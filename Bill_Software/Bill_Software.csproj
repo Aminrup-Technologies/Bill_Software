@@ -1,0 +1,1590 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{923F9320-8009-4E36-9685-6ADF4E42AEF3}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Bill_Software</RootNamespace>
+    <AssemblyName>Bill_Software</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="AspNet.ScriptManager.jQuery">
+      <HintPath>..\packages\AspNet.ScriptManager.jQuery.1.7.1\lib\net45\AspNet.ScriptManager.jQuery.dll</HintPath>
+    </Reference>
+    <Reference Include="AspNet.ScriptManager.jQuery.UI.Combined">
+      <HintPath>..\packages\AspNet.ScriptManager.jQuery.UI.Combined.1.8.20\lib\net45\AspNet.ScriptManager.jQuery.UI.Combined.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ScriptManager.MSAjax, Version=4.5.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <HintPath>..\packages\Microsoft.AspNet.ScriptManager.MSAjax.4.5.6\lib\net45\Microsoft.ScriptManager.MSAjax.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ScriptManager.WebForms, Version=4.5.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <HintPath>..\packages\Microsoft.AspNet.ScriptManager.WebForms.4.5.6\lib\net45\Microsoft.ScriptManager.WebForms.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.5.0.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Optimization, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <HintPath>..\packages\Microsoft.AspNet.Web.Optimization.1.0.0\lib\net40\System.Web.Optimization.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Providers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <HintPath>..\packages\Microsoft.AspNet.Providers.Core.1.1\lib\net40\System.Web.Providers.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNetOpenAuth.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=2780ccd10d57b246, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DotNetOpenAuth.Core.4.0.3.12153\lib\net40-full\DotNetOpenAuth.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNetOpenAuth.OAuth, Version=4.0.0.0, Culture=neutral, PublicKeyToken=2780ccd10d57b246, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DotNetOpenAuth.OAuth.Core.4.0.3.12153\lib\net40-full\DotNetOpenAuth.OAuth.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNetOpenAuth.OAuth.Consumer, Version=4.0.0.0, Culture=neutral, PublicKeyToken=2780ccd10d57b246, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DotNetOpenAuth.OAuth.Consumer.4.0.3.12153\lib\net40-full\DotNetOpenAuth.OAuth.Consumer.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNetOpenAuth.OpenId, Version=4.0.0.0, Culture=neutral, PublicKeyToken=2780ccd10d57b246, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DotNetOpenAuth.OpenId.Core.4.0.3.12153\lib\net40-full\DotNetOpenAuth.OpenId.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNetOpenAuth.OpenId.RelyingParty, Version=4.0.0.0, Culture=neutral, PublicKeyToken=2780ccd10d57b246, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DotNetOpenAuth.OpenId.RelyingParty.4.0.3.12153\lib\net40-full\DotNetOpenAuth.OpenId.RelyingParty.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNetOpenAuth.AspNet, Version=4.0.0.0, Culture=neutral, PublicKeyToken=2780ccd10d57b246, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DotNetOpenAuth.AspNet.4.0.3.12153\lib\net40-full\DotNetOpenAuth.AspNet.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Membership.OpenAuth, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <HintPath>..\packages\Microsoft.AspNet.Membership.OpenAuth.1.0.0\lib\net45\Microsoft.AspNet.Membership.OpenAuth.dll</HintPath>
+    </Reference>
+    <Reference Include="WebGrease">
+      <Private>True</Private>
+      <HintPath>..\packages\WebGrease.1.1.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Runtime">
+      <Private>True</Private>
+      <HintPath>..\packages\WebGrease.1.1.0\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Web.Optimization.WebForms">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.Web.Optimization.WebForms.1.0.0\lib\net45\Microsoft.AspNet.Web.Optimization.WebForms.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="admin\add_company.aspx" />
+    <Content Include="admin\home.aspx" />
+    <Content Include="admin\show_date.aspx" />
+    <Content Include="admin\Total_id_card.aspx" />
+    <Content Include="admin\Update_Company.aspx" />
+    <Content Include="admin\update_image.aspx" />
+    <Content Include="admin\Upload_data.aspx" />
+    <Content Include="admin\Delete_date.aspx" />
+    <Content Include="admin\Setting.aspx" />
+    <Content Include="admin\Show_data1.aspx" />
+    <Content Include="Content\Site.css" />
+    <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
+    <Content Include="Content\themes\base\images\ui-bg_flat_75_ffffff_40x100.png" />
+    <Content Include="Content\themes\base\images\ui-bg_glass_55_fbf9ee_1x400.png" />
+    <Content Include="Content\themes\base\images\ui-bg_glass_65_ffffff_1x400.png" />
+    <Content Include="Content\themes\base\images\ui-bg_glass_75_dadada_1x400.png" />
+    <Content Include="Content\themes\base\images\ui-bg_glass_75_e6e6e6_1x400.png" />
+    <Content Include="Content\themes\base\images\ui-bg_glass_95_fef1ec_1x400.png" />
+    <Content Include="Content\themes\base\images\ui-bg_highlight-soft_75_cccccc_1x100.png" />
+    <Content Include="Content\themes\base\images\ui-icons_222222_256x240.png" />
+    <Content Include="Content\themes\base\images\ui-icons_2e83ff_256x240.png" />
+    <Content Include="Content\themes\base\images\ui-icons_454545_256x240.png" />
+    <Content Include="Content\themes\base\images\ui-icons_888888_256x240.png" />
+    <Content Include="Content\themes\base\images\ui-icons_cd0a0a_256x240.png" />
+    <Content Include="Content\themes\base\jquery-ui.css" />
+    <Content Include="Content\themes\base\jquery.ui.accordion.css" />
+    <Content Include="Content\themes\base\jquery.ui.all.css" />
+    <Content Include="Content\themes\base\jquery.ui.autocomplete.css" />
+    <Content Include="Content\themes\base\jquery.ui.base.css" />
+    <Content Include="Content\themes\base\jquery.ui.button.css" />
+    <Content Include="Content\themes\base\jquery.ui.core.css" />
+    <Content Include="Content\themes\base\jquery.ui.datepicker.css" />
+    <Content Include="Content\themes\base\jquery.ui.dialog.css" />
+    <Content Include="Content\themes\base\jquery.ui.progressbar.css" />
+    <Content Include="Content\themes\base\jquery.ui.resizable.css" />
+    <Content Include="Content\themes\base\jquery.ui.selectable.css" />
+    <Content Include="Content\themes\base\jquery.ui.slider.css" />
+    <Content Include="Content\themes\base\jquery.ui.tabs.css" />
+    <Content Include="Content\themes\base\jquery.ui.theme.css" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_flat_0_aaaaaa_40x100.png" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_flat_75_ffffff_40x100.png" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_glass_55_fbf9ee_1x400.png" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_glass_65_ffffff_1x400.png" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_glass_75_dadada_1x400.png" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_glass_75_e6e6e6_1x400.png" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_glass_95_fef1ec_1x400.png" />
+    <Content Include="Content\themes\base\minified\images\ui-bg_highlight-soft_75_cccccc_1x100.png" />
+    <Content Include="Content\themes\base\minified\images\ui-icons_222222_256x240.png" />
+    <Content Include="Content\themes\base\minified\images\ui-icons_2e83ff_256x240.png" />
+    <Content Include="Content\themes\base\minified\images\ui-icons_454545_256x240.png" />
+    <Content Include="Content\themes\base\minified\images\ui-icons_888888_256x240.png" />
+    <Content Include="Content\themes\base\minified\images\ui-icons_cd0a0a_256x240.png" />
+    <Content Include="Content\themes\base\minified\jquery-ui.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.accordion.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.autocomplete.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.button.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.core.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.datepicker.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.dialog.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.progressbar.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.resizable.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.selectable.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.slider.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
+    <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
+    <Content Include="corporate\business\app\calender\jquery-1.7.1.js" />
+    <Content Include="corporate\business\app\calender\jquery.ui.all.css" />
+    <Content Include="corporate\business\app\calender\jquery.ui.core.js" />
+    <Content Include="corporate\business\app\calender\jquery.ui.datepicker.js" />
+    <Content Include="corporate\business\app\calender\jquery.ui.widget.js" />
+    <Content Include="corporate\business\app\CreateHydrentQuatation.aspx" />
+    <Content Include="corporate\business\app\DeleteHydrentQuatation.aspx" />
+    <Content Include="corporate\business\app\Deletehydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\home.aspx" />
+    <Content Include="corporate\business\app\HydrantProduct.aspx" />
+    <Content Include="corporate\business\app\hydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\PaymentMail.aspx" />
+    <Content Include="corporate\business\app\productparent.aspx" />
+    <Content Include="corporate\business\app\ProformaMail.aspx" />
+    <Content Include="corporate\business\app\RequisitionManual.aspx" />
+    <Content Include="corporate\business\app\RequisitionView.aspx" />
+    <Content Include="corporate\business\app\SearchHydrentQuatation.aspx" />
+    <Content Include="corporate\business\app\Searchhydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\settings.aspx" />
+    <Content Include="corporate\business\app\Update\contactno.aspx" />
+    <Content Include="corporate\business\app\Update\emailid.aspx" />
+    <Content Include="corporate\business\app\Update\name.aspx" />
+    <Content Include="corporate\business\app\Update\password.aspx" />
+    <Content Include="corporate\business\app\master_city.aspx" />
+    <Content Include="corporate\business\app\master_State.aspx" />
+    <Content Include="corporate\business\app\New_vendor.aspx" />
+    <Content Include="corporate\business\app\product_master.aspx" />
+    <Content Include="corporate\business\app\Service_master.aspx" />
+    <Content Include="corporate\business\app\Service_Tax_Master.aspx" />
+    <Content Include="corporate\business\app\Vat_master.aspx" />
+    <Content Include="corporate\business\app\Purches_new_vendor.aspx" />
+    <Content Include="corporate\business\app\Purches_exting_vendor.aspx" />
+    <Content Include="corporate\business\app\Update_vendor.aspx" />
+    <Content Include="corporate\business\app\ViewHydrentQuatation.aspx" />
+    <Content Include="corporate\business\app\Viewhydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\View_vendor.aspx" />
+    <Content Include="corporate\business\app\Delete_vendor.aspx" />
+    <Content Include="corporate\business\app\New_client.aspx" />
+    <Content Include="corporate\business\app\View_client.aspx" />
+    <Content Include="corporate\business\app\Update_client.aspx" />
+    <Content Include="corporate\business\app\Delete_client.aspx" />
+    <Content Include="corporate\business\app\Create_quotation.aspx" />
+    <Content Include="corporate\business\app\View_purches.aspx" />
+    <Content Include="corporate\business\app\seartch_purtch.aspx" />
+    <Content Include="corporate\business\app\Delete_purtches.aspx" />
+    <Content Include="corporate\business\app\View_quotation.aspx" />
+    <Content Include="corporate\business\app\Seartch_quotation.aspx" />
+    <Content Include="corporate\business\app\Delete_Quotation.aspx" />
+    <Content Include="corporate\business\app\Add_invoice.aspx" />
+    <Content Include="corporate\business\app\View_Invoice.aspx" />
+    <Content Include="corporate\business\app\seartch_invoice.aspx" />
+    <Content Include="corporate\business\app\Delete_invoice.aspx" />
+    <Content Include="corporate\business\app\Add_proforma.aspx" />
+    <Content Include="corporate\business\app\View_proforma.aspx" />
+    <Content Include="corporate\business\app\Seartch_proforma.aspx" />
+    <Content Include="corporate\business\app\Delete_proforma.aspx" />
+    <Content Include="corporate\business\app\add_payment.aspx" />
+    <Content Include="corporate\business\app\View_payment.aspx" />
+    <Content Include="corporate\business\app\seartch_payment.aspx" />
+    <Content Include="corporate\business\app\Delete_payment.aspx" />
+    <Content Include="corporate\business\app\add_chalan.aspx" />
+    <Content Include="corporate\business\app\View_chalan.aspx" />
+    <Content Include="corporate\business\app\seartch_chalan.aspx" />
+    <Content Include="corporate\business\app\Delete_chalan.aspx" />
+    <Content Include="corporate\business\app\Expenses_Head.aspx" />
+    <Content Include="corporate\business\app\general_expences.aspx" />
+    <Content Include="corporate\business\app\view_expencess_head.aspx" />
+    <Content Include="corporate\business\app\Delete_general_expencess.aspx" />
+    <Content Include="corporate\business\app\add_payment_purchess.aspx" />
+    <Content Include="corporate\business\app\View_purchess_payment.aspx" />
+    <Content Include="corporate\business\app\Seartch_purchess_payments.aspx" />
+    <Content Include="corporate\business\app\Delete_purches_payment.aspx" />
+    <Content Include="corporate\business\app\Product_stock.aspx" />
+    <Content Include="corporate\business\app\Service_stock.aspx" />
+    <Content Include="corporate\business\app\Payment_due.aspx" />
+    <Content Include="corporate\business\app\Purchess_due.aspx" />
+    <Content Include="corporate\business\app\Update_product.aspx" />
+    <Content Include="corporate\business\app\Service_update.aspx" />
+    <Content Include="corporate\business\app\patty_cash_expences.aspx" />
+    <Content Include="corporate\business\app\view_patty_cash_expenses.aspx" />
+    <Content Include="corporate\business\app\Delete_patty_cash_expenses.aspx" />
+    <Content Include="corporate\business\app\Representative.aspx" />
+    <Content Include="corporate\business\app\Show_representative.aspx" />
+    <Content Include="corporate\business\app\AddFactory.aspx" />
+    <Content Include="corporate\business\app\ShowFactory.aspx" />
+    <Content Include="corporate\business\app\Update_factory.aspx" />
+    <Content Include="corporate\business\app\Block_invoice.aspx" />
+    <Content Include="corporate\business\app\Edit_quatation.aspx" />
+    <Content Include="corporate\business\app\RequisitionCreate.aspx" />
+    <Content Include="corporate\business\app\newproductparent.aspx" />
+    <Content Include="corporate\business\app\newproduct_master.aspx" />
+    <Content Include="corporate\business\app\NewUpdate_product.aspx" />
+    <Content Include="corporate\business\app\RequisitionManualView.aspx" />
+    <Content Include="corporate\business\app\RequisitionManualSearch.aspx" />
+    <Content Include="corporate\business\app\RequisitionManualDelete.aspx" />
+    <Content Include="corporate\business\app\AddIndustry.aspx" />
+    <Content Include="corporate\business\app\AddPrimaryService.aspx" />
+    <Content Include="corporate\business\app\PaymentPhase.aspx" />
+    <Content Include="corporate\business\app\PrimaryServiceTerms.aspx" />
+    <Content Include="corporate\business\app\AddUser.aspx" />
+    <Content Include="corporate\business\app\ViewUser.aspx" />
+    <Content Include="corporate\business\app\Update_Designation.aspx" />
+    <Content Include="corporate\business\app\Set_quatation.aspx" />
+    <Content Include="corporate\business\app\InvoiceMail.aspx" />
+    <Content Include="corporate\business\app\FinalPaymentInvoice.aspx" />
+    <Content Include="corporate\business\app\PaymentsReceived.aspx" />
+    <Content Include="corporate\business\app\PaymentsDue.aspx" />
+    <Content Include="corporate\business\print\bill.aspx" />
+    <Content Include="corporate\business\print\billduplicate.aspx" />
+    <Content Include="corporate\business\print\chhalan.aspx" />
+    <Content Include="corporate\business\print\General_expencess_voutcher.aspx" />
+    <Content Include="corporate\business\print\hydrentInvoice.aspx" />
+    <Content Include="corporate\business\print\hydrentInvoiceSeller.aspx" />
+    <Content Include="corporate\business\print\Invoice.aspx" />
+    <Content Include="corporate\business\print\Invoiceduplicate.aspx" />
+    <Content Include="corporate\business\print\NewChhalan.aspx" />
+    <Content Include="corporate\business\print\NewChhalanDuplicate.aspx" />
+    <Content Include="corporate\business\print\NewChhalanTriplicate.aspx" />
+    <Content Include="corporate\business\print\NewInvoice.aspx" />
+    <Content Include="corporate\business\print\NewInvoiceDuplicate.aspx" />
+    <Content Include="corporate\business\print\NewPaymentInvoice.aspx" />
+    <Content Include="corporate\business\print\NewPaymentInvoiceDuplicate.aspx" />
+    <Content Include="corporate\business\print\NewProformaInvoice.aspx" />
+    <Content Include="corporate\business\print\NewQuotation.aspx" />
+    <Content Include="corporate\business\print\Patty_cash_expencess_voutcher.aspx" />
+    <Content Include="corporate\business\print\proforma_invoice.aspx" />
+    <Content Include="corporate\business\print\purchess_payment.aspx" />
+    <Content Include="corporate\business\print\purches_bill.aspx" />
+    <Content Include="corporate\business\print\Quotation.aspx" />
+    <Content Include="corporate\business\print\QuotationHydrent.aspx" />
+    <Content Include="corporate\business\print\Requisition.aspx" />
+    <Content Include="corporate\business\print\RequisitionNew.aspx" />
+    <Content Include="corporate\business\WebImages\active_block.png" />
+    <Content Include="corporate\business\WebImages\block.png" />
+    <Content Include="corporate\business\WebImages\Body_With_Map.png" />
+    <Content Include="corporate\business\WebImages\ClientPageForSoftwareLast1.png" />
+    <Content Include="corporate\business\WebImages\ClientPageForSoftware.png" />
+    <Content Include="corporate\business\WebImages\close-window.png" />
+    <Content Include="corporate\business\WebImages\Cross_icon.png.png" />
+    <Content Include="corporate\business\WebImages\delete.png" />
+    <Content Include="corporate\business\WebImages\E-mail-icon.png" />
+    <Content Include="corporate\business\WebImages\edit1.png" />
+    <Content Include="corporate\business\WebImages\edit_icon.png" />
+    <Content Include="corporate\business\WebImages\Exclamation.png" />
+    <Content Include="corporate\business\WebImages\factory.png" />
+    <Content Include="corporate\business\WebImages\I2ILOGO1.png" />
+    <Content Include="corporate\business\WebImages\I2ILHHeader1.png" />
+    <Content Include="corporate\business\WebImages\I2ILHFooter.png" />
+    <Content Include="corporate\business\WebImages\I2ILHHeader.png" />
+    <Content Include="corporate\business\WebImages\i2ilogo.png" />
+    <Content Include="corporate\business\WebImages\I2Ilogo10.png" />
+    <Content Include="corporate\business\WebImages\I2Ilogo15.png" />
+    <Content Include="corporate\business\WebImages\I2Ilogo20.png" />
+    <Content Include="corporate\business\WebImages\i2i_lh.jpg" />
+    <Content Include="corporate\business\WebImages\i2i_lh_b.jpg" />
+    <Content Include="corporate\business\WebImages\i2i_logo.png" />
+    <Content Include="corporate\business\WebImages\i2i_LOGO_ad_sig.png" />
+    <Content Include="corporate\business\WebImages\invoice_cancel.png" />
+    <Content Include="corporate\business\WebImages\invoice_ok.png" />
+    <Content Include="corporate\business\WebImages\invoice_status.png" />
+    <Content Include="corporate\business\WebImages\KCGC.png" />
+    <Content Include="corporate\business\WebImages\logo.jpg" />
+    <Content Include="corporate\business\WebImages\logo.png" />
+    <Content Include="corporate\business\WebImages\mail.jpg" />
+    <Content Include="corporate\business\WebImages\mozillafirefox.jpg" />
+    <Content Include="corporate\business\WebImages\ms_excel.png" />
+    <Content Include="corporate\business\WebImages\oh4y.png" />
+    <Content Include="corporate\business\WebImages\oh4ylogo.jpg" />
+    <Content Include="corporate\business\WebImages\page_left.png" />
+    <Content Include="corporate\business\WebImages\page_right.png" />
+    <Content Include="corporate\business\WebImages\page_top.png" />
+    <Content Include="corporate\business\WebImages\print.png" />
+    <Content Include="corporate\business\WebImages\recieved.jpg" />
+    <Content Include="corporate\business\WebImages\recieved1.jpg" />
+    <Content Include="corporate\business\WebImages\representative.png" />
+    <Content Include="corporate\business\WebImages\settings_icon.png" />
+    <Content Include="corporate\business\WebImages\sorry.png" />
+    <Content Include="corporate\business\WebImages\Stamp.jpg" />
+    <Content Include="corporate\business\WebImages\Stamp.png" />
+    <Content Include="corporate\business\WebImages\tick-icon.png" />
+    <Content Include="corporate\business\WebImages\unexpectederror_KCGC.jpg" />
+    <Content Include="corporate\business\WebImages\unit.png" />
+    <Content Include="corporate\business\WebImages\update_icon.png" />
+    <Content Include="corporate\business\WebImages\viewicon.png" />
+    <Content Include="corporate\WebProperty\css\menu.css" />
+    <Content Include="corporate\WebProperty\css\sf.css" />
+    <Content Include="corporate\WebProperty\css\style.css" />
+    <Content Include="corporate\WebProperty\images\11header_bg.jpg" />
+    <Content Include="corporate\WebProperty\images\body_bg.jpg" />
+    <Content Include="corporate\WebProperty\images\btn_bg.jpg" />
+    <Content Include="corporate\WebProperty\images\btn_bg_hover.jpg" />
+    <Content Include="corporate\WebProperty\images\current_tab_bg.jpg" />
+    <Content Include="corporate\WebProperty\images\header_bg.jpg" />
+    <Content Include="corporate\WebProperty\images\i2i_logo.png" />
+    <Content Include="corporate\WebProperty\images\login_bg.jpg" />
+    <Content Include="corporate\WebProperty\images\login_border.png" />
+    <Content Include="corporate\WebProperty\images\logout.png" />
+    <Content Include="corporate\WebProperty\images\logout_hover.png" />
+    <Content Include="corporate\WebProperty\images\menu_bg.jpg" />
+    <Content Include="corporate\WebProperty\images\right_arrow.png" />
+    <Content Include="corporate\WebProperty\js\clock.js" />
+    <Content Include="idcardslogo.jpg" />
+    <Content Include="Images\accent.png" />
+    <Content Include="Images\bullet.png" />
+    <Content Include="Images\button-bg.png" />
+    <Content Include="Images\Cross_icon.png.png" />
+    <Content Include="Images\delete.png" />
+    <Content Include="Images\edit1.png" />
+    <Content Include="Images\edit_icon.png" />
+    <Content Include="Images\heroAccent.png" />
+    <Content Include="Images\IMG-20140404-WA002.png" />
+    <Content Include="Images\login-page-bg.jpg" />
+    <Content Include="Images\orderedList0.png" />
+    <Content Include="Images\orderedList1.png" />
+    <Content Include="Images\orderedList2.png" />
+    <Content Include="Images\orderedList3.png" />
+    <Content Include="Images\orderedList4.png" />
+    <Content Include="Images\orderedList5.png" />
+    <Content Include="Images\orderedList6.png" />
+    <Content Include="Images\orderedList7.png" />
+    <Content Include="Images\orderedList8.png" />
+    <Content Include="Images\orderedList9.png" />
+    <Content Include="Images\print.png" />
+    <Content Include="Images\tick-icon.png" />
+    <Content Include="index_start.aspx" />
+    <Content Include="index.aspx" />
+    <Content Include="corporate\WebProperty\css\sf.eot" />
+    <Content Include="corporate\WebProperty\css\sf.svg" />
+    <Content Include="corporate\WebProperty\css\sf.ttf" />
+    <Content Include="corporate\WebProperty\css\sf.woff" />
+    <Content Include="corporate\business\app\Bill.Master" />
+    <Content Include="index_card.aspx" />
+    <Content Include="Invoice.jpg" />
+    <Content Include="jquery-3.2.1.js" />
+    <Content Include="jquery-ui.css" />
+    <Content Include="jquery-ui.js" />
+    <Content Include="Print\id_card1.aspx" />
+    <Content Include="SessionKeepAlive1.aspx" />
+    <Content Include="admin\Update\contactno.aspx" />
+    <Content Include="admin\Update\emailid.aspx" />
+    <Content Include="admin\Update\name.aspx" />
+    <Content Include="admin\Update\password.aspx" />
+    <Content Include="WebProperty\css\menu.css" />
+    <Content Include="WebProperty\css\sf.css" />
+    <Content Include="WebProperty\css\style.css" />
+    <Content Include="WebProperty\images\body_bg.jpg" />
+    <Content Include="WebProperty\images\btn_bg.jpg" />
+    <Content Include="WebProperty\images\btn_bg_hover.jpg" />
+    <Content Include="WebProperty\images\current_tab_bg.jpg" />
+    <Content Include="WebProperty\images\header_bg.jpg" />
+    <Content Include="WebProperty\images\login_bg.jpg" />
+    <Content Include="WebProperty\images\login_border.png" />
+    <Content Include="WebProperty\images\logout.png" />
+    <Content Include="WebProperty\images\logout_hover.png" />
+    <Content Include="WebProperty\images\menu_bg.jpg" />
+    <Content Include="admin\card.Master" />
+    <Content Include="admin\Company.ashx" />
+    <Content Include="admin\personal_image.ashx" />
+    <Content Include="corporate\business\app\clientHandlerAdmin.ashx" />
+    <None Include="Properties\PublishProfiles\bill.pubxml" />
+    <None Include="Scripts\jquery-1.7.1.intellisense.js" />
+    <Content Include="Scripts\jquery-1.7.1.js" />
+    <Content Include="Scripts\jquery-1.7.1.min.js" />
+    <Content Include="Scripts\jquery-ui-1.8.20.js" />
+    <Content Include="Scripts\jquery-ui-1.8.20.min.js" />
+    <Content Include="Scripts\modernizr-2.5.3.js" />
+    <Content Include="Scripts\WebForms\DetailsView.js" />
+    <Content Include="Scripts\WebForms\Focus.js" />
+    <Content Include="Scripts\WebForms\GridView.js" />
+    <Content Include="Scripts\WebForms\Menu.js" />
+    <Content Include="Scripts\WebForms\MenuStandards.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjax.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxApplicationServices.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxComponentModel.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxCore.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxGlobalization.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxHistory.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxNetwork.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxSerialization.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxTimer.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxWebForms.js" />
+    <Content Include="Scripts\WebForms\MSAjax\MicrosoftAjaxWebServices.js" />
+    <Content Include="Scripts\WebForms\SmartNav.js" />
+    <Content Include="Scripts\WebForms\TreeView.js" />
+    <Content Include="Scripts\WebForms\WebForms.js" />
+    <Content Include="Scripts\WebForms\WebParts.js" />
+    <Content Include="Scripts\WebForms\WebUIValidation.js" />
+    <Content Include="Scripts\_references.js" />
+    <Content Include="SessionKeepAlive.aspx" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="WebProperty\css\sf.eot" />
+    <Content Include="WebProperty\css\sf.svg" />
+    <Content Include="WebProperty\css\sf.ttf" />
+    <Content Include="WebProperty\css\sf.woff" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="admin\card.Master.cs">
+      <DependentUpon>card.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\card.Master.designer.cs">
+      <DependentUpon>card.Master</DependentUpon>
+    </Compile>
+    <Compile Include="admin\add_company.aspx.cs">
+      <DependentUpon>add_company.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\add_company.aspx.designer.cs">
+      <DependentUpon>add_company.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Company.ashx.cs">
+      <DependentUpon>Company.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\home.aspx.cs">
+      <DependentUpon>home.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\home.aspx.designer.cs">
+      <DependentUpon>home.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\personal_image.ashx.cs">
+      <DependentUpon>personal_image.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\show_date.aspx.cs">
+      <DependentUpon>show_date.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\show_date.aspx.designer.cs">
+      <DependentUpon>show_date.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Total_id_card.aspx.cs">
+      <DependentUpon>Total_id_card.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Total_id_card.aspx.designer.cs">
+      <DependentUpon>Total_id_card.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Update_Company.aspx.cs">
+      <DependentUpon>Update_Company.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Update_Company.aspx.designer.cs">
+      <DependentUpon>Update_Company.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\update_image.aspx.cs">
+      <DependentUpon>update_image.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\update_image.aspx.designer.cs">
+      <DependentUpon>update_image.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Upload_data.aspx.cs">
+      <DependentUpon>Upload_data.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Upload_data.aspx.designer.cs">
+      <DependentUpon>Upload_data.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Delete_date.aspx.cs">
+      <DependentUpon>Delete_date.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Delete_date.aspx.designer.cs">
+      <DependentUpon>Delete_date.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Setting.aspx.cs">
+      <DependentUpon>Setting.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Setting.aspx.designer.cs">
+      <DependentUpon>Setting.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Show_data1.aspx.cs">
+      <DependentUpon>Show_data1.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Show_data1.aspx.designer.cs">
+      <DependentUpon>Show_data1.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="App_Start\BundleConfig.cs" />
+    <Compile Include="App_Start\AuthConfig.cs" />
+    <Compile Include="corporate\business\app\Bill.Master.cs">
+      <DependentUpon>Bill.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Bill.Master.designer.cs">
+      <DependentUpon>Bill.Master</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\clientHandlerAdmin.ashx.cs">
+      <DependentUpon>clientHandlerAdmin.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\CreateHydrentQuatation.aspx.cs">
+      <DependentUpon>CreateHydrentQuatation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\CreateHydrentQuatation.aspx.designer.cs">
+      <DependentUpon>CreateHydrentQuatation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\DeleteHydrentQuatation.aspx.cs">
+      <DependentUpon>DeleteHydrentQuatation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\DeleteHydrentQuatation.aspx.designer.cs">
+      <DependentUpon>DeleteHydrentQuatation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Deletehydrent_invoice.aspx.cs">
+      <DependentUpon>Deletehydrent_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Deletehydrent_invoice.aspx.designer.cs">
+      <DependentUpon>Deletehydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\home.aspx.cs">
+      <DependentUpon>home.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\home.aspx.designer.cs">
+      <DependentUpon>home.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\HydrantProduct.aspx.cs">
+      <DependentUpon>HydrantProduct.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\HydrantProduct.aspx.designer.cs">
+      <DependentUpon>HydrantProduct.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\hydrent_invoice.aspx.cs">
+      <DependentUpon>hydrent_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\hydrent_invoice.aspx.designer.cs">
+      <DependentUpon>hydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentMail.aspx.cs">
+      <DependentUpon>PaymentMail.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentMail.aspx.designer.cs">
+      <DependentUpon>PaymentMail.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\productparent.aspx.cs">
+      <DependentUpon>productparent.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\productparent.aspx.designer.cs">
+      <DependentUpon>productparent.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\ProformaMail.aspx.cs">
+      <DependentUpon>ProformaMail.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\ProformaMail.aspx.designer.cs">
+      <DependentUpon>ProformaMail.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManual.aspx.cs">
+      <DependentUpon>RequisitionManual.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManual.aspx.designer.cs">
+      <DependentUpon>RequisitionManual.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionView.aspx.cs">
+      <DependentUpon>RequisitionView.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionView.aspx.designer.cs">
+      <DependentUpon>RequisitionView.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\SearchHydrentQuatation.aspx.cs">
+      <DependentUpon>SearchHydrentQuatation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\SearchHydrentQuatation.aspx.designer.cs">
+      <DependentUpon>SearchHydrentQuatation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Searchhydrent_invoice.aspx.cs">
+      <DependentUpon>Searchhydrent_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Searchhydrent_invoice.aspx.designer.cs">
+      <DependentUpon>Searchhydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\settings.aspx.cs">
+      <DependentUpon>settings.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\settings.aspx.designer.cs">
+      <DependentUpon>settings.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\contactno.aspx.cs">
+      <DependentUpon>contactno.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\contactno.aspx.designer.cs">
+      <DependentUpon>contactno.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\emailid.aspx.cs">
+      <DependentUpon>emailid.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\emailid.aspx.designer.cs">
+      <DependentUpon>emailid.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\name.aspx.cs">
+      <DependentUpon>name.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\name.aspx.designer.cs">
+      <DependentUpon>name.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\password.aspx.cs">
+      <DependentUpon>password.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update\password.aspx.designer.cs">
+      <DependentUpon>password.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\master_city.aspx.cs">
+      <DependentUpon>master_city.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\master_city.aspx.designer.cs">
+      <DependentUpon>master_city.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\master_State.aspx.cs">
+      <DependentUpon>master_State.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\master_State.aspx.designer.cs">
+      <DependentUpon>master_State.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\New_vendor.aspx.cs">
+      <DependentUpon>New_vendor.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\New_vendor.aspx.designer.cs">
+      <DependentUpon>New_vendor.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\product_master.aspx.cs">
+      <DependentUpon>product_master.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\product_master.aspx.designer.cs">
+      <DependentUpon>product_master.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_master.aspx.cs">
+      <DependentUpon>Service_master.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_master.aspx.designer.cs">
+      <DependentUpon>Service_master.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_Tax_Master.aspx.cs">
+      <DependentUpon>Service_Tax_Master.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_Tax_Master.aspx.designer.cs">
+      <DependentUpon>Service_Tax_Master.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Vat_master.aspx.cs">
+      <DependentUpon>Vat_master.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Vat_master.aspx.designer.cs">
+      <DependentUpon>Vat_master.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Purches_new_vendor.aspx.cs">
+      <DependentUpon>Purches_new_vendor.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Purches_new_vendor.aspx.designer.cs">
+      <DependentUpon>Purches_new_vendor.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Purches_exting_vendor.aspx.cs">
+      <DependentUpon>Purches_exting_vendor.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Purches_exting_vendor.aspx.designer.cs">
+      <DependentUpon>Purches_exting_vendor.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_vendor.aspx.cs">
+      <DependentUpon>Update_vendor.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_vendor.aspx.designer.cs">
+      <DependentUpon>Update_vendor.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\ViewHydrentQuatation.aspx.cs">
+      <DependentUpon>ViewHydrentQuatation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\ViewHydrentQuatation.aspx.designer.cs">
+      <DependentUpon>ViewHydrentQuatation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Viewhydrent_invoice.aspx.cs">
+      <DependentUpon>Viewhydrent_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Viewhydrent_invoice.aspx.designer.cs">
+      <DependentUpon>Viewhydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_vendor.aspx.cs">
+      <DependentUpon>View_vendor.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_vendor.aspx.designer.cs">
+      <DependentUpon>View_vendor.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_vendor.aspx.cs">
+      <DependentUpon>Delete_vendor.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_vendor.aspx.designer.cs">
+      <DependentUpon>Delete_vendor.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\New_client.aspx.cs">
+      <DependentUpon>New_client.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\New_client.aspx.designer.cs">
+      <DependentUpon>New_client.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_client.aspx.cs">
+      <DependentUpon>View_client.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_client.aspx.designer.cs">
+      <DependentUpon>View_client.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_client.aspx.cs">
+      <DependentUpon>Update_client.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_client.aspx.designer.cs">
+      <DependentUpon>Update_client.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_client.aspx.cs">
+      <DependentUpon>Delete_client.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_client.aspx.designer.cs">
+      <DependentUpon>Delete_client.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Create_quotation.aspx.cs">
+      <DependentUpon>Create_quotation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Create_quotation.aspx.designer.cs">
+      <DependentUpon>Create_quotation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_purches.aspx.cs">
+      <DependentUpon>View_purches.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_purches.aspx.designer.cs">
+      <DependentUpon>View_purches.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_purtch.aspx.cs">
+      <DependentUpon>seartch_purtch.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_purtch.aspx.designer.cs">
+      <DependentUpon>seartch_purtch.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_purtches.aspx.cs">
+      <DependentUpon>Delete_purtches.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_purtches.aspx.designer.cs">
+      <DependentUpon>Delete_purtches.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_quotation.aspx.cs">
+      <DependentUpon>View_quotation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_quotation.aspx.designer.cs">
+      <DependentUpon>View_quotation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Seartch_quotation.aspx.cs">
+      <DependentUpon>Seartch_quotation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Seartch_quotation.aspx.designer.cs">
+      <DependentUpon>Seartch_quotation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_Quotation.aspx.cs">
+      <DependentUpon>Delete_Quotation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_Quotation.aspx.designer.cs">
+      <DependentUpon>Delete_Quotation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Add_invoice.aspx.cs">
+      <DependentUpon>Add_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Add_invoice.aspx.designer.cs">
+      <DependentUpon>Add_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_Invoice.aspx.cs">
+      <DependentUpon>View_Invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_Invoice.aspx.designer.cs">
+      <DependentUpon>View_Invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_invoice.aspx.cs">
+      <DependentUpon>seartch_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_invoice.aspx.designer.cs">
+      <DependentUpon>seartch_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_invoice.aspx.cs">
+      <DependentUpon>Delete_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_invoice.aspx.designer.cs">
+      <DependentUpon>Delete_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Add_proforma.aspx.cs">
+      <DependentUpon>Add_proforma.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Add_proforma.aspx.designer.cs">
+      <DependentUpon>Add_proforma.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_proforma.aspx.cs">
+      <DependentUpon>View_proforma.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_proforma.aspx.designer.cs">
+      <DependentUpon>View_proforma.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Seartch_proforma.aspx.cs">
+      <DependentUpon>Seartch_proforma.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Seartch_proforma.aspx.designer.cs">
+      <DependentUpon>Seartch_proforma.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_proforma.aspx.cs">
+      <DependentUpon>Delete_proforma.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_proforma.aspx.designer.cs">
+      <DependentUpon>Delete_proforma.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\add_payment.aspx.cs">
+      <DependentUpon>add_payment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\add_payment.aspx.designer.cs">
+      <DependentUpon>add_payment.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_payment.aspx.cs">
+      <DependentUpon>View_payment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_payment.aspx.designer.cs">
+      <DependentUpon>View_payment.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_payment.aspx.cs">
+      <DependentUpon>seartch_payment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_payment.aspx.designer.cs">
+      <DependentUpon>seartch_payment.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_payment.aspx.cs">
+      <DependentUpon>Delete_payment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_payment.aspx.designer.cs">
+      <DependentUpon>Delete_payment.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\add_chalan.aspx.cs">
+      <DependentUpon>add_chalan.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\add_chalan.aspx.designer.cs">
+      <DependentUpon>add_chalan.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_chalan.aspx.cs">
+      <DependentUpon>View_chalan.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_chalan.aspx.designer.cs">
+      <DependentUpon>View_chalan.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_chalan.aspx.cs">
+      <DependentUpon>seartch_chalan.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\seartch_chalan.aspx.designer.cs">
+      <DependentUpon>seartch_chalan.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_chalan.aspx.cs">
+      <DependentUpon>Delete_chalan.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_chalan.aspx.designer.cs">
+      <DependentUpon>Delete_chalan.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Expenses_Head.aspx.cs">
+      <DependentUpon>Expenses_Head.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Expenses_Head.aspx.designer.cs">
+      <DependentUpon>Expenses_Head.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\general_expences.aspx.cs">
+      <DependentUpon>general_expences.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\general_expences.aspx.designer.cs">
+      <DependentUpon>general_expences.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\view_expencess_head.aspx.cs">
+      <DependentUpon>view_expencess_head.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\view_expencess_head.aspx.designer.cs">
+      <DependentUpon>view_expencess_head.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_general_expencess.aspx.cs">
+      <DependentUpon>Delete_general_expencess.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_general_expencess.aspx.designer.cs">
+      <DependentUpon>Delete_general_expencess.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\add_payment_purchess.aspx.cs">
+      <DependentUpon>add_payment_purchess.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\add_payment_purchess.aspx.designer.cs">
+      <DependentUpon>add_payment_purchess.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_purchess_payment.aspx.cs">
+      <DependentUpon>View_purchess_payment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_purchess_payment.aspx.designer.cs">
+      <DependentUpon>View_purchess_payment.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Seartch_purchess_payments.aspx.cs">
+      <DependentUpon>Seartch_purchess_payments.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Seartch_purchess_payments.aspx.designer.cs">
+      <DependentUpon>Seartch_purchess_payments.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_purches_payment.aspx.cs">
+      <DependentUpon>Delete_purches_payment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_purches_payment.aspx.designer.cs">
+      <DependentUpon>Delete_purches_payment.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Product_stock.aspx.cs">
+      <DependentUpon>Product_stock.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Product_stock.aspx.designer.cs">
+      <DependentUpon>Product_stock.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_stock.aspx.cs">
+      <DependentUpon>Service_stock.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_stock.aspx.designer.cs">
+      <DependentUpon>Service_stock.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Payment_due.aspx.cs">
+      <DependentUpon>Payment_due.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Payment_due.aspx.designer.cs">
+      <DependentUpon>Payment_due.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Purchess_due.aspx.cs">
+      <DependentUpon>Purchess_due.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Purchess_due.aspx.designer.cs">
+      <DependentUpon>Purchess_due.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_product.aspx.cs">
+      <DependentUpon>Update_product.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_product.aspx.designer.cs">
+      <DependentUpon>Update_product.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_update.aspx.cs">
+      <DependentUpon>Service_update.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Service_update.aspx.designer.cs">
+      <DependentUpon>Service_update.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\patty_cash_expences.aspx.cs">
+      <DependentUpon>patty_cash_expences.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\patty_cash_expences.aspx.designer.cs">
+      <DependentUpon>patty_cash_expences.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\view_patty_cash_expenses.aspx.cs">
+      <DependentUpon>view_patty_cash_expenses.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\view_patty_cash_expenses.aspx.designer.cs">
+      <DependentUpon>view_patty_cash_expenses.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_patty_cash_expenses.aspx.cs">
+      <DependentUpon>Delete_patty_cash_expenses.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Delete_patty_cash_expenses.aspx.designer.cs">
+      <DependentUpon>Delete_patty_cash_expenses.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Representative.aspx.cs">
+      <DependentUpon>Representative.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Representative.aspx.designer.cs">
+      <DependentUpon>Representative.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Show_representative.aspx.cs">
+      <DependentUpon>Show_representative.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Show_representative.aspx.designer.cs">
+      <DependentUpon>Show_representative.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AddFactory.aspx.cs">
+      <DependentUpon>AddFactory.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AddFactory.aspx.designer.cs">
+      <DependentUpon>AddFactory.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\ShowFactory.aspx.cs">
+      <DependentUpon>ShowFactory.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\ShowFactory.aspx.designer.cs">
+      <DependentUpon>ShowFactory.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_factory.aspx.cs">
+      <DependentUpon>Update_factory.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_factory.aspx.designer.cs">
+      <DependentUpon>Update_factory.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Block_invoice.aspx.cs">
+      <DependentUpon>Block_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Block_invoice.aspx.designer.cs">
+      <DependentUpon>Block_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Edit_quatation.aspx.cs">
+      <DependentUpon>Edit_quatation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Edit_quatation.aspx.designer.cs">
+      <DependentUpon>Edit_quatation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionCreate.aspx.cs">
+      <DependentUpon>RequisitionCreate.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionCreate.aspx.designer.cs">
+      <DependentUpon>RequisitionCreate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\newproductparent.aspx.cs">
+      <DependentUpon>newproductparent.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\newproductparent.aspx.designer.cs">
+      <DependentUpon>newproductparent.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\newproduct_master.aspx.cs">
+      <DependentUpon>newproduct_master.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\newproduct_master.aspx.designer.cs">
+      <DependentUpon>newproduct_master.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\NewUpdate_product.aspx.cs">
+      <DependentUpon>NewUpdate_product.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\NewUpdate_product.aspx.designer.cs">
+      <DependentUpon>NewUpdate_product.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManualView.aspx.cs">
+      <DependentUpon>RequisitionManualView.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManualView.aspx.designer.cs">
+      <DependentUpon>RequisitionManualView.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManualSearch.aspx.cs">
+      <DependentUpon>RequisitionManualSearch.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManualSearch.aspx.designer.cs">
+      <DependentUpon>RequisitionManualSearch.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManualDelete.aspx.cs">
+      <DependentUpon>RequisitionManualDelete.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionManualDelete.aspx.designer.cs">
+      <DependentUpon>RequisitionManualDelete.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AddIndustry.aspx.cs">
+      <DependentUpon>AddIndustry.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AddIndustry.aspx.designer.cs">
+      <DependentUpon>AddIndustry.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AddPrimaryService.aspx.cs">
+      <DependentUpon>AddPrimaryService.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AddPrimaryService.aspx.designer.cs">
+      <DependentUpon>AddPrimaryService.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentPhase.aspx.cs">
+      <DependentUpon>PaymentPhase.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentPhase.aspx.designer.cs">
+      <DependentUpon>PaymentPhase.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\PrimaryServiceTerms.aspx.cs">
+      <DependentUpon>PrimaryServiceTerms.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\PrimaryServiceTerms.aspx.designer.cs">
+      <DependentUpon>PrimaryServiceTerms.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AddUser.aspx.cs">
+      <DependentUpon>AddUser.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AddUser.aspx.designer.cs">
+      <DependentUpon>AddUser.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\ViewUser.aspx.cs">
+      <DependentUpon>ViewUser.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\ViewUser.aspx.designer.cs">
+      <DependentUpon>ViewUser.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_Designation.aspx.cs">
+      <DependentUpon>Update_Designation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Update_Designation.aspx.designer.cs">
+      <DependentUpon>Update_Designation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Set_quatation.aspx.cs">
+      <DependentUpon>Set_quatation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Set_quatation.aspx.designer.cs">
+      <DependentUpon>Set_quatation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\InvoiceMail.aspx.cs">
+      <DependentUpon>InvoiceMail.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\InvoiceMail.aspx.designer.cs">
+      <DependentUpon>InvoiceMail.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\FinalPaymentInvoice.aspx.cs">
+      <DependentUpon>FinalPaymentInvoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\FinalPaymentInvoice.aspx.designer.cs">
+      <DependentUpon>FinalPaymentInvoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentsReceived.aspx.cs">
+      <DependentUpon>PaymentsReceived.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentsReceived.aspx.designer.cs">
+      <DependentUpon>PaymentsReceived.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentsDue.aspx.cs">
+      <DependentUpon>PaymentsDue.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\PaymentsDue.aspx.designer.cs">
+      <DependentUpon>PaymentsDue.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\bill.aspx.cs">
+      <DependentUpon>bill.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\bill.aspx.designer.cs">
+      <DependentUpon>bill.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\billduplicate.aspx.cs">
+      <DependentUpon>billduplicate.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\billduplicate.aspx.designer.cs">
+      <DependentUpon>billduplicate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\chhalan.aspx.cs">
+      <DependentUpon>chhalan.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\chhalan.aspx.designer.cs">
+      <DependentUpon>chhalan.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\General_expencess_voutcher.aspx.cs">
+      <DependentUpon>General_expencess_voutcher.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\General_expencess_voutcher.aspx.designer.cs">
+      <DependentUpon>General_expencess_voutcher.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\hydrentInvoice.aspx.cs">
+      <DependentUpon>hydrentInvoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\hydrentInvoice.aspx.designer.cs">
+      <DependentUpon>hydrentInvoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\hydrentInvoiceSeller.aspx.cs">
+      <DependentUpon>hydrentInvoiceSeller.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\hydrentInvoiceSeller.aspx.designer.cs">
+      <DependentUpon>hydrentInvoiceSeller.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\Invoice.aspx.cs">
+      <DependentUpon>Invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\Invoice.aspx.designer.cs">
+      <DependentUpon>Invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\Invoiceduplicate.aspx.cs">
+      <DependentUpon>Invoiceduplicate.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\Invoiceduplicate.aspx.designer.cs">
+      <DependentUpon>Invoiceduplicate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewChhalan.aspx.cs">
+      <DependentUpon>NewChhalan.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewChhalan.aspx.designer.cs">
+      <DependentUpon>NewChhalan.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewChhalanDuplicate.aspx.cs">
+      <DependentUpon>NewChhalanDuplicate.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewChhalanDuplicate.aspx.designer.cs">
+      <DependentUpon>NewChhalanDuplicate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewChhalanTriplicate.aspx.cs">
+      <DependentUpon>NewChhalanTriplicate.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewChhalanTriplicate.aspx.designer.cs">
+      <DependentUpon>NewChhalanTriplicate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewInvoice.aspx.cs">
+      <DependentUpon>NewInvoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewInvoice.aspx.designer.cs">
+      <DependentUpon>NewInvoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewInvoiceDuplicate.aspx.cs">
+      <DependentUpon>NewInvoiceDuplicate.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewInvoiceDuplicate.aspx.designer.cs">
+      <DependentUpon>NewInvoiceDuplicate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewPaymentInvoice.aspx.cs">
+      <DependentUpon>NewPaymentInvoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewPaymentInvoice.aspx.designer.cs">
+      <DependentUpon>NewPaymentInvoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewPaymentInvoiceDuplicate.aspx.cs">
+      <DependentUpon>NewPaymentInvoiceDuplicate.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewPaymentInvoiceDuplicate.aspx.designer.cs">
+      <DependentUpon>NewPaymentInvoiceDuplicate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewProformaInvoice.aspx.cs">
+      <DependentUpon>NewProformaInvoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewProformaInvoice.aspx.designer.cs">
+      <DependentUpon>NewProformaInvoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewQuotation.aspx.cs">
+      <DependentUpon>NewQuotation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewQuotation.aspx.designer.cs">
+      <DependentUpon>NewQuotation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\Patty_cash_expencess_voutcher.aspx.cs">
+      <DependentUpon>Patty_cash_expencess_voutcher.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\Patty_cash_expencess_voutcher.aspx.designer.cs">
+      <DependentUpon>Patty_cash_expencess_voutcher.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\proforma_invoice.aspx.cs">
+      <DependentUpon>proforma_invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\proforma_invoice.aspx.designer.cs">
+      <DependentUpon>proforma_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\purchess_payment.aspx.cs">
+      <DependentUpon>purchess_payment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\purchess_payment.aspx.designer.cs">
+      <DependentUpon>purchess_payment.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\purches_bill.aspx.cs">
+      <DependentUpon>purches_bill.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\purches_bill.aspx.designer.cs">
+      <DependentUpon>purches_bill.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\Quotation.aspx.cs">
+      <DependentUpon>Quotation.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\Quotation.aspx.designer.cs">
+      <DependentUpon>Quotation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\QuotationHydrent.aspx.cs">
+      <DependentUpon>QuotationHydrent.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\QuotationHydrent.aspx.designer.cs">
+      <DependentUpon>QuotationHydrent.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\Requisition.aspx.cs">
+      <DependentUpon>Requisition.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\Requisition.aspx.designer.cs">
+      <DependentUpon>Requisition.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\RequisitionNew.aspx.cs">
+      <DependentUpon>RequisitionNew.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\RequisitionNew.aspx.designer.cs">
+      <DependentUpon>RequisitionNew.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="DB_UTILITY.cs" />
+    <Compile Include="index_start.aspx.cs">
+      <DependentUpon>index_start.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="index_start.aspx.designer.cs">
+      <DependentUpon>index_start.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="index.aspx.cs">
+      <DependentUpon>index.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="index.aspx.designer.cs">
+      <DependentUpon>index.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="index_card.aspx.cs">
+      <DependentUpon>index_card.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="index_card.aspx.designer.cs">
+      <DependentUpon>index_card.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="MoneyConvDS.cs" />
+    <Compile Include="Print\id_card1.aspx.cs">
+      <DependentUpon>id_card1.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Print\id_card1.aspx.designer.cs">
+      <DependentUpon>id_card1.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SessionKeepAlive.aspx.cs">
+      <DependentUpon>SessionKeepAlive.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="SessionKeepAlive.aspx.designer.cs">
+      <DependentUpon>SessionKeepAlive.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="SessionKeepAlive1.aspx.cs">
+      <DependentUpon>SessionKeepAlive1.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="SessionKeepAlive1.aspx.designer.cs">
+      <DependentUpon>SessionKeepAlive1.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Update\contactno.aspx.cs">
+      <DependentUpon>contactno.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Update\contactno.aspx.designer.cs">
+      <DependentUpon>contactno.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Update\emailid.aspx.cs">
+      <DependentUpon>emailid.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Update\emailid.aspx.designer.cs">
+      <DependentUpon>emailid.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Update\name.aspx.cs">
+      <DependentUpon>name.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Update\name.aspx.designer.cs">
+      <DependentUpon>name.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\Update\password.aspx.cs">
+      <DependentUpon>password.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\Update\password.aspx.designer.cs">
+      <DependentUpon>password.aspx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\" />
+    <Folder Include="Document\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:1216/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

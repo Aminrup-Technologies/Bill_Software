@@ -1,0 +1,138 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace Bill_Software.corporate.business.app
+{
+    public partial class WebForm33 : System.Web.UI.Page
+    {
+        DB_UTILITY DbCL = new DB_UTILITY();
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (HttpContext.Current.Session["USERID"] == null)
+            {
+                Response.Redirect("~/index.aspx");
+            }
+            if (!IsPostBack)
+            {
+                DbCL.FillCombo(cmbvendor, "select Client_Name from tbl_Client order by Client_Name");
+                txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+
+            }
+        }
+
+        protected void btnSertch_Click(object sender, EventArgs e)
+        {
+            string cmdstring = "";
+            if (RadioButtonList1.SelectedIndex == 0)
+            {
+                BuindCompanyId();
+                //cmdstring = "select  tbl_Proforma.ID,tbl_Proforma.Invoice_No,tbl_Proforma.Invoice_Date,tbl_Proforma.Quotation_No,tbl_Proforma.Quotation_Date,tbl_Proforma.Net_Amount,tbl_Client.Client_Name from tbl_Proforma inner join tbl_Client on tbl_Proforma.Client_ID=tbl_Client.Client_Id where tbl_Proforma.Client_ID='" + lblclientId.Text + "' order by cast(tbl_Proforma.Invoice_Date as datetime) desc";
+                cmdstring = "select a.ID,a.Invoice_No,a.Invoice_Date,a.Quotation_No,a.Quotation_Date,a.Net_Amount,a.mail_Date,a.subtotal,(a.Net_Amount-a.subtotal) as Gst,b.Client_Name,c.PServiceName from tbl_Proforma as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID where a.Client_ID='" + lblclientId.Text + "' order by a.ID desc";
+                Buinddatagrid(cmdstring);
+            }
+            else if (RadioButtonList1.SelectedIndex == 1)
+            {
+                //cmdstring = "select  tbl_Proforma.ID,tbl_Proforma.Invoice_No,tbl_Proforma.Invoice_Date,tbl_Proforma.Quotation_No,tbl_Proforma.Quotation_Date,tbl_Proforma.Net_Amount,tbl_Client.Client_Name from tbl_Proforma inner join tbl_Client on tbl_Proforma.Client_ID=tbl_Client.Client_Id where cast(tbl_Proforma.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by cast(tbl_Proforma.Invoice_Date as datetime) desc";
+                cmdstring = "select a.ID,a.Invoice_No,a.Invoice_Date,a.Quotation_No,a.Quotation_Date,a.Net_Amount,a.mail_Date,a.subtotal,(a.Net_Amount-a.subtotal) as Gst,b.Client_Name,c.PServiceName from tbl_Proforma as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID where cast(a.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by a.ID desc";
+                Buinddatagrid(cmdstring);
+            }
+            else
+            {
+                BuindCompanyId();
+                //cmdstring = "select  tbl_Proforma.ID,tbl_Proforma.Invoice_No,tbl_Proforma.Invoice_Date,tbl_Proforma.Quotation_No,tbl_Proforma.Quotation_Date,tbl_Proforma.Net_Amount,tbl_Client.Client_Name from tbl_Proforma inner join tbl_Client on tbl_Proforma.Client_ID=tbl_Client.Client_Id where tbl_Proforma.Client_ID='" + lblclientId.Text + "' and cast(tbl_Proforma.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by cast(tbl_Proforma.Invoice_Date as datetime) desc";
+                cmdstring = "select a.ID,a.Invoice_No,a.Invoice_Date,a.Quotation_No,a.Quotation_Date,a.Net_Amount,a.mail_Date,a.subtotal,(a.Net_Amount-a.subtotal) as Gst,b.Client_Name,c.PServiceName from tbl_Proforma as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID where a.Client_ID='" + lblclientId.Text + "' and cast(a.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by a.ID desc";
+                Buinddatagrid(cmdstring);
+            }
+            btnSertch.Visible = false;
+        }
+        private void Buinddatagrid(string cmdstring)
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            SqlDataReader re = cmd.ExecuteReader();
+            if (re.Read())
+            {
+                Buinddatagrid1(cmdstring);
+            }
+            else
+            {
+                PanelError.Visible = true;
+                lblErrorMsg.Text = "No Data Found...";
+
+            }
+            DbCL.Conn.Close();
+        }
+
+        private void Buinddatagrid1(string cmdstring)
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
+            DataList1.DataSource = cmd1.ExecuteReader();
+            DataList1.DataBind();
+            DbCL.Conn.Close();
+
+        }
+
+        private void BuindCompanyId()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Client_Id from tbl_Client where Client_Name='" + cmbvendor.Text + "'";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            SqlDataReader re = cmd.ExecuteReader();
+            if (re.Read())
+            {
+                lblclientId.Text = re["Client_Id"].ToString();
+            }
+            DbCL.Conn.Close();
+        }
+
+        protected void btnreset_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("~/corporate/business/app/Delete_proforma.aspx");
+
+        }
+
+        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            string Invoice_No = Convert.ToString(e.CommandArgument);
+
+            if (e.CommandName == "Delete")
+            {
+
+                updatestock1(Invoice_No);
+                DbCL.executeRdr("delete from tbl_Proforma where Invoice_No='" + Invoice_No + "'");
+
+
+                PanelOK.Visible = true;
+                lblOk.Text = "Data Deleted Successfully...";
+                DataList1.Visible = false;
+            }
+        }
+        private void updatestock1(string Invoice_No)
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Quotation_No from tbl_Proforma where Invoice_No='" + Invoice_No + "'";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            SqlDataReader re = cmd.ExecuteReader();
+            if (re.Read())
+            {
+                string quotation_no = re["Quotation_No"].ToString();
+                DbCL.executeRdr("update tbl_Quotation set Status1='No' where  Quotation_no='" + quotation_no.ToString() + "'");
+                
+            }
+            DbCL.Conn.Close();
+        }
+    }
+}

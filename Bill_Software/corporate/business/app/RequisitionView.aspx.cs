@@ -1,0 +1,38 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace Bill_Software.corporate.business.app
+{
+    public partial class WebForm67 : System.Web.UI.Page
+    {
+        DB_UTILITY DbCL = new DB_UTILITY();
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (HttpContext.Current.Session["USERID"] == null)
+            {
+                Response.Redirect("~/index.aspx");
+            }
+            if (!IsPostBack)
+            {
+                Binddata();
+            }
+        }
+
+        private void Binddata()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select top(50) id,requeno,reqDate,CompName,address,paytype,chkno,bankname,ifscCode,date from tbl_requisitionBankDetails order by id desc";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            DataList1.DataSource = cmd.ExecuteReader();
+            DataList1.DataBind();
+            DbCL.Conn.Close();
+        }
+    }
+}

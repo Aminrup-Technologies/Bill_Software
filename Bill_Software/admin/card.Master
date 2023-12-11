@@ -1,0 +1,101 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="card.master.cs" Inherits="Bill_Software.admin.card" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>i2i inc.</title>
+    
+    <link href="~/WebProperty/css/style.css" rel="stylesheet" type="text/css" />
+<link href="~/WebProperty/css/menu.css" rel="stylesheet" type="text/css" />
+    <link rel="shortcut icon" href="corporate/business/WebImages/i2i_logo.png" />
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <form id="form1" runat="server">
+    <div>
+        <div class="header_outer">
+        <div class="top_header">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td width="3%">&nbsp;</td>
+    <td width="69%" height="112">
+    <h2 style="font:normal 24px/36px Arial, Helvetica, sans-serif; color:#999;">
+        &nbsp;ID Card.</h2>
+    </td>
+    <td width="20%">
+    <%--<div class="clock_style" id="txt"></div>--%>
+        <div class="clock_style">
+    
+        Hi, 
+        <asp:Label ID="lblName" runat="server"></asp:Label>&nbsp;
+    
+    </div>
+    <div style="visibility:hidden;">
+    <iframe src="../SessionKeepAlive1.aspx" height="30" width="90%" style="margin:0 20px 0 0;"></iframe>
+    </div>
+    </td>
+    <td width="8%">
+    <asp:LinkButton ID="btnLogOut" runat="server" class="logout" 
+            onclick="btnLogOut_Click" onclientclick="return confirm('Are you sure you want to Logout ...?')">Logout</asp:LinkButton>
+        </td>
+  </tr>
+</table>
+
+  </div>
+            <div class="header_menu">
+           <div class="menu">
+    <ul id="nav" style="margin:0 0 0 0;">
+    <li style="border-left:1px solid #2268a9;" runat="server" id="home">Home
+        <ul class="nav first">
+            <li runat="server" id="my_profile"><a href="home.aspx">My Profile</a></li>
+            <li runat="server" id="setting"><a href="Setting.aspx">Settings</a></li>
+        </ul>
+    </li>
+    <li id="Company" runat="server">Company
+        <ul class="nav first">
+            <li id="add_company" runat="server"><a href="add_company.aspx">Add Company</a></li>
+            
+        </ul>
+    </li>
+    <li style="border-left:1px solid #2268a9;" runat="server" id="Upload">Upload
+        <ul class="nav first">
+            <li runat="server" id="Upload_data"><a href="Upload_data.aspx">Upload Data</a></li>
+            <li runat="server" id="Show_date"><a href="show_date.aspx">Show Data</a></li>
+            <li runat="server" id="Li1"><a href="Delete_date.aspx">Delete Data</a></li>
+        </ul>
+    </li>
+     
+     
+    
+     
+    
+  </ul>
+  </div>
+  </div>
+    </div>
+        <div class="body_contain_outer">
+  <div class="body_contain">
+        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+         <p>
+                &nbsp;</p>
+        </asp:ContentPlaceHolder>
+      </div>
+    
+     </div><!--end of body contain-->
+    </div>
+    </form>
+     <br class="clear" />
+<div class="footer">
+<table width="90%" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto;">
+  <tr>
+    <td width="34%" height="36">&nbsp;</td>
+    <td width="37%">&nbsp;</td>
+    <td width="29%" align="right">Resolution 1366 x 768 (Recomended).</td>
+  </tr>
+</table>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿@font-face {
+    font-family: 'Arial';
+    src: url('sf.eot');
+    src: url('sf.eot') format('embedded-opentype'),
+         url('sf.woff') format('woff'),
+         url('sf.ttf') format('truetype'),
+         url('sf.svg#SFDigitalReadoutHeavyOblique') format('svg');
+}

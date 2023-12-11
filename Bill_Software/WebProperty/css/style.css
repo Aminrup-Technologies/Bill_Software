@@ -1,0 +1,90 @@
+
+@charset "utf-8";
+/* CSS Document */
+@font-face {
+    font-family: 'SFDigitalReadoutHeavyOblique';
+    src: url('sf.eot');
+    src: url('sf.eot') format('embedded-opentype'),
+         url('sf.woff') format('woff'),
+         url('sf.ttf') format('truetype'),
+         url('sf.svg#SFDigitalReadoutHeavyOblique') format('svg');
+}
+
+*{ padding:0; margin:0; border:none; list-style:none; text-decoration:none;}
+.clear{ clear:both; font-size:0; line-height:0;}
+body{font:normal 11px/18px Arial, Helvetica, sans-serif; color:#666;}
+
+h1{ font:normal 18px/36px Arial, Helvetica, sans-serif; color:#666; background:#EBEBEB; padding:0 15px; -webkit-border-radius: 5px;
+-moz-border-radius: 5px;
+border-radius: 5px;}
+.main_div{ width:100%; height:100%; overflow:hidden;}
+.header_outer{ width:100%;  float:left;}
+.top_header{ width:100%; height:118px; background:url(../images/header_bg.jpg) repeat-x 0 0; float:left;}
+.header_menu{ width:100%; height:36px;  background:url(../images/menu_bg.jpg) repeat-x 0 0; float:left;}
+.logout{ font:normal 11px/18px Arial, Helvetica, sans-serif; color:#a2a2a2; background:url(../images/logout.png) no-repeat; display:block; padding:0 0 0 24px;}
+.logout:hover{ background:url(../images/logout_hover.png) no-repeat;}
+.clock_style{ color:#b3c71f;   font-family: 'SFDigitalReadoutHeavyOblique'; font-size:24px; margin:25px 30px 0 0; float:right;}
+.body_contain_outer{ width:100%; float:left; background:url(../images/body_bg.jpg) repeat-x 0 0;}
+.body_contain{ /*width:1180px;*/ width:90%;  border:1px solid #CCC; margin:25px auto; padding:10px 20px;
+-webkit-border-radius: 10px;
+-moz-border-radius: 10px;
+border-radius: 10px;
+}
+
+.footer{ width:100%; height:40px; background:#cbcbcb; font:normal 11px/22px Arial, Helvetica, sans-serif; color:#666;}
+.footer a{ color:#333;}
+.footer a:hover{ text-decoration:underline;}
+
+.logindiv{ width:400px; margin:0 auto; }
+.logindiv_inner{ border:1px solid #fff; margin:20px 0 0 0; background:url(../images/login_bg.jpg) repeat-x 0 0; width:100%; font:normal 11px/22px Arial, Helvetica, sans-serif; color: #666; 
+-webkit-border-radius: 30px;
+-moz-border-radius: 30px;
+border-radius: 30px;
+
+}
+.textbox_style{ font:normal 11px/24px Tahoma, Geneva, sans-serif; color:#333; border:1px solid #CCC; height:22px; width:180px;}
+.textbox_U_Datalist_style{ font:normal 11px/24px Tahoma, Geneva, sans-serif; color:#333; border:1px solid #CCC; height:22px; width:60px; text-transform:uppercase;}
+.textbox_U_style{ font:normal 11px/24px Tahoma, Geneva, sans-serif; color:#333; border:1px solid #CCC; height:22px; width:180px; text-transform:uppercase;}
+.textbox_Email_style{ font:normal 11px/24px Tahoma, Geneva, sans-serif; color:#333; border:1px solid #CCC; height:22px; width:180px;}
+.textbox_U_Multiline_style{ font:normal 11px/15px Tahoma, Geneva, sans-serif; color:#333; border:1px solid #CCC; height:50px; width:240px; text-transform:uppercase;}
+.dropdown_style{ font:normal 11px/15px Tahoma, Geneva, sans-serif; color:#333; border:1px solid #CCC; height:22px;}
+.Grid td
+        {
+            
+            text-align:center;
+            font-size: 11px;
+            line-height:200%
+        }
+        .Grid th
+        {
+            
+          text-align:center;
+            font-size: 11px;
+            line-height:200%;
+        }
+        .ChildGrid td
+        {
+        	text-align:center;
+            background-color: #eee !important;
+            color:#2D2D2D;
+            font-size: 11px;
+            line-height:200%
+        }
+        .ChildGrid th
+        {
+        	text-align:center;
+            background-color: White  !important;
+            color: White;
+            font-size: 11px;
+            line-height:200%
+        }
+       
+.btn_style{ width:100px; height:24px;  background:url(../images/btn_bg.jpg) repeat-x 0 0; border:1px solid #7a8912; font:bold 11px/24px Arial, Helvetica, sans-serif; color:#fff;
+-webkit-border-radius: 3px;
+-moz-border-radius: 3px;
+border-radius: 3px;
+}
+.btn_style:hover{ cursor:pointer; background:url(../images/btn_bg_hover.jpg) repeat-x 0 0;}
+.iframestyle{ color:#b3c71f;   font:normal 11px/11px 'Arial';  text-align:right;}
+
+

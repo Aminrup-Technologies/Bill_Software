@@ -1,0 +1,84 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data.SqlClient;
+
+namespace Bill_Software.corporate.business.app
+{
+    public partial class WebForm14 : System.Web.UI.Page
+    {
+        DB_UTILITY DbCL = new DB_UTILITY();
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (HttpContext.Current.Session["USERID"] == null)
+            {
+                Response.Redirect("~/index.aspx");
+            }
+            if (!IsPostBack)
+            {
+                Bindcombo();
+                BindGrid();
+            }
+        }
+        private void BindGrid()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Vendor_Id,Vendor_Name from tbl_Vendor order by Vendor_Name";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            DataList1.DataSource = cmd.ExecuteReader();
+            DataList1.DataBind();
+            DbCL.Conn.Close();
+        }
+
+        private void BindGrid1()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Vendor_Id,Vendor_Name from tbl_Vendor where Vendor_Name='" + cmbvendor.Text + "'";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            DataList1.DataSource = cmd.ExecuteReader();
+            DataList1.DataBind();
+            DbCL.Conn.Close();
+        }
+
+        private void Bindcombo()
+        {
+            cmbvendor.Items.Add("ALL");
+            DbCL.FillCombo10(cmbvendor, "select Vendor_Name from tbl_Vendor order by Vendor_Name");
+        }
+
+        protected void cmbvendor_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbvendor.SelectedIndex == 0)
+            {
+                BindGrid();
+
+
+            }
+            else
+            {
+                BindGrid1();
+            }
+            PanelOK.Visible = false;
+        }
+
+        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            string Vendor_Id = Convert.ToString(e.CommandArgument);
+
+
+            if (e.CommandName == "Delete")
+            {
+                DbCL.executeRdr("delete from tbl_Vendor where Vendor_Id='" + Vendor_Id.ToString() + "'");
+                PanelOK.Visible = true;
+                lblOk.Text = "Data Deleted Successfully...";
+                DataList1.Visible = false;
+            }
+        }
+    }
+
+}
