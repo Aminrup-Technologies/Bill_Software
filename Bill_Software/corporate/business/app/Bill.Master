@@ -4,219 +4,219 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-	<link href="../../WebProperty/css/style.css"rel="stylesheet" type="text/css" />
-	<link href="../../WebProperty/css/menu.css" rel="stylesheet" type="text/css" />
-	<script type="text/javascript" src="../../WebProperty/js/clock.js"></script>
-	<title>OH4Y</title>
-	<link rel="shortcut icon" href="../WebImages/oh4y.png" />
-	<asp:ContentPlaceHolder ID="head" runat="server">
-	</asp:ContentPlaceHolder>
-	<style type="text/css">
-		.style1
-		{
-			width: 100%;
-			height: 40px;
-			font: normal 11px/22px Arial, Helvetica, sans-serif;
-			color: #666;
-		}
-	</style>
+    <link href="../../WebProperty/css/style.css" rel="stylesheet" type="text/css" />
+    <link href="../../WebProperty/css/menu.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="../../WebProperty/js/clock.js"></script>
+    <title>Aminrup Technologies</title>
+    <link rel="shortcut icon" href="../WebImages/oh4y.png" />
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+    <style type="text/css">
+        .style1 {
+            width: 100%;
+            height: 40px;
+            font: normal 11px/22px Arial, Helvetica, sans-serif;
+            color: #666;
+        }
+    </style>
 </head>
 
 <body onload="startTime()">
-	<div class="main_div">
-		<form id="form1" runat="server">
-			<div class="header_outer">
-				<div class="top_header">
-					<table width="100%" height="108px" border="0" cellspacing="0" cellpadding="0">
-						<tr>
-							<td width="3%">&nbsp;</td>
+    <div class="main_div">
+        <form id="form1" runat="server">
+            <div class="header_outer">
+                <div class="top_header">
+                    <table width="100%" height="108px" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td width="3%">&nbsp;</td>
 
-							<td width="69%">
-								<h2 style="font:normal 24px/36px Arial, Helvetica, sans-serif; color:#999;"><asp:Image ID="Image2" runat="server" ImageUrl="~/corporate/business/WebImages/oh4ylogo.jpg" Height="82px" Width="225px"/></h2>
-							</td>
+                            <td width="69%">
+                                <h2 style="font: normal 24px/36px Arial, Helvetica, sans-serif; color: #999;">
+                                    <asp:Image ID="Image2" runat="server" ImageUrl="../WebImages/oh4y.png" Height="82px" Width="225px" />Aminrup Technologies</h2>
+                            </td>
 
-							<td width="20%">
-								<div class="clock_style" id="txt"></div>
-								<div class="clock_style">Hi, <asp:Label ID="lblName" runat="server"></asp:Label>&nbsp;</div>
-								<div style="visibility:hidden;">
-									<iframe height="20" src="../../../SessionKeepAlive.aspx" width="225"></iframe>
-									<span lang="en-us">&nbsp;</span></div></td>
-							<td width="8%">
-								<asp:LinkButton ID="btnLogOut" runat="server" class="logout" onclick="btnLogOut_Click" onclientclick="return confirm('Are you sure you want to Logout ...?')">Logout</asp:LinkButton>
-							</td>
-						</tr>
-					</table>
-				</div><!--end of top header-->
-				<div class="header_menu">
-					<div class="menu">
-						<ul id="nav" style="margin:0 0 0 0;">
-							<li style="border-left:1px solid #2268a9;" id="Home" runat="server">Home
+                            <td width="20%">
+                                <div class="clock_style" id="txt"></div>
+                                <div class="clock_style">Hi,
+                                    <asp:Label ID="lblName" runat="server"></asp:Label>&nbsp;</div>
+                                <div style="visibility: hidden;">
+                                    <iframe height="20" src="../../../SessionKeepAlive.aspx" width="225"></iframe>
+                                    <span lang="en-us">&nbsp;</span>
+                                </div>
+                            </td>
+                            <td width="8%">
+                                <asp:LinkButton ID="btnLogOut" runat="server" class="logout" OnClick="btnLogOut_Click" OnClientClick="return confirm('Are you sure you want to Logout ...?')">Logout</asp:LinkButton>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <!--end of top header-->
+                <div class="header_menu">
+                    <div class="menu">
+                        <ul id="nav" style="margin: 0 0 0 0;">
+                            <li style="border-left: 1px solid #2268a9;" id="Home" runat="server">Home
 								<ul class="nav first">
-									<li id="home1" runat="server"><a href="home.aspx">My Profile</a></li>
-									<li id="settings" runat="server"><a href="settings.aspx">Settings</a></li>
-								</ul>
-							</li>
+                                    <li id="home1" runat="server"><a href="home.aspx">My Profile</a></li>
+                                    <li id="settings" runat="server"><a href="settings.aspx">Settings</a></li>
+                                </ul>
+                            </li>
 
-							<li id="Dashboard" runat="server">Dashboard
+                            <li id="Dashboard" runat="server">Dashboard
 								<!--sub menu start here-->
-								<ul class="nav first">
-									<li id="Data_Mastering" runat="server"><a href="">Data Mastering</a>
-										<ul class="nav first1">
-											<li id="master_State" runat="server"><a href="master_State.aspx">State Master</a></li>
-											<li id="master_city" runat="server"><a href="master_city.aspx">City Master</a></li>
-											<li id="AddIndustry" runat="server"><a href="AddIndustry.aspx">Add Industry</a></li>
-											<li id="PaymentPhase" runat="server"><a href="PaymentPhase.aspx">Add Payment Phase</a></li>
-											<li id="AddPrimaryService" runat="server"><a href="AddPrimaryService.aspx">Add Primary Service</a></li>
-											<%--<li id="PrimaryServiceTerms" runat="server"><a href="PrimaryServiceTerms.aspx">Primary Service Terms</a></li>--%>
-										</ul>
-									</li>
+                                <ul class="nav first">
+                                    <li id="Data_Mastering" runat="server"><a href="">Data Mastering</a>
+                                        <ul class="nav first1">
+                                            <li id="master_State" runat="server"><a href="master_State.aspx">State Master</a></li>
+                                            <li id="master_city" runat="server"><a href="master_city.aspx">City Master</a></li>
+                                            <li id="AddIndustry" runat="server"><a href="AddIndustry.aspx">Add Industry</a></li>
+                                            <li id="PaymentPhase" runat="server"><a href="PaymentPhase.aspx">Add Payment Phase</a></li>
+                                            <li id="AddPrimaryService" runat="server"><a href="AddPrimaryService.aspx">Add Primary Service</a></li>
+                                            <%--<li id="PrimaryServiceTerms" runat="server"><a href="PrimaryServiceTerms.aspx">Primary Service Terms</a></li>--%>
+                                        </ul>
+                                    </li>
 
 
-									<li id="productparent" runat="server"><a href="productparent.aspx">Product Catagory Old</a></li>
-									<li id="product_master" runat="server"><a href="product_master.aspx">Product Name Old</a></li>
-									<li id="newproductparent" runat="server"><a href="newproductparent.aspx">Product Catagory</a></li>
-									<li id="newproduct_master" runat="server"><a href="newproduct_master.aspx">Product Name</a></li>
-									<%--<li id="HydrantProduct" runat="server"><a href="HydrantProduct.aspx">Hydrant Product</a></li>--%>
-									<li id="Service_master" runat="server"><a href="Service_master.aspx">Service</a></li>
-									 <li id="Vat_master" runat="server"><a href="Vat_master.aspx">Vat Master</a></li>
-									 <li id="Service_Tax_Master" runat="server"><a href="Service_Tax_Master.aspx">Service Tax Master</a></li>
-									 <li id="PrimaryServiceTerms" runat="server"><a href="PrimaryServiceTerms.aspx">Specific Terms for Product Category</a></li>
-									 <li id="Expenses_Head" runat="server"><a href="Expenses_Head.aspx">Expense Head</a></li>
-								  </ul>
-								<!--sub menu end here-->
-							</li>
+                                    <li id="productparent" runat="server"><a href="productparent.aspx">Product Catagory Old</a></li>
+                                    <li id="product_master" runat="server"><a href="product_master.aspx">Product Name Old</a></li>
+                                    <li id="newproductparent" runat="server"><a href="newproductparent.aspx">Product Catagory</a></li>
+                                    <li id="newproduct_master" runat="server"><a href="newproduct_master.aspx">Product Name</a></li>
+                                    <%--<li id="HydrantProduct" runat="server"><a href="HydrantProduct.aspx">Hydrant Product</a></li>--%>
+                                    <li id="Service_master" runat="server"><a href="Service_master.aspx">Service</a></li>
+                                    <li id="Vat_master" runat="server"><a href="Vat_master.aspx">Vat Master</a></li>
+                                    <li id="Service_Tax_Master" runat="server"><a href="Service_Tax_Master.aspx">Service Tax Master</a></li>
+                                    <li id="PrimaryServiceTerms" runat="server"><a href="PrimaryServiceTerms.aspx">Specific Terms for Product Category</a></li>
+                                    <li id="Expenses_Head" runat="server"><a href="Expenses_Head.aspx">Expense Head</a></li>
+                                </ul>
+                                <!--sub menu end here-->
+                            </li>
 
-							<li id="Vendor" runat="server">Vendor
+                            <li id="Vendor" runat="server">Vendor
 									<ul class="nav first">
-										<li id="New_vendor" runat="server"><a href="New_vendor.aspx">Create Vendor</a></li>
-										<li id="View_vendor" runat="server"><a href="View_vendor.aspx">View Vendor</a></li>
-										<li id="Delete_vendor" runat="server"><a href="Delete_vendor.aspx">Delete Vendor</a></li>
-										 <%--<li id="Purchase_price_fixt_new_client" runat="server"><a href="Purches_new_vendor.aspx">Fix Purchasse Price To New Vendor</a></li>--%>
-									   <%-- <li id="Vendor_quotation" runat="server"><a href="Vendor_quotation.aspx">Add Vendor Quotation</a></li>--%>
-										<li id="Purches_exting_vendor" runat="server"><a href="Purches_exting_vendor.aspx">Purchase Add</a></li>
-										<li id="View_purches" runat="server"><a href="View_purches.aspx">View Purchase</a></li>
-										<li id="seartch_purtch" runat="server"><a href="seartch_purtch.aspx">Search Purchase</a></li>
-										<li id="Delete_purtches" runat="server"><a href="Delete_purtches.aspx">Delete Purchase</a></li>
+                                        <li id="New_vendor" runat="server"><a href="New_vendor.aspx">Create Vendor</a></li>
+                                        <li id="View_vendor" runat="server"><a href="View_vendor.aspx">View Vendor</a></li>
+                                        <li id="Delete_vendor" runat="server"><a href="Delete_vendor.aspx">Delete Vendor</a></li>
+                                        <%--<li id="Purchase_price_fixt_new_client" runat="server"><a href="Purches_new_vendor.aspx">Fix Purchasse Price To New Vendor</a></li>--%>
+                                        <%-- <li id="Vendor_quotation" runat="server"><a href="Vendor_quotation.aspx">Add Vendor Quotation</a></li>--%>
+                                        <li id="Purches_exting_vendor" runat="server"><a href="Purches_exting_vendor.aspx">Purchase Add</a></li>
+                                        <li id="View_purches" runat="server"><a href="View_purches.aspx">View Purchase</a></li>
+                                        <li id="seartch_purtch" runat="server"><a href="seartch_purtch.aspx">Search Purchase</a></li>
+                                        <li id="Delete_purtches" runat="server"><a href="Delete_purtches.aspx">Delete Purchase</a></li>
 
-									</ul>
-							  </li>
-								<li id="Purchess_payment" runat="server">Purchase Payment
+                                    </ul>
+                            </li>
+                            <li id="Purchess_payment" runat="server">Purchase Payment
 									<ul class="nav first">
-										<li id="add_payment_purchess" runat="server"><a href="add_payment_purchess.aspx">Add Payment against Purchase</a></li>
-										<li id="View_purchess_payment" runat="server"><a href="View_purchess_payment.aspx">View Payment against Purchase</a></li>
-										<li id="Seartch_purchess_payments" runat="server"><a href="Seartch_purchess_payments.aspx">Search Payment against Purchase</a></li>
-										<li id="Delete_purches_payment" runat="server"><a href="Delete_purches_payment.aspx">Delete Payment against Purchase</a></li>
-									</ul>
-							  </li>
+                                        <li id="add_payment_purchess" runat="server"><a href="add_payment_purchess.aspx">Add Payment against Purchase</a></li>
+                                        <li id="View_purchess_payment" runat="server"><a href="View_purchess_payment.aspx">View Payment against Purchase</a></li>
+                                        <li id="Seartch_purchess_payments" runat="server"><a href="Seartch_purchess_payments.aspx">Search Payment against Purchase</a></li>
+                                        <li id="Delete_purches_payment" runat="server"><a href="Delete_purches_payment.aspx">Delete Payment against Purchase</a></li>
+                                    </ul>
+                            </li>
 
-							  <li id="Client" runat="server">Client
+                            <li id="Client" runat="server">Client
 									<ul class="nav first">
-										<li id="New_client" runat="server"><a href="New_client.aspx">Add Client</a></li>
-										<li id="View_client" runat="server"><a href="View_client.aspx">View Client</a></li>
-										<li id="Delete_client" runat="server"><a href="Delete_client.aspx">Delete Client</a></li>
-										<li id="Representative" runat="server"><a href="Representative.aspx">Add Representatives</a></li>
-										<li id="AddFactory" runat="server"><a href="AddFactory.aspx">Add Factory</a></li>
-									</ul>
-							  </li>
-							<li id="Quotatio" runat="server">Quotation
+                                        <li id="New_client" runat="server"><a href="New_client.aspx">Add Client</a></li>
+                                        <li id="View_client" runat="server"><a href="View_client.aspx">View Client</a></li>
+                                        <li id="Delete_client" runat="server"><a href="Delete_client.aspx">Delete Client</a></li>
+                                        <li id="Representative" runat="server"><a href="Representative.aspx">Add Representatives</a></li>
+                                        <li id="AddFactory" runat="server"><a href="AddFactory.aspx">Add Factory</a></li>
+                                    </ul>
+                            </li>
+                            <li id="Quotatio" runat="server">Quotation
 									<ul class="nav first">
-										<li id="Create_quotation" runat="server"><a href="Create_quotation.aspx">Create Quotation</a></li>
-										<li id="View_quotation" runat="server"><a href="View_quotation.aspx">View Quotation</a></li>
-										<li id="Seartch_quotation" runat="server"><a href="Seartch_quotation.aspx">Search Quotation</a></li>
-										<li id="Delete_Quotation" runat="server"><a href="Delete_Quotation.aspx">Delete Quotation</a></li>
-										<li id="Edit_quatation" runat="server"><a href="Edit_quatation.aspx">Edit Quotation</a></li>
+                                        <li id="Create_quotation" runat="server"><a href="Create_quotation.aspx">Create Quotation</a></li>
+                                        <li id="View_quotation" runat="server"><a href="View_quotation.aspx">View Quotation</a></li>
+                                        <li id="Seartch_quotation" runat="server"><a href="Seartch_quotation.aspx">Search Quotation</a></li>
+                                        <li id="Delete_Quotation" runat="server"><a href="Delete_Quotation.aspx">Delete Quotation</a></li>
+                                        <li id="Edit_quatation" runat="server"><a href="Edit_quatation.aspx">Edit Quotation</a></li>
 
-										<li id="SetQuatation" runat="server"><a href="Set_quatation.aspx">Set Quotation Permission</a></li>
+                                        <li id="SetQuatation" runat="server"><a href="Set_quatation.aspx">Set Quotation Permission</a></li>
 
-										<%--<li id="CreateHydrentQuatation" runat="server"><a href="CreateHydrentQuatation.aspx">Create New Quotation</a></li>
+                                        <%--<li id="CreateHydrentQuatation" runat="server"><a href="CreateHydrentQuatation.aspx">Create New Quotation</a></li>
 										<li id="ViewHydrentQuatation" runat="server"><a href="ViewHydrentQuatation.aspx">View New Quotation</a></li>
 										<li id="SearchHydrentQuatation" runat="server"><a href="SearchHydrentQuatation.aspx">Search New Quotation</a></li>
 										<li id="DeleteHydrentQuatation" runat="server"><a href="DeleteHydrentQuatation.aspx">Delete New Quotation</a></li>--%>
-
-
-
-									</ul>
-							  </li>
-									<li id="challan" runat="server">Challan
+                                    </ul>
+                            </li>
+                            <li id="challan" runat="server">Challan
 									<ul class="nav first">
-										<li id="add_chalan" runat="server"><a href="add_chalan.aspx">Create Challan</a></li>
-										<li id="View_chalan" runat="server"><a href="View_chalan.aspx">View Challan</a></li>
-										<li id="seartch_chalan" runat="server"><a href="seartch_chalan.aspx">Search Challan</a></li>
-										<li id="Delete_chalan" runat="server"><a href="Delete_chalan.aspx">Delete Challan</a></li>
+                                        <li id="add_chalan" runat="server"><a href="add_chalan.aspx">Create Challan</a></li>
+                                        <li id="View_chalan" runat="server"><a href="View_chalan.aspx">View Challan</a></li>
+                                        <li id="seartch_chalan" runat="server"><a href="seartch_chalan.aspx">Search Challan</a></li>
+                                        <li id="Delete_chalan" runat="server"><a href="Delete_chalan.aspx">Delete Challan</a></li>
 
 
-									</ul>
-							  </li>
-							<li id="proforma" runat="server">Proforma Invoice
+                                    </ul>
+                            </li>
+                            <li id="proforma" runat="server">Proforma Invoice
 									<ul class="nav first">
-										<li id="Add_proforma" runat="server"><a href="Add_proforma.aspx">Create Proforma Invoice</a></li>
-										<li id="View_proforma" runat="server"><a href="View_proforma.aspx">View Proforma Invoice</a></li>
-										<li id="Seartch_proforma" runat="server"><a href="Seartch_proforma.aspx">Search Proforma Invoice</a></li>
-										<li id="Delete_proforma" runat="server"><a href="Delete_proforma.aspx">Delete Proforma Invoice</a></li>
-										<li id="ProformaMail" runat="server"><a href="ProformaMail.aspx">Proforma Invoice Mailer</a></li>
+                                        <li id="Add_proforma" runat="server"><a href="Add_proforma.aspx">Create Proforma Invoice</a></li>
+                                        <li id="View_proforma" runat="server"><a href="View_proforma.aspx">View Proforma Invoice</a></li>
+                                        <li id="Seartch_proforma" runat="server"><a href="Seartch_proforma.aspx">Search Proforma Invoice</a></li>
+                                        <li id="Delete_proforma" runat="server"><a href="Delete_proforma.aspx">Delete Proforma Invoice</a></li>
+                                        <li id="ProformaMail" runat="server"><a href="ProformaMail.aspx">Proforma Invoice Mailer</a></li>
 
 
-									</ul>
-							  </li>
-							<li id="Invoice" runat="server">Tax Invoice
+                                    </ul>
+                            </li>
+                            <li id="Invoice" runat="server">Tax Invoice
 									<ul class="nav first">
-										<li id="Add_invoice" runat="server"><a href="Add_invoice.aspx">Create Tax Invoice</a></li>
-										<li id="View_Invoice" runat="server"><a href="View_Invoice.aspx">View Tax Invoice</a></li>
-										<li id="seartch_invoice" runat="server"><a href="seartch_invoice.aspx">Search Tax Invoice</a></li>
-										<li id="Delete_invoice" runat="server"><a href="Delete_invoice.aspx">Delete Tax Invoice</a></li>
-										<li id="Block_invoice" runat="server"><a href="Block_invoice.aspx">Block Invoice</a></li>
+                                        <li id="Add_invoice" runat="server"><a href="Add_invoice.aspx">Create Tax Invoice</a></li>
+                                        <li id="View_Invoice" runat="server"><a href="View_Invoice.aspx">View Tax Invoice</a></li>
+                                        <li id="seartch_invoice" runat="server"><a href="seartch_invoice.aspx">Search Tax Invoice</a></li>
+                                        <li id="Delete_invoice" runat="server"><a href="Delete_invoice.aspx">Delete Tax Invoice</a></li>
+                                        <li id="Block_invoice" runat="server"><a href="Block_invoice.aspx">Block Invoice</a></li>
 
-										<li id="InvoiceMail" runat="server"><a href="InvoiceMail.aspx">Tax Invoice Mailer</a></li>
+                                        <li id="InvoiceMail" runat="server"><a href="InvoiceMail.aspx">Tax Invoice Mailer</a></li>
 
-									   <%-- <li id="hydrent_invoice" runat="server"><a href="hydrent_invoice.aspx">Create New Invoice</a></li>
+                                        <%-- <li id="hydrent_invoice" runat="server"><a href="hydrent_invoice.aspx">Create New Invoice</a></li>
 										<li id="Viewhydrent_invoice" runat="server"><a href="Viewhydrent_invoice.aspx">View New Invoice</a></li>
 										<li id="Searchhydrent_invoice" runat="server"><a href="Searchhydrent_invoice.aspx">Search New Invoice</a></li>
 										<li id="Deletehydrent_invoice" runat="server"><a href="Deletehydrent_invoice.aspx">Delete New Invoice</a></li>--%>
 
 
-										<%--<li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>--%>
-
-									</ul>
-							  </li>
-								<li id="Payment" runat="server">Payments Received
+                                        <%--<li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>--%>
+                                    </ul>
+                            </li>
+                            <li id="Payment" runat="server">Payments Received
 									<ul class="nav first">
-										<li id="add_payment" runat="server"><a href="add_payment.aspx">Add Payment</a></li>
-										<li id="View_payment" runat="server"><a href="View_payment.aspx">View Payment</a></li>
-										<li id="seartch_payment" runat="server"><a href="seartch_payment.aspx">Search Payment</a></li>
-										<li id="Delete_payment" runat="server"><a href="Delete_payment.aspx">Delete Payment</a></li>
-										<%--<li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>--%>
-										<li id="FinalPaymentInvoice" runat="server"><a href="FinalPaymentInvoice.aspx">Final Payment Invoice</a></li>
+                                        <li id="add_payment" runat="server"><a href="add_payment.aspx">Add Payment</a></li>
+                                        <li id="View_payment" runat="server"><a href="View_payment.aspx">View Payment</a></li>
+                                        <li id="seartch_payment" runat="server"><a href="seartch_payment.aspx">Search Payment</a></li>
+                                        <li id="Delete_payment" runat="server"><a href="Delete_payment.aspx">Delete Payment</a></li>
+                                        <%--<li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>--%>
+                                        <li id="FinalPaymentInvoice" runat="server"><a href="FinalPaymentInvoice.aspx">Final Payment Invoice</a></li>
 
-										<%--<li id="PaymentsReceived" runat="server"><a href="PaymentsReceived.aspx">Payments Received</a></li>--%>
-										<li id="PaymentsDue" runat="server"><a href="PaymentsDue.aspx">Payments Due</a></li>
+                                        <%--<li id="PaymentsReceived" runat="server"><a href="PaymentsReceived.aspx">Payments Received</a></li>--%>
+                                        <li id="PaymentsDue" runat="server"><a href="PaymentsDue.aspx">Payments Due</a></li>
 
 
 
-										<li id="PaymentMail" runat="server"><a href="PaymentMail.aspx">Payment Invoice Mailer</a></li>
+                                        <li id="PaymentMail" runat="server"><a href="PaymentMail.aspx">Payment Invoice Mailer</a></li>
 
-									</ul>
-							  </li>
-								<li id="Epencess" runat="server">Payments Made
+                                    </ul>
+                            </li>
+                            <li id="Epencess" runat="server">Payments Made
 									<ul class="nav first">
-										<li id="general_expences" runat="server"><a href="general_expences.aspx">General Expenses</a></li>
-										<li id="patty_cash_expences" runat="server"><a href="patty_cash_expences.aspx">Petty Cash Expences</a></li>
-										<li id="view_expencess_head" runat="server"><a href="view_expencess_head.aspx">View General Expenses</a></li>
-										<li id="view_patty_cash_expenses" runat="server"><a href="view_patty_cash_expenses.aspx">View Petty Cash Expenses</a></li>
-										<li id="Delete_general_expencess" runat="server"><a href="Delete_general_expencess.aspx">Delete General Expenses</a></li>
-										<li id="Delete_patty_cash_expenses" runat="server"><a href="Delete_patty_cash_expenses.aspx">Delete Petty Cash Expenses</a></li>
-									</ul>
-								</li>
-							  <li id="Reports" runat="server">Reports
+                                        <li id="general_expences" runat="server"><a href="general_expences.aspx">General Expenses</a></li>
+                                        <li id="patty_cash_expences" runat="server"><a href="patty_cash_expences.aspx">Petty Cash Expences</a></li>
+                                        <li id="view_expencess_head" runat="server"><a href="view_expencess_head.aspx">View General Expenses</a></li>
+                                        <li id="view_patty_cash_expenses" runat="server"><a href="view_patty_cash_expenses.aspx">View Petty Cash Expenses</a></li>
+                                        <li id="Delete_general_expencess" runat="server"><a href="Delete_general_expencess.aspx">Delete General Expenses</a></li>
+                                        <li id="Delete_patty_cash_expenses" runat="server"><a href="Delete_patty_cash_expenses.aspx">Delete Petty Cash Expenses</a></li>
+                                    </ul>
+                            </li>
+                            <li id="Reports" runat="server">Reports
 									<ul class="nav first">
-										<%--<li id="product_stock" runat="server"><a href="Product_stock.aspx">Product Stock</a></li>--%>
-									   <%--<li id="Service_stock" runat="server"><a href="Service_stock.aspx">Service Stock</a></li>--%>
-									   <li id="Payment_due" runat="server"><a href="Payment_due.aspx">Payments Due</a></li>
-										<li id="Purchess_due" runat="server"><a href="Purchess_due.aspx">Purchesse Due</a></li>
-									</ul>
-							  </li>
+                                        <%--<li id="product_stock" runat="server"><a href="Product_stock.aspx">Product Stock</a></li>--%>
+                                        <%--<li id="Service_stock" runat="server"><a href="Service_stock.aspx">Service Stock</a></li>--%>
+                                        <li id="Payment_due" runat="server"><a href="Payment_due.aspx">Payments Due</a></li>
+                                        <li id="Purchess_due" runat="server"><a href="Purchess_due.aspx">Purchesse Due</a></li>
+                                    </ul>
+                            </li>
 
 
-							  <%-- <li id="PurchaseRequisition" runat="server">Purchase Requisition
+                            <%-- <li id="PurchaseRequisition" runat="server">Purchase Requisition
 									<ul class="nav first">
 									   <li id="RequisitionCreate" runat="server"><a href="RequisitionCreate.aspx">Create</a></li>
 										<li id="RequisitionView" runat="server"><a href="RequisitionView.aspx">View</a></li>
@@ -224,47 +224,53 @@
 							  </li>--%>
 
 
-									<li id="PurchaseRequisition" runat="server">Purchase Requisition
+                            <li id="PurchaseRequisition" runat="server">Purchase Requisition
 									<ul class="nav first">
-									   <li id="RequisitionManual" runat="server"><a href="RequisitionManual.aspx">Create</a></li>
-									   <li id="RequisitionManualView" runat="server"><a href="RequisitionManualView.aspx">View</a></li>
-										<li id="RequisitionManualSearch" runat="server"><a href="RequisitionManualSearch.aspx">Search</a></li>
-									   <li id="RequisitionManualDelete" runat="server"><a href="RequisitionManualDelete.aspx">Delete</a></li>
-									</ul>
-							  </li>
+                                        <li id="RequisitionManual" runat="server"><a href="RequisitionManual.aspx">Create</a></li>
+                                        <li id="RequisitionManualView" runat="server"><a href="RequisitionManualView.aspx">View</a></li>
+                                        <li id="RequisitionManualSearch" runat="server"><a href="RequisitionManualSearch.aspx">Search</a></li>
+                                        <li id="RequisitionManualDelete" runat="server"><a href="RequisitionManualDelete.aspx">Delete</a></li>
+                                    </ul>
+                            </li>
 
-									<li id="Users" runat="server">Users
+                            <li id="Users" runat="server">Users
 									<ul class="nav first">
-									   <li id="AddUser" runat="server"><a href="AddUser.aspx">Create</a></li>
-									   <li id="ViewUser" runat="server"><a href="ViewUser.aspx">View</a></li>
-									</ul>
-							  </li>
-						</ul>
-					</div>
-				</div><!--end of header menu-->
-			</div><!--end of header outer-->
+                                        <li id="AddUser" runat="server"><a href="AddUser.aspx">Create</a></li>
+                                        <li id="ViewUser" runat="server"><a href="ViewUser.aspx">View</a></li>
+                                    </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <!--end of header menu-->
+            </div>
+            <!--end of header outer-->
 
-			<div class="body_contain_outer">
-				<div class="body_contain">
-					<div>
-						<asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server"><p>&nbsp;</p></asp:ContentPlaceHolder>
-					</div>
-				</div><!--end of body contain-->
-			</div>
-		</form>
-	 <!--end of body_contain_outer-->
+            <div class="body_contain_outer">
+                <div class="body_contain">
+                    <div>
+                        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                            <p>&nbsp;</p>
+                        </asp:ContentPlaceHolder>
+                    </div>
+                </div>
+                <!--end of body contain-->
+            </div>
+        </form>
+        <!--end of body_contain_outer-->
 
-		<br class="clear" />
-		<div class="style1">
-			<table width="90%" border="0" cellspacing="0" cellpadding="0" style="margin:0 auto;">
-				<tr>
-					<td width="34%" height="36">&nbsp;<sup>©</sup>
-						<asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />&nbsp;<sup>2020-2021</sup></td>
-					<td width="37%">&nbsp;</td>
-					<td width="29%" align="right">Resolution 1366 x 768 (Recomended).</td>
-				</tr>
-			</table>
-		</div>
-	</div><!--end of main div-->
+        <br class="clear" />
+        <div class="style1">
+            <table width="90%" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                    <td width="34%" height="36">&nbsp;<sup>©</sup>
+                        <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />&nbsp;<sup>2018-2024</sup></td>
+                    <td width="37%">&nbsp;</td>
+                    <td width="29%" align="right">Resolution 1366 x 768 (Recomended).</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <!--end of main div-->
 </body>
 </html>
