@@ -216,7 +216,7 @@ namespace Bill_Software.corporate.business.app
 
         private string BindInvoiceNo()
         {
-            string p = null;
+            //string p = null;
             string c = lblClientName.Text.Trim();
             string f = c.Substring(0, 1);
             //string tt;
