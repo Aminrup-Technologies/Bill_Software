@@ -224,7 +224,7 @@
                             </tr>
                             <tr>
                                 <td class='' style='text-align:justify; font:italic; font-weight: 100'>
-                                    <span class='bold'>I2I INC</span> is an <span class='bold'>ISO 9001:2015 Certified Company</span> dealing in the all types of <span class='bold'>Industrial Supplies & Commissioning of Turnkey Projects</span> for <span class='bold'>Fire Safety & Security Systems</span> in compliance with the <span class='bold'>Social & Technical Audit Requirements. I2I INC focuses</span> on designing a <span class='bold'>Safe Workplace</span> by providing the <span class='bold'>Best Quality Products with Services at Reasonable Rates</span>. We are committed to building Long-Lasting Relationships with our Clients & Community by providing a high standard of Product Quality and On-Time Delivery, while ensuring our Integrity, Performance and Customer Satisfaction. I2I INC has developed Multi-Sector Expertise in diverse Industry Verticals such as Paper, Jute, Metals, Engineering, Export, Retail Chains, Construction, Computer Hardware & Software, Rubber, Plastic, Steel, Chemical, Electrical, Leather, Garments, Food, Education etc. I2I INC deals with the below Industrial Supplies & Commissioning of related Turnkey Projects:
+                                    <span class='bold'>Aminrup Technologies</span> is an <span class='bold'>ISO 9001:2015 Certified Company</span> dealing in the all types of <span class='bold'>Industrial Supplies & Commissioning of Turnkey Projects</span> for <span class='bold'>Fire Safety & Security Systems</span> in compliance with the <span class='bold'>Social & Technical Audit Requirements. Aminrup Technologies focuses</span> on designing a <span class='bold'>Safe Workplace</span> by providing the <span class='bold'>Best Quality Products with Services at Reasonable Rates</span>. We are committed to building Long-Lasting Relationships with our Clients & Community by providing a high standard of Product Quality and On-Time Delivery, while ensuring our Integrity, Performance and Customer Satisfaction. Aminrup Technologies has developed Multi-Sector Expertise in diverse Industry Verticals such as Paper, Jute, Metals, Engineering, Export, Retail Chains, Construction, Computer Hardware & Software, Rubber, Plastic, Steel, Chemical, Electrical, Leather, Garments, Food, Education etc. Aminrup Technologies deals with the below Industrial Supplies & Commissioning of related Turnkey Projects:
                                 </td>
                             </tr>
                             <tr>
@@ -272,7 +272,7 @@
                             </tr>
                             <tr>
                                 <td class="" style="text-align: justify; font-weight: 100;">
-                                     	<span class='bold'>FIRE SAFETY INSPECTION:</span> I2I INC conducts Fire Safety Inspections to assess the Fire Safety Procedures, Installations, Fire Safety Hazards at Workplace & verify whether the Occupier of the Building is complying with the Statutory & Legislative Requirements, National Building Code of India, Relevant Indian Standards on Fire Prevention and Life Safety Measures prevailed from time to time. 
+                                     	<span class='bold'>FIRE SAFETY INSPECTION:</span> Aminrup Technologies conducts Fire Safety Inspections to assess the Fire Safety Procedures, Installations, Fire Safety Hazards at Workplace & verify whether the Occupier of the Building is complying with the Statutory & Legislative Requirements, National Building Code of India, Relevant Indian Standards on Fire Prevention and Life Safety Measures prevailed from time to time. 
                                 </td>
                             </tr>
 
@@ -352,7 +352,7 @@
                                 <td class="" style="text-align: justify; font-weight: 100;  vertical-align: top">
                                     <i class="fa fa-arrow-circle-right" style="color: #c8152a"></i></td>
                                 <td class="" style="text-align: justify;  font-weight: 100">
-                                    All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “I2I INC”.
+                                    All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “Aminrup Technologies”.
                                 </td>
                             </tr>
                             <tr>
@@ -605,7 +605,7 @@
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR I2I INC</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR Aminrup Technologies</td>
                             </tr>
                             
                             <tr>

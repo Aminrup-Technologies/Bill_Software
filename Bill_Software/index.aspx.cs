@@ -62,7 +62,7 @@ namespace Bill_Software
                 myCookie.Expires = DateTime.Now.AddDays(30);
                 Response.Cookies.Add(myCookie);
             }
-            if (cmbLoginAs.SelectedIndex == 0)
+            if (cmbLoginAs.SelectedIndex == 0 || cmbLoginAs.SelectedIndex == 1)
             {
                 string cmdString = "select User_Id,Password from tbl_login where User_Id='" + txtUserName.Text.Trim() + "'";
                 DbCL.Sqlconnection();

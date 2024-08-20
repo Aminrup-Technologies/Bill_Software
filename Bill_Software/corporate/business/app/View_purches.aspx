@@ -1,18 +1,36 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="View_purches.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm20" %>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
         .auto-style1 {
             width: 100%;
         }
-         .style2
-    {
-        color: #FFFFFF;
-        font-weight: bold;
-    }
-         .table1{ border-collapse:collapse;}
-        .table1 td{ text-align:left; border:1px solid #666666; width:100%; }
-        .table2{ border-collapse:collapse;}
-        .table2 td{ text-align:left; border:1px solid #666666; width:100%; border-top:none; }
+
+        .style2 {
+            color: #FFFFFF;
+            font-weight: bold;
+        }
+
+        .table1 {
+            border-collapse: collapse;
+        }
+
+            .table1 td {
+                text-align: left;
+                border: 1px solid #666666;
+                width: 100%;
+            }
+
+        .table2 {
+            border-collapse: collapse;
+        }
+
+            .table2 td {
+                text-align: left;
+                border: 1px solid #666666;
+                width: 100%;
+                border-top: none;
+            }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -49,23 +67,23 @@
                     <HeaderTemplate>
                         <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
                             <tr>
-                                <td style="text-align:center; width:15%;">
+                                <td style="text-align: center; width: 15%;">
                                     <asp:Label ID="showid" runat="server" Text="Purchase ID"></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:10%;">
+                                <td style="text-align: center; width: 10%;">
                                     <asp:Label ID="showrm" runat="server" Text="Purchase Date"></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:25%;">
+                                <td style="text-align: center; width: 25%;">
                                     <asp:Label ID="Label2" runat="server" Text="Vendor Name"></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:20%;"> 
+                                <td style="text-align: center; width: 20%;">
                                     <asp:Label ID="Label6" runat="server" Text="Total Purchase Rate"></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:20%;">
+                                <td style="text-align: center; width: 20%;">
                                     <asp:Label ID="Label3" runat="server" Text="Total Vat"></asp:Label>
                                 </td>
-                               
-                                <td style="text-align:center; width:10%;">
+
+                                <td style="text-align: center; width: 10%;">
                                     <asp:Label ID="edit" runat="server" Text="View"></asp:Label>
                                 </td>
                             </tr>
@@ -74,25 +92,27 @@
                     <ItemTemplate>
                         <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
                             <tr>
-                                <td style="text-align:center; width:15%;">
+                                <td style="text-align: center; width: 15%;">
                                     <asp:Label ID="ID" runat="server" Text='<%# Eval("Purches_Id") %>'></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:10%;">
+                                <td style="text-align: center; width: 10%;">
                                     <asp:Label ID="addshowname" runat="server" Text='<%# Eval("Purches_date") %>'></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:25%;">
+                                <td style="text-align: center; width: 25%;">
                                     <asp:Label ID="Label4" runat="server" Text='<%# Eval("Vendor_Name") %>'></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:20%;">Rs. 
-                                    <asp:Label ID="Label7" runat="server" Text='<%# Eval("Total_purches_rate") %>'></asp:Label> /-
+                                <td style="text-align: center; width: 20%;">Rs. 
+                                    <asp:Label ID="Label7" runat="server" Text='<%# Eval("Total_purches_rate") %>'></asp:Label>
+                                    /-
                                 </td>
-                                <td style="text-align:center; width:20%;">Rs. 
-                                    <asp:Label ID="Label5" runat="server" Text='<%# Eval("Total_Tax_rate") %>'></asp:Label> /-
+                                <td style="text-align: center; width: 20%;">Rs. 
+                                    <asp:Label ID="Label5" runat="server" Text='<%# Eval("Total_Tax_rate") %>'></asp:Label>
+                                    /-
                                 </td>
-                               
-                                <td style="text-align:center; width:10%;">
-                                    <a href = "#" title="Print Purchasse Bill..." onclick="window.open('/corporate/business/print/purches_bill.aspx?Purches_Id=<%# DataBinder.Eval (Container.DataItem,"Purches_Id")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
-                                                <img alt="" height="25px" src="../WebImages/viewicon.png" />
+
+                                <td style="text-align: center; width: 10%;">
+                                    <a href="#" title="Print Purchasse Bill..." onclick="window.open('/corporate/business/print/purches_bill.aspx?Purches_Id=<%# DataBinder.Eval (Container.DataItem,"Purches_Id")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
+                                        <img alt="" height="25px" src="../WebImages/viewicon.png" />
 
                                 </td>
                             </tr>

@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head id="Head1" runat="server">
-    <title>i2i inc.</title>
+    <title>Aminrup Technologies.</title>
     <link rel="shortcut icon" href="corporate/business/WebImages/i2i_logo.png" />
         <style type="text/css">
             .style1
@@ -417,16 +417,16 @@
                         <tr>
                             <td style="width:50%">
                                 A/C Name:
-                                I2I INC</td>
+                                Aminrup Technologies</td>
                             <td style="width:50%;">
-                                <span lang="en-us">Bank: </span>ICICI<span lang="en-us"> BANK, A/C No-</span>032805004861</td>
+                                <span lang="en-us">Bank: </span>ICICI<span lang="en-us"> BANK, A/C No-</span>012805007421</td>
                         </tr>
                         <tr>
                             <td style="width:50%">
                                 Branch:
-                                Behala,Kolkata-700008</td>
+                                Sakchi, Jamshedpur-831001</td>
                             <td style="width:50%;">
-                                IFSC Code: ICIC0000328</td>
+                                IFSC Code: ICIC0000001</td>
                         </tr>
                         
                     </table>

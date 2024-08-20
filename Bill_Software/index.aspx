@@ -19,7 +19,7 @@
                             <tr>
                                 <td width="3%">&nbsp;</td>
                                 <td width="82%" height="112">
-                                    <h2 style="font: normal 24px/36px Arial, Helvetica, sans-serif; color:darkblue;">
+                                    <h2 style="font: normal 24px/36px Arial, Helvetica, sans-serif; color: darkblue;">
                                         <asp:Image ID="Image2" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Height="82px" Width="102px" />
                                         Aminrup Technologies</h2>
 
@@ -72,7 +72,7 @@
                                                 <td align="left" valign="middle">&nbsp;</td>
                                                 <td align="left" valign="middle">
                                                     <asp:DropDownList ID="cmbLoginAs" runat="server" class="dropdown_style">
-                                                        <asp:ListItem>CEO</asp:ListItem>
+                                                        <asp:ListItem>ADMIN</asp:ListItem>
                                                         <asp:ListItem>Employee</asp:ListItem>
                                                     </asp:DropDownList>
                                                     &nbsp;</td>
@@ -147,7 +147,8 @@
                                     &nbsp;
                                 </p>
                             </td>
-                            <td width="4%"><img src="Corporate/WebProperty/images/login_border.png" width="20" height="331" /></td>
+                            <td width="4%">
+                                <img src="Corporate/WebProperty/images/login_border.png" width="20" height="331" /></td>
 
                         </tr>
                     </table>

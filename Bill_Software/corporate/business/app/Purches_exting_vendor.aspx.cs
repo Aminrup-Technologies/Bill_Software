@@ -419,23 +419,23 @@ namespace Bill_Software.corporate.business.app
 
         }
 
-        //private void updatestock(string Ser_pro_code, string Ser_pro_Name, string Quantity1, string Sale_rate, string service_Tax_Rate)
-        //{
-        //    DbCL.Sqlconnection();
-        //    DbCL.ConnectDb();
-        //    string cmdstring = "select Product_id from tbl_stock where  Product_id='" + Ser_pro_code + "'";
-        //    SqlCommand cmd10 = new SqlCommand(cmdstring, DbCL.Conn);
-        //    SqlDataReader re = cmd10.ExecuteReader();
-        //    if (re.Read())
-        //    {
-        //        DbCL.executeRdr("update tbl_stock set Quantity=(cast(Quantity as int)+'" + Quantity1.ToString() + "'),Sail_Rate='" + Sale_rate + "',Service_tax_rate='" + service_Tax_Rate + "' where Product_id='" + Ser_pro_code + "' and Product_name='" + Ser_pro_Name + "'");
-        //    }
-        //    else
-        //    {
-        //        DbCL.executeRdr("insert into tbl_stock(Product_id,Product_name,Quantity,Sail_Rate,Service_tax_rate)values('" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Quantity1 + "','" + Sale_rate + "','" + service_Tax_Rate + "')");
-        //    }
-        //    DbCL.Conn.Close();
-        //}
+        private void updatestock(string Ser_pro_code, string Ser_pro_Name, string Quantity1, string Sale_rate, string service_Tax_Rate)
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Product_id from tbl_stock where  Product_id='" + Ser_pro_code + "'";
+            SqlCommand cmd10 = new SqlCommand(cmdstring, DbCL.Conn);
+            SqlDataReader re = cmd10.ExecuteReader();
+            if (re.Read())
+            {
+                DbCL.executeRdr("update tbl_stock set Quantity=(cast(Quantity as int)+'" + Quantity1.ToString() + "'),Sail_Rate='" + Sale_rate + "',Service_tax_rate='" + service_Tax_Rate + "' where Product_id='" + Ser_pro_code + "' and Product_name='" + Ser_pro_Name + "'");
+            }
+            else
+            {
+                DbCL.executeRdr("insert into tbl_stock(Product_id,Product_name,Quantity,Sail_Rate,Service_tax_rate)values('" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Quantity1 + "','" + Sale_rate + "','" + service_Tax_Rate + "')");
+            }
+            DbCL.Conn.Close();
+        }
 
         private string findpurchesId()
         {

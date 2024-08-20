@@ -37,8 +37,10 @@
 
                             <td width="20%">
                                 <div class="clock_style" id="txt"></div>
-                                <div class="clock_style">Hi,
-                                    <asp:Label ID="lblName" runat="server"></asp:Label>&nbsp;</div>
+                                <div class="clock_style">
+                                    Hi,
+                                    <asp:Label ID="lblName" runat="server"></asp:Label>&nbsp;
+                                </div>
                                 <div style="visibility: hidden;">
                                     <iframe height="20" src="../../../SessionKeepAlive.aspx" width="225"></iframe>
                                     <span lang="en-us">&nbsp;</span>
@@ -208,8 +210,8 @@
                             </li>
                             <li id="Reports" runat="server">Reports
 									<ul class="nav first">
-                                        <%--<li id="product_stock" runat="server"><a href="Product_stock.aspx">Product Stock</a></li>--%>
-                                        <%--<li id="Service_stock" runat="server"><a href="Service_stock.aspx">Service Stock</a></li>--%>
+                                        <li id="product_stock" runat="server"><a href="Product_stock.aspx">Product Stock</a></li>
+                                        <li id="Service_stock" runat="server"><a href="Service_stock.aspx">Service Stock</a></li>
                                         <li id="Payment_due" runat="server"><a href="Payment_due.aspx">Payments Due</a></li>
                                         <li id="Purchess_due" runat="server"><a href="Purchess_due.aspx">Purchesse Due</a></li>
                                     </ul>

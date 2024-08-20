@@ -444,7 +444,7 @@
                                             <td class="" style="background-color: #e31e24; color: white; text-align: center;">PAYMENT TERMS</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “I2I INC” at the Account Details Provided.</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “Aminrup Technologies” at the Account Details Provided.</td>
                                         </tr>
                                         <tr>
                                             <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Invoices shall be paid by the Client within Seven (7) Days of the Date of Invoice. In the event of Late Payment, the Company shall be entitled to charge Interest on any Outstanding Amounts at a rate of 1.5% per Month. GST at Current Rates is payable in addition to the Amount Quoted in accordance with the HSN/SAC Code.</td>
@@ -464,13 +464,13 @@
                                             <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK: ICICI BANK</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 032805004861</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 012805007421</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: ICIC0000328</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: ICIC0000001</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: Behala, Branch, Kolkata – 700 008</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: Sakchi, Jamshedpur - 831001</td>
                                         </tr>
                                         <tr>
                                             <td class="gap" style="text-align: justify; border: 0;">&nbsp</td>
@@ -492,7 +492,7 @@
                                             </tr>
                                         </asp:Panel>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">PAN NUMBER: AAEFI5315E</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">PAN NUMBER: ADF56JNB2</td>
                                         </tr>
                                     </table>
                                 </td>
@@ -520,7 +520,7 @@
 
                         <table border="0" width="100%" class="FORKVQAEAST">
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR I2I INC</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR Aminrup Technologies</td>
                             </tr>
                             <%--<tr>
                                 <td><img src="../WebImages/Stamp.jpg" width="100PX" /></td>

@@ -218,12 +218,12 @@
                                         </tr>
 
                                             <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">I2I INC GST Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Aminrup Technologies GST Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">19AAEF15315E1ZL</td>
                                         </tr>
                                             <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">I2I INC Pan Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Aminrup Technologies Pan Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">AAEF15315E</td>
                                         </tr>
@@ -335,7 +335,7 @@
 
                         <table border="0" width="100%" class="FORKVQAEAST">
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR I2I INC</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR Aminrup Technologies</td>
                                 <td class="" style="text-align: right; font-weight: bold;"></td>
                             </tr>
                            

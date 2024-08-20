@@ -350,7 +350,7 @@ namespace Bill_Software.corporate.business.app
 
                 SmtpClient smtpClient = new SmtpClient();
                 MailMessage message = new MailMessage();
-                MailAddress fromAddress = new MailAddress("info@i2iinc.in", "I2I INC");
+                MailAddress fromAddress = new MailAddress("info@i2iinc.in", "Aminrup Technologies");
                 //smtpClient.Host = "103.21.58.28";
                 smtpClient.Host = "199.79.63.186";
                 smtpClient.Port = 25;
@@ -382,7 +382,7 @@ namespace Bill_Software.corporate.business.app
                 mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>We greatly appreciate your patronage and look forward to serving you at all times.</span></td></tr>");
                 mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Should you have any questions, please do not hesitate to contact us.</span></td></tr>");
                 mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Thanks & Regards,</span></td></tr>");
-                mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Mr. Avijit Das<br>CEO <br>I2I INC<br>Tel: +91 91 96748 97316<br></span><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='#' style='text-decoration:none;color:#c8152a;'>E-mail: info@i2iinc.in</a></span><br><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='' style='text-decoration:none;color:#c8152a;'>URL: www.i2iinc.in</a></span></td></tr>");
+                mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Mr. Avijit Das<br>CEO <br>Aminrup Technologies<br>Tel: +91 91 96748 97316<br></span><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='#' style='text-decoration:none;color:#c8152a;'>E-mail: info@i2iinc.in</a></span><br><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='' style='text-decoration:none;color:#c8152a;'>URL: www.i2iinc.in</a></span></td></tr>");
                 mad.Append("</table></html>");
 
                 message.Bcc.Add(new MailAddress("info@i2iinc.in"));
