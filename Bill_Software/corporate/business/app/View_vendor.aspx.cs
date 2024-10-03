@@ -29,7 +29,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Vendor_Id,Vendor_Name from tbl_Vendor order by Vendor_Name";
+            string cmdstring = "select Vendor_Id,Vendor_Name,City from tbl_Vendor order by Id desc";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
@@ -40,7 +40,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Vendor_Id,Vendor_Name from tbl_Vendor where Vendor_Name='" + cmbvendor.Text + "'";
+            string cmdstring = "select Vendor_Id,Vendor_Name, City from tbl_Vendor where Vendor_Name='" + cmbvendor.Text + "'";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();

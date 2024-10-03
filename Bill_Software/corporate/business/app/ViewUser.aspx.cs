@@ -28,8 +28,8 @@ namespace Bill_Software.corporate.business.app
 
         private void Binddata()
         {
-            DbCL.FillCombo(ddlEmpId, "select User_Id from tbl_login where User_Id not in('admin')");
-            string cmdstring = "select id,User_Id,Password,Name,Phone_no,Email from tbl_login where User_Id not in ('admin')";
+            DbCL.FillCombo(ddlEmpId, "select User_Id from tbl_login where User_Id not in('superadmin', 'uat')");
+            string cmdstring = "select id,User_Id,Password,Name,Phone_no,Email from tbl_login where User_Id not in ('superadmin', 'uat')";
             BindDataGrig(cmdstring);
             ddlEmpId.SelectedIndex = 0;
         }

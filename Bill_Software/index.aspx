@@ -4,8 +4,8 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>Aminrup Technologies</title>
-    <link rel="shortcut icon" href="corporate/business/WebImages/oh4y.png" />
+    <title>FLAME-EX | Login</title>
+    <link rel="shortcut icon" href="corporate/business/WebImages/aagrouplogo.png" />
     <link href="corporate/WebProperty/css/style.css" rel="stylesheet" type="text/css" />
     <link href="corporate/WebProperty/css/menu.css" rel="stylesheet" type="text/css" />
 </head>
@@ -19,9 +19,9 @@
                             <tr>
                                 <td width="3%">&nbsp;</td>
                                 <td width="82%" height="112">
-                                    <h2 style="font: normal 24px/36px Arial, Helvetica, sans-serif; color: darkblue;">
-                                        <asp:Image ID="Image2" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Height="82px" Width="102px" />
-                                        Aminrup Technologies</h2>
+                                    <h2 style="font: normal 24px/36px Arial, Helvetica, sans-serif; font-weight:bolder; color: white;">
+                                        <asp:Image ID="Image2" runat="server" ImageUrl="~/corporate/business/WebImages/aagrouplogo.png" Height="82px" Width="102px" />
+                                        &nbsp;&nbsp;FLAME-EX</h2>
 
                                 </td>
                                 <td width="7%"></td>
@@ -125,7 +125,7 @@
                             </td>
                             <td width="57%" height="437" style="text-align: center;">
                                 <%--<asp:Image ID="Image4" runat="server" Height="93px" ImageUrl="~/corporate/business/WebImages/i2i_logo.png" Width="223px" />--%>
-                                <asp:Image ID="Image4" runat="server" Height="102px" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="102px" />
+                                <asp:Image ID="Image4" runat="server" Height="102px" ImageUrl="~/corporate/business/WebImages/aagrouplogo.png" Width="102px" />
                                 <br />
                                 <br />
                                 <br />
@@ -139,9 +139,11 @@
                                     &nbsp;
                                 </p>
                                 <p>
-                                    <b><sup>©</sup></b>
+                                    <b><sup>© <a href="https://www.aminruptechnologies.co.in/" target="_blank" style="text-decoration: none;">Aminrup Technologies</a></sup></b>
+                                    &nbsp;
+   
                                     <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" Height="16px" />
-                                    &nbsp;<sup>2018-2024</sup>
+                                    &nbsp;<sup>2024</sup>
                                 </p>
                                 <p>
                                     &nbsp;

@@ -150,7 +150,7 @@
         <ContentTemplate>
             <table class="style1">
                 <tr>
-                    <td bgcolor="#19658A" colspan="6">&nbsp;<span class="style2">Fix Purchasse Price To Existing Vendor</span>&nbsp;</td>
+                    <td bgcolor="#19658A" colspan="6">&nbsp;<span class="style2">Create Purchase Request aginst Existing Vendor</span>&nbsp;</td>
                 </tr>
                 <tr>
                     <td width="10%">&nbsp;</td>

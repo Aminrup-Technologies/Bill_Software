@@ -28,7 +28,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select id,User_Id,Password,Name,Phone_no,Email from tbl_login where User_Id not in ('admin')";
+            string cmdstring = "select id,User_Id,Password,Name,Phone_no,Email from tbl_login where User_Id not in ('superadmin', 'uat')";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
@@ -38,7 +38,7 @@ namespace Bill_Software.corporate.business.app
         protected void btnSave_Click(object sender, EventArgs e)
         {
             string idvalue = getidvalue();
-            idvalue = "EMP00" + idvalue;
+            idvalue = "FLM0" + idvalue;
 
             string query = "insert into tbl_login(User_Id,Password,Name,Phone_no,Email) values (@User_Id,@Password,@Name,@Phone_no,@Email)";
             SqlParameter[] pram = {

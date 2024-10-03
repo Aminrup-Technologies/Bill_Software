@@ -131,7 +131,7 @@
             <td>
                 &nbsp;</td>
             <td>
-                &nbsp;&nbsp; PRODUCT / SERVICE&nbsp;</td>
+                &nbsp;&nbsp; PRODUCT / SERVICE TYPE&nbsp;</td>
             <td>
                 <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style" Width="300px">
                     <asp:ListItem>Product</asp:ListItem>
@@ -155,7 +155,7 @@
         <tr>
             <td>
                 &nbsp;</td>
-            <td>&nbsp;&nbsp;&nbsp; EXTRA SPECIFICATIONS&nbsp;</td>
+            <td>&nbsp;&nbsp; BRAND NAME &nbsp;</td>
             <td><asp:TextBox ID="txtBrand" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox></td>
             <td>
                 &nbsp;</td>
@@ -172,7 +172,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp;&nbsp; UNIT</td>
+            <td>&nbsp;&nbsp; UOM</td>
             <td>
                 <asp:TextBox ID="txtUnit" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
             </td>
@@ -180,7 +180,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp;&nbsp; BASE RATE (RS)</td>
+            <td>&nbsp;&nbsp; BASE RATE (RS)</td>
             <td>
                 <asp:TextBox ID="txtSalerate" runat="server" CssClass="textbox_U_style" onkeypress="return validate(event)" Width="300px"></asp:TextBox>
             </td>

@@ -56,7 +56,7 @@
                         <tr>
                             <td class="style1" colspan="2" width="50%">&nbsp;Welcome
                             <asp:Label ID="lblName" runat="server" CssClass="style3"></asp:Label>
-                                &nbsp;to <b>Aminrup Technologies</b>. You are logged in from <b>IP</b> : &nbsp;<asp:Label ID="lblIP" runat="server" Font-Bold="True" ForeColor="DarkBlue"></asp:Label>
+                                &nbsp;to <b>Flam-Ex</b>. You are logged in from <b>IP</b> : &nbsp;<asp:Label ID="lblIP" runat="server" Font-Bold="True" ForeColor="DarkBlue"></asp:Label>
                                 &nbsp;& Computer Name :
                                 <asp:Label ID="lblpcname" runat="server" Font-Bold="True" ForeColor="DarkBlue"></asp:Label>.</td>
                         </tr>

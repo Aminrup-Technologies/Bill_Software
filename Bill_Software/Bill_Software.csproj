@@ -367,6 +367,8 @@
     <Content Include="corporate\business\print\QuotationHydrent.aspx" />
     <Content Include="corporate\business\print\Requisition.aspx" />
     <Content Include="corporate\business\print\RequisitionNew.aspx" />
+    <Content Include="corporate\business\WebImages\aagrouplogo.jpeg" />
+    <Content Include="corporate\business\WebImages\aagrouplogo.png" />
     <Content Include="corporate\business\WebImages\active_block.png" />
     <Content Include="corporate\business\WebImages\block.png" />
     <Content Include="corporate\business\WebImages\Body_With_Map.png" />

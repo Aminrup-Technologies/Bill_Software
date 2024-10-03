@@ -7,8 +7,8 @@
     <link href="../../WebProperty/css/style.css" rel="stylesheet" type="text/css" />
     <link href="../../WebProperty/css/menu.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="../../WebProperty/js/clock.js"></script>
-    <title>Aminrup Technologies</title>
-    <link rel="shortcut icon" href="../WebImages/oh4y.png" />
+    <title>FLAME-EX</title>
+    <link rel="shortcut icon" href="../WebImages/aagrouplogo.png" />
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <style type="text/css">
@@ -31,8 +31,8 @@
                             <td width="3%">&nbsp;</td>
 
                             <td width="69%">
-                                <h2 style="font: normal 24px/36px Arial, Helvetica, sans-serif; color: #999;">
-                                    <asp:Image ID="Image2" runat="server" ImageUrl="../WebImages/oh4y.png" Height="82px" Width="225px" />Aminrup Technologies</h2>
+                                <h2 style="font: normal 24px/36px Arial, Helvetica, sans-serif; font-weight:bolder; color: white;">
+                                    <asp:Image ID="Image2" runat="server" ImageUrl="../WebImages/aagrouplogo.png" Height="82px" Width="102px" />&nbsp;&nbsp;FLAME-EX</h2>
                             </td>
 
                             <td width="20%">
@@ -84,7 +84,7 @@
                                     <li id="newproduct_master" runat="server"><a href="newproduct_master.aspx">Product Name</a></li>
                                     <%--<li id="HydrantProduct" runat="server"><a href="HydrantProduct.aspx">Hydrant Product</a></li>--%>
                                     <li id="Service_master" runat="server"><a href="Service_master.aspx">Service</a></li>
-                                    <li id="Vat_master" runat="server"><a href="Vat_master.aspx">Vat Master</a></li>
+                                    <li id="Vat_master" runat="server"><a href="Vat_master.aspx">GST Rate Master</a></li>
                                     <li id="Service_Tax_Master" runat="server"><a href="Service_Tax_Master.aspx">Service Tax Master</a></li>
                                     <li id="PrimaryServiceTerms" runat="server"><a href="PrimaryServiceTerms.aspx">Specific Terms for Product Category</a></li>
                                     <li id="Expenses_Head" runat="server"><a href="Expenses_Head.aspx">Expense Head</a></li>
@@ -266,9 +266,9 @@
             <table width="90%" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
                 <tr>
                     <td width="34%" height="36">&nbsp;<sup>©</sup>
-                        <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />&nbsp;<sup>2018-2024</sup></td>
+                        <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />&nbsp;<sup>2024</sup></td>
                     <td width="37%">&nbsp;</td>
-                    <td width="29%" align="right">Resolution 1366 x 768 (Recomended).</td>
+                    <td width="29%" align="right"><a href="https://www.aminruptechnologies.co.in/" target="_blank" style="text-decoration: none;">Aminrup Technologies, JSR</a></td>
                 </tr>
             </table>
         </div>

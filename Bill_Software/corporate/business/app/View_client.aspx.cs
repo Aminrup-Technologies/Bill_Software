@@ -27,7 +27,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Client_Id,Client_Name,Industry from tbl_Client order by Client_Id asc";
+            string cmdstring = "select Client_Id,Client_Name,Industry from tbl_Client order by Id desc";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
