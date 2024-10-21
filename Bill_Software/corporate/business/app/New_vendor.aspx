@@ -242,17 +242,17 @@
         <tr>
             <td>&nbsp;</td>
             <td width="15%">Principle Vendor Code`</td>
-            <td width="25%"><asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_style"></asp:TextBox></td>
-            <td width="15%">Bank Name`</td>
-            <td width="25%"><asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_style"></asp:TextBox></td>
+            <td width="25%"><asp:TextBox ID="txt_pvc" runat="server" CssClass="textbox_style"></asp:TextBox></td>
+            <td width="15%">Bank Acc No`</td>
+            <td width="25%"><asp:TextBox ID="txt_vndr_bankacc" runat="server" CssClass="textbox_style"></asp:TextBox></td>
             <td>&nbsp;</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
             <td width="15%">IFSC Code`</td>
-            <td width="25%"><asp:TextBox ID="TextBox3" runat="server" CssClass="textbox_style"></asp:TextBox></td>
+            <td width="25%"><asp:TextBox ID="txt_ifsc" runat="server" CssClass="textbox_style"></asp:TextBox></td>
             <td width="15%">Account Name`</td>
-            <td width="25%"><asp:TextBox ID="TextBox4" runat="server" CssClass="textbox_style"></asp:TextBox></td>
+            <td width="25%"><asp:TextBox ID="txt_accholdername" runat="server" CssClass="textbox_style"></asp:TextBox></td>
             <td>&nbsp;</td>
         </tr>
         <tr>

@@ -193,40 +193,40 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.TextBox txtvat;
         
         /// <summary>
-        /// TextBox1 control.
+        /// txt_pvc control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox TextBox1;
+        protected global::System.Web.UI.WebControls.TextBox txt_pvc;
         
         /// <summary>
-        /// TextBox2 control.
+        /// txt_vndr_bankacc control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox TextBox2;
+        protected global::System.Web.UI.WebControls.TextBox txt_vndr_bankacc;
         
         /// <summary>
-        /// TextBox3 control.
+        /// txt_ifsc control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox TextBox3;
+        protected global::System.Web.UI.WebControls.TextBox txt_ifsc;
         
         /// <summary>
-        /// TextBox4 control.
+        /// txt_accholdername control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox TextBox4;
+        protected global::System.Web.UI.WebControls.TextBox txt_accholdername;
         
         /// <summary>
         /// btnSave control.

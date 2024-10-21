@@ -28,7 +28,7 @@ namespace Bill_Software.corporate.business.app
         protected void btnSave_Click(object sender, EventArgs e)
         {
             string companyID = findcompanyId();
-            string cmdstring = "insert into tbl_Vendor(Vendor_Id,Vendor_Name,Address1,Address2,City,pin,State,Com_web_site,Com_email,Com_phone,Com_Fax,Rep_Name,Rep_Desig,Rep_phone,Rep_email,Service_tax_No,Pan_No,Vat_No)values(@Vendor_Id,@Vendor_Name,@Address1,@Address2,@City,@pin,@State,@Com_web_site,@Com_email,@Com_phone,@Com_Fax,@Rep_Name,@Rep_Desig,@Rep_phone,@Rep_email,@Service_tax_No,@Pan_No,@Vat_No)";
+            string cmdstring = "insert into tbl_Vendor(Vendor_Id,Vendor_Name,Address1,Address2,City,pin,State,Com_web_site,Com_email,Com_phone,Com_Fax,Rep_Name,Rep_Desig,Rep_phone,Rep_email,Service_tax_No,Pan_No,Vat_No,PrincipleVndrCode,BankAccNo,BankIfscCode,AccountName)values(@Vendor_Id,@Vendor_Name,@Address1,@Address2,@City,@pin,@State,@Com_web_site,@Com_email,@Com_phone,@Com_Fax,@Rep_Name,@Rep_Desig,@Rep_phone,@Rep_email,@Service_tax_No,@Pan_No,@Vat_No,@PrincipleVndrCode,@BankAccNo,@BankIfscCode,@AccountName)";
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
@@ -53,6 +53,11 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@Service_tax_No", txtservicetaxNo.Text);
             cmd.Parameters.AddWithValue("@Pan_No", txtpanNo.Text);
             cmd.Parameters.AddWithValue("@Vat_No", txtvat.Text);
+            //Below fileds are added for meeting the requirements from flame-ex client #21-10-2024
+            cmd.Parameters.AddWithValue("@PrincipleVndrCode", txt_pvc.Text);
+            cmd.Parameters.AddWithValue("@BankAccNo", txt_vndr_bankacc.Text);
+            cmd.Parameters.AddWithValue("@BankIfscCode", txt_ifsc.Text);
+            cmd.Parameters.AddWithValue("@AccountName", txt_accholdername.Text);
             cmd.ExecuteNonQuery();
             DbCL.Conn.Close();
             PanelOK.Visible = true;
