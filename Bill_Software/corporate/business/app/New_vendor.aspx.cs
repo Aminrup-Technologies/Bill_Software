@@ -22,9 +22,7 @@ namespace Bill_Software.corporate.business.app
             {
                 DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
                 DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
-
             }
-
         }
 
         protected void btnSave_Click(object sender, EventArgs e)
@@ -64,35 +62,66 @@ namespace Bill_Software.corporate.business.app
         }
         private string findcompanyId()
         {
-            string ComId = "";
-            string aa = "";
+            //string ComId = "";
+            //string aa = "";
+            //DbCL.Sqlconnection();
+            //DbCL.ConnectDb();
+            //string cmdString1 = "select Id,Vendor_Id from tbl_Vendor where Id=(select max(Id)from tbl_Vendor)";
+            //SqlCommand com1 = new SqlCommand(cmdString1, DbCL.Conn);
+            //SqlDataReader DR1 = com1.ExecuteReader();
+            //if (DR1.Read())
+            //{
+            //    aa = DR1.GetValue(1).ToString();
+            //    string bb = aa.Substring(5);
+            //    int k = Convert.ToInt32(bb);
+            //    k = k + 1;
+            //    string q = Convert.ToString(k);
+            //    ComId = "VEN00" + q;
+            //}
+            //else
+            //{
+            //    ComId = "VEN001";
+            //}
+
+            //DbCL.Conn.Close();
+            //return ComId;
+
+
+            //The above code is commented on 19-10-2024 for modifying the logic for Auto-Vendor Code generation #Flame-Ex Client
+            string comId = "";
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdString1 = "select Id,Vendor_Id from tbl_Vendor where Id=(select max(Id)from tbl_Vendor)";
-            SqlCommand com1 = new SqlCommand(cmdString1, DbCL.Conn);
-            SqlDataReader DR1 = com1.ExecuteReader();
-            if (DR1.Read())
+
+            string cmdString = "SELECT TOP 1 Vendor_Id FROM tbl_Vendor WHERE Vendor_Id LIKE 'AA%' ORDER BY Vendor_Id DESC";
+            using (SqlCommand com = new SqlCommand(cmdString, DbCL.Conn))
             {
-                aa = DR1.GetValue(1).ToString();
-                string bb = aa.Substring(5);
-                int k = Convert.ToInt32(bb);
-                k = k + 1;
-                string q = Convert.ToString(k);
-                ComId = "VEN00" + q;
-            }
-            else
-            {
-                ComId = "VEN001";
+                using (SqlDataReader dr = com.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        string vendorId = dr["Vendor_Id"].ToString();
+                        string numericPart = vendorId.Substring(2); // Extract the numeric part after 'AA'
+                        Int32 k = 0;
+                        if (int.TryParse(numericPart, out k))
+                        {
+                            k++; // Increment the numeric part
+                            comId = "AA" + k.ToString("D2"); // Format the number with 2 digits
+                        }
+                    }
+                    else
+                    {
+                        comId = "AA01"; // Start with AA01 if no matching Vendor_Id found
+                    }
+                }
             }
 
             DbCL.Conn.Close();
-            return ComId;
+            return comId;
         }
 
         protected void btnReset_Click(object sender, EventArgs e)
         {
             Response.Redirect("~/corporate/business/app/New_vendor.aspx");
-
         }
     }
 }
