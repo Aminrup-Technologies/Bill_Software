@@ -56,7 +56,8 @@ namespace Bill_Software.corporate.business.app
             string cmdstring = "";
             if (RadioButtonList1.SelectedIndex == 0)
             {
-                cmdstring = "select Product_Name from tbl_Product order by Product_Name";
+                //cmdstring = "select Product_Name from tbl_Product order by Product_Name";
+                cmdstring = "select ProductOrServiceCat from tbl_NewparentProduct order by Id";
             }
             else
             {
@@ -79,7 +80,8 @@ namespace Bill_Software.corporate.business.app
             Panel2.Visible = true;
             if (RadioButtonList1.SelectedIndex == 0)
             {
-                string cmdstring = "select Product_code,Product_Name from tbl_Product where Product_Name='" + cmbproduct_service.Text + "'";
+                //string cmdstring = "select Product_code,Product_Name from tbl_Product where Product_Name='" + cmbproduct_service.Text + "'";
+                string cmdstring = "select ProductID, ProductName from tbl_NewProduct where ProductOrServiceCat='" + cmbproduct_service.Text + "'";
                 Binddata1(cmdstring);
             }
             else
@@ -314,15 +316,88 @@ namespace Bill_Software.corporate.business.app
 
 
             dt1 = (DataTable)ViewState["dt"];
+            //if (dt1 != null)
+            //{
+            //    for (i = 0; i <= dt1.Rows.Count - 1; i++)
+            //    {
+            //        SqlTransaction trans = null;
+            //        SqlConnection conn = null;
+            //        SqlCommand cmd = null;
+            //        try
+            //        {
+            //            string cnnString = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString();
+            //            conn = new SqlConnection(cnnString);
+
+            //            cmd = new SqlCommand { CommandType = CommandType.Text, Connection = conn };
+            //            conn.Open();
+            //            trans = conn.BeginTransaction();
+            //            cmd.Transaction = trans;
+            //            int j = i + 1;
+            //            string Ser_pro_code = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_code")).Text;
+            //            string Ser_pro_Name = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_Name")).Text;
+            //            string Vendor_rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Vendor_rate")).Text;
+            //            string tax_app = ((RadioButtonList)gd_Service_Product.Rows[i].FindControl("RadioButtonList1")).Text;
+            //            string vat_parsentage = ((DropDownList)gd_Service_Product.Rows[i].FindControl("vat_parsentage")).Text;
+            //            string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
+            //            string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
+            //            //string Sale_rate = ((Label)gd_Service_Product.Rows[i].FindControl("Sale_rate")).Text;
+            //            //string service_Tax_Rate = ((Label)gd_Service_Product.Rows[i].FindControl("service_Tax_Rate")).Text;
+            //            string parches_rate = (Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity)).ToString();
+            //            double tax_rete;
+            //            if (tax_app == "Yes")
+            //            {
+            //                double a = (Convert.ToDouble(parches_rate) * Convert.ToDouble(vat_parsentage)) / 100;
+            //                //a = Math.Round(a);
+            //                tax_rete = a;
+
+            //            }
+            //            else
+            //            {
+            //                tax_rete = 0;
+            //            }
+            //            double parches_rate111 = Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
+            //            tota_purchesrate1 = tota_purchesrate1 + Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
+            //            //double b = Convert.ToDouble(Sale_rate) * Convert.ToDouble(Quantity);
+
+            //            //double total_sail_rate = b;
+            //            //double c = b * Convert.ToDouble(service_Tax_Rate) / 100;
+            //            //double total_sail_rate1 = c;
+            //            //double total_sail_rate2 = (b + c);
+            //            total_tax_rate_details = total_tax_rate_details + tax_rete;
+            //            cmd.CommandText = ("insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,Purches_date,Client_id)values('" + j.ToString() + "','" + purchesid + "','" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Vendor_rate + "','" + tax_app + "','" + vat_parsentage + "','" + Quantity + "','" + parches_rate + "','" + parches_rate111 + "','" + tax_rete + "','" + sepecification.ToString() + "','" + txtPurchesDate.Text + "','" + lblvendor_id.Text + "')");
+            //            cmd.ExecuteNonQuery();
+            //            //updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Sale_rate, service_Tax_Rate);
+
+            //            trans.Commit();
+            //            conn.Close();
+
+            //            trans.Dispose();
+            //            conn.Dispose();
+            //            cmd.Dispose();
+
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            i = 1;
+            //            if (trans != null) trans.Rollback();
+            //            throw ex;
+
+
+            //        }
+            //        finally
+            //        {
+            //            if (conn != null) conn.Close();
+
+            //        }
+
+            //    }
+            //}
+
             if (dt1 != null)
             {
-
+                Int32 sl = 0;
                 for (i = 0; i <= dt1.Rows.Count - 1; i++)
                 {
-
-
-
-
                     SqlTransaction trans = null;
                     SqlConnection conn = null;
                     SqlCommand cmd = null;
@@ -335,6 +410,7 @@ namespace Bill_Software.corporate.business.app
                         conn.Open();
                         trans = conn.BeginTransaction();
                         cmd.Transaction = trans;
+
                         int j = i + 1;
                         string Ser_pro_code = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_code")).Text;
                         string Ser_pro_Name = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_Name")).Text;
@@ -343,58 +419,69 @@ namespace Bill_Software.corporate.business.app
                         string vat_parsentage = ((DropDownList)gd_Service_Product.Rows[i].FindControl("vat_parsentage")).Text;
                         string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
                         string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
-                        //string Sale_rate = ((Label)gd_Service_Product.Rows[i].FindControl("Sale_rate")).Text;
-                        //string service_Tax_Rate = ((Label)gd_Service_Product.Rows[i].FindControl("service_Tax_Rate")).Text;
-                        string parches_rate = (Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity)).ToString();
-                        double tax_rete;
-                        if (tax_app == "Yes")
+
+                        // Check if Quantity is not null, not empty, and greater than 1
+                        if (!string.IsNullOrEmpty(Quantity) && Convert.ToDouble(Quantity) > 1)
                         {
-                            double a = (Convert.ToDouble(parches_rate) * Convert.ToDouble(vat_parsentage)) / 100;
-                            //a = Math.Round(a);
-                            tax_rete = a;
+                            sl = sl + 1;
+                            string parches_rate = (Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity)).ToString();
+                            double tax_rete;
 
+                            if (tax_app == "Yes")
+                            {
+                                double a = (Convert.ToDouble(parches_rate) * Convert.ToDouble(vat_parsentage)) / 100;
+                                tax_rete = a;
+                            }
+                            else
+                            {
+                                tax_rete = 0;
+                            }
+
+                            double parches_rate111 = Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
+                            tota_purchesrate1 = tota_purchesrate1 + Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
+                            total_tax_rate_details = total_tax_rate_details + tax_rete;
+
+                            cmd.CommandText = "insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,Purches_date,Client_id)" +
+                                              "values(@sl_no, @Purches_id, @Product_id, @Product_name, @vendor_rate, @tax_applicable, @tax_rate, @Quantity, @purches_rate, @total_purches_rate, @vat_amount, @specification, @Purches_date, @Client_id)";
+
+                            //cmd.Parameters.AddWithValue("@sl_no", j.ToString());
+                            cmd.Parameters.AddWithValue("@sl_no", sl.ToString());
+                            cmd.Parameters.AddWithValue("@Purches_id", purchesid);
+                            cmd.Parameters.AddWithValue("@Product_id", Ser_pro_code);
+                            cmd.Parameters.AddWithValue("@Product_name", Ser_pro_Name);
+                            cmd.Parameters.AddWithValue("@vendor_rate", Vendor_rate);
+                            cmd.Parameters.AddWithValue("@tax_applicable", tax_app);
+                            cmd.Parameters.AddWithValue("@tax_rate", vat_parsentage);
+                            cmd.Parameters.AddWithValue("@Quantity", Quantity);
+                            cmd.Parameters.AddWithValue("@purches_rate", parches_rate);
+                            cmd.Parameters.AddWithValue("@total_purches_rate", parches_rate111);
+                            cmd.Parameters.AddWithValue("@vat_amount", tax_rete);
+                            cmd.Parameters.AddWithValue("@specification", sepecification.ToString());
+                            cmd.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
+                            cmd.Parameters.AddWithValue("@Client_id", lblvendor_id.Text);
+
+                            cmd.ExecuteNonQuery();
+                            updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Vendor_rate, vat_parsentage);
+                            trans.Commit();
                         }
-                        else
-                        {
-                            tax_rete = 0;
-                        }
-                        double parches_rate111 = Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
-                        tota_purchesrate1 = tota_purchesrate1 + Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
-                        //double b = Convert.ToDouble(Sale_rate) * Convert.ToDouble(Quantity);
-
-                        //double total_sail_rate = b;
-                        //double c = b * Convert.ToDouble(service_Tax_Rate) / 100;
-                        //double total_sail_rate1 = c;
-                        //double total_sail_rate2 = (b + c);
-                        total_tax_rate_details = total_tax_rate_details + tax_rete;
-                        cmd.CommandText = ("insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,Purches_date,Client_id)values('" + j.ToString() + "','" + purchesid + "','" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Vendor_rate + "','" + tax_app + "','" + vat_parsentage + "','" + Quantity + "','" + parches_rate + "','" + parches_rate111 + "','" + tax_rete + "','" + sepecification.ToString() + "','" + txtPurchesDate.Text + "','" + lblvendor_id.Text + "')");
-                        cmd.ExecuteNonQuery();
-                        //updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Sale_rate, service_Tax_Rate);
-
-                        trans.Commit();
                         conn.Close();
-
                         trans.Dispose();
                         conn.Dispose();
                         cmd.Dispose();
-
                     }
                     catch (Exception ex)
                     {
-                        i = 1;
                         if (trans != null) trans.Rollback();
                         throw ex;
-
-
                     }
                     finally
                     {
                         if (conn != null) conn.Close();
-
                     }
-
                 }
             }
+
+
             DbCL.Conn.Close();
             tota_purchesrate1 = Math.Round(tota_purchesrate1);
             total_tax_rate_details = Math.Round(total_tax_rate_details);
@@ -429,10 +516,14 @@ namespace Bill_Software.corporate.business.app
             if (re.Read())
             {
                 DbCL.executeRdr("update tbl_stock set Quantity=(cast(Quantity as int)+'" + Quantity1.ToString() + "'),Sail_Rate='" + Sale_rate + "',Service_tax_rate='" + service_Tax_Rate + "' where Product_id='" + Ser_pro_code + "' and Product_name='" + Ser_pro_Name + "'");
+
+                DbCL.executeRdr("UPDATE tbl_NewProduct SET Quantity=(CAST(Quantity AS INT) + '" + Quantity1.ToString() + "'), Sail_Rate='" + Sale_rate + "', Tax_Rate='" + service_Tax_Rate + "' WHERE ProductID='" + Ser_pro_code + "' AND ProductName='" + Ser_pro_Name + "'");
             }
             else
             {
                 DbCL.executeRdr("insert into tbl_stock(Product_id,Product_name,Quantity,Sail_Rate,Service_tax_rate)values('" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Quantity1 + "','" + Sale_rate + "','" + service_Tax_Rate + "')");
+
+                DbCL.executeRdr("INSERT INTO tbl_NewProduct (ProductID, ProductName, Quantity, Sail_Rate, Tax_Rate) VALUES ('" + Ser_pro_code + "', '" + Ser_pro_Name + "', '" + Quantity1 + "', '" + Sale_rate + "', '" + service_Tax_Rate + "')");
             }
             DbCL.Conn.Close();
         }

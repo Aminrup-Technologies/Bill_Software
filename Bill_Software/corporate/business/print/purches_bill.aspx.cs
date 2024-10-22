@@ -47,11 +47,13 @@ namespace Bill_Software.corporate.business.print
                 string type = re["Purches_Type"].ToString();
                 if (type == "Product")
                 {
-                    labeltax1.Text = "Vat";
+                    //labeltax1.Text = "Vat";
+                    labeltax1.Text = "GST";
                 }
                 else
                 {
-                    labeltax1.Text = "Service Tax";
+                    //labeltax1.Text = "Service Tax";
+                    labeltax1.Text = "GST";
                 }
                 string clientid = re["Client_Id"].ToString();
                 Bindclientdetails(clientid);

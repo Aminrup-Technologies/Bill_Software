@@ -39,6 +39,33 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
+
+        private string findProductId()
+        {
+            string PurID = "";
+            string aa = "";
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdString1 = "select Id,ProductID from tbl_NewProduct where Id=(select max(Id)from tbl_NewProduct)";
+            SqlCommand com1 = new SqlCommand(cmdString1, DbCL.Conn);
+            SqlDataReader DR1 = com1.ExecuteReader();
+            if (DR1.Read())
+            {
+                aa = DR1.GetValue(1).ToString();
+                string bb = aa.Substring(3); // Get the numeric part of ProductID, skipping "PRD"
+                int k = Convert.ToInt32(bb);
+                k = k + 1; // Increment the numeric part
+                PurID = "PRD" + k.ToString().PadLeft(2, '0'); // Pad with leading zeros to ensure two digits
+            }
+            else
+            {
+                PurID = "PRD01"; // Start with "PRD01" if no records exist
+            }
+
+            DbCL.Conn.Close();
+            return PurID;
+        }
+
         protected void btnSave_Click(object sender, EventArgs e)
         {
             //if (txtProductCode.Text != "")
@@ -55,55 +82,86 @@ namespace Bill_Software.corporate.business.app
 
             if (!string.IsNullOrEmpty(txtProductCode.Text))
             {
+                SqlTransaction transaction = null;
+
                 try
                 {
+                    string productid = findProductId();
+
                     // Initialize the database connection
                     DbCL.Sqlconnection();
                     DbCL.ConnectDb();
 
-                    // Create the SQL query with parameters
-                    string query = "INSERT INTO tbl_NewProduct(Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, " +
-                                   "Type, Unit, Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, TimeStamp) " +
-                                   "VALUES (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, " +
-                                   "@Specification, @Quantity, @MOQValue, @SaleNote, @ExpiryDate, GETDATE())";
+                    // Start a new transaction
+                    transaction = DbCL.Conn.BeginTransaction();
 
-                    // Create the SQL command and assign the parameters
-                    SqlCommand cmd = new SqlCommand(query, DbCL.Conn);
-                    cmd.Parameters.AddWithValue("@ProductCode", txtProductCode.Text);
-                    cmd.Parameters.AddWithValue("@ProductOrServiceCat", cmdProduct.SelectedItem.Text);
-                    cmd.Parameters.AddWithValue("@SaleRate", txtSalerate.Text);
-                    cmd.Parameters.AddWithValue("@TaxRate", cmbtax.SelectedItem.Text);
-                    cmd.Parameters.AddWithValue("@Product_catagory", txtproducttype.Text);
-                    cmd.Parameters.AddWithValue("@ProductName", txtSubProductsName.Text);
-                    cmd.Parameters.AddWithValue("@Type", ddlProOrSer.SelectedItem.Text);
-                    cmd.Parameters.AddWithValue("@Unit", txtUnit.Text);
-                    cmd.Parameters.AddWithValue("@Brand", txtBrand.Text);
-                    cmd.Parameters.AddWithValue("@ParentId", Convert.ToInt32(Session["pid"]));
-                    cmd.Parameters.AddWithValue("@Specification", TextBox1.Text);
-                    cmd.Parameters.AddWithValue("@Quantity", TextBox2.Text);
-                    cmd.Parameters.AddWithValue("@MOQValue", TextBox3.Text);
-                    cmd.Parameters.AddWithValue("@SaleNote", TextBox4.Text);
+                    // Create the SQL query for tbl_NewProduct
+                    string queryNewProduct = "INSERT INTO tbl_NewProduct(Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, " +
+                                             "Type, Unit, Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, TimeStamp, ProductID) " +
+                                             "VALUES (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, " +
+                                             "@Specification, @Quantity, @MOQValue, @SaleNote, @ExpiryDate, GETDATE(), @ProductID)";
+
+                    // Create the SQL command for tbl_NewProduct
+                    SqlCommand cmdNewProduct = new SqlCommand(queryNewProduct, DbCL.Conn, transaction);
+                    cmdNewProduct.Parameters.AddWithValue("@ProductCode", txtProductCode.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@ProductOrServiceCat", cmdProduct.SelectedItem.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@SaleRate", txtSalerate.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@TaxRate", cmbtax.SelectedItem.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@Product_catagory", txtproducttype.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@ProductName", txtSubProductsName.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@Type", ddlProOrSer.SelectedItem.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@Unit", txtUnit.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@Brand", txtBrand.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@ParentId", Convert.ToInt32(Session["pid"]));
+                    cmdNewProduct.Parameters.AddWithValue("@Specification", TextBox1.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@Quantity", TextBox2.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@MOQValue", TextBox3.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@SaleNote", TextBox4.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@ProductID", productid);
 
                     DateTime expiryDate;
-                    // Handle the expiry date (ensure valid format or handle nulls)
                     if (DateTime.TryParse(txtfromDate.Text, out expiryDate))
                     {
-                        cmd.Parameters.AddWithValue("@ExpiryDate", expiryDate);
+                        cmdNewProduct.Parameters.AddWithValue("@ExpiryDate", expiryDate);
                     }
                     else
                     {
-                        cmd.Parameters.AddWithValue("@ExpiryDate", DBNull.Value); // Insert NULL if the date is invalid
+                        cmdNewProduct.Parameters.AddWithValue("@ExpiryDate", DBNull.Value);
                     }
 
-                    // Execute the query
-                    cmd.ExecuteNonQuery();
+                    // Execute the query for tbl_NewProduct
+                    cmdNewProduct.ExecuteNonQuery();
+
+                    // Now insert relevant data into tbl_stock
+                    string queryStock = "INSERT INTO tbl_stock (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate) " +
+                                        "VALUES (@ProductID, @ProductName, @Quantity, @SaleRate, @TaxRate)";
+
+                    // Create the SQL command for tbl_stock
+                    SqlCommand cmdStock = new SqlCommand(queryStock, DbCL.Conn, transaction);
+                    cmdStock.Parameters.AddWithValue("@ProductID", productid);
+                    cmdStock.Parameters.AddWithValue("@ProductName", txtSubProductsName.Text);
+                    cmdStock.Parameters.AddWithValue("@Quantity", TextBox2.Text);
+                    cmdStock.Parameters.AddWithValue("@SaleRate", txtSalerate.Text);
+                    cmdStock.Parameters.AddWithValue("@TaxRate", cmbtax.SelectedItem.Text);
+
+                    // Execute the query for tbl_stock
+                    cmdStock.ExecuteNonQuery();
+
+                    // Commit the transaction if both inserts are successful
+                    transaction.Commit();
 
                     // Show success message
                     PanelOK.Visible = true;
-                    lblOk.Text = "Data saved successfully!";
+                    lblOk.Text = "Data saved successfully into both tables!";
                 }
                 catch (Exception ex)
                 {
+                    // Rollback the transaction if any error occurs
+                    if (transaction != null)
+                    {
+                        transaction.Rollback();
+                    }
+
                     // Handle any exceptions
                     lblOk.Text = "Error: " + ex.Message;
                     PanelOK.Visible = true;
@@ -119,10 +177,12 @@ namespace Bill_Software.corporate.business.app
                 lblOk.Text = "Please enter a Product Code.";
                 PanelOK.Visible = true;
             }
+
+
             Binddata();
 
         }
-     
+
         protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
         {
             string Id = Convert.ToString(e.CommandArgument);

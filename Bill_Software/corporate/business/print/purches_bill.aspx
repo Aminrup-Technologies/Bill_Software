@@ -4,193 +4,267 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head id="Head1" runat="server">
-     <title>Aminrup Technologies.</title>
+    <title>Aminrup Technologies.</title>
     <link rel="shortcut icon" href="corporate/business/WebImages/i2i_logo.png" />
-        <style type="text/css">
-            .style1
-            {
-                width: 100%;
-                
-            }
- 
-        
-*{ padding:0; margin:0; border:none; list-style:none; text-decoration:none;}
-        
-        
-*{ border-style: none;
-	border-color: inherit;
-	border-width: medium;
-	margin: 0px;
-	padding: 0px;
-	list-style: none;
-	text-decoration:none;
-}
+    <style type="text/css">
+        .style1 {
+            width: 100%;
+        }
 
-            .style5
-            {
-                text-align: right;
-                padding:0px 5px 0px 0px;
+
+        * {
+            padding: 0;
+            margin: 0;
+            border: none;
+            list-style: none;
+            text-decoration: none;
+        }
+
+
+        * {
+            border-style: none;
+            border-color: inherit;
+            border-width: medium;
+            margin: 0px;
+            padding: 0px;
+            list-style: none;
+            text-decoration: none;
+        }
+
+        .style5 {
+            text-align: right;
+            padding: 0px 5px 0px 0px;
+        }
+
+        .style6 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            font-size: medium;
+            color: #000037;
+        }
+
+        .tableOne {
+            margin: 0;
+            border: solid 1px #bfbfbf;
+        }
+
+            .tableOne td {
+                font: normal 14px/20px Calibri;
+                background: #dbe5f1;
+                border: solid 1px #bfbfbf;
+                padding: 2px 0 2px 5px;
             }
-            .style6
-            {
-                font-family: Arial, Helvetica, sans-serif;
-                font-weight: bold;
-                font-size: medium;
-                color: #000037;
+
+        .tableTwo {
+            margin: 0;
+            border: solid 1px #bfbfbf;
+        }
+
+            .tableTwo td {
+                font: normal 12px/16px Calibri;
+                background: #dbe5f1;
+                border: solid 1px #bfbfbf;
+                padding: 2px 5px 2px 5px;
             }
-            .tableOne{ margin:0; border:solid 1px #bfbfbf;}
-        .tableOne td{font:normal 14px/20px Calibri; background:#dbe5f1; border:solid 1px #bfbfbf; padding:2px 0 2px 5px;}
-        
-        .tableTwo{ margin:0; border:solid 1px #bfbfbf;}
-        .tableTwo td{font:normal 12px/16px Calibri; background:#dbe5f1; border:solid 1px #bfbfbf; padding:2px 5px 2px 5px;}
-        
-        .table_border td{ border:2px solid #bfbfbf;}
-        .table1{ border-collapse:collapse;}
-        .table1 td{ text-align:left; border:1px solid #bfbfbf; width:50%;}
-        .table2{ border-collapse:collapse;}
-        .table2 td{ text-align:left; border:1px solid #bfbfbf;  padding:2px 0 2px 20px;}
-            .style7
-            {
-                font-family: Arial;
-                font-size: small;
-                font-weight: bold;
-                text-align:center;
+
+        .table_border td {
+            border: 2px solid #bfbfbf;
+        }
+
+        .table1 {
+            border-collapse: collapse;
+        }
+
+            .table1 td {
+                text-align: left;
+                border: 1px solid #bfbfbf;
+                width: 50%;
             }
-            .style8
-            {
-                text-align: center;
-                color: #FFFFFF;
-                font-weight: bold;
-                font-family: Calibri;
+
+        .table2 {
+            border-collapse: collapse;
+        }
+
+            .table2 td {
+                text-align: left;
+                border: 1px solid #bfbfbf;
+                padding: 2px 0 2px 20px;
             }
-            .style9
-            {
-                font-family: Arial, Helvetica, sans-serif;
-                font-weight: bold;
-                font-size:20px;
-                color: #e36c0a;
+
+        .style7 {
+            font-family: Arial;
+            font-size: small;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .style8 {
+            text-align: center;
+            color: #FFFFFF;
+            font-weight: bold;
+            font-family: Calibri;
+        }
+
+        .style9 {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            font-size: 20px;
+            color: #e36c0a;
+        }
+
+        .style10 {
+            font-family: Arial;
+            font-size: small;
+            font-weight: bold;
+        }
+
+        .style11 {
+            font-weight: bold;
+        }
+
+        .style12 {
+            font-family: "Century Gothic";
+            font-size: medium;
+            font-weight: bold;
+        }
+
+        .style13 {
+            color: #1c3564;
+        }
+
+        .style14 {
+            color: #1c3564;
+        }
+
+        .style15 {
+            color: #e36c0a;
+        }
+
+        .style16 {
+            font-family: "Century Gothic";
+            font-size: medium;
+            font-weight: bold;
+            color: #1c3564;
+        }
+
+        .style17 {
+            font-family: Arial;
+            font-size: small;
+            font-weight: bold;
+        }
+
+        .style18 {
+            font-family: Arial;
+            font-size: small;
+            font-weight: bold;
+        }
+
+        .sssss {
+            position: fixed;
+            bottom: 0;
+        }
+
+        @media print {
+            thead {
+                display: table-header-group;
             }
-            .style10
-            {
-                font-family: Arial;
-                font-size: small;
-                font-weight: bold;
+
+            tfoot {
+                display: table-footer-group;
             }
-            .style11
-            {
-                font-weight: bold;
+
+            .header, .hide {
+                visibility: hidden;
+                height: 100px;
             }
-            .style12
-            {
-                font-family: "Century Gothic";
-                font-size: medium;
-                font-weight: bold;
+
+            .header1, .show {
             }
-            .style13
-            {
-                color: #1c3564;
+
+            .Foter, .hide {
+                visibility: hidden;
+                height: 60px;
             }
-            .style14
-            {
-                color: #1c3564;
+
+            .Foter1, .show {
+                position:fixed; bottom:0;
             }
-            .style15
-            {
-                color: #e36c0a;
+        }
+
+        @media screen {
+            thead {
+                display: block;
             }
-            .style16
-            {
-                font-family: "Century Gothic";
-                font-size: medium;
-                font-weight: bold;
-                color: #1c3564;
+
+            tfoot {
+                display: block;
             }
-            .style17
-            {
-                font-family: Arial;
-                font-size: small;
-                font-weight: bold;
+        }
+
+        @media print1 {
+            #non-printable {
+                display: none;
             }
-            .style18
-            {
-                font-family: Arial;
-                font-size: small;
-                font-weight: bold;
+
+            #printable {
+                display: block;
             }
-            .sssss
-            {
-            	position:fixed;
-            	 bottom:0;
-            }
-            @media print {
-  thead { display: table-header-group; }
-  tfoot { display: table-footer-group;}
-  .header, .hide { visibility: hidden;height:100px; }
-  
-  .header1, .show {}
-  .Foter, .hide { visibility: hidden;height:60px  }
-  .Foter1, .show { position:fixed; bottom:0;  }
-   }
-  @media screen {
-  thead { display: block; }
-  tfoot { display: block; }
-  }
-    @media print1
-    {
-	#non-printable { display: none; }
-	#printable { display: block; }
-	
-    }
-            .auto-style1 {
-                font-family: "Century Gothic";
-                font-size: medium;
-                font-weight: bold;
-                color: #1c3564;
-                height: 19px;
-            }
-            .auto-style2 {
-                font-size: medium;
-            }
-            </style>
+        }
+
+        .auto-style1 {
+            font-family: "Century Gothic";
+            font-size: medium;
+            font-weight: bold;
+            color: #1c3564;
+            height: 19px;
+        }
+
+        #footerrprint img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .auto-style2 {
+            font-size: medium;
+        }
+    </style>
 </head>
 <body>
     <form id="form1" runat="server">
-    <div id="printable" style="width:844px;">
-    
-        <table cellpadding="0" cellspacing="0" class="style1">
-        
-            <tr>
-                <td id="Hederprint" runat="server" colspan="2">
-                    <asp:Image ID="Image21" runat="server" 
-                         Width="844px" Height="106px" ImageUrl="~/corporate/business/WebImages/i2i_lh.jpg" /></td>
-            </tr>
-           
-          
-            <tr>
-                <td class="style5" colspan="2">
-                    &nbsp;</td>
-            </tr>
-            <tr>
-                <td class="style5" colspan="2">
-                    <span lang="en-us"><span class="style6">&nbsp;</span><span class="style9">PURCHASSE</span></span></td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    &nbsp;</td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <table width="100%" cellpadding="0" cellspacing="0" class="tableOne">
-                        <tr>
-                            <td style="width:50%">
-                                Purchasse No:<span lang="en-us"> </span><asp:Label ID="lblpurches_id" runat="server"></asp:Label>
-                            </td>
-                            <td style="text-align:right; width:50%; padding:0px 5px 0px 0px;">
-                                <span lang="en-us">&nbsp;</span>Purchasse Date:<span lang="en-us"> </span>
-                                <asp:Label ID="lblpurches_date" runat="server"></asp:Label>
-                            </td>
-                        </tr>
-                        <%--<tr>
+        <div id="printable" style="width: 844px;">
+
+            <table cellpadding="0" cellspacing="0" class="style1">
+
+                <tr>
+                    <td id="Hederprint" runat="server" colspan="2">
+                        <asp:Image ID="Image21" runat="server"
+                            Width="844px" Height="140px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" /></td>
+                </tr>
+
+
+                <tr>
+                    <td class="style5" colspan="2">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td class="style5" colspan="2">
+                        <span lang="en-us"><span class="style6">&nbsp;</span><span class="style9">PURCHASE ORDER</span></span></td>
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <table width="100%" cellpadding="0" cellspacing="0" class="tableOne">
+                            <tr>
+                                <td style="width: 50%">Purchasse No:<span lang="en-us"> </span>
+                                    <asp:Label ID="lblpurches_id" runat="server"></asp:Label>
+                                </td>
+                                <td style="text-align: right; width: 50%; padding: 0px 5px 0px 0px;">
+                                    <span lang="en-us">&nbsp;</span>Purchasse Date:<span lang="en-us"> </span>
+                                    <asp:Label ID="lblpurches_date" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+                            <%--<tr>
                             <td style="width:50%">
                                 Service Tax Registration No:
                                 <asp:Label ID="lblservicetax_re" runat="server"></asp:Label>
@@ -200,21 +274,19 @@
                                 <asp:Label ID="lblpan" runat="server"></asp:Label>
                             </td>
                         </tr>--%>
-                    </table>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    &nbsp;</td>
-            </tr>
-            <tr>
-                <td style="width:50%; padding:0px 0px 0px 5px; font:normal 14px/16px Calibri;">
-                    <span lang="en-us" class="style11">To</span><span lang="en-us">,</span>&nbsp;</td>
-                <td style="text-align:right; width:50%; padding:0px 5px 0px 0px; font:normal 14px/16px Calibri;">
-                    &nbsp;</td>
-            </tr>
-            
-           <%-- <tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%; padding: 0px 0px 0px 5px; font: normal 14px/16px Calibri;">
+                        <span lang="en-us" class="style11">To</span><span lang="en-us">,</span>&nbsp;</td>
+                    <td style="text-align: right; width: 50%; padding: 0px 5px 0px 0px; font: normal 14px/16px Calibri;">&nbsp;</td>
+                </tr>
+
+                <%-- <tr>
                 <td colspan="2" style="padding:0px 0px 0px 5px; font:normal 14px/16px Calibri;">
                     <asp:Label ID="lblrepresentativeName" runat="server" CssClass="style11"></asp:Label>
                 </td>
@@ -225,84 +297,92 @@
                     <asp:Label ID="lblrepresentativedesignation" runat="server" CssClass="style11"></asp:Label>
                 </td>
             </tr>--%>
-           
-            <tr>
-                <td colspan="2" style="padding:0px 0px 0px 5px; font:normal 14px/16px Calibri;">
-                    <asp:Label ID="lblcompanyName" runat="server" CssClass="style11"></asp:Label>
-                </td>
-            </tr>
-           
-            <tr>
-                <td colspan="2" style="padding:0px 0px 0px 5px; font:normal 14px/16px Calibri;">
-                    <asp:Label ID="lbladdress1" runat="server" CssClass="style11"></asp:Label>
-                    <br />
-                    <asp:Label ID="lbladdress2" runat="server" CssClass="style11"></asp:Label>
-                </td>
-            </tr>
-           
-            <tr>
-                <td colspan="2" style="padding:0px 0px 0px 5px; font:normal 14px/16px Calibri;">
-                    <asp:Label ID="lblcity" runat="server" CssClass="style11"></asp:Label>
-                    -<asp:Label ID="lblPin" runat="server" CssClass="style11"></asp:Label>
-                </td>
-            </tr>
-           
-            
-            <tr>
-                <td colspan="2" style="padding:0px 0px 0px 5px; font:normal 14px/16px Calibri;">
-                    <asp:Label ID="lblstate" runat="server" CssClass="style11"></asp:Label>
-                </td>
-            </tr>
-           
-            
-            <tr>
-                <td colspan="2" style="padding:0px 0px 0px 5px; font:normal 14px/16px Calibri;">
-                    &nbsp;</td>
-            </tr>
-          
-            <tr>
-                <td colspan="2" style="border:1px solid #bfbfbf;">
-                    <asp:DataList ID="DataList1" runat="server" Width="100%" >
-                     <HeaderTemplate>
-                        <table width="100%" border="0" cellpadding="0" cellspacing="0" class="table1">
-                                <tr>
-                                        <td style="width:8%;text-align:center;"><asp:Label runat="server" ID="tupe_ofcirtificate" Text="S.No." Font-Bold="true" style="font-family: Arial; font-size: small; font-weight:bold;"></asp:Label></td>
-                                        <td style="width:47%;text-align:center;"><asp:Label runat="server" ID="no_of_sur" Text="Particulars" Font-Bold="true" style="font-family: Arial; font-size: small; font-weight:bold;"></asp:Label></td>
-                                    <td style="width:10%;text-align:center;"><asp:Label runat="server" ID="Label1" Text="Qnty" Font-Bold="true" style="font-family: Arial; font-size: small; font-weight:bold;"></asp:Label></td>
-                                        <td style="width:10%;text-align:center;"><asp:Label runat="server" ID="Label4" Text="Rate" Font-Bold="true" style="font-family: Arial; font-size: small; font-weight:bold;"></asp:Label></td>
-                                        <td style="width:10%;text-align:center;"><asp:Label runat="server" ID="Label8" Text="Tax" Font-Bold="true" style="font-family: Arial; font-size: small; font-weight:bold;"></asp:Label></td>
-                                    <td style="width:15%;text-align:center;"><asp:Label runat="server" ID="Label3" Text="Amount" Font-Bold="true" style="font-family: Arial; font-size: small; font-weight:bold;"></asp:Label></td>
-                                    
-                                </tr>
-                        </table>
-                </HeaderTemplate>
-                        <ItemTemplate>
-                        <table width="100%"  border="0" cellpadding="0" cellspacing="0" class="table1">
-                            <tr>
-                                <td style="width:8%;border-top:none; text-align:center;"><asp:Label ID="qtation_survice" runat="server" Text='<%# Eval("sl_no") %>' style="font-family: Arial; font-size: small;"></asp:Label></td>
-                                <td style="width:47%;border-top:none; text-align:left; padding:0px 2px 0px 5px;"><asp:Label ID="survice_month" runat="server" Text='<%# Eval("Product_name") %>' style="font-family: Arial; font-size: small;"></asp:Label></td>
-                                <td style="width:10%;border-top:none; text-align:center;"><asp:Label ID="Label5" runat="server" Text='<%# Eval("Quantity") %>' style="font-family: Arial; font-size: small;"></asp:Label></td>
-                                <td style="width:10%;border-top:none; text-align:center;"><asp:Label ID="Label2" runat="server" Text='<%# Eval("vendor_rate") %>' style="font-family: Arial; font-size: small;"></asp:Label></td>
-                                <td style="width:10%;border-top:none; text-align:center;">
-                                    <asp:Label ID="Label9" runat="server" Text='<%# Eval("tax_rate") %>' style="font-family: Arial; font-size: small;"></asp:Label>
-            
-                                </td>
-                                <td style="width:15%;border-top:none; text-align:center;">
-                                    <asp:Label ID="Label7" runat="server" Text='<%# Eval("purches_rate") %>' style="font-family: Arial; font-size: small;"></asp:Label>
-                                       
-                                </td>
-                                
-                            </tr>
-                            </table>
-                        </ItemTemplate>
-                    </asp:DataList>
-                   
-                   
+
+                <tr>
+                    <td colspan="2" style="padding: 0px 0px 0px 5px; font: normal 14px/16px Calibri;">
+                        <asp:Label ID="lblcompanyName" runat="server" CssClass="style11"></asp:Label>
                     </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    &nbsp;
+                </tr>
+
+                <tr>
+                    <td colspan="2" style="padding: 0px 0px 0px 5px; font: normal 14px/16px Calibri;">
+                        <asp:Label ID="lbladdress1" runat="server" CssClass="style11"></asp:Label>
+                        <br />
+                        <asp:Label ID="lbladdress2" runat="server" CssClass="style11"></asp:Label>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="2" style="padding: 0px 0px 0px 5px; font: normal 14px/16px Calibri;">
+                        <asp:Label ID="lblcity" runat="server" CssClass="style11"></asp:Label>
+                        -<asp:Label ID="lblPin" runat="server" CssClass="style11"></asp:Label>
+                    </td>
+                </tr>
+
+
+                <tr>
+                    <td colspan="2" style="padding: 0px 0px 0px 5px; font: normal 14px/16px Calibri;">
+                        <asp:Label ID="lblstate" runat="server" CssClass="style11"></asp:Label>
+                    </td>
+                </tr>
+
+
+                <tr>
+                    <td colspan="2" style="padding: 0px 0px 0px 5px; font: normal 14px/16px Calibri;">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td colspan="2" style="border: 1px solid #bfbfbf;">
+                        <asp:DataList ID="DataList1" runat="server" Width="100%">
+                            <HeaderTemplate>
+                                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="table1">
+                                    <tr>
+                                        <td style="width: 8%; text-align: center;">
+                                            <asp:Label runat="server" ID="tupe_ofcirtificate" Text="S.No." Font-Bold="true" Style="font-family: Arial; font-size: small; font-weight: bold;"></asp:Label></td>
+                                        <td style="width: 47%; text-align: center;">
+                                            <asp:Label runat="server" ID="no_of_sur" Text="Particulars" Font-Bold="true" Style="font-family: Arial; font-size: small; font-weight: bold;"></asp:Label></td>
+                                        <td style="width: 10%; text-align: center;">
+                                            <asp:Label runat="server" ID="Label1" Text="Qnty" Font-Bold="true" Style="font-family: Arial; font-size: small; font-weight: bold;"></asp:Label></td>
+                                        <td style="width: 10%; text-align: center;">
+                                            <asp:Label runat="server" ID="Label4" Text="Rate" Font-Bold="true" Style="font-family: Arial; font-size: small; font-weight: bold;"></asp:Label></td>
+                                        <td style="width: 10%; text-align: center;">
+                                            <asp:Label runat="server" ID="Label8" Text="Tax" Font-Bold="true" Style="font-family: Arial; font-size: small; font-weight: bold;"></asp:Label></td>
+                                        <td style="width: 15%; text-align: center;">
+                                            <asp:Label runat="server" ID="Label3" Text="Amount" Font-Bold="true" Style="font-family: Arial; font-size: small; font-weight: bold;"></asp:Label></td>
+
+                                    </tr>
+                                </table>
+                            </HeaderTemplate>
+                            <ItemTemplate>
+                                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="table1">
+                                    <tr>
+                                        <td style="width: 8%; border-top: none; text-align: center;">
+                                            <asp:Label ID="qtation_survice" runat="server" Text='<%# Eval("sl_no") %>' Style="font-family: Arial; font-size: small;"></asp:Label></td>
+                                        <td style="width: 47%; border-top: none; text-align: left; padding: 0px 2px 0px 5px;">
+                                            <asp:Label ID="survice_month" runat="server" Text='<%# Eval("Product_name") %>' Style="font-family: Arial; font-size: small;"></asp:Label></td>
+                                        <td style="width: 10%; border-top: none; text-align: center;">
+                                            <asp:Label ID="Label5" runat="server" Text='<%# Eval("Quantity") %>' Style="font-family: Arial; font-size: small;"></asp:Label></td>
+                                        <td style="width: 10%; border-top: none; text-align: center;">
+                                            <asp:Label ID="Label2" runat="server" Text='<%# Eval("vendor_rate") %>' Style="font-family: Arial; font-size: small;"></asp:Label></td>
+                                        <td style="width: 10%; border-top: none; text-align: center;">
+                                            <asp:Label ID="Label9" runat="server" Text='<%# Eval("tax_rate") %>' Style="font-family: Arial; font-size: small;"></asp:Label>
+
+                                        </td>
+                                        <td style="width: 15%; border-top: none; text-align: center;">
+                                            <asp:Label ID="Label7" runat="server" Text='<%# Eval("purches_rate") %>' Style="font-family: Arial; font-size: small;"></asp:Label>
+
+                                        </td>
+
+                                    </tr>
+                                </table>
+                            </ItemTemplate>
+                        </asp:DataList>
+
+
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp;
                     <%--<table cellpadding="0" cellspacing="0" width="100%";>
                          
                             <tr>
@@ -337,29 +417,28 @@
                             </tr>
                         </table>--%>
                     </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    &nbsp; <strong><asp:Label ID="labeltax1" runat="server"></asp:Label>
-                    :-<asp:Label ID="lblsail_rate" runat="server"></asp:Label>
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp; <strong>
+                        <asp:Label ID="labeltax1" runat="server"></asp:Label>
+                        :-<asp:Label ID="lblsail_rate" runat="server"></asp:Label>
                     </strong>
                     </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                &nbsp;
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp;
                     <strong><span class="auto-style2">Total Purchasse Rate:-</span><asp:Label ID="lblpurches_rate" runat="server"></asp:Label>
                     </strong>
                     </td>
-            </tr>
-            <tr>
-                <%--<td colspan="2" bgcolor="#002060" class="style8">
+                </tr>
+                <tr>
+                    <%--<td colspan="2" bgcolor="#002060" class="style8">
                     Payment <span lang="en-us">T</span>erms</td>--%>
-                <td colspan="2">&nbsp;</td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <%--<table width="100%" cellpadding="0" cellspacing="0" class="tableTwo">
+                    <td colspan="2">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <%--<table width="100%" cellpadding="0" cellspacing="0" class="tableTwo">
                         <tr>
                             <td style="width:50%; text-align:justify;">
                                 Payment for service shall be payable in advance/within 15 days issue of Invoice. 
@@ -394,78 +473,67 @@
                         </tr>
                     </table>--%>
                     </td>
-            </tr>
-            
-           
-          
-            <tr>
-                <td colspan="2">
-                    &nbsp;</td>
-            </tr>
-            
-           
-          
-            <tr>
-                <td colspan="2">
-                    &nbsp;</td>
-            </tr>
-            
-           
-          
-            <tr>
-                <td colspan="2" class="style12">
-                    &nbsp;</td>
-            </tr>
+                </tr>
 
-            <tr>
-                <td colspan="2" class="style12">
-                    &nbsp;</td>
-            </tr>
 
-            <tr>
-                <td colspan="2" class="style12">
-                    &nbsp;</td>
-            </tr>
-            
-            <tr>
-                <td colspan="2" style="text-align:right; padding:4px 30px 4px 2px;">
-                    <span lang="en-us">&nbsp;<asp:Image ID="Image4" runat="server" 
-                        Height="73px" Width="119px" ImageUrl="~/corporate/business/WebImages/Stamp.jpg" />
+
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                </tr>
+
+
+
+                <tr>
+                    <td colspan="2">&nbsp;</td>
+                </tr>
+
+
+
+                <tr>
+                    <td colspan="2" class="style12">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td colspan="2" class="style12">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td colspan="2" class="style12">&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td colspan="2" style="text-align: right; padding: 4px 30px 4px 2px;">
+                        <span lang="en-us">&nbsp;<asp:Image ID="Image4" runat="server"
+                            Height="73px" Width="119px" ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
                         </span>&nbsp;</td>
-            </tr>
-          
-            <tr>
-                <td colspan="2" class="auto-style1" style="text-align:right; padding:4px 7px 4px 2px;">
-                    Authorized Signatory</td>
-            </tr>
-            
-            <tr>
-                <td colspan="2">
-                    <asp:Button ID="Button1" runat="server" class="hide" onclick="Button1_Click" 
-                        OnClientClick="document.getElementById('Hederprint').className ='header' ;document.getElementById('footerrprint').className ='Foter'; window.print()" 
-                        Text="Print Without Header" BackColor="#005886" BorderStyle="Outset" 
-                        ForeColor="White" />
-                        <span lang="en-us">&nbsp;<asp:Button ID="Button2" runat="server" 
-                        class="hide" onclick="Button2_Click" 
-                        OnClientClick="document.getElementById('Hederprint').className ='header1' ;document.getElementById('footerrprint').className ='Foter1'; window.print()" 
-                        Text="Print With Header" BackColor="#005886" BorderStyle="Outset" 
-                        ForeColor="White" />
-                        </span></td>
-            </tr>
-            
-         <tr>
-                <td id="footerrprint" runat="server" colspan="2">
-                
-                <asp:Image ID="Image22" runat="server" 
-                         Width="844px" Height="100px" ImageUrl="~/corporate/business/WebImages/i2i_lh_b.jpg" />
-                        
+                </tr>
+
+                <tr>
+                    <td colspan="2" class="style12" style="text-align: right; padding: 4px 7px 4px 2px;">Authorized Signatory</td>
+                </tr>
+                <tr>
+                    <td id="footerrprint" runat="server" colspan="2">
+
+                        <asp:Image ID="Image22" runat="server"
+                            Width="844px" Height="180px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrbtm.png" />
+
                     </td>
-            </tr>
-            
-           
-        </table>
-   
-    </div>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <asp:Button ID="Button1" runat="server" class="hide" OnClick="Button1_Click"
+                            OnClientClick="document.getElementById('Hederprint').className ='header' ;document.getElementById('footerrprint').className ='Foter'; window.print()"
+                            Text="Print Without Header" BackColor="#005886" BorderStyle="Outset"
+                            ForeColor="White" />
+                        <span lang="en-us">&nbsp;<asp:Button ID="Button2" runat="server"
+                            class="hide" OnClick="Button2_Click"
+                            OnClientClick="document.getElementById('Hederprint').className ='header1' ;document.getElementById('footerrprint').className ='Foter1'; window.print()"
+                            Text="Print With Header" BackColor="#005886" BorderStyle="Outset"
+                            ForeColor="White" />
+                        </span></td>
+                </tr>
+            </table>
+        </div>
     </form>
 </body>
 </html>
