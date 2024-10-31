@@ -84,8 +84,7 @@
     <form id="form1" runat="server">
         <table border='0' width='844px'>
             <thead id='header'>
-                <tr><th style='width: 100%'><img src="../WebImages/I2ILHHeader1.png" width="100%" /></th></tr>
-                <tr><th></th></tr>
+                <tr><th style='width: 100%'><img src="../WebImages/flame-ex_hdrtop.png" width="100%"></th></tr>
                 <tr><th></th></tr>
                 
             </thead>
@@ -230,14 +229,14 @@
                             <tr>
                                 <td  class="gap" style="">&nbsp</td>
                             </tr>
-                            <tr>
+                            <%--<tr>
                                 <td class="" style="text-align: justify; font-weight: 100">
                                      <span class='bold'>CREATIVE VISUAL DISPLAY PRINTING PRODUCTS:</span> We offer an extensive range of specially designed Creative Visual Display Printing Products designed in English as well as relevant Local Languages comprising of Department ID Boards, Customised Safety Signages, Sign Boards, Banners, Evacuation Plans & Posters for BSCI, ETI, WRAP, SA8000, CT-PAT, Quality, Environmental Concerns, Occupational Health & Safety, Minimum Wage Abstracts, Factory's Act Abstracts, Fire Safety and various Management Systems Policies & Procedures, Machine Instructions etc. These Creative Visual Display Printing Products are available in Art Paper, Gumming Sheets, Vinyl Sunboard with Lamination, Canvas, Acrylic Sheets etc
                                 </td>
                             </tr>
                             <tr>
                                 <td  class="gap" style="">&nbsp</td>
-                            </tr>
+                            </tr>--%>
                             <tr>
                                 <td class="" style="text-align: justify; font-weight: 100">
                                    <span class='bold'>CORPORATE BRANDING SOLUTIONS:</span> We offer an extensive range of customised Visiting cards, Brochures, Catalogues, Annual Reports, Diaries, Calendars, Books, Magazines, Labels, Stationeries, POP Materials, Flyers, Corporate Invites, Corporate Profile, Note Books, Note Pads, Journals, Employee ID Cards, Fire Trained & First Trained Batches, Websites etc.
@@ -254,14 +253,14 @@
                             <tr>
                                 <td  class="gap" style="">&nbsp</td>
                             </tr>
-                            <tr>
+                            <%--<tr>
                                 <td class="" style="text-align: justify; font-weight: 100">
                                      	<span class='bold'>CCTV SURVEILLANCE SYSTEM:</span> The Security Systems that we offer are high on demand due to their effective Performance & Advanced Technology. The Salient features of our CCTV Surveillance Systems are High Security, Efficient Performance & Clear Images
                                 </td>
                             </tr>
                             <tr>
                                 <td  class="gap" style="">&nbsp</td>
-                            </tr>
+                            </tr>--%>
                             <tr>
                                 <td class="" style="text-align: justify; font-weight: 100">
                                      	<span class='bold'>INDUSTRIAL SAFETY ITEMS & PPEs:</span> Our complete gamut of Industrial Safety Items & Personal Protective Equipments including First Aid Kit & Medical Supplies; Suggestion Boxes, Bay Marking Tapes, Rubber Mats etc., delivered by us is highly appreciated for their Rugged Construction, Compact Designs, Easy Installation, Optimum Performance, and Longer Functional Life.
@@ -270,11 +269,11 @@
                             <tr>
                                 <td  class="gap" style="">&nbsp</td>
                             </tr>
-                            <tr>
+                            <%--<tr>
                                 <td class="" style="text-align: justify; font-weight: 100;">
                                      	<span class='bold'>FIRE SAFETY INSPECTION:</span> Aminrup Technologies conducts Fire Safety Inspections to assess the Fire Safety Procedures, Installations, Fire Safety Hazards at Workplace & verify whether the Occupier of the Building is complying with the Statutory & Legislative Requirements, National Building Code of India, Relevant Indian Standards on Fire Prevention and Life Safety Measures prevailed from time to time. 
                                 </td>
-                            </tr>
+                            </tr>--%>
 
                             <tr>
                                 <td  class="gap" style="">&nbsp</td>
@@ -605,7 +604,7 @@
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR Aminrup Technologies</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR FLAME-EX</td>
                             </tr>
                             
                             <tr>
@@ -622,7 +621,7 @@
                 </td></tr></tbody>
         </table>
         <table id='footer' border='0' width='844px'>
-            <tr><td style='height: auto;' width='100%'><img src='../WebImages/I2ILHFooter.png' width='100%' /></td></tr>
+            <tr><td style='height: auto;' width='100%'><img src="../WebImages/flame-ex_hdrbtm.png" width='100%' /></td></tr>
         </table>
 
         <asp:Button ID="Button1" runat="server" OnClick="Button1_Click" OnClientClick="document.getElementById('header').className ='header'; document.getElementById('footer').className ='footer'; window.print()" Text="Print Without Header & Footer" />

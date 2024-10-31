@@ -12,11 +12,15 @@ namespace Bill_Software.corporate.business.app
     public partial class WebForm11 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        
+
         public DataTable first_datatable;
         public static DataTable Dt = new DataTable("Table");
         public static double tota_purchesrate1 = 0;
         public static double total_tax_rate_details = 0;
+
+        private List<string> vatRates;
+        private List<string> serviceTaxRates;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -38,6 +42,38 @@ namespace Bill_Software.corporate.business.app
                 txtneftdate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
                 txtpaymentdate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
             }
+        }
+
+        private void LoadTaxRates()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            // Fetch VAT Rates
+            string vatQuery = "Select Vat_Rate from tbl_Vat_Master";
+            SqlCommand vatCmd = new SqlCommand(vatQuery, DbCL.Conn);
+            SqlDataReader vatRdr = vatCmd.ExecuteReader();
+
+            vatRates = new List<string> { "NA" }; // Initialize with "NA"
+            while (vatRdr.Read())
+            {
+                vatRates.Add(vatRdr[0].ToString());
+            }
+            vatRdr.Close();
+
+            // Fetch Service Tax Rates
+            string serviceTaxQuery = "Select Service_tax from tbl_Service_master";
+            SqlCommand serviceTaxCmd = new SqlCommand(serviceTaxQuery, DbCL.Conn);
+            SqlDataReader serviceTaxRdr = serviceTaxCmd.ExecuteReader();
+
+            serviceTaxRates = new List<string> { "NA" }; // Initialize with "NA"
+            while (serviceTaxRdr.Read())
+            {
+                serviceTaxRates.Add(serviceTaxRdr[0].ToString());
+            }
+            serviceTaxRdr.Close();
+
+            DbCL.Conn.Close();
         }
 
         protected void Button1_Click(object sender, EventArgs e)
@@ -77,6 +113,8 @@ namespace Bill_Software.corporate.business.app
 
         protected void Button2_Click(object sender, EventArgs e)
         {
+            LoadTaxRates();
+
             Panel2.Visible = true;
             if (RadioButtonList1.SelectedIndex == 0)
             {
@@ -89,6 +127,7 @@ namespace Bill_Software.corporate.business.app
                 string cmdstring = "select Service_code,Service_name  from tbl_Service where Service_name='" + cmbproduct_service.Text + "'";
                 Binddata1(cmdstring);
             }
+
             cmbproduct_service.SelectedIndex = 0;
 
             //string listProduct_Service1 = null;
@@ -114,10 +153,79 @@ namespace Bill_Software.corporate.business.app
             gd_Service_Product.DataSource = Dt;
             gd_Service_Product.DataBind();
             ViewState["dt"] = Dt;
+            
+        }
 
+        private void Binddata1New(SqlCommand cmd)
+        {
+            // Assuming DbCL already has methods to handle connection management
+            DbCL.ConnectDb(); // Establish the database connection
+            cmd.Connection = DbCL.Conn; // Assign the connection to the SqlCommand
+            // Initialize a DataTable and fill it directly using SqlDataAdapter
+            DataTable dt = new DataTable();
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            da.Fill(dt); // Fill the DataTable with data from the command
+
+            if (dt.Rows.Count > 0) // Check if there is any data
+            {
+                first_datatable = dt;
+
+                if (Label2.Text == "1")
+                {
+                    newgrid1();
+                }
+                else
+                {
+                    newgrid();
+                }
+
+                Label2.Text = (Convert.ToInt32(Label2.Text) + 1).ToString();
+            }
+            DbCL.Conn.Close(); // Close the connection
         }
 
         private void Binddata1(string cmdstring)
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            try
+            {
+                // Create and configure the SqlCommand
+                SqlCommand com1 = new SqlCommand(cmdstring, DbCL.Conn);
+
+                // Use SqlDataAdapter to fill the DataTable directly
+                DataTable dt = new DataTable();
+                SqlDataAdapter da = new SqlDataAdapter(com1);
+                da.Fill(dt); // Fill the DataTable with data
+
+                // Check if the DataTable has rows to process
+                if (dt.Rows.Count > 0)
+                {
+                    first_datatable = dt;
+
+                    // Call the appropriate grid function based on Label2.Text
+                    if (Label2.Text == "1")
+                    {
+                        newgrid1();
+                    }
+                    else
+                    {
+                        newgrid();
+                    }
+
+                    // Update Label2 to ensure the function executes only once
+                    Label2.Text = (Convert.ToInt32(Label2.Text) + 1).ToString();
+                }
+            }
+            finally
+            {
+                // Close the database connection in the finally block to ensure it always closes
+                DbCL.Conn.Close();
+            }
+        }
+
+
+        private void Binddata1Org(string cmdstring)
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
@@ -174,12 +282,42 @@ namespace Bill_Software.corporate.business.app
                 //dr["Sale_rate"] = Sale_rate1.ToString();
                 //dr["service_Tax_Rate"] = service_Tax_Rate1.ToString();
                 Dt.Rows.Add(dr);
+            }
+        }
 
+        private void newgrid1New()
+        {
+            DataTable dt = first_datatable; // Get the existing data table
 
+            // Create a new DataTable to hold the results
+            DataTable Dt = new DataTable();
 
+            // Add columns to the new DataTable
+            Dt.Columns.Add(new DataColumn("Ser_pro_code", typeof(string)));
+            Dt.Columns.Add(new DataColumn("Ser_pro_Name", typeof(string)));
+            // Uncomment these if you decide to use them in the future
+            // Dt.Columns.Add(new DataColumn("Vendor_rate", typeof(string)));
+            // Dt.Columns.Add(new DataColumn("Sale_rate", typeof(string)));
+            // Dt.Columns.Add(new DataColumn("service_Tax_Rate", typeof(string)));
+
+            // Iterate over rows in the first DataTable
+            foreach (DataRow row in dt.Rows)
+            {
+                DataRow dr = Dt.NewRow(); // Create a new row for the new DataTable
+                dr["Ser_pro_code"] = row[0]?.ToString(); // Use null-conditional operator for safety
+                dr["Ser_pro_Name"] = row[1]?.ToString(); // Use null-conditional operator for safety
+
+                // Uncomment these if you decide to use them in the future
+                // dr["Vendor_rate"] = row[2]?.ToString();
+                // dr["Sale_rate"] = row[3]?.ToString();
+                // dr["service_Tax_Rate"] = row[4]?.ToString();
+
+                Dt.Rows.Add(dr); // Add the new row to the new DataTable
             }
 
+            // Now, you can use Dt as needed
         }
+
 
         private void newgrid()
         {
@@ -208,50 +346,69 @@ namespace Bill_Software.corporate.business.app
 
         protected void gd_Service_Product_RowDataBound(object sender, GridViewRowEventArgs e)
         {
+            //if (e.Row.RowType == DataControlRowType.DataRow)
+            //{
+            //    //DropDownList dp = (DropDownList)e.Row.Cells[6].FindControl("service_Tax_Rate");
+            //    DropDownList dp1 = (DropDownList)e.Row.Cells[4].FindControl("vat_parsentage");
+
+
+            //    DbCL.Sqlconnection();
+
+            //    DbCL.ConnectDb();
+            //    string cmdString = "";
+            //    if (RadioButtonList1.SelectedIndex == 0)
+            //    {
+            //        cmdString = "Select Vat_Rate from tbl_Vat_Master";
+            //    }
+            //    else
+            //    {
+            //        cmdString = "Select Service_tax from tbl_Service_master";
+            //    }
+            //    SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
+
+            //    SqlDataReader Rdr;
+            //    Rdr = cmd.ExecuteReader();
+            //    dp1.Items.Add("NA");
+            //    while (Rdr.Read())
+            //    {
+            //        dp1.Items.Add(Rdr[0].ToString());
+            //    }
+
+            //    DbCL.Conn.Close();
+            //    //DbCL.Sqlconnection();
+
+            //    //DbCL.ConnectDb();
+            //    //string cmdString1 = "Select Service_tax from tbl_Service_master";
+            //    //SqlCommand cmd1 = new SqlCommand(cmdString1, DbCL.Conn);
+
+            //    //SqlDataReader Rdr1;
+            //    //Rdr1 = cmd1.ExecuteReader();
+
+            //    //while (Rdr1.Read())
+            //    //{
+            //    //    dp.Items.Add(Rdr1["Service_tax"].ToString());
+            //    //}
+
+            //    //DbCL.Conn.Close();
+            //}
+
+            //Above whole code is commented to use single databse query and read from the list
+
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                //DropDownList dp = (DropDownList)e.Row.Cells[6].FindControl("service_Tax_Rate");
                 DropDownList dp1 = (DropDownList)e.Row.Cells[4].FindControl("vat_parsentage");
 
+                // Clear existing items
+                dp1.Items.Clear();
 
-                DbCL.Sqlconnection();
-
-                DbCL.ConnectDb();
-                string cmdString = "";
-                if (RadioButtonList1.SelectedIndex == 0)
+                if (RadioButtonList1.SelectedIndex == 0) // VAT Rates
                 {
-                    cmdString = "Select Vat_Rate from tbl_Vat_Master";
+                    dp1.Items.AddRange(vatRates.Select(rate => new ListItem(rate)).ToArray());
                 }
-                else
+                else // Service Tax Rates
                 {
-                    cmdString = "Select Service_tax from tbl_Service_master";
+                    dp1.Items.AddRange(serviceTaxRates.Select(rate => new ListItem(rate)).ToArray());
                 }
-                SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
-
-                SqlDataReader Rdr;
-                Rdr = cmd.ExecuteReader();
-                dp1.Items.Add("NA");
-                while (Rdr.Read())
-                {
-                    dp1.Items.Add(Rdr[0].ToString());
-                }
-
-                DbCL.Conn.Close();
-                //DbCL.Sqlconnection();
-
-                //DbCL.ConnectDb();
-                //string cmdString1 = "Select Service_tax from tbl_Service_master";
-                //SqlCommand cmd1 = new SqlCommand(cmdString1, DbCL.Conn);
-
-                //SqlDataReader Rdr1;
-                //Rdr1 = cmd1.ExecuteReader();
-
-                //while (Rdr1.Read())
-                //{
-                //    dp.Items.Add(Rdr1["Service_tax"].ToString());
-                //}
-
-                //DbCL.Conn.Close();
             }
         }
 
@@ -562,25 +719,25 @@ namespace Bill_Software.corporate.business.app
             Button1.Visible = true;
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select * from tbl_Vendor where Vendor_Name='"+ cmbvendor.Text +"'";
-            SqlCommand cmd = new SqlCommand(cmdstring,DbCL.Conn);
+            string cmdstring = "select * from tbl_Vendor where Vendor_Name='" + cmbvendor.Text + "'";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
-            if(re.Read())
+            if (re.Read())
             {
                 lblvendor_id.Text = re["Vendor_Id"].ToString();
-                txtAddress1.Text=re["Address1"].ToString();
-                txtAddress2.Text=re["Address2"].ToString();
-                cmbcity.Text=re["City"].ToString();
-                txtPin.Text=re["pin"].ToString();
+                txtAddress1.Text = re["Address1"].ToString();
+                txtAddress2.Text = re["Address2"].ToString();
+                cmbcity.Text = re["City"].ToString();
+                txtPin.Text = re["pin"].ToString();
                 cmbState.Text = re["State"].ToString();
-                txtWebsite.Text=re["Com_web_site"].ToString();
-                txtEmail.Text=re["Com_email"].ToString();
-                txtPhone.Text=re["Com_phone"].ToString();
-                txtFax.Text=re["Com_Fax"].ToString();
-                txtRepresentativeName.Text=re["Rep_Name"].ToString();
-                txtRepresantativeDesig.Text=re["Rep_Desig"].ToString();
-                txtRepresentativePhone.Text=re["Rep_phone"].ToString();
-                txtRepresentativeEmail.Text=re["Rep_email"].ToString();
+                txtWebsite.Text = re["Com_web_site"].ToString();
+                txtEmail.Text = re["Com_email"].ToString();
+                txtPhone.Text = re["Com_phone"].ToString();
+                txtFax.Text = re["Com_Fax"].ToString();
+                txtRepresentativeName.Text = re["Rep_Name"].ToString();
+                txtRepresantativeDesig.Text = re["Rep_Desig"].ToString();
+                txtRepresentativePhone.Text = re["Rep_phone"].ToString();
+                txtRepresentativeEmail.Text = re["Rep_email"].ToString();
                 txtservicetaxNo.Text = re["Service_tax_No"].ToString();
                 txtpanNo.Text = re["Pan_No"].ToString();
                 txtvat.Text = re["Vat_No"].ToString();
@@ -605,7 +762,7 @@ namespace Bill_Software.corporate.business.app
 
             }
 
-            
+
         }
 
         private void InserttotalDate()
@@ -652,7 +809,7 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@Client_Id", lblvendor_id.Text);
             cmd.Parameters.AddWithValue("@Net_amount", lblpaayment_amount.Text);
 
-            
+
             cmd.Parameters.AddWithValue("@Given_amount", txtpaymentamount.Text);
             cmd.Parameters.AddWithValue("@type", RadioButtonList2.Text);
             cmd.Parameters.AddWithValue("@Ch_no", no.ToString());

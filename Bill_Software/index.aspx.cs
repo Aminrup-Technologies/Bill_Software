@@ -64,10 +64,17 @@ namespace Bill_Software
             }
             if (cmbLoginAs.SelectedIndex == 0 || cmbLoginAs.SelectedIndex == 1)
             {
-                string cmdString = "select User_Id,Password from tbl_login where User_Id='" + txtUserName.Text.Trim() + "'";
+                //string cmdString = "select TOP 1 User_Id, Password from tbl_login where User_Id='" + txtUserName.Text.Trim() + "'";
+
+                string cmdString = "SELECT User_Id, Password FROM tbl_login WHERE User_Id = @UserId";
+                
+
                 DbCL.Sqlconnection();
                 DbCL.ConnectDb();
+                //SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
                 SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
+                cmd.Parameters.AddWithValue("@UserId", txtUserName.Text.Trim());
+
                 SqlDataReader Rdr;
                 Rdr = cmd.ExecuteReader();
                 if (!Rdr.Read())
@@ -84,7 +91,9 @@ namespace Bill_Software
                     {
                         Session["USERID"] = txtUserName.Text;
                         Session["USERTYPE"] = cmbLoginAs.SelectedValue.ToString();
-                        Response.Redirect("~/corporate/business/app/home.aspx");
+                        Response.Redirect("~/corporate/business/app/home.aspx", false); // Avoids ThreadAbortException
+                        //The below line of code is commented by PB #31102024 to avoid the Exception
+                        //Response.Redirect("~/corporate/business/app/home.aspx");
                     }
                     else
                     {

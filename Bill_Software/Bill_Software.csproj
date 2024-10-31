@@ -382,6 +382,8 @@
     <Content Include="corporate\business\WebImages\edit_icon.png" />
     <Content Include="corporate\business\WebImages\Exclamation.png" />
     <Content Include="corporate\business\WebImages\factory.png" />
+    <Content Include="corporate\business\WebImages\flame-ex_hdrbtm.png" />
+    <Content Include="corporate\business\WebImages\flame-ex_hdrtop.png" />
     <Content Include="corporate\business\WebImages\I2ILOGO1.png" />
     <Content Include="corporate\business\WebImages\I2ILHHeader1.png" />
     <Content Include="corporate\business\WebImages\I2ILHFooter.png" />
@@ -390,6 +392,7 @@
     <Content Include="corporate\business\WebImages\I2Ilogo10.png" />
     <Content Include="corporate\business\WebImages\I2Ilogo15.png" />
     <Content Include="corporate\business\WebImages\I2Ilogo20.png" />
+    <Content Include="corporate\business\WebImages\I2Ilogo44.png" />
     <Content Include="corporate\business\WebImages\i2i_lh.jpg" />
     <Content Include="corporate\business\WebImages\i2i_lh_b.jpg" />
     <Content Include="corporate\business\WebImages\i2i_logo.png" />

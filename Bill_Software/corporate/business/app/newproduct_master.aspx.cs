@@ -23,6 +23,8 @@ namespace Bill_Software.corporate.business.app
                 DbCL.FillCombo(cmdProduct, "select ProductOrServiceCat from tbl_NewparentProduct order by id");
                 DbCL.FillCombo(cmbtax, "select Vat_Rate from tbl_New_Vat_Master order by ID");
                 txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+
+                //Products pre-loading in Page laod have been disabled initially and later only top 100 items are laoded
                 Binddata();
             }
 
@@ -32,7 +34,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Id,Product_code,ProductOrServiceCat,Product_catagory,Sail_Rate,Tax_Rate,Type,ProductName,Unit,Brand,parentId from tbl_NewProduct order by Id asc";
+            string cmdstring = "select top 100 Id,Product_code,ProductOrServiceCat,Product_catagory,Sail_Rate,Tax_Rate,Type,ProductName,Unit,Brand,parentId from tbl_NewProduct order by Id desc";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
@@ -216,7 +218,21 @@ namespace Bill_Software.corporate.business.app
                 //Session["ProductCode"] = ProductCode;
                 //Session["gstRate"] = gstRate;
                 Session["pid"] = pid;
+                BinddataByServiceCategory(pid);
             }
         }
+
+        private void BinddataByServiceCategory(int ParentId)
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Id,Product_code,ProductOrServiceCat,Product_catagory,Sail_Rate,Tax_Rate,Type,ProductName,Unit,Brand,parentId from tbl_NewProduct where parentId=@parentId order by Id asc";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            cmd.Parameters.AddWithValue("@parentId", ParentId);
+            DataList1.DataSource = cmd.ExecuteReader();
+            DataList1.DataBind();
+            DbCL.Conn.Close();
+        }
+
     }
 }

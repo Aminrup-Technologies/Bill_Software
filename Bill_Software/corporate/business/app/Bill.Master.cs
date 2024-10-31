@@ -25,7 +25,7 @@ namespace Bill_Software.corporate.business.app
 
             if (HttpContext.Current.Session["USERID"] == null)
             {
-                Response.Redirect("~/index.aspx");
+                Response.Redirect("~/index.aspx", false);
             }
             GetAdminName();
 
@@ -50,7 +50,7 @@ namespace Bill_Software.corporate.business.app
         private void GetMenuControl()
         {
             string UserName = Session["USERID"].ToString();
-            string query = "select Home,home1,settings,Dashboard,Data_Mastering,master_State,master_city,AddIndustry,PaymentPhase,AddPrimaryService,PrimaryServiceTerms,productparent,product_master,newproductparent,newproduct_master,Service_master,Vat_master,Service_Tax_Master,Expenses_Head,Vendor,New_vendor,View_vendor,Delete_vendor,Purches_exting_vendor,View_purches,seartch_purtch,Delete_purtches,Purchess_payment,add_payment_purchess,View_purchess_payment,Seartch_purchess_payments,Delete_purches_payment,Client,New_client,View_client,Delete_client,Representative,AddFactory,Quotatio,Create_quotation,View_quotation,Seartch_quotation,Delete_Quotation,Edit_quatation,challan,add_chalan,View_chalan,seartch_chalan,Delete_chalan,proforma,Add_proforma,View_proforma,Seartch_proforma,Delete_proforma,Invoice,Add_invoice,View_Invoice,seartch_invoice,Delete_invoice,Block_invoice,Payment,add_payment,View_payment,seartch_payment,Delete_payment,Epencess,general_expences,patty_cash_expences,view_expencess_head,view_patty_cash_expenses,Delete_general_expencess,Delete_patty_cash_expenses,Reports,Payment_due,Purchess_due,PurchaseRequisition,RequisitionManual,RequisitionManualView,RequisitionManualSearch,RequisitionManualDelete,Users,AddUser,ViewUser,SetQuatation,ProformaMail,InvoiceMail,PaymentMail,FinalPaymentInvoice from tbl_Designation where User_Id=@User_Id";
+            string query = "SELECT * FROM vw_FullDesignation WHERE User_Id=@User_Id";
             SqlParameter[] pram = {
                 new SqlParameter("@User_Id",UserName)
             };
@@ -854,7 +854,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnLogOut_Click(object sender, EventArgs e)
         {
-            Response.Redirect("~/index.aspx");
+            Response.Redirect("~/index.aspx", false);
         }
     }
 }

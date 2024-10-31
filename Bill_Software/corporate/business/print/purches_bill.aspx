@@ -431,14 +431,14 @@
                     </strong>
                     </td>
                 </tr>
-                <tr>
-                    <%--<td colspan="2" bgcolor="#002060" class="style8">
-                    Payment <span lang="en-us">T</span>erms</td>--%>
+                <%--<tr>
+                    <td colspan="2" bgcolor="#002060" class="style8">
+                    Payment <span lang="en-us">T</span>erms</td>
                     <td colspan="2">&nbsp;</td>
-                </tr>
-                <tr>
+                </tr>--%>
+                <%--<tr>
                     <td colspan="2">
-                        <%--<table width="100%" cellpadding="0" cellspacing="0" class="tableTwo">
+                        <table width="100%" cellpadding="0" cellspacing="0" class="tableTwo">
                         <tr>
                             <td style="width:50%; text-align:justify;">
                                 Payment for service shall be payable in advance/within 15 days issue of Invoice. 
@@ -471,9 +471,9 @@
                             <td style="width:50%; text-align:justify;">
                                 The Application Fee for the Certification is Non Refundable.</td>
                         </tr>
-                    </table>--%>
+                    </table>
                     </td>
-                </tr>
+                </tr>--%>
 
 
 

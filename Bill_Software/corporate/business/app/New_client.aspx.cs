@@ -26,8 +26,8 @@ namespace Bill_Software.corporate.business.app
                 DbCL.FillCombo(ddlRegCity, "select City_Name from tbl_City order by City_Name");
                 DbCL.FillCombo(cmbIndustry, "select IndustryName from tbl_Industry");
                 DbCL.FillCombo(ddlplaceofSupply, "select City_Name from tbl_City order by City_Name");
-                
 
+                findcompanyId();
             }
 
         }
@@ -102,18 +102,19 @@ namespace Bill_Software.corporate.business.app
             if (DR1.Read())
             {
                 aa = DR1.GetValue(1).ToString();
-                string bb = aa.Substring(5);
+                string bb = aa.Substring(2);
                 int k = Convert.ToInt32(bb);
                 k = k + 1;
                 string q = Convert.ToString(k);
-                ComId = "CLI00" + q;
+                ComId = "AD" + q;
             }
             else
             {
-                ComId = "CLI001";
+                ComId = "AD01";
             }
 
             DbCL.Conn.Close();
+            lbl_nxtclientid.Text = ComId;
             return ComId;
         }
 
