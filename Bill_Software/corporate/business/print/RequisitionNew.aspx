@@ -126,7 +126,7 @@
            @media print {
 
                .jkhj {
-                background: url("http://i2isoft.i2iinc.in/corporate/business/WebImages/I2Ilogo10.png");
+                background: url("http://i2isoft.aminruptechnologies.co.in/corporate/business/WebImages/I2Ilogo10.png");
                 /*width: 100%;
                 height:100%;
                 background-size: 100%;*/

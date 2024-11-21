@@ -507,7 +507,7 @@
                                 <td class="qno" width="100%">
                                     <table border="0" width="100%" class="">
                                         <tr>
-                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">If you have any Question about this Invoice, Please Contact Mr. Das at +91 9674897316 or email at info@i2iinc.in</td>
+                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">If you have any Question about this Invoice, Please Contact Mr. Das at +91 9674897316 or email at info@aminruptechnologies.co.in</td>
                                         </tr>
                                     </table>
                                 </td>

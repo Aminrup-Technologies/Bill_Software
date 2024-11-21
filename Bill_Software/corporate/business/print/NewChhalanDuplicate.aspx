@@ -323,7 +323,7 @@
                                 <td class="qno" width="100%">
                                     <table border="0" width="100%" class="">
                                         <tr>
-                                            <td class="" style="background-color: #c8152a; color: white; text-align: center;">If you have any Question about this Chhalan, Please Contact Ms Das at +91 9674897316 or info@i2iinc.in</td>
+                                            <td class="" style="background-color: #c8152a; color: white; text-align: center;">If you have any Question about this Chhalan, Please Contact Ms Das at +91 9674897316 or info@aminruptechnologies.co.in</td>
                                         </tr>
                                     </table>
                                 </td>
