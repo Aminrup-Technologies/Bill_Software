@@ -374,6 +374,8 @@
     <Content Include="corporate\business\WebImages\Body_With_Map.png" />
     <Content Include="corporate\business\WebImages\ClientPageForSoftwareLast1.png" />
     <Content Include="corporate\business\WebImages\ClientPageForSoftware.png" />
+    <Content Include="corporate\business\WebImages\clients.png" />
+    <Content Include="corporate\business\WebImages\clientsbg.png" />
     <Content Include="corporate\business\WebImages\close-window.png" />
     <Content Include="corporate\business\WebImages\Cross_icon.png.png" />
     <Content Include="corporate\business\WebImages\delete.png" />

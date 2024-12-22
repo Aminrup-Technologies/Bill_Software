@@ -26,11 +26,17 @@ namespace Bill_Software.corporate.business.app
         public int count = 1;
         public DataTable first_datatable;
         public static DataTable Dt = new DataTable("Table");
-        public static decimal Gross_amount = 0;
+        //public static decimal Gross_amount = 0;
         public static decimal Service_tax = 0;
         public static decimal total_sail_rate_details = 0;
-        public static decimal total_Service = 0;
-        public static decimal sub_total = 0;
+        //public static decimal total_Service = 0;
+        //public static decimal sub_total = 0;
+
+        public static decimal new_sub_total = 0;
+        public static decimal new_Gross_amount = 0;
+        public static decimal discounted_rate = 0;
+        public static decimal new_total_Service = 0;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -39,28 +45,33 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                Gross_amount = 0;
+                //Gross_amount = 0;
+                new_Gross_amount = 0;
                 Service_tax = 0;
                 total_sail_rate_details = 0;
-                total_Service = 0;
-                sub_total = 0;
+                //total_Service = 0;
+                //sub_total = 0;
+
+                new_total_Service = 0;
+                new_sub_total = 0;
+
                 //Dt = null;
                 Dt = new DataTable("Table");
                 DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
                 DbCL.FillCombo(ddlPlaceOfSupply, "Select City_Name from tbl_City order by City_Name asc");
                 txtquotationDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
-                
+
             }
         }
 
         protected void Button1_Click(object sender, EventArgs e)
         {
-            
+
             Panel1.Visible = true;
             cmbClient.Enabled = false;
             //if (RadioButtonList2.SelectedIndex == 0)
             //{
-                BindListitemNew();
+            BindListitemNew();
             //}
             //else
             //{
@@ -85,8 +96,8 @@ namespace Bill_Software.corporate.business.app
             string cmdstring = "";
             //if (RadioButtonList1.SelectedIndex == 0)
             //{
-                //cmdstring = "select Product_Name from tbl_Product order by Product_Name";
-                cmdstring = "select ProductOrServiceCat from tbl_NewparentProduct order by ProductOrServiceCat";
+            //cmdstring = "select Product_Name from tbl_Product order by Product_Name";
+            cmdstring = "select ProductOrServiceCat from tbl_NewparentProduct order by ProductOrServiceCat";
             //}
 
             //else
@@ -382,7 +393,7 @@ namespace Bill_Software.corporate.business.app
                         //phasedesc = bindphasedesc(phasetypename);
                         phasedesc = "";
 
-                        
+
 
                         string service = "";
                         string status = "NO";
@@ -406,7 +417,7 @@ namespace Bill_Software.corporate.business.app
                         phasedesc = "";
                         SearchPaymentPhaseFees(1, phasetypename, phasedesc);
 
-                        
+
                     }
                 }
             }
@@ -441,10 +452,11 @@ namespace Bill_Software.corporate.business.app
                 {
                     dr[2] = "100";
                 }
-                else {
+                else
+                {
                     dr[2] = "";
                 }
-               
+
 
                 dtPhasefees.Rows.Add(dr);
             }
@@ -510,7 +522,7 @@ namespace Bill_Software.corporate.business.app
 
                     TextBox tb = (TextBox)gvr.Cells[1].FindControl("AmountPer");
                     tb.Text = netamount.ToString();
-                    
+
                 }
             }
         }
@@ -659,20 +671,34 @@ namespace Bill_Software.corporate.business.app
                             string Sail_Rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate")).Text;
                             string Tax_Rate = ((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate")).Text;
 
+                            //Below is added to get the discount % and do further calculations on discounted rate
+                            string Discount_Rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Discount_Rate")).Text;
+
                             string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type")).Text;
                             string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit")).Text;
 
                             string ProductOrServiceCat = ((Label)gd_Service_Product.Rows[i].FindControl("ProductOrServiceCat")).Text;
 
+                            discounted_rate = Convert.ToDecimal(Sail_Rate) - (Convert.ToDecimal(Sail_Rate) * Convert.ToDecimal(Discount_Rate) / 100);
 
                             decimal d = Convert.ToDecimal(Tax_Rate) + 100;
-                            decimal b = d * Convert.ToDecimal(Sail_Rate) / 100;
-                            decimal service = (Convert.ToDecimal(Tax_Rate) * Convert.ToDecimal(Quantity) * Convert.ToDecimal(Sail_Rate)) / 100;
-                            
-                            decimal c = b * Convert.ToDecimal(Quantity);
-                            decimal g = Convert.ToDecimal(Quantity) * Convert.ToDecimal(Sail_Rate);
-                            sub_total = sub_total + g;
-                            insertvatamount(service, Tax_Rate);
+                            //decimal b = d * Convert.ToDecimal(Sail_Rate) / 100;
+                            decimal new_b = d * Convert.ToDecimal(discounted_rate) / 100;
+
+                            //decimal service = (Convert.ToDecimal(Tax_Rate) * Convert.ToDecimal(Quantity) * Convert.ToDecimal(Sail_Rate)) / 100;
+                            decimal new_service = (Convert.ToDecimal(Tax_Rate) * Convert.ToDecimal(Quantity) * Convert.ToDecimal(discounted_rate)) / 100;
+
+                            //decimal c = b * Convert.ToDecimal(Quantity);
+                            decimal new_c = new_b * Convert.ToDecimal(Quantity);
+
+                            //decimal g = Convert.ToDecimal(Quantity) * Convert.ToDecimal(Sail_Rate);
+                            decimal new_g = Convert.ToDecimal(Quantity) * Convert.ToDecimal(discounted_rate);
+
+                            //sub_total = sub_total + g;
+                            new_sub_total = new_sub_total + new_g;
+
+                            //insertvatamount(service, Tax_Rate);
+                            insertvatamount(new_service, Tax_Rate);
 
                             //c = Math.Round(c, 2);
                             //double b = Convert.ToDouble(Sale_rate) * Convert.ToDouble(Quantity);
@@ -683,10 +709,19 @@ namespace Bill_Software.corporate.business.app
                             //Service_tax = Service_tax + c;
                             //string total_sail_rate2 = (b + c).ToString();
 
-                            Gross_amount = Gross_amount + c;
-                            Gross_amount = Math.Round(Gross_amount, 2);
-                            total_Service = total_Service + service;
-                            cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + b + "','" + c + "','" + g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','"+ ProductOrServiceCat.ToString() + "')");
+                            //Gross_amount = Gross_amount + c;
+                            new_Gross_amount = new_Gross_amount + new_c;
+
+                            //Gross_amount = Math.Round(Gross_amount, 2);
+                            new_Gross_amount = Math.Round(new_Gross_amount, 2);
+
+                            //total_Service = total_Service + service;
+                            new_total_Service = new_total_Service + new_service;
+
+                            //cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + b + "','" + c + "','" + g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','"+ ProductOrServiceCat.ToString() + "')");
+
+                            cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat,discount_rate,new_sailrate)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + new_b + "','" + new_c + "','" + new_g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','" + ProductOrServiceCat.ToString() + "','" + Discount_Rate.ToString() + "','" + discounted_rate.ToString() + "')");
+
                             //cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + b + "','" + c + "','" + g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "')");
                             cmd.ExecuteNonQuery();
 
@@ -713,12 +748,17 @@ namespace Bill_Software.corporate.business.app
                 }
             }
 
+            int validDays = int.Parse(txt_valdays.Text.Trim());
+            string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text.Trim() : DDL_DeliveryTerms.SelectedItem.Text;
+            string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text.Trim() : DDL_pkgfrwd.SelectedItem.Text;
+            string remarks = txt_remarks.Text.Trim();
+
             DbCL.Conn.Close();
-            Service_tax = Gross_amount % 1;
-            total_sail_rate_details = Gross_amount;
-            total_sail_rate_details = Math.Round(total_sail_rate_details);
-            total_Service = Math.Round(total_Service);
-            DbCL.executeRdr("insert into tbl_Quotation(Quotation_no,Quotation_date,Client_Id,Gross,Service_tax,Net_amount,Status1,Status2,Sl_no,status3,service_tax1,sub_total,cgstOrsgst,igst,PlaceofSupply,PaymentStatus)values('" + lblqno.Text + "','" + txtquotationDate.Text + "','" + lblclientID.Text + "','" + Gross_amount + "','" + Service_tax + "','" + total_sail_rate_details + "','No','No','" + j.ToString() + "','No','" + total_Service + "','" + sub_total + "','" + CGSTSGSTSTATUS + "','" + IGSTSTATUS + "','"+ ddlPlaceOfSupply.Text + "','No')");
+            Service_tax = new_Gross_amount % 1;
+            total_sail_rate_details = new_Gross_amount;
+            total_sail_rate_details = Math.Round(total_sail_rate_details, 2);
+            new_total_Service = Math.Round(new_total_Service, 2);
+            DbCL.executeRdr("insert into tbl_Quotation(Quotation_no,Quotation_date,Client_Id,Gross,Service_tax,Net_amount,Status1,Status2,Sl_no,status3,service_tax1,sub_total,cgstOrsgst,igst,PlaceofSupply,PaymentStatus,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks)values('" + lblqno.Text + "','" + txtquotationDate.Text + "','" + lblclientID.Text + "','" + new_Gross_amount + "','" + Service_tax + "','" + total_sail_rate_details + "','No','No','" + j.ToString() + "','No','" + new_total_Service + "','" + new_sub_total + "','" + CGSTSGSTSTATUS + "','" + IGSTSTATUS + "','" + ddlPlaceOfSupply.Text + "','No','"+txt_clientrefname.Text.ToString()+ "','" + txt_clientrefid.Text.ToString() + "','" + txt_clientrefdate.Text.ToString() + "','" + validDays.ToString() + "','" + deliveryTenure.ToString() + "','" + packageForwarding.ToString() + "','" + remarks.ToString() + "')");
 
 
             string qutno = lblqno.Text;
@@ -730,7 +770,7 @@ namespace Bill_Software.corporate.business.app
             lblOk.Text = "Data Save Successfully.....";
             PanelOK.Visible = true;
             Button3.Visible = false;
-            
+
 
         }
 
@@ -928,7 +968,7 @@ namespace Bill_Software.corporate.business.app
                 //string Ser_pro_code = "";
                 //string Ser_pro_Name = "";
                 //string specification = "";
-                
+
                 //string Sale_rate = "";
                 //string service_Tax_Rate = "";
 
@@ -960,7 +1000,7 @@ namespace Bill_Software.corporate.business.app
                         Tax_Rate = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate")).Text;
                         Type = ((Label)gridProdWithCat.Rows[i].FindControl("Type")).Text;
                         Unit = ((Label)gridProdWithCat.Rows[i].FindControl("Unit")).Text;
-                        ProductOrServiceCat= ((Label)gridProdWithCat.Rows[i].FindControl("ProductOrServiceCat")).Text;
+                        ProductOrServiceCat = ((Label)gridProdWithCat.Rows[i].FindControl("ProductOrServiceCat")).Text;
 
                         if (ViewState["PhaseProductData"] != null)
                         {
@@ -968,7 +1008,7 @@ namespace Bill_Software.corporate.business.app
                             int count = dtPCat.Rows.Count + 1;
 
                             SearchProductCatwise(count, Product_code, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
-                         
+
                         }
                         else
                         {
@@ -1076,7 +1116,7 @@ namespace Bill_Software.corporate.business.app
             ViewState["pService"] = dtPCat1;
         }
 
-        private void SearchProductCatwise(int count, string Product_code, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit,string ProductOrServiceCat)
+        private void SearchProductCatwise(int count, string Product_code, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
         {
             DataRow dr;
             if (count == 1)
