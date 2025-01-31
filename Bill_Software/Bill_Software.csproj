@@ -386,6 +386,7 @@
     <Content Include="corporate\business\WebImages\factory.png" />
     <Content Include="corporate\business\WebImages\flame-ex_hdrbtm.png" />
     <Content Include="corporate\business\WebImages\flame-ex_hdrtop.png" />
+    <Content Include="corporate\business\WebImages\flmx_authsign.png" />
     <Content Include="corporate\business\WebImages\I2ILOGO1.png" />
     <Content Include="corporate\business\WebImages\I2ILHHeader1.png" />
     <Content Include="corporate\business\WebImages\I2ILHFooter.png" />

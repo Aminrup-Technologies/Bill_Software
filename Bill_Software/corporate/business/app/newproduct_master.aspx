@@ -31,12 +31,13 @@
                 width: 100%;
                 border-top: none;
             }
+
         .auto-style1 {
             height: 19px;
         }
     </style>
     <script type="text/javascript">
-        function ValidateField() {
+        <%--function ValidateField() {
             if (document.getElementById('<%=txtSubProductsName.ClientID%>').value == "") {
                 alert("Provide Products Name.");
                 document.getElementById('<%=txtSubProductsName.ClientID%>').focus();
@@ -48,12 +49,96 @@
                 document.getElementById('<%=txtSalerate.ClientID%>').focus();
                 return false;
             }
-            <%--if (document.getElementById('<%=cmbtax.ClientID%>').selectedIndex == 0) {
+            if (document.getElementById('<%=cmbtax.ClientID%>').selectedIndex == 0) {
                 alert("Please Select Tax.");
                 document.getElementById('<%=cmbtax.ClientID%>').focus();
                 return false;
-            }--%>
+            }
+        }--%>
+
+        function ValidateField() {
+            // Array of required field IDs and their corresponding alert messages
+            var fields = [
+                { id: '<%=cmdProduct.ClientID%>', message: "Select Product Category", isDropdown: true },
+                { id: '<%=ddlProOrSer.ClientID%>', message: "Select Business Type", isDropdown: true },
+                { id: '<%=txtSubProductsName.ClientID%>', message: "Provide Product Name" },
+                { id: '<%=txtproducttype.ClientID%>', message: "Provide Product Specifications" },
+                <%--{ id: '<%=TextBox1.ClientID%>', message: "Provide value for Extra Specifications." },--%>
+                { id: '<%=txtBrand.ClientID%>', message: "Provide Brand Name" },
+                { id: '<%=txtProductCode.ClientID%>', message: "Provide HSN Code" },
+                { id: '<%=txtUnit.ClientID%>', message: "Provide UOM" },
+                { id: '<%=TextBox2.ClientID%>', message: "Provide Opening Stock Value" },
+                <%--{ id: '<%=TextBox3.ClientID%>', message: "Provide value for TextBox3." },--%>
+                { id: '<%=txtSalerate.ClientID%>', message: "Provide Sale Rate." },
+                { id: '<%=cmbtax.ClientID%>', message: "Please Select Tax Slab", isDropdown: true },
+                { id: '<%=txtfromDate.ClientID%>', message: "Provide Expiry Date." },
+                { id: '<%=TextBox4.ClientID%>', message: "Provide Sales Note" }
+            ];
+
+            for (var i = 0; i < fields.length; i++) {
+                var field = document.getElementById(fields[i].id);
+
+                if (field) {
+                    if (fields[i].isDropdown) {
+                        if (field.selectedIndex === 0) {
+                            alert(fields[i].message);
+                            field.focus();
+                            return false;
+                        }
+                    } else {
+                        if (field.value.trim() === "") {
+                            alert(fields[i].message);
+                            field.focus();
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
+
+
+        function ResetFields() {
+            var fields = [
+                '<%=txtSubProductsName.ClientID%>',
+                '<%=txtproducttype.ClientID%>',
+                '<%=TextBox1.ClientID%>',
+                '<%=txtBrand.ClientID%>',
+                '<%=txtProductCode.ClientID%>',
+                '<%=txtUnit.ClientID%>',
+                '<%=TextBox2.ClientID%>',
+                '<%=TextBox3.ClientID%>',
+                '<%=txtSalerate.ClientID%>',
+                '<%=txtfromDate.ClientID%>',
+                '<%=TextBox4.ClientID%>'
+            ];
+
+            // Reset textboxes
+            for (var i = 0; i < fields.length; i++) {
+                var field = document.getElementById(fields[i]);
+                if (field) {
+                    field.value = "";
+                }
+            }
+
+            // Reset dropdowns
+            var dropdowns = [
+                '<%=cmdProduct.ClientID%>',
+                '<%=ddlProOrSer.ClientID%>',
+                '<%=cmbtax.ClientID%>'
+            ];
+    
+            for (var j = 0; j < dropdowns.length; j++) {
+                var dropdown = document.getElementById(dropdowns[j]);
+                if (dropdown) {
+                    dropdown.selectedIndex = 0;
+                }
+            }
+
+            return false; // Prevents any unintended form submission
+        }
+
 
     </script>
     <script type="text/javascript">
@@ -64,6 +149,7 @@
             }
         }
     </script>
+
     <script type="text/javascript">
         //Function to allow only numbers to textbox
         function validate(key) {
@@ -146,7 +232,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; PRODUCT / SERVICE CATAGORY</td>
+            <td>&nbsp;<asp:Label ID="Label16" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;PRODUCT / SERVICE CATAGORY</td>
             <td>
                 <asp:DropDownList ID="cmdProduct" runat="server" CssClass="dropdown_style" Width="300px" AutoPostBack="True" OnSelectedIndexChanged="cmdProduct_SelectedIndexChanged">
                 </asp:DropDownList>
@@ -155,9 +241,10 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; BUSINESS TYPE&nbsp;</td>
+            <td>&nbsp;<asp:Label ID="Label17" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;BUSINESS TYPE&nbsp;</td>
             <td>
                 <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style" Width="300px">
+                    <asp:ListItem>--Select--</asp:ListItem>
                     <asp:ListItem>Product</asp:ListItem>
                     <asp:ListItem>Service</asp:ListItem>
                 </asp:DropDownList>
@@ -166,7 +253,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; PRODUCT / SERVICE NAME&nbsp;</td>
+            <td>&nbsp;<asp:Label ID="Label18" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;PRODUCT / SERVICE NAME&nbsp;</td>
             <td>
                 <asp:TextBox ID="txtSubProductsName" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
             </td>
@@ -174,7 +261,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; PRODUCT / SERVICE TYPE'&nbsp;</td>
+            <td>&nbsp;<asp:Label ID="Label19" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;PRODUCT / SERVICE Specifications'&nbsp;</td>
             <td>
                 <asp:TextBox ID="txtproducttype" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
             </td>
@@ -182,7 +269,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; PRODUCT / SERVICE SPECIFICATIONS'&nbsp;</td>
+            <td>&nbsp;&nbsp; PRODUCT / SERVICE Extra Specifications'&nbsp;</td>
             <td>
                 <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
             </td>
@@ -190,22 +277,22 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; MAKE / BRAND NAME &nbsp;</td>
+            <td>&nbsp;<asp:Label ID="Label21" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;MAKE / BRAND NAME &nbsp;</td>
             <td>
                 <asp:TextBox ID="txtBrand" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox></td>
             <td>&nbsp;</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; HSN / SAC CODE</td>
+            <td>&nbsp;<asp:Label ID="Label22" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;HSN / SAC CODE</td>
             <td>
-                <asp:TextBox ID="txtProductCode" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
+                <asp:TextBox ID="txtProductCode" runat="server" CssClass="textbox_U_style" Width="300px" onkeypress="return validate(event)"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; UOM</td>
+            <td>&nbsp;<asp:Label ID="Label23" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;UOM</td>
             <td>
                 <asp:TextBox ID="txtUnit" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
             </td>
@@ -213,9 +300,9 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; OPENING / STOCK QNTY'&nbsp;</td>
+            <td>&nbsp;<asp:Label ID="Label20" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;OPENING / STOCK QNTY'</td>
             <td>
-                <asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
+                <asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_U_style" Width="300px" onkeypress="return validate(event)"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
@@ -223,13 +310,13 @@
             <td>&nbsp;</td>
             <td>&nbsp;&nbsp; MOQ VALUE'&nbsp;</td>
             <td>
-                <asp:TextBox ID="TextBox3" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
+                <asp:TextBox ID="TextBox3" runat="server" CssClass="textbox_U_style" Width="300px" onkeypress="return validate(event)"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; BASE RATE (RS)</td>
+            <td>&nbsp;<asp:Label ID="Label24" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;BASE RATE (RS)</td>
             <td>
                 <asp:TextBox ID="txtSalerate" runat="server" CssClass="textbox_U_style" onkeypress="return validate(event)" Width="300px"></asp:TextBox>
             </td>
@@ -237,14 +324,14 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;&nbsp; GST RATE (%)</td>
+            <td>&nbsp;<asp:Label ID="Label25" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;GST RATE (%)</td>
             <td>
                 <asp:DropDownList ID="cmbtax" runat="server" CssClass="dropdown_style" Width="300px">
                 </asp:DropDownList>
             </td>
             <td>&nbsp;</td>
         </tr>
-        
+
 
         <tr>
             <td class="auto-style1"></td>
@@ -258,7 +345,7 @@
             <td class="auto-style1"></td>
             <td class="auto-style1">&nbsp;&nbsp; Sale Note'&nbsp;</td>
             <td class="auto-style1">
-                <asp:TextBox ID="TextBox4" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
+                <asp:TextBox ID="TextBox4" runat="server" CssClass="textbox_U_style" Width="300px" Text="N/A"></asp:TextBox>
             </td>
             <td class="auto-style1"></td>
         </tr>
@@ -291,6 +378,7 @@
             <td colspan="2" style="text-align: center">
                 <asp:Button ID="btnSave" runat="server" CssClass="btn_style" Text="Save"
                     OnClientClick="return ValidateField();" OnClick="btnSave_Click" />
+                &nbsp;<asp:Button ID="btnreset" runat="server" CssClass="btn_style" OnClientClick="return ResetFields();" Text="Reset" />
             </td>
             <td>&nbsp;</td>
         </tr>
@@ -323,7 +411,7 @@
                                 <td style="text-align: center; width: 12%;">
                                     <asp:Label ID="showrm" runat="server" Text="PRODUCT / SERVICE CATEGORY"></asp:Label>
                                 </td>
-                                
+
                                 <td style="text-align: center; width: 15%;">
                                     <asp:Label ID="Label5" runat="server" Text="PRODUCT / SERVICE NAME"></asp:Label>
                                 </td>
@@ -369,7 +457,7 @@
                                 <td style="text-align: center; width: 18%;">
                                     <asp:Label ID="Label15" runat="server" Text='<%# Eval("Product_catagory") %>'></asp:Label>
                                 </td>
-                                
+
                                 <td style="text-align: center; width: 10%;">
                                     <asp:Label ID="Label10" runat="server" Text='<%# Eval("Brand") %>'></asp:Label>
                                 </td>

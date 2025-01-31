@@ -503,8 +503,7 @@
 
                 <tr>
                     <td colspan="2" style="text-align: right; padding: 4px 30px 4px 2px;">
-                        <span lang="en-us">&nbsp;<asp:Image ID="Image4" runat="server"
-                            Height="73px" Width="119px" ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
+                        <span lang="en-us">&nbsp;<asp:Image ID="Image4" runat="server" width="150PX" ImageUrl="~/corporate/business/WebImages/flmx_authsign.png" />
                         </span>&nbsp;</td>
                 </tr>
 

@@ -100,7 +100,8 @@
             <thead id="header">
                 <tr>
                     <th style="width: 100%">
-                        <img src="../WebImages/I2ILHHeader1.png" width="100%" /></th>
+                        <asp:Image ID="Image21" runat="server"
+                            Width="844px" Height="140px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" /></th>
                 </tr>
                 <tr>
                     <th>
@@ -535,13 +536,13 @@
 
                         <table border="0" width="100%" class="FORKVQAEAST">
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR Aminrup Technologies</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR FLAME-EX</td>
                             </tr>
                             <%--<tr>
                                 <td><img src="../WebImages/Stamp.jpg" width="100PX" /></td>
                             </tr>--%>
                             <tr>
-                                <td><img src="../WebImages/i2i_LOGO_ad_sig.png" width="150PX" /></td>
+                                <td><img src="../WebImages/flmx_authsign.png" width="150PX" /></td>
                             </tr>
                             <tr class="trheight">
                                 <td class="" style="text-align: left; font-weight: bold;">Authorized Signatory</td>
@@ -585,7 +586,8 @@
             <tr>
                 <td style="height: auto; text-align: center; font-weight: bold; font-size: 14px; font-style: italic" width="100%">
                     <span style="padding-right:10px; color:#c8152a">------------------------------Thank You For Your Business------------------------------</span>
-                    <img src='../WebImages/I2ILHFooter.png' width='100%' />
+                    <asp:Image ID="Image22" runat="server"
+                            Width="844px" Height="180px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrbtm.png" />
                 </td>
             </tr>
         </table>

@@ -21,7 +21,7 @@ namespace Bill_Software.corporate.business.app
             if (!IsPostBack)
             {
                 DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
-                DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
+                //DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
             }
         }
 
@@ -38,7 +38,8 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@Vendor_Name", txtvendorName.Text.Trim());
             cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
             cmd.Parameters.AddWithValue("@Address2", txtAddress2.Text);
-            cmd.Parameters.AddWithValue("@City", cmbcity.Text.Trim());
+            cmd.Parameters.AddWithValue("@City", txtCity.Text.Trim());
+            //cmd.Parameters.AddWithValue("@City", cmbcity.Text.Trim());
             cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
             cmd.Parameters.AddWithValue("@State", cmbState.Text);
             cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text);
@@ -52,7 +53,8 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@Rep_email", txtRepresentativeEmail.Text);
             cmd.Parameters.AddWithValue("@Service_tax_No", txtservicetaxNo.Text);
             cmd.Parameters.AddWithValue("@Pan_No", txtpanNo.Text);
-            cmd.Parameters.AddWithValue("@Vat_No", txtvat.Text);
+            //empty string value is passed to vatno field
+            cmd.Parameters.AddWithValue("@Vat_No", string.Empty);
             //Below fileds are added for meeting the requirements from flame-ex client #21-10-2024
             cmd.Parameters.AddWithValue("@PrincipleVndrCode", txt_pvc.Text);
             cmd.Parameters.AddWithValue("@BankAccNo", txt_vndr_bankacc.Text);
@@ -60,11 +62,50 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@AccountName", txt_accholdername.Text);
             cmd.ExecuteNonQuery();
             DbCL.Conn.Close();
+
+            //Added on #23-Jan-2025
+            InsertCity();
+
             PanelOK.Visible = true;
-            lblOk.Text = "Data Save Successfully...";
+            lblOk.Text = "Data and City Saved Successfully...";
             btnSave.Visible = false;
 
         }
+
+        private void InsertCity()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            // Check if the combination of City_Name and State_Name already exists
+            string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName";
+            SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn);
+            checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text);
+            checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+
+            int count = (int)checkCmd.ExecuteScalar();
+
+            if (count > 0)
+            {
+                PanelOK.Visible = true;
+                lblOk.Text = "Record already exists!";
+            }
+            else
+            {
+                // Insert new record
+                string insertQuery = "INSERT INTO tbl_City(City_Name, State_Name) VALUES (@CityName, @StateName)";
+                SqlCommand insertCmd = new SqlCommand(insertQuery, DbCL.Conn);
+                insertCmd.Parameters.AddWithValue("@CityName", txtCity.Text);
+                insertCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+                insertCmd.ExecuteNonQuery();
+
+                PanelOK.Visible = true;
+                lblOk.Text = "Data saved successfully...";
+            }
+            DbCL.Conn.Close();
+        }
+
+
         private string findcompanyId()
         {
             //string ComId = "";

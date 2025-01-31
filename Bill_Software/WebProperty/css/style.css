@@ -84,6 +84,19 @@ border-radius: 30px;
 -moz-border-radius: 3px;
 border-radius: 3px;
 }
+
+.btn_reset {
+    width: 100px;
+    height: 24px;
+    background: url(../images/btn_reset_bg.jpg) repeat-x 0 0;
+    border: 1px solid #d9534f; /* Red border for reset */
+    font: bold 11px/24px Arial, Helvetica, sans-serif;
+    color: #fff;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+
 .btn_style:hover{ cursor:pointer; background:url(../images/btn_bg_hover.jpg) repeat-x 0 0;}
 .iframestyle{ color:#b3c71f;   font:normal 11px/11px 'Arial';  text-align:right;}
 

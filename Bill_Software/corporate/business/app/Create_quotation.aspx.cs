@@ -1071,6 +1071,8 @@ namespace Bill_Software.corporate.business.app
             //}
 
 
+            // added on 30-Jan-2025, To hide the Products Grid after selection of Products for Quotes Creation
+            gridProdWithCat.Visible = false;
         }
 
         private void TakePservice(int count1, string pservice)

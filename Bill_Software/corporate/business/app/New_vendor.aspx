@@ -143,7 +143,8 @@
             <td width="15%">
                 <span class="style3">*</span>City</td>
             <td width="25%">
-                <asp:DropDownList ID="cmbcity" runat="server" CssClass="dropdown_style">
+                <asp:TextBox ID="txtCity" runat="server" CssClass="textbox_style"></asp:TextBox>
+                <asp:DropDownList ID="cmbcity" runat="server" Visible="false" CssClass="dropdown_style">
                 </asp:DropDownList>
             </td>
             <td>&nbsp;</td>
@@ -219,7 +220,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td width="15%">Service Tax No</td>
+            <td width="15%">GSTIN No.</td>
             <td width="25%">
                 <asp:TextBox ID="txtservicetaxNo" runat="server" CssClass="textbox_style"></asp:TextBox>
             </td>
@@ -229,16 +230,28 @@
             </td>
             <td>&nbsp;</td>
         </tr>
+
         <tr>
             <td>&nbsp;</td>
-            <td width="15%">Vat No</td>
+            <td width="15%"></td>
             <td width="25%">
-                <asp:TextBox ID="txtvat" runat="server" CssClass="textbox_style"></asp:TextBox>
             </td>
             <td width="15%">&nbsp;</td>
             <td width="25%">&nbsp;</td>
             <td>&nbsp;</td>
         </tr>
+
+        <%--<tr>
+            <td>&nbsp;</td>
+            <td width="15%">Vat No</td>
+            <td width="25%">
+                <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_style"></asp:TextBox>
+            </td>
+            <td width="15%">&nbsp;</td>
+            <td width="25%">&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>--%>
+
         <tr>
             <td>&nbsp;</td>
             <td width="15%">Principle Vendor Code`</td>

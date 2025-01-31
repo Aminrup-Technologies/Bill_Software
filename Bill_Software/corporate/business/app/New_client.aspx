@@ -164,7 +164,8 @@
             <td class="auto-style2"></td>
             <td width="15%" class="auto-style2">&nbsp;<span class="style3">*</span>City&nbsp;</td>
             <td width="25%" class="auto-style2">
-                <asp:DropDownList ID="cmbcity" runat="server" CssClass="dropdown_style" Width="250px">
+                <asp:TextBox ID="txtCity" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
+                <asp:DropDownList ID="cmbcity" runat="server" Visible="false" CssClass="dropdown_style" Width="150px">
                 </asp:DropDownList>
             </td>
             <td width="15%" class="auto-style2">
@@ -211,7 +212,8 @@
             <td>&nbsp;</td>
             <td width="15%">&nbsp;City&nbsp;</td>
             <td width="25%">
-                <asp:DropDownList ID="ddlRegCity" runat="server" CssClass="dropdown_style" Width="250px">
+                <asp:TextBox ID="txtRegCity" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
+                <asp:DropDownList ID="ddlRegCity" runat="server" Visible="false" CssClass="dropdown_style" Width="150px">
                 </asp:DropDownList>
             </td>
             <td width="15%">Pin</td>
@@ -288,7 +290,8 @@
             <td>&nbsp;</td>
             <td width="15%">Place Of Supply</td>
             <td width="25%">
-                <asp:DropDownList ID="ddlplaceofSupply" runat="server" CssClass="dropdown_style" Width="250px">
+                <asp:TextBox ID="txtplaceofSupply" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
+                <asp:DropDownList ID="ddlplaceofSupply" runat="server" Visible="false" CssClass="dropdown_style" Width="150px">
                 </asp:DropDownList>
             </td>
             <td width="15%">&nbsp;</td>

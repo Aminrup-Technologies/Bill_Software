@@ -21,11 +21,11 @@ namespace Bill_Software.corporate.business.app
             if (!IsPostBack)
             {
                 DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
-                DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
+                //DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
                 DbCL.FillCombo(ddlRegState, "select State_Name from tbl_State order by State_Name");
-                DbCL.FillCombo(ddlRegCity, "select City_Name from tbl_City order by City_Name");
+                //DbCL.FillCombo(ddlRegCity, "select City_Name from tbl_City order by City_Name");
                 DbCL.FillCombo(cmbIndustry, "select IndustryName from tbl_Industry");
-                DbCL.FillCombo(ddlplaceofSupply, "select City_Name from tbl_City order by City_Name");
+                //DbCL.FillCombo(ddlplaceofSupply, "select City_Name from tbl_City order by City_Name");
 
                 findcompanyId();
             }
@@ -47,7 +47,8 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@Client_Name", txtvendorName.Text.Trim());
             //cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
             cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
-            cmd.Parameters.AddWithValue("@City", cmbcity.Text.Trim());
+            //cmd.Parameters.AddWithValue("@City", cmbcity.Text.Trim());
+            cmd.Parameters.AddWithValue("@City", txtCity.Text.Trim());
             cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
             cmd.Parameters.AddWithValue("@State", cmbState.Text);
             cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text);
@@ -61,17 +62,86 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@Service_tax_no", txtservicetax_no.Text);
             cmd.Parameters.AddWithValue("@Pan_no", txtpanno.Text);
             cmd.Parameters.AddWithValue("@Industry", cmbIndustry.Text);
-            cmd.Parameters.AddWithValue("PlaceofSupply", ddlplaceofSupply.Text);
-            
+            //cmd.Parameters.AddWithValue("PlaceofSupply", ddlplaceofSupply.Text);
+            cmd.Parameters.AddWithValue("PlaceofSupply", txtplaceofSupply.Text);
+
             cmd.ExecuteNonQuery();
             DbCL.Conn.Close();
 
+            InsertCity();
             insertRegoffAdd(companyID);
 
             PanelOK.Visible = true;
             lblOk.Text = "Data Save Successfully...";
             btnSave.Visible = false;
 
+        }
+
+        private void InsertCity()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            // Check if the combination of City_Name and State_Name already exists
+            string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName";
+            SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn);
+            checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text);
+            checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+
+            int count = (int)checkCmd.ExecuteScalar();
+
+            if (count > 0)
+            {
+                PanelOK.Visible = true;
+                lblOk.Text = "Record already exists!";
+            }
+            else
+            {
+                // Insert new record
+                string insertQuery = "INSERT INTO tbl_City(City_Name, State_Name) VALUES (@CityName, @StateName)";
+                SqlCommand insertCmd = new SqlCommand(insertQuery, DbCL.Conn);
+                insertCmd.Parameters.AddWithValue("@CityName", txtCity.Text);
+                insertCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+                insertCmd.ExecuteNonQuery();
+
+                PanelOK.Visible = true;
+                lblOk.Text = "Data saved successfully...";
+            }
+            DbCL.Conn.Close();
+        }
+
+
+        private void InsertRegCity()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            // Check if the combination of City_Name and State_Name already exists
+            string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName";
+            SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn);
+            checkCmd.Parameters.AddWithValue("@CityName", txtRegCity.Text);
+            checkCmd.Parameters.AddWithValue("@StateName", ddlRegState.Text);
+
+            int count = (int)checkCmd.ExecuteScalar();
+
+            if (count > 0)
+            {
+                PanelOK.Visible = true;
+                lblOk.Text = "Record already exists!";
+            }
+            else
+            {
+                // Insert new record
+                string insertQuery = "INSERT INTO tbl_City(City_Name, State_Name) VALUES (@CityName, @StateName)";
+                SqlCommand insertCmd = new SqlCommand(insertQuery, DbCL.Conn);
+                insertCmd.Parameters.AddWithValue("@CityName", txtRegCity.Text);
+                insertCmd.Parameters.AddWithValue("@StateName", ddlRegState.Text);
+                insertCmd.ExecuteNonQuery();
+
+                PanelOK.Visible = true;
+                lblOk.Text = "Data saved successfully...";
+            }
+            DbCL.Conn.Close();
         }
 
         private void insertRegoffAdd(string companyID)
@@ -81,13 +151,15 @@ namespace Bill_Software.corporate.business.app
             new SqlParameter("@Client_Id", companyID),
             new SqlParameter("@Address", txtRegAddress.Text),
             new SqlParameter("@State",ddlRegState.Text),
-            new SqlParameter("@City",ddlRegCity.Text),
+            new SqlParameter("@City",txtRegCity.Text),
+            //new SqlParameter("@City",ddlRegCity.Text),
             new SqlParameter("@Phno",txtRegPhno.Text),
             new SqlParameter("@pin",txtRegPin.Text),
             };
 
             DbCL.SPExecDB(query, pram);
 
+            InsertRegCity();
         }
 
         private string findcompanyId()

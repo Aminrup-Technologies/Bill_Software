@@ -685,7 +685,7 @@
                 <td class="" style="text-align: justify; font-weight: 100">
                     <asp:Label ID="lbl_remarks" runat="server" Text="N/A"></asp:Label>&nbsp;<br />
                     <br />
-                    We trust the above offer is in line with your requirement and wear looking forward to receive your valued order at the earliest.<br />
+                    We trust the above offer is in line with your requirement and we are looking forward to receive your valued order at the earliest.<br />
                     Please feel free to contact us for any further clarifications in this regard.<br />
                     Thanking you and assuring you of our best and prompt services always.<br /><br />
                     Thanks & Regards,
@@ -707,7 +707,7 @@
 
             <tr>
                 <td>
-                    <img src="../WebImages/i2i_LOGO_ad_sig.png" width="150PX" /></td>
+                    <img src="../WebImages/flmx_authsign.png" width="150PX" /></td>
             </tr>
 
             <tr class="trheight">

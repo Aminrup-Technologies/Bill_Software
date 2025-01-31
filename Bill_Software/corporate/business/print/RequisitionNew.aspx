@@ -164,8 +164,15 @@
         <table cellpadding="0" cellspacing="0" class="style1">
         
             <tr>
-                <td id="Hederprint" runat="server">
-                    <asp:Image ID="Image21" runat="server" Width="" Height="70px" ImageUrl="~/corporate/business/WebImages/i2i_logo.png" />
+                <td id="Hederprint" runat="server" colspan="2">
+                    <asp:Image ID="Image21" runat="server"
+                            Width="844px" Height="140px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" />
+                </td>
+                
+            </tr>
+            <tr>
+                <td>
+
                 </td>
                 <td style="text-decoration:underline; font-weight:bold; font-size:16px;">
                     PURCHASE REQUISITION

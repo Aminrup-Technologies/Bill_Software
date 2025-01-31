@@ -34,7 +34,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select top 100 Id,Product_code,ProductOrServiceCat,Product_catagory,Sail_Rate,Tax_Rate,Type,ProductName,Unit,Brand,parentId from tbl_NewProduct order by Id desc";
+            string cmdstring = "select top 100 Id,Product_code,ProductOrServiceCat,Product_catagory,Sail_Rate,Tax_Rate,Type,ProductName,Unit,Brand,parentId from tbl_NewProduct where ViewMode=1 and DeleteMode=0 order by Id desc";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
@@ -90,25 +90,29 @@ namespace Bill_Software.corporate.business.app
                 {
                     string productid = findProductId();
 
-                    // Initialize the database connection
+                    // Initialize database connection
                     DbCL.Sqlconnection();
                     DbCL.ConnectDb();
 
                     // Start a new transaction
                     transaction = DbCL.Conn.BeginTransaction();
 
-                    // Create the SQL query for tbl_NewProduct
-                    string queryNewProduct = "INSERT INTO tbl_NewProduct(Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, " +
-                                             "Type, Unit, Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, TimeStamp, ProductID) " +
-                                             "VALUES (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, " +
-                                             "@Specification, @Quantity, @MOQValue, @SaleNote, @ExpiryDate, GETDATE(), @ProductID)";
+                    // SQL query for tbl_NewProduct
+                    string queryNewProduct = @"
+                            INSERT INTO tbl_NewProduct 
+                            (Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, 
+                            Type, Unit, Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, 
+                            TimeStamp, ProductID, AddedbyUserId, AddedOn) 
+                            VALUES 
+                            (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, 
+                            @Type, @Unit, @Brand, @ParentId, @Specification, @Quantity, @MOQ_Value, @SaleNote, @ExpiryDate, 
+                            GETDATE(), @ProductID, @AddedbyUserId, @AddedOn)";
 
-                    // Create the SQL command for tbl_NewProduct
                     SqlCommand cmdNewProduct = new SqlCommand(queryNewProduct, DbCL.Conn, transaction);
                     cmdNewProduct.Parameters.AddWithValue("@ProductCode", txtProductCode.Text);
                     cmdNewProduct.Parameters.AddWithValue("@ProductOrServiceCat", cmdProduct.SelectedItem.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@SaleRate", txtSalerate.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@TaxRate", cmbtax.SelectedItem.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@SaleRate", Convert.ToDecimal(txtSalerate.Text));
+                    cmdNewProduct.Parameters.AddWithValue("@TaxRate", Convert.ToDecimal(cmbtax.SelectedItem.Text));
                     cmdNewProduct.Parameters.AddWithValue("@Product_catagory", txtproducttype.Text);
                     cmdNewProduct.Parameters.AddWithValue("@ProductName", txtSubProductsName.Text);
                     cmdNewProduct.Parameters.AddWithValue("@Type", ddlProOrSer.SelectedItem.Text);
@@ -116,10 +120,12 @@ namespace Bill_Software.corporate.business.app
                     cmdNewProduct.Parameters.AddWithValue("@Brand", txtBrand.Text);
                     cmdNewProduct.Parameters.AddWithValue("@ParentId", Convert.ToInt32(Session["pid"]));
                     cmdNewProduct.Parameters.AddWithValue("@Specification", TextBox1.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@Quantity", TextBox2.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@MOQValue", TextBox3.Text);
+                    cmdNewProduct.Parameters.AddWithValue("@Quantity", Convert.ToInt32(TextBox2.Text));
+                    cmdNewProduct.Parameters.AddWithValue("@MOQ_Value", Convert.ToInt32(TextBox3.Text));
                     cmdNewProduct.Parameters.AddWithValue("@SaleNote", TextBox4.Text);
                     cmdNewProduct.Parameters.AddWithValue("@ProductID", productid);
+                    cmdNewProduct.Parameters.AddWithValue("@AddedbyUserId", Session["USERID"].ToString());
+                    cmdNewProduct.Parameters.AddWithValue("@AddedOn", DateTime.Now);
 
                     DateTime expiryDate;
                     if (DateTime.TryParse(txtfromDate.Text, out expiryDate))
@@ -131,49 +137,50 @@ namespace Bill_Software.corporate.business.app
                         cmdNewProduct.Parameters.AddWithValue("@ExpiryDate", DBNull.Value);
                     }
 
-                    // Execute the query for tbl_NewProduct
+                    // Execute tbl_NewProduct Insert
                     cmdNewProduct.ExecuteNonQuery();
 
-                    // Now insert relevant data into tbl_stock
-                    string queryStock = "INSERT INTO tbl_stock (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate) " +
-                                        "VALUES (@ProductID, @ProductName, @Quantity, @SaleRate, @TaxRate)";
+                    // SQL query for tbl_stock
+                    string queryStock = @"
+                    INSERT INTO tbl_stock 
+                    (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate) 
+                    VALUES 
+                    (@ProductID, @ProductName, @Quantity, @SaleRate, @TaxRate)";
 
-                    // Create the SQL command for tbl_stock
                     SqlCommand cmdStock = new SqlCommand(queryStock, DbCL.Conn, transaction);
                     cmdStock.Parameters.AddWithValue("@ProductID", productid);
                     cmdStock.Parameters.AddWithValue("@ProductName", txtSubProductsName.Text);
-                    cmdStock.Parameters.AddWithValue("@Quantity", TextBox2.Text);
-                    cmdStock.Parameters.AddWithValue("@SaleRate", txtSalerate.Text);
-                    cmdStock.Parameters.AddWithValue("@TaxRate", cmbtax.SelectedItem.Text);
+                    cmdStock.Parameters.AddWithValue("@Quantity", Convert.ToInt32(TextBox2.Text));
+                    cmdStock.Parameters.AddWithValue("@SaleRate", Convert.ToDecimal(txtSalerate.Text));
+                    cmdStock.Parameters.AddWithValue("@TaxRate", Convert.ToDecimal(cmbtax.SelectedItem.Text));
 
-                    // Execute the query for tbl_stock
+                    // Execute tbl_stock Insert
                     cmdStock.ExecuteNonQuery();
 
-                    // Commit the transaction if both inserts are successful
+                    // Commit transaction if both insertions succeed
                     transaction.Commit();
 
-                    // Show success message
                     PanelOK.Visible = true;
                     lblOk.Text = "Data saved successfully into both tables!";
                 }
                 catch (Exception ex)
                 {
-                    // Rollback the transaction if any error occurs
+                    // Rollback the transaction if an error occurs
                     if (transaction != null)
                     {
                         transaction.Rollback();
                     }
 
-                    // Handle any exceptions
                     lblOk.Text = "Error: " + ex.Message;
                     PanelOK.Visible = true;
                 }
                 finally
                 {
-                    // Close the database connection
+                    // Close the connection
                     DbCL.Conn.Close();
                 }
             }
+
             else
             {
                 lblOk.Text = "Please enter a Product Code.";
@@ -185,22 +192,71 @@ namespace Bill_Software.corporate.business.app
 
         }
 
+        //protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        //{
+        //    string Id = Convert.ToString(e.CommandArgument);
+
+        //    if (e.CommandName == "Delete")
+        //    {
+        //        DbCL.executeRdr("UPDATE tbl_NewProduct SET ViewMode=0, DeleteMode=1, DeletedOn=@DeletedOn, DeletedByUserId=@DeletedByUserId where Id='" + Id + "'");
+        //        PanelOK.Visible = true;
+        //        lblOk.Text = "Data Deleted Successfully...";
+        //    }
+        //    else if (e.CommandName == "Edit")
+        //    {
+        //        Response.Redirect("NewUpdate_product.aspx?Id=" + Id);
+        //    }
+        //    Binddata();
+        //}
+
         protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
         {
             string Id = Convert.ToString(e.CommandArgument);
 
-            if (e.CommandName == "Delete")
+            try
             {
-                DbCL.executeRdr("delete from tbl_NewProduct where Id='" + Id + "'");
+                if (e.CommandName == "Delete")
+                {
+                    string query = "UPDATE tbl_NewProduct SET ViewMode=0, DeleteMode=1, DeletedOn=@DeletedOn, DeletedByUserId=@DeletedByUserId WHERE Id=@Id";
+
+                    // Initialize database connection
+                    DbCL.Sqlconnection();
+                    DbCL.ConnectDb();
+
+                    using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
+                    {
+                        cmd.Parameters.AddWithValue("@DeletedOn", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@DeletedByUserId", Session["USERID"].ToString());
+                        cmd.Parameters.AddWithValue("@Id", Id);
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    PanelOK.Visible = true;
+                    lblOk.Text = "Data Deleted Successfully...";
+                }
+                else if (e.CommandName == "Edit")
+                {
+                    Response.Redirect("NewUpdate_product.aspx?Id=" + Id);
+                }
+            }
+            catch (Exception ex)
+            {
                 PanelOK.Visible = true;
-                lblOk.Text = "Data Deleted Successfully...";
+                lblOk.Text = "Error: " + ex.Message;
             }
-            else if (e.CommandName == "Edit")
+            finally
             {
-                Response.Redirect("NewUpdate_product.aspx?Id=" + Id);
+                // Ensure proper database connection handling
+                if (DbCL.Conn != null && DbCL.Conn.State == ConnectionState.Open)
+                {
+                    DbCL.Conn.Close();
+                }
             }
+
             Binddata();
         }
+
 
         protected void cmdProduct_SelectedIndexChanged(object sender, EventArgs e)
         {
