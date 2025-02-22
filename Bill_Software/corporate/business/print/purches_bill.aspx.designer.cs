@@ -67,6 +67,33 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblpurches_date;
         
         /// <summary>
+        /// lbl_invoiceno control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_invoiceno;
+        
+        /// <summary>
+        /// lbl_invoicedate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_invoicedate;
+        
+        /// <summary>
+        /// lbl_stockaddedon control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_stockaddedon;
+        
+        /// <summary>
         /// lblcompanyName control.
         /// </summary>
         /// <remarks>
@@ -155,6 +182,15 @@ namespace Bill_Software.corporate.business.print {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblpurches_rate;
+        
+        /// <summary>
+        /// lbl_narration control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_narration;
         
         /// <summary>
         /// Image4 control.

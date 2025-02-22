@@ -261,7 +261,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td>&nbsp;<asp:Label ID="Label19" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;PRODUCT / SERVICE Specifications'&nbsp;</td>
+            <td>&nbsp;<%--<asp:Label ID="Label19" runat="server" Text="*" ForeColor="Red"></asp:Label>--%>&nbsp; PRODUCT / SERVICE Specifications'&nbsp;</td>
             <td>
                 <asp:TextBox ID="txtproducttype" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
             </td>

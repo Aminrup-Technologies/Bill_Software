@@ -118,7 +118,7 @@ namespace Bill_Software.corporate.business.app
 
         }
 
-        private void Bindquotationno()
+        private void Bindquotationno_old()
         {
             string p = null;
             string c = cmbClient.Text.Trim();
@@ -147,6 +147,17 @@ namespace Bill_Software.corporate.business.app
             lblqno.Text = f.ToString();
 
         }
+
+        private void Bindquotationno()
+        {
+            string prefix = "QTN/FE/";  // Default prefix
+            string ss = findmonth();  // Get financial year format (e.g., "24-25/")
+            int j = idreturn();  // Get last serial number
+            j = j + 1;  // Increment serial number
+            string quotationNo = prefix + ss + j.ToString();  // Construct final quotation number
+            lblqno.Text = quotationNo;  // Assign to label
+        }
+
         private int idreturn()
         {
             string a = null;
@@ -291,6 +302,8 @@ namespace Bill_Software.corporate.business.app
             //bindservice();
             bindphaseType();
 
+            btnAddProduct.Enabled = true;
+
         }
 
         //private void bindFactoryAddress(string clientcode)
@@ -357,7 +370,7 @@ namespace Bill_Software.corporate.business.app
 
         private void bindphaseType()
         {
-            string str = "select PaymentPhase from tbl_PaymentPhase order by id";
+            string str = "select id, PaymentPhase from tbl_PaymentPhase order by id";
             dtphasetype = DbCL.SPreturn_dt(str, null);
             if (dtphasetype.Rows.Count > 0)
             {
@@ -466,6 +479,10 @@ namespace Bill_Software.corporate.business.app
                 dr[0] = phasetypename;
                 dr[1] = phasedesc;
                 if (phasetypename == "Full & Final Instalment")
+                {
+                    dr[2] = "100";
+                }
+                else if (phasetypename == "100% Against PI")
                 {
                     dr[2] = "100";
                 }
@@ -671,6 +688,9 @@ namespace Bill_Software.corporate.business.app
                             string Sail_Rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate")).Text;
                             string Tax_Rate = ((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate")).Text;
 
+                            //Added on 13-02-2025 for capturing the comments against indivudal items
+                            string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks")).Text;
+
                             //Below is added to get the discount % and do further calculations on discounted rate
                             string Discount_Rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Discount_Rate")).Text;
 
@@ -720,7 +740,7 @@ namespace Bill_Software.corporate.business.app
 
                             //cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + b + "','" + c + "','" + g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','"+ ProductOrServiceCat.ToString() + "')");
 
-                            cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat,discount_rate,new_sailrate)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + new_b + "','" + new_c + "','" + new_g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','" + ProductOrServiceCat.ToString() + "','" + Discount_Rate.ToString() + "','" + discounted_rate.ToString() + "')");
+                            cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat,discount_rate,new_sailrate,ItemRemarks)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + new_b + "','" + new_c + "','" + new_g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','" + ProductOrServiceCat.ToString() + "','" + Discount_Rate.ToString() + "','" + discounted_rate.ToString() + "','" + ItemRemarks.ToString() + "')");
 
                             //cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + b + "','" + c + "','" + g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "')");
                             cmd.ExecuteNonQuery();
@@ -1073,6 +1093,7 @@ namespace Bill_Software.corporate.business.app
 
             // added on 30-Jan-2025, To hide the Products Grid after selection of Products for Quotes Creation
             gridProdWithCat.Visible = false;
+            btnAddProduct.Enabled = false;
         }
 
         private void TakePservice(int count1, string pservice)

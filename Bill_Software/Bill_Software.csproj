@@ -387,6 +387,7 @@
     <Content Include="corporate\business\WebImages\flame-ex_hdrbtm.png" />
     <Content Include="corporate\business\WebImages\flame-ex_hdrtop.png" />
     <Content Include="corporate\business\WebImages\flmx_authsign.png" />
+    <Content Include="corporate\business\WebImages\flmx_authsign1.png" />
     <Content Include="corporate\business\WebImages\I2ILOGO1.png" />
     <Content Include="corporate\business\WebImages\I2ILHHeader1.png" />
     <Content Include="corporate\business\WebImages\I2ILHFooter.png" />
@@ -453,7 +454,6 @@
     <Content Include="Images\edit1.png" />
     <Content Include="Images\edit_icon.png" />
     <Content Include="Images\heroAccent.png" />
-    <Content Include="Images\IMG-20140404-WA002.png" />
     <Content Include="Images\login-page-bg.jpg" />
     <Content Include="Images\orderedList0.png" />
     <Content Include="Images\orderedList1.png" />

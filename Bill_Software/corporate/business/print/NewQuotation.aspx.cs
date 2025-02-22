@@ -57,7 +57,7 @@ namespace Bill_Software.corporate.business.print
 
         private void buindalldata(string id)
         {
-            string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst,PlaceofSupply,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks from tbl_Quotation where ID=@ID";
+            string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst,PlaceofSupply,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks,DetailedView  from tbl_Quotation where ID=@ID";
             SqlParameter[] pram = {
             new SqlParameter("@id",id)
             };
@@ -94,6 +94,7 @@ namespace Bill_Software.corporate.business.print
                 //lblqnumber.Text = dtmain.Rows[0]["igst"].ToString();
                 Session["cgstOrsgst"] = dtmain.Rows[0]["cgstOrsgst"].ToString();
                 Session["igst"] = dtmain.Rows[0]["igst"].ToString();
+                Session["viewtype"] = dtmain.Rows[0]["DetailedView"].ToString();
 
                 string word = MoneyConvDS.MoneyConvFn(netamount);
                 //blword.Text = word.ToString();
@@ -565,7 +566,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             //string cmdstring = "select Sl_no,Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
-            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
+            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno)
                                       };
@@ -590,46 +591,77 @@ namespace Bill_Software.corporate.business.print
                     double new_TOTALGSTPLUSAMO = 0;
                     string new_TOTALGSTPLUSAMO1 = string.Empty;
 
-                    strp += "<table border='0' width='100%' class='Payment pagebrake'><tr><td class='' style='text-align: left; font-weight: bold;'>OUR QUOTE</td></tr><tr><td class='' style=''>";
-                    strp += "<table class='PaymentPhase' style='border:0' width='100%'><tr><td class='gap' style=''>&nbsp</td></tr>";
-                    strp += "<tr>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white; border-right:none;'>S.NO</td>";
-                    strp += "<td style='width:25%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>PARTICULARS</td>";
-                    strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>HSN <br> CODE</td>";
-                    strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>QTY <br> (PCS)</td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>BASE RATE <br> (RS)</td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>DISC<br> (%)</td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>NEW <br> RATE (RS)</td>";
-                    //strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>RATE<br> (RS)</td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>GST</td>";
 
-                    strp += "<td style='width:14%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;''>";
-                    strp += "<table cellpadding='0' cellspacing='0' class='style1'>";
-                    strp += "<tr>";
-                    strp += "<td style='width:14%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-right:none; font-weight: bold; background-color: #e31e24; text-align: center; color: white; ' colspan='2'>CGST</td>";
-                    strp += "</tr>";
-                    strp += "<tr>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-bottom:none;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; '>RATE</td>";
-                    strp += "<td style='width:9%;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; '>AMOUNT</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
-                    strp += "</td>";
+                    //strp += "<table border='0' width='100%' class='Payment pagebrake'><tr><td class='' style='text-align: left; font-weight: bold;'>OUR QUOTE</td></tr><tr><td class='' style=''>";
+                    //strp += "<table class='PaymentPhase' style='border:0' width='100%'><tr><td class='gap' style=''>&nbsp</td></tr>";
+                    //strp += "<tr>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white; border-right:none;'>S.NO</td>";
+                    //strp += "<td style='width:25%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white;  border-right:none;'>PARTICULARS</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white;  border-right:none;'>HSN <br> CODE</td>";
+                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white;  border-right:none;'>QTY <br> (PCS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;  border-right:none;'>BASE RATE <br> (RS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;  border-right:none;'>DISC<br> (%)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;  border-right:none;'>NEW <br> RATE (RS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;  border-right:none;'>GST</td>";
+                    //strp += "<td style='width:14%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;  border-right:none;''>";
+                    //strp += "<table cellpadding='0' cellspacing='0' class='style1'>";
+                    //strp += "<tr>";
+                    //strp += "<td style='width:14%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-right:none; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;' colspan='2'>CGST</td>";
+                    //strp += "</tr>";
+                    //strp += "<tr>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-bottom:none;  font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;'>RATE</td>";
+                    //strp += "<td style='width:9%;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; font-size: 10px; '>AMOUNT</td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
+                    //strp += "</td>";
+                    //strp += "<td style='width:14%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;  border-right:none;'>";
+                    //strp += "<table cellpadding='0' cellspacing='0' class='style1'>";
+                    //strp += "<tr>";
+                    //strp += "<td style='width:14%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-right:none;  font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;' colspan='2'>SGST</td>";
+                    //strp += "</tr>";
+                    //strp += "<tr>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-bottom:none;  font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px; '>RATE</td>";
+                    //strp += "<td style='width:9%;  font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;  border-right:none;'>AMOUNT</td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
+                    //strp += "</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;'>AMOUNT<br> (RS)</td>";
+                    //strp += "<td style='width:10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;'>Remarks</td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
 
-                    strp += "<td style='width:14%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>";
-                    strp += "<table cellpadding='0' cellspacing='0' class='style1'>";
-                    strp += "<tr>";
-                    strp += "<td style='width:14%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-right:none;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; ' colspan='2'>SGST</td>";
-                    strp += "</tr>";
-                    strp += "<tr>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-bottom:none;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; '>RATE</td>";
-                    strp += "<td style='width:9%;  font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>AMOUNT</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
-                    strp += "</td>";
+                    //strp += "<table border='0' width='100%' class='Payment pagebrake'><tr><td class='' style='text-align: left; font-weight: bold;'>OUR QUOTE</td></tr><tr><td class='' style=''>";
+                    //strp += "<table class='PaymentPhase' style='border:0' width='100%'><tr><td class='gap' style=''>&nbsp</td></tr>";
+                    //strp += "<tr>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white; border-right:none;'>S.NO</td>";
+                    //strp += "<td style='width:25%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white; border-right:none;'>PARTICULARS</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white; border-right:none;'>HSN <br> CODE</td>";
+                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; font-size: 10px; color: white; border-right:none;'>QTY <br> (PCS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px; border-right:none;'>BASE RATE <br> (RS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px; border-right:none;'>DISC<br> (%)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px; border-right:none;'>NEW <br> RATE (RS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;'>GST</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;'>AMOUNT<br> (RS)</td>";
+                    //strp += "<td style='width:10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; word-wrap: break-word; text-align: center; color: white; font-size: 10px;'>Remarks</td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
 
-                    strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT<br> (RS)</td>";
+                    // Start Table
+                    strp += "<table class='' style='border:2px solid #6c6c6c; border-collapse: collapse; width:100%;'>";
+
+                    // HEADER ROW
+                    strp += "<tr style='background-color:#d9d3d3; text-align:center; background-color: #e31e24; font-weight:bold; color: white; font-size: 10px;'>";
+                    strp += "<th style='width:5%; border:2px solid #6c6c6c; '>S.No</th>";
+                    strp += "<th style='width:30%; border:2px solid #6c6c6c;'>Product Name & Specification</th>";
+                    strp += "<th style='width:8%; border:2px solid #6c6c6c;'>HSN Code</th>";
+                    strp += "<th style='width:6%; border:2px solid #6c6c6c;'>Qty (PCS)</th>";
+                    strp += "<th style='width:5%; border:2px solid #6c6c6c;'>Base Rate</th>";
+                    strp += "<th style='width:5%; border:2px solid #6c6c6c;'>Disc (%)</th>";
+                    strp += "<th style='width:5%; border:2px solid #6c6c6c;'>Disc Rate</th>";
+                    strp += "<th style='width:5%; border:2px solid #6c6c6c;'>GST (%)</th>";
+                    strp += "<th style='width:8%; border:2px solid #6c6c6c;'>Amount (₹)</th>";
+                    strp += "<th style='width:13%; border:2px solid #6c6c6c;'>Remarks</th>";
                     strp += "</tr>";
-                    strp += "</table>";
 
 
                     //strp += "</td></tr></table>";
@@ -640,6 +672,10 @@ namespace Bill_Software.corporate.business.print
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
                         string specification = dtp.Rows[i]["specification"].ToString();
+                        string itemno = dtp.Rows[i]["ItemNo"].ToString();
+                        string materialno = dtp.Rows[i]["MaterialNo"].ToString();
+                        string packsize = dtp.Rows[i]["PackSize"].ToString();
+
                         int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
                         TQ = TQ + Quantity;
                         double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
@@ -648,6 +684,9 @@ namespace Bill_Software.corporate.business.print
                         int discper = Convert.ToInt32(dtp.Rows[i]["discount_rate"]);
                         //double QuantityBaserateAmo = Math.Round((Quantity * baserate), 2);
                         //string QuantityBaserateAmo1 = DoFormat(QuantityBaserateAmo);
+
+                        //individual items remarks for display
+                        string itemremarks = dtp.Rows[i]["ItemRemarks"].ToString();
 
                         double new_QuantityBaserateAmo = Math.Round((Quantity * discountrate), 2);
                         string new_QuantityBaserateAmo1 = DoFormat(new_QuantityBaserateAmo);
@@ -681,23 +720,66 @@ namespace Bill_Software.corporate.business.print
                         new_TOTALGST1 = DoFormat(new_TOTALGST);
 
 
-                        strp += "<table class='' style='border:0' width='100%'>";
+                        //strp += "<table class='' style='border:0' width='100%'>";
+                        //strp += "<tr>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + (i + 1).ToString() + "</td>";
+                        //strp += "<td style='width:25%; border:2px solid #6c6c6c; font-weight: bold;  text-align: left; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + Productname +"<br>" + specification + "</td>";
+                        //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + HSN + "</td>";
+                        //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + Quantity.ToString() + "</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + baserate.ToString() + "</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + discper.ToString() + "%</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + discountrate.ToString() + "</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + gstper.ToString() + " %</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none;'>" + cgstper.ToString() + " %</td>";
+                        //strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none;'>" + new_cgstamo1.ToString() + "</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + cgstper.ToString() + " %</td>";
+                        //strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + new_cgstamo1.ToString() + "</td>";
+                        //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: right; font-size: 10px; word-wrap: break-word; border-top:none;'>" + new_QuantityBaserateAmo1.ToString() + "</td>";
+                        //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: right; font-size: 10px; word-wrap: break-word; border-top:none;'>" + itemremarks.ToString() + "</td>";
+                        //strp += "</tr>";
+                        //strp += "</table>";
+
+                        //strp += "<table class='' style='border:0' width='100%'>";
+                        //strp += "<tr>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + (i + 1).ToString() + "</td>";
+                        //strp += "<td style='width:30%; border:2px solid #6c6c6c; font-weight: bold; text-align: left; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + Productname + "<br>" + specification + "</td>";
+                        //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + HSN + "</td>";
+                        //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + Quantity.ToString() + "</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + baserate.ToString() + "</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + discper.ToString() + "%</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + discountrate.ToString() + "</td>";
+                        //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + gstper.ToString() + " %</td>";
+                        //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; text-align: right; font-size: 10px; word-wrap: break-word; border-top:none;'>" + new_QuantityBaserateAmo1.ToString() + "</td>";
+                        //strp += "<td style='width:13%; border: 2px solid #6c6c6c; font-weight: bold; text-align: right; font-size: 10px; word-wrap: break-word; border-top:none;'>" + itemremarks.ToString() + "</td>";
+                        //strp += "</tr>";
+                        //strp += "</table>";
+
                         strp += "<tr>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'>" + (i + 1).ToString() + "</td>";
-                        strp += "<td style='width:25%; border:2px solid #6c6c6c; font-weight: bold;  text-align: left;   border-right:none; border-top:none;'>" + Productname +"<br>" + specification + "</td>";
-                        strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + HSN + "</td>";
-                        strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + Quantity.ToString() + "</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + baserate.ToString() + "</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + discper.ToString() + "%</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + discountrate.ToString() + "</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + gstper.ToString() + " %</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + cgstper.ToString() + " %</td>";
-                        strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + new_cgstamo1.ToString() + "</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + cgstper.ToString() + " %</td>";
-                        strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + new_cgstamo1.ToString() + "</td>";
-                        strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;'>" + new_QuantityBaserateAmo1.ToString() + "</td>";
+                        strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + (i + 1) + "</td>";
+                        //strp += "<td style='text-align:left; border:2px solid #6c6c6c; font-size: 10.5px;'>" + Productname + "<br>" + specification + "</td>";
+                        if (Session["viewtype"].ToString() == "Yes")
+                        {
+                            strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
+                                   "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Make: {1}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {2}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {3}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
+                                   "</td>", Productname, specification, itemno, materialno, packsize);
+                        }
+                        else
+                        {
+                            strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
+                        }
+                        strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + HSN + "</td>";
+                        strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + Quantity + "</td>";
+                        strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + baserate + "</td>";
+                        strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + discper + "%</td>";
+                        strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + discountrate + "</td>";
+                        strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + gstper + "%</td>";
+                        strp += "<td style='text-align:right; border:2px solid #6c6c6c; font-size: 10.5px;'>" + new_QuantityBaserateAmo1 + "</td>";
+                        strp += "<td style='text-align:left; border:2px solid #6c6c6c; font-size: 10.5px;'>" + itemremarks + "</td>";
                         strp += "</tr>";
-                        strp += "</table>";
                     }
 
                     //TOTALGSTPLUSAMO = TOTALGST + SUBTOTAL;
@@ -713,87 +795,113 @@ namespace Bill_Software.corporate.business.print
                     //string SUBTOTAL1 = DoFormat(SUBTOTAL);
                     string new_SUBTOTAL1 = DoFormat(new_SUBTOTAL);
 
-                    strp += "<table class='' style='border:0' width='100%'>";
-                    strp += "<tr>";
+                    //strp += "<table class='' style='border:0' width='100%'>";
+                    //strp += "<tr>";
+                    //strp += "<td style='border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; border-right:none; word-wrap: break-word; border-top:none; background-color:#d9d3d3' colspan='4'>GRAND TOTAL</td>";
+                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;  font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none; background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none; background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none; background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none; background-color:#d9d3d3'>" + new_TOTALCGST1.ToString() + "</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'>" + new_TOTALCGST1.ToString() + "</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: right; font-size: 10px; word-wrap: break-word; border-top:none; background-color:#d9d3d3'>" + new_SUBTOTAL1.ToString() + "</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none; background-color:#d9d3d3'></td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
 
-                    strp += "<td style='border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;  border-right:none; border-top:none;background-color:#d9d3d3' colspan='3'>GRAND TOTAL</td>";
-                    strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    //strp += "<td style='border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;' colspan='7'></td>";
-                    strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + new_TOTALCGST1.ToString() + "</td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + new_TOTALCGST1.ToString() + "</td>";
-                    //strp += "<td style='width:10%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;background-color:#d9d3d3'>" + Math.Round(SUBTOTAL).ToString() + ".00" + "</td>";
-                    strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;background-color:#d9d3d3'>" + new_SUBTOTAL1.ToString() + "</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
+                    //strp += "<table class='' style='border:2px solid #6c6c6c; border-collapse: collapse;' width='100%'>";
+                    //strp += "<tr style='background-color:#d9d3d3;'>";
+                    //strp += "<td style='border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; border-right:none; word-wrap: break-word; border-top:none;' colspan='3'>GRAND TOTAL</td>";
+                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + TQ.ToString() + "</td>";
+                    //strp += "<td style='width:20%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;' colspan='4'></td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; text-align: right; font-size: 10px; word-wrap: break-word; border-top:none;'>" + new_SUBTOTAL1.ToString() + "</td>";
+                    //strp += "<td style='width:13%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-top:none;'></td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
+
+                    //// GRAND TOTAL ROW
+                    //strp += "<tr style='background-color:#d9d3d3; font-weight:bold;'>";
+                    //strp += "<td colspan='3' style='border:2px solid #6c6c6c; text-align:center;'>GRAND TOTAL</td>";
+                    //strp += "<td style='border:2px solid #6c6c6c; text-align:center;'>" + TQ + "</td>";
+                    //strp += "<td colspan='4' style='border:2px solid #6c6c6c;'></td>";
+                    //strp += "<td style='border:2px solid #6c6c6c; text-align:right;'>" + new_SUBTOTAL1 + "</td>";
+                    //strp += "<td style='border:2px solid #6c6c6c;'>&nbsp;</td>";
+                    //strp += "</tr>";
+
+                    //strp += "</table>";
 
 
-                    strp += "<table class='' style='border:0' width='100%'>";
-                    strp += "<tr>";
-                    strp += "<td style='font-weight: bold;  text-align: center' colspan='6'></td>";
-                    strp += "<td style='width:28%; font-weight: bold;  text-align: right; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT BEFORE TAX:</td>";
-                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none'>" + Math.Round(SUBTOTAL, 2).ToString() + ".00" + "</td>";
-                    strp += "<td style='width:8%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none'>" + new_SUBTOTAL1.ToString() + "</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
 
                     //strp += "<table class='' style='border:0' width='100%'>";
                     //strp += "<tr>";
-                    //strp += "<td style='font-weight: bold;  text-align: center;  border-right:none; border-top:none' colspan='6'></td>";
-                    //strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL GST:</td>";
-                    //strp += "<td style='width:10%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-top:none;'>" + Math.Round(TOTALGST).ToString()+".00" + "</td>";
+                    //strp += "<td style='font-weight: bold; text-align: center' colspan='3'></td>";
+                    //strp += "<td style='width:28%; font-weight: bold;  text-align: right; font-size: 10px; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT BEFORE TAX:</td>";
+                    //strp += "<td style='width:8%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none'>" + new_SUBTOTAL1.ToString() + "</td>";
+                    //strp += "<td style='border: 2px solid #6c6c6c; border-top:none'></td>";
                     //strp += "</tr>";
                     //strp += "</table>";
 
                     //strp += "<table class='' style='border:0' width='100%'>";
                     //strp += "<tr>";
-                    //strp += "<td style='font-weight: bold;  text-align: center;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='5'>Amount (In Words):" + word + "</td>";
+                    //strp += "<td style='font-weight: bold;  text-align: justify;  border-right:none; border-top:none; background-color: #e31e24; color: white; vertical-align: center;' rowspan='2' colspan='3'>Amount (In Words):" + word + "</td>";
                     //strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
-                    //strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT AFTER TAX:</td>";
-                    //strp += "<td style='width:10%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-top:none;'>" + grandtotal.ToString()+".00" + "</td>";
+                    //strp += "<td style='width:28%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL GST:</td>";
+                    //strp += "<td style='width:8%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + new_TOTALGST1.ToString() + "</td>";
+                    //strp += "</tr>";
+
+
+                    //strp += "<tr>";
+                    //strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
+                    ////strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT AFTER TAX:</td>";
+                    ////strp += "<td style='width:8%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + new_TOTALGSTPLUSAMO1.ToString() + "</td>";
+                    //strp += "<td style='width:28%; font-weight: bold; text-align: right; font-size: 10px; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT AFTER TAX:</td>";
+                    //strp += "<td style='width:8%; border:2px solid #6c6c6c; font-weight: bold; text-align: right; border-top:none;'>" + new_TOTALGSTPLUSAMO1.ToString() + "</td>";
                     //strp += "</tr>";
                     //strp += "</table>";
 
-                    strp += "<table class='' style='border:0' width='100%'>";
-                    strp += "<tr>";
-                    strp += "<td style='font-weight: bold;  text-align: justify;  border-right:none; border-top:none; background-color: #e31e24; color: white; vertical-align: center;' rowspan='2' colspan='3'>Amount (In Words):" + word + "</td>";
-                    strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
-                    strp += "<td style='width:28%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL GST:</td>";
-                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + Math.Round(TOTALGST, 2).ToString() + ".00" + "</td>";
-                    strp += "<td style='width:8%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + new_TOTALGST1.ToString() + "</td>";
+                    // **Footer Row**
+                    strp += "<tfoot>";
+                    strp += "<tr style='background-color:#d9d3d3; font-weight: bold;'>";
+                    strp += "<td colspan='3' style='border: 2px solid #6c6c6c; text-align: center;'>GRAND TOTAL</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{TQ}</td>";
+                    strp += "<td colspan='4' style='border: 2px solid #6c6c6c;'></td>";
+                    //strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{new_TOTALIGST}</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_SUBTOTAL1}</td>";
+                    strp += "<td style='border: 2px solid #6c6c6c;'></td>";
                     strp += "</tr>";
 
+                    // **Total Amount Before Tax Row**
                     strp += "<tr>";
-                    //strp += "<td style='font-weight: bold;  text-align: center;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='5'>Amount (In Words):" + word + "</td>";
-                    strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
-                    strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT AFTER TAX:</td>";
-                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + grandtotal.ToString() + ".00" + "</td>";
-                    strp += "<td style='width:8%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + new_TOTALGSTPLUSAMO1.ToString() + "</td>";
+                    strp += "<td colspan='4'></td>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: right;'>TOTAL AMOUNT BEFORE TAX:</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_SUBTOTAL1}</td>";
                     strp += "</tr>";
+
+                    // **Total GST Row**
+                    strp += "<tr>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: left;'>Amount (In Words): " + word + "</td>";
+                    //strp += "<td></td>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: right;'>TOTAL GST:</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_TOTALGST1}</td>";
+                    strp += "</tr>";
+
+                    // **Total Amount After Tax Row**
+                    strp += "<tr>";
+                    strp += "<td colspan='4'></td>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: right;'>TOTAL AMOUNT AFTER TAX:</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_TOTALGSTPLUSAMO1}</td>";
+                    strp += "</tr>";
+
+                    strp += "</tfoot>";
+
+                    // **Close Table**
                     strp += "</table>";
 
 
-                    //< table border = "0" width = "100%" class="FORCE MAJEURE">
-                    //        <tr>
-                    //            <td class="" style="text-align: justify; font-weight: 100;  vertical-align: top;" rowspan="2">1 ST1 ST</td>
-                    //            <td class="" style="text-align: justify;  font-weight: 100">
-                    //                 	The Company will
-                    //            </td>
-                    //        </tr>
-                    //        <tr>
-                    //            <td class="" style="text-align: justify;  font-weight: 100">
-                    //                 	The Company will
-                    //            </td>
-                    //        </tr>
-
-                    //    </table>
-
-                    strp += "</td></tr><tr><td class='gap' style=''>&nbsp</td></tr></table>";
+                    //strp += "</td></tr><tr><td class='gap' style=''>&nbsp</td></tr></table>";
 
                 }
                 if (Session["igst"].ToString() == "YES")
@@ -809,158 +917,283 @@ namespace Bill_Software.corporate.business.print
                     double new_TOTALGST = 0;
                     double new_TOTALGSTPLUSAMO = 0;
 
-                    strp += "<table border='0' width='100%'><tr><td class='' style='text-align: left; font-weight: bold;'>OUR QUOTE</td></tr><tr><td class='' style=''>";
-                    strp += "<table class='PaymentPhase' style='border:0' width='100%'><tr><td class='gap' style=''>&nbsp</td></tr>";
-                    strp += "<tr>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white; border-right:none;'>S.NO</td>";
+                    //strp += "<table border='0' width='100%'><tr><td class='' style='text-align: left; font-weight: bold;'>OUR QUOTE</td></tr><tr><td class='' style=''>";
+                    //strp += "<table class='PaymentPhase' style='border:0' width='100%'><tr><td class='gap' style=''>&nbsp</td></tr>";
+                    //strp += "<tr>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white; border-right:none;'>S.NO</td>";
 
-                    strp += "<td style='width:32%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>PARTICULARS</td>";
-                    strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>HSN<br> CODE</td>";
-                    strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>QUANTITY<br> (PCS)</td>";
-                    //strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>RATE<br> (RS)</td>";
-                    strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>BASE RATE <br> (RS)</td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>DISC<br> (%)</td>";
-                    strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>NEW <br> RATE (RS)</td>";
+                    //strp += "<td style='width:32%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>PARTICULARS</td>";
+                    //strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>HSN<br> CODE</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>QTY<br> (PCS)</td>";
+                    //strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>BASE RATE <br> (RS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>DISC<br> (%)</td>";
+                    //strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>NEW <br> RATE (RS)</td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>GST</td>";
+                    ////strp += "<td style='width:14%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;''>";
+                    ////strp += "<table cellpadding='0' cellspacing='0' class='style1'>";
+                    ////strp += "<tr>";
+                    ////strp += "<td style='width:14%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-right:none; font-weight: bold; background-color: #e31e24; text-align: center; color: white; ' colspan='2'>IGST</td>";
+                    ////strp += "</tr>";
+                    ////strp += "<tr>";
+                    ////strp += "<td style='width:5%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-bottom:none;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; '>RATE</td>";
+                    ////strp += "<td style='width:9%;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; '>AMOUNT</td>";
+                    ////strp += "</tr>";
+                    ////strp += "</table>";
+                    ////strp += "</td>";
+                    //strp += "<td style='width:10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT<br> (RS)</td>";
+                    //strp += "<td style='width:14%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>Remarks</td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
 
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>GST</td>";
-                    strp += "<td style='width:14%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;''>";
-                    strp += "<table cellpadding='0' cellspacing='0' class='style1'>";
-                    strp += "<tr>";
-                    strp += "<td style='width:14%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-right:none; font-weight: bold; background-color: #e31e24; text-align: center; color: white; ' colspan='2'>IGST</td>";
+                    // Start Table
+                    strp += "<table class='' style='border-collapse: collapse; width:100%; border: 2px solid #6c6c6c;'>";
+
+                    // **Table Header**
+                    strp += "<thead>";
+                    strp += "<tr style='background-color:#d9d3d3; font-weight: bold; text-align: center;'>";
+                    strp += "<th style='width:5%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>S.No.</th>";
+                    strp += "<th style='width:30%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>Product Name & Specification</th>";
+                    strp += "<th style='width:7%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>HSN</th>";
+                    strp += "<th style='width:8%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>Qty</th>";
+                    strp += "<th style='width:10%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>BASE RATE <br> (RS)</th>";
+                    strp += "<th style='width:5%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>DISC<br> (%)</th>";
+                    strp += "<th style='width:10%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>NEW RATE (RS)</th>";
+                    strp += "<th style='width:5%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>GST %</th>";
+                    //strp += "<th style='width:9%; border: 2px solid #6c6c6c;'>IGST</th>";
+                    strp += "<th style='width:10%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>AMOUNT<br> (RS)</th>";
+                    strp += "<th style='width:19%; border: 2px solid #6c6c6c; background-color: #e31e24; color: white;'>Remarks</th>";
                     strp += "</tr>";
-                    strp += "<tr>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c;border-top:none; border-left:none; border-bottom:none;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; '>RATE</td>";
-                    strp += "<td style='width:9%;  font-weight: bold; background-color: #e31e24; text-align: center; color: white; '>AMOUNT</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
-                    strp += "</td>";
+                    strp += "</thead>";
 
-                    strp += "<td style='width:10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT<br> (RS)</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
 
+
+                    //for (int i = 0; i < dtp.Rows.Count; i++)
+                    //{
+                    //    string HSN = dtp.Rows[i]["HSN"].ToString();
+                    //    string Productname = dtp.Rows[i]["Product_name"].ToString();
+                    //    string specification = dtp.Rows[i]["specification"].ToString();
+                    //    int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
+                    //    TQ = TQ + Quantity;
+                    //    double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
+                    //    double discountrate = Math.Round((Convert.ToDouble(dtp.Rows[i]["new_sailrate"])), 2);
+                    //    int gstper = Convert.ToInt32(dtp.Rows[i]["Service_tax_rate"]);
+                    //    int discper = Convert.ToInt32(dtp.Rows[i]["discount_rate"]);
+                    //    //double QuantityBaserateAmo = Math.Round((Quantity * baserate), 2);
+                    //    double new_QuantityBaserateAmo = Math.Round((Quantity * discountrate), 2);
+                    //    string itemremarks = dtp.Rows[i]["ItemRemarks"].ToString();
+                    //    //string QuantityBaserateAmo1 = DoFormat(QuantityBaserateAmo);
+                    //    string new_QuantityBaserateAmo1 = DoFormat(new_QuantityBaserateAmo);
+
+                    //    //double gstamount = Math.Round(((new_QuantityBaserateAmo * gstper) / 100), 2);
+                    //    double new_gstamount = Math.Round(((new_QuantityBaserateAmo * gstper) / 100), 2);
+
+                    //    double cgstper = Math.Round((Convert.ToDouble(gstper) / 2), 2);
+
+                    //    double cgstamo = Math.Round((Convert.ToDouble(new_gstamount) / 2), 2);
+
+                    //    //TOTALIGST = TOTALIGST + gstamount;
+                    //    //SUBTOTAL = SUBTOTAL + QuantityBaserateAmo;
+                    //    //TOTALGST = TOTALGST + gstamount;
+
+                    //    new_TOTALIGST = new_TOTALIGST + new_gstamount;
+                    //    new_SUBTOTAL = new_SUBTOTAL + new_QuantityBaserateAmo;
+
+                    //    new_TOTALGST = new_TOTALGST + new_gstamount;
+
+
+                    //    strp += "<table class='' style='border:0' width='100%'>";
+                    //    strp += "<tr>";
+                    //    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + (i + 1).ToString() + "</td>";
+                    //    strp += "<td style='width:32%; border:2px solid #6c6c6c; font-weight: bold;  text-align: left;     border-right:none; border-top:none;'>" + Productname + "<br>" + specification + "</td>";
+                    //    strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + HSN + "</td>";
+                    //    strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + Quantity.ToString() + "</td>";
+                    //    strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + baserate.ToString() + "</td>";
+                    //    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + discper.ToString() + "</td>";
+                    //    strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + discountrate.ToString() + "</td>";
+                    //    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + gstper.ToString() + " %</td>";
+                    //    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + gstper.ToString() + " %</td>";
+                    //    //strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + new_gstamount.ToString() + "</td>";
+                    //    strp += "<td style='width:14%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;'>" + new_QuantityBaserateAmo1.ToString() + "</td>";
+                    //    strp += "<td style='width:14%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;'>" + itemremarks + "</td>";
+                    //    strp += "</tr>";
+                    //    strp += "</table>";
+                    //}
+
+                    // **Table Body - Item Rows**
+                    strp += "<tbody>";
 
                     for (int i = 0; i < dtp.Rows.Count; i++)
                     {
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
                         string specification = dtp.Rows[i]["specification"].ToString();
+                        string itemno = dtp.Rows[i]["ItemNo"].ToString();
+                        string materialno = dtp.Rows[i]["MaterialNo"].ToString();
+                        string packsize = dtp.Rows[i]["PackSize"].ToString();
+
                         int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
-                        TQ = TQ + Quantity;
-                        double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
-                        double discountrate = Math.Round((Convert.ToDouble(dtp.Rows[i]["new_sailrate"])), 2);
+                        TQ += Quantity;
+                        double baserate = Math.Round(Convert.ToDouble(dtp.Rows[i]["sail_rate"]), 2);
+                        double discountrate = Math.Round(Convert.ToDouble(dtp.Rows[i]["new_sailrate"]), 2);
                         int gstper = Convert.ToInt32(dtp.Rows[i]["Service_tax_rate"]);
                         int discper = Convert.ToInt32(dtp.Rows[i]["discount_rate"]);
-                        //double QuantityBaserateAmo = Math.Round((Quantity * baserate), 2);
-                        double new_QuantityBaserateAmo = Math.Round((Quantity * discountrate), 2);
-
-                        //string QuantityBaserateAmo1 = DoFormat(QuantityBaserateAmo);
+                        double new_QuantityBaserateAmo = Math.Round(Quantity * discountrate, 2);
+                        string itemremarks = dtp.Rows[i]["ItemRemarks"].ToString();
                         string new_QuantityBaserateAmo1 = DoFormat(new_QuantityBaserateAmo);
+                        double new_gstamount = Math.Round((new_QuantityBaserateAmo * gstper) / 100, 2);
+                        new_TOTALIGST += new_gstamount;
+                        new_SUBTOTAL += new_QuantityBaserateAmo;
+                        new_TOTALGST += new_gstamount;
 
-                        //double gstamount = Math.Round(((new_QuantityBaserateAmo * gstper) / 100), 2);
-                        double new_gstamount = Math.Round(((new_QuantityBaserateAmo * gstper) / 100), 2);
-
-                        double cgstper = Math.Round((Convert.ToDouble(gstper) / 2), 2);
-
-                        double cgstamo = Math.Round((Convert.ToDouble(new_gstamount) / 2), 2);
-
-                        //TOTALIGST = TOTALIGST + gstamount;
-                        //SUBTOTAL = SUBTOTAL + QuantityBaserateAmo;
-                        //TOTALGST = TOTALGST + gstamount;
-
-                        new_TOTALIGST = new_TOTALIGST + new_gstamount;
-                        new_SUBTOTAL = new_SUBTOTAL + new_QuantityBaserateAmo;
-                        
-                        new_TOTALGST = new_TOTALGST + new_gstamount;
-
-
-                        strp += "<table class='' style='border:0' width='100%'>";
                         strp += "<tr>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + (i + 1).ToString() + "</td>";
-                        strp += "<td style='width:32%; border:2px solid #6c6c6c; font-weight: bold;  text-align: left;     border-right:none; border-top:none;'>" + Productname + "<br>" + specification + "</td>";
-                        strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + HSN + "</td>";
-                        strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + Quantity.ToString() + "</td>";
-                        strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + baserate.ToString() + "</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + discper.ToString() + "</td>";
-                        strp += "<td style='width:7%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + discountrate.ToString() + "</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + gstper.ToString() + " %</td>";
-                        strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + gstper.ToString() + " %</td>";
-                        strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;'>" + new_gstamount.ToString() + "</td>";
-                        strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;'>" + new_QuantityBaserateAmo1.ToString() + "</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{i + 1}</td>";
+                        //strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'>{Productname}<br>{specification}</td>";
+                        if (Session["viewtype"].ToString() == "Yes")
+                        {
+                            strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
+                                   "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Make: {1}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {2}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {3}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
+                                   "</td>", Productname, specification, itemno, materialno, packsize);
+                        }
+                        else
+                        {
+                            strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
+                        }
+
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{HSN}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{Quantity}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{baserate}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{discper}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{discountrate}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{gstper}%</td>";
+                        //strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{new_gstamount}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_QuantityBaserateAmo1}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'>{itemremarks}</td>";
                         strp += "</tr>";
-                        strp += "</table>";
                     }
 
-                    //TOTALGSTPLUSAMO = TOTALGST + SUBTOTAL;
+                    strp += "</tbody>";
+
+                    // **Footer Calculations**
                     new_TOTALGSTPLUSAMO = new_TOTALGST + new_SUBTOTAL;
                     string new_SUBTOTAL1 = DoFormat(new_SUBTOTAL);
                     string final_new_TOTALGSTPLUSAMO = DoFormat(new_TOTALGSTPLUSAMO);
-
-                    string grandtotal = (Math.Round((Convert.ToDouble(new_TOTALGSTPLUSAMO))).ToString());
-                    string grandtotal1 = DoFormat(Math.Round((Convert.ToDouble(new_TOTALGSTPLUSAMO)))).ToString();
+                    string grandtotal = Math.Round(Convert.ToDouble(new_TOTALGSTPLUSAMO)).ToString();
                     string word = MoneyConvDS.MoneyConvFn(final_new_TOTALGSTPLUSAMO);
 
-                    strp += "<table class='' style='border:0' width='100%'>";
-                    strp += "<tr>";
-                    strp += "<td style='border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none; background-color:#d9d3d3' colspan='3'>GRAND TOTAL</td>";
-                    strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
-                    strp += "<td style='width:7%; border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:7%; border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
-                    strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + new_TOTALIGST.ToString() + "</td>";
-                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;background-color:#d9d3d3'>" + Math.Round(SUBTOTAL,2).ToString() + ".00" + "</td>";
-                    strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;background-color:#d9d3d3'>" + new_SUBTOTAL1.ToString() + "</td>";
+                    // **Footer Row**
+                    strp += "<tfoot>";
+                    strp += "<tr style='background-color:#d9d3d3; font-weight: bold;'>";
+                    strp += "<td colspan='3' style='border: 2px solid #6c6c6c; text-align: center;'>GRAND TOTAL</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{TQ}</td>";
+                    strp += "<td colspan='4' style='border: 2px solid #6c6c6c;'></td>";
+                    //strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{new_TOTALIGST}</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_SUBTOTAL1}</td>";
+                    strp += "<td style='border: 2px solid #6c6c6c;'></td>";
                     strp += "</tr>";
+
+                    // **Total Amount Before Tax Row**
+                    strp += "<tr>";
+                    strp += "<td colspan='4'></td>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: right;'>TOTAL AMOUNT BEFORE TAX:</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_SUBTOTAL1}</td>";
+                    strp += "</tr>";
+
+                    // **Total GST Row**
+                    strp += "<tr>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: left;'>Amount (In Words): " + word + "</td>";
+                    //strp += "<td></td>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: right;'>TOTAL GST:</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_TOTALGST}</td>";
+                    strp += "</tr>";
+
+                    // **Total Amount After Tax Row**
+                    strp += "<tr>";
+                    strp += "<td colspan='4'></td>";
+                    strp += "<td colspan='4' style='background-color: #e31e24; color: white; text-align: right;'>TOTAL AMOUNT AFTER TAX:</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{final_new_TOTALGSTPLUSAMO}</td>";
+                    strp += "</tr>";
+
+                    strp += "</tfoot>";
+
+                    // **Close Table**
                     strp += "</table>";
 
 
-                    strp += "<table class='' style='border:0' width='100%'>";
-                    strp += "<tr>";
-                    strp += "<td style='font-weight: bold;  text-align: center' colspan='6'></td>";
-                    strp += "<td style='width:28%; font-weight: bold;  text-align: right; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT BEFORE TAX:</td>";
-                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none'>" + Math.Round(SUBTOTAL,2).ToString() + ".00" + "</td>";
-                    strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none'>" + new_SUBTOTAL1.ToString() + "</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
+                    ////TOTALGSTPLUSAMO = TOTALGST + SUBTOTAL;
+                    //new_TOTALGSTPLUSAMO = new_TOTALGST + new_SUBTOTAL;
+                    //string new_SUBTOTAL1 = DoFormat(new_SUBTOTAL);
+                    //string final_new_TOTALGSTPLUSAMO = DoFormat(new_TOTALGSTPLUSAMO);
 
-
+                    //string grandtotal = (Math.Round((Convert.ToDouble(new_TOTALGSTPLUSAMO))).ToString());
+                    //string grandtotal1 = DoFormat(Math.Round((Convert.ToDouble(new_TOTALGSTPLUSAMO)))).ToString();
+                    //string word = MoneyConvDS.MoneyConvFn(final_new_TOTALGSTPLUSAMO);
 
                     //strp += "<table class='' style='border:0' width='100%'>";
                     //strp += "<tr>";
-                    //strp += "<td style='font-weight: bold;  text-align: center;  border-right:none; border-top:none' colspan='6'></td>";
-                    //strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL GST:</td>";
-                    //strp += "<td style='width:10%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-top:none;'>" + Math.Round(TOTALGST).ToString()+".00" + "</td>";
+                    //strp += "<td style='border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none; background-color:#d9d3d3' colspan='3'>GRAND TOTAL</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
+                    //strp += "<td style='width:7%; border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:7%; border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
+                    //strp += "<td style='width:9%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + new_TOTALIGST.ToString() + "</td>";
+                    ////strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;background-color:#d9d3d3'>" + Math.Round(SUBTOTAL,2).ToString() + ".00" + "</td>";
+                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;background-color:#d9d3d3'>" + new_SUBTOTAL1.ToString() + "</td>";
+                    //strp += "<td style='width:14%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;   border-top:none;background-color:#d9d3d3'>&nbsp;</td>";
                     //strp += "</tr>";
                     //strp += "</table>";
 
+
                     //strp += "<table class='' style='border:0' width='100%'>";
                     //strp += "<tr>";
-                    //strp += "<td style='font-weight: bold;  text-align: center;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='5'>Amount (In Words):" + word + "</td>";
+                    //strp += "<td style='font-weight: bold;  text-align: center' colspan='6'></td>";
+                    //strp += "<td style='width:28%; font-weight: bold;  text-align: right; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT BEFORE TAX:</td>";
+                    ////strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none'>" + Math.Round(SUBTOTAL,2).ToString() + ".00" + "</td>";
+                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none'>" + new_SUBTOTAL1.ToString() + "</td>";
+                    //strp += "</tr>";
+                    //strp += "</table>";
+
+
+
+                    ////strp += "<table class='' style='border:0' width='100%'>";
+                    ////strp += "<tr>";
+                    ////strp += "<td style='font-weight: bold;  text-align: center;  border-right:none; border-top:none' colspan='6'></td>";
+                    ////strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL GST:</td>";
+                    ////strp += "<td style='width:10%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-top:none;'>" + Math.Round(TOTALGST).ToString()+".00" + "</td>";
+                    ////strp += "</tr>";
+                    ////strp += "</table>";
+
+                    ////strp += "<table class='' style='border:0' width='100%'>";
+                    ////strp += "<tr>";
+                    ////strp += "<td style='font-weight: bold;  text-align: center;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='5'>Amount (In Words):" + word + "</td>";
+                    ////strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
+                    ////strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT AFTER TAX:</td>";
+                    ////strp += "<td style='width:10%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-top:none;'>" + grandtotal.ToString()+".00" + "</td>";
+                    ////strp += "</tr>";
+                    ////strp += "</table>";
+
+                    //strp += "<table class='' style='border:0' width='100%'>";
+                    //strp += "<tr>";
+                    //strp += "<td style='font-weight: bold;  text-align: justify;  border-right:none; border-top:none; background-color: #e31e24; color: white; vertical-align: top;' rowspan='2' colspan='5'>Amount (In Words):" + word + "</td>";
+                    //strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
+                    //strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL GST:</td>";
+                    ////strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + Math.Round(TOTALGST,2).ToString() + ".00" + "</td>";
+                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + new_TOTALGST.ToString() + "</td>";
+                    //strp += "</tr>";
+
+                    //strp += "<tr>";
                     //strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
                     //strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT AFTER TAX:</td>";
-                    //strp += "<td style='width:10%; border:1px solid #bfbfbf; font-weight: bold;  text-align: right;  border-top:none;'>" + grandtotal.ToString()+".00" + "</td>";
+                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + final_new_TOTALGSTPLUSAMO + "</td>";
                     //strp += "</tr>";
                     //strp += "</table>";
 
-                    strp += "<table class='' style='border:0' width='100%'>";
-                    strp += "<tr>";
-                    strp += "<td style='font-weight: bold;  text-align: justify;  border-right:none; border-top:none; background-color: #e31e24; color: white; vertical-align: top;' rowspan='2' colspan='5'>Amount (In Words):" + word + "</td>";
-                    strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
-                    strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL GST:</td>";
-                    //strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + Math.Round(TOTALGST,2).ToString() + ".00" + "</td>";
-                    strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + new_TOTALGST.ToString() + "</td>";
-                    strp += "</tr>";
-
-                    strp += "<tr>";
-                    strp += "<td style='width:5%; font-weight: bold;  text-align: center;  border-right:none; border-top:none;'></td>";
-                    strp += "<td style='width:28%; font-weight: bold;  text-align: right;  border-right:none; border-top:none; background-color: #e31e24; color: white;' colspan='4'>TOTAL AMOUNT AFTER TAX:</td>";
-                    strp += "<td style='width:10%; border:2px solid #6c6c6c; font-weight: bold;  text-align: right;  border-top:none;'>" + final_new_TOTALGSTPLUSAMO + "</td>";
-                    strp += "</tr>";
-                    strp += "</table>";
-
-                    strp += "</td></tr><tr><td class='gap' style=''>&nbsp</td></tr></table>";
+                    //strp += "</td></tr><tr><td class='gap' style=''>&nbsp</td></tr></table>";
                 }
                 lblserviceamo.Text = strp.ToString();
             }
@@ -977,14 +1210,50 @@ namespace Bill_Software.corporate.business.print
 
             if (dtpayphase.Rows.Count > 0)
             {
-                strPayment.Append("<table border='0' width='100%' class='Payment pagebrake'><tr><td class='' style='text-align: left; font-weight: bold; '>SCHEDULE OF PAYMENTS</td></tr><tr><td class='' style=''>");
-                strPayment.Append("<table class='PaymentPhase' style='border:0' width='100%'><tr><td class='gap' style=''>&nbsp</td></tr>");
+                //strPayment.Append("<table border='0' width='100%' class='Payment pagebrake'><tr><td class='' style='text-align: left; font-weight: bold; '>SCHEDULE OF PAYMENTS</td></tr><tr><td class='' style=''>");
+                //strPayment.Append("<table class='PaymentPhase' style='border:0' width='100%'><tr><td class='gap' style=''>&nbsp</td></tr>");
+                //strPayment.Append("<tr>");
+                //strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>S.NO</td>");
+                //strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT PHASE</td>");
+                //strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT (INR)</td>");
+                //strPayment.Append("</tr>");
+
+                //for (int i = 0; i < dtpayphase.Rows.Count; i++)
+                //{
+                //    string amoper = dtpayphase.Rows[i]["amountper"].ToString();
+                //    double amountper = Convert.ToDouble(amoper);
+                //    double netamo = Convert.ToDouble(netamount);
+                //    double amount = (netamo * amountper) / 100;
+
+                //    double finalamo = Math.Round(amount,2);
+                //    //double finalamo = Math.Round(amount);
+                //    string finalamo1 = DoFormat(finalamo);
+
+                //    strPayment.Append("<tr>");
+                //    strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; text-align:center;'>" + (i + 1).ToString() + "</td>");
+                //    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align:left; '>" + dtpayphase.Rows[i]["phase_type"].ToString() + " " + dtpayphase.Rows[i]["PhaseDesc"].ToString() + "</td>");
+                //    strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align:center;'>" + finalamo1.ToString() + "</td>");
+                //    strPayment.Append("</tr>");
+                //}
+
+                //strPayment.Append("</table>");
+                //strPayment.Append("</td></tr><tr><td class='gap' style=''>&nbsp</td></tr></table>");
+
+                strPayment.Append("<table border='0' width='100%' class='Payment pagebrake' style='border-collapse: collapse;'>");
+                strPayment.Append("<tr><td style='text-align: left; font-weight: bold;'>SCHEDULE OF PAYMENTS</td></tr>");
+                strPayment.Append("<tr><td>");
+
+                // Inner Table (Actual Payment Table)
+                strPayment.Append("<table class='PaymentPhase' width='100%' style='border-collapse: collapse;'>");
+
+                // Header Row
                 strPayment.Append("<tr>");
-                strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>S.NO</td>");
-                strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT PHASE</td>");
-                strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT (INR)</td>");
+                strPayment.Append("<th style='width: 10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>S.NO</th>");
+                strPayment.Append("<th style='width: 70%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT PHASE</th>");
+                strPayment.Append("<th style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT (INR)</th>");
                 strPayment.Append("</tr>");
 
+                // Data Rows
                 for (int i = 0; i < dtpayphase.Rows.Count; i++)
                 {
                     string amoper = dtpayphase.Rows[i]["amountper"].ToString();
@@ -992,19 +1261,21 @@ namespace Bill_Software.corporate.business.print
                     double netamo = Convert.ToDouble(netamount);
                     double amount = (netamo * amountper) / 100;
 
-                    double finalamo = Math.Round(amount,2);
-                    //double finalamo = Math.Round(amount);
+                    double finalamo = Math.Round(amount, 2);
                     string finalamo1 = DoFormat(finalamo);
 
                     strPayment.Append("<tr>");
-                    strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; text-align:center;'>" + (i + 1).ToString() + "</td>");
-                    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align:left; '>" + dtpayphase.Rows[i]["phase_type"].ToString() + " " + dtpayphase.Rows[i]["PhaseDesc"].ToString() + "</td>");
-                    strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align:center;'>" + finalamo1.ToString() + "</td>");
+                    strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; text-align: center;'>" + (i + 1) + "</td>");
+                    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align: left;'>" + dtpayphase.Rows[i]["phase_type"].ToString() + " " + dtpayphase.Rows[i]["PhaseDesc"].ToString() + "</td>");
+                    strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" + finalamo1 + "</td>");
                     strPayment.Append("</tr>");
                 }
 
+                // Close Inner Table
                 strPayment.Append("</table>");
-                strPayment.Append("</td></tr><tr><td class='gap' style=''>&nbsp</td></tr></table>");
+                strPayment.Append("</td></tr>");
+                strPayment.Append("</table>");
+
                 lblPayment.Text = strPayment.ToString();
 
             }

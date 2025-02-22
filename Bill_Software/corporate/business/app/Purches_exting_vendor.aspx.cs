@@ -642,7 +642,11 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
             tota_purchesrate1 = Math.Round(tota_purchesrate1);
             total_tax_rate_details = Math.Round(total_tax_rate_details);
-            DbCL.executeRdr("insert into tbl_Purches(Purches_Id,Client_Id,Total_purches_rate,Total_Tax_rate,Purches_date,Purches_Type)values('" + purchesid + "','" + lblvendor_id.Text + "','" + tota_purchesrate1.ToString() + "','" + total_tax_rate_details.ToString() + "','" + txtPurchesDate.Text + "','" + RadioButtonList1.Text + "')");
+            //DbCL.executeRdr("insert into tbl_Purches(Purches_Id,Client_Id,Total_purches_rate,Total_Tax_rate,Purches_date,Purches_Type)values('" + purchesid + "','" + lblvendor_id.Text + "','" + tota_purchesrate1.ToString() + "','" + total_tax_rate_details.ToString() + "','" + txtPurchesDate.Text + "','" + RadioButtonList1.Text + "')");
+
+            DbCL.executeRdr("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration) " + "VALUES ('" + purchesid + "', '" + lblvendor_id.Text + "', '" + tota_purchesrate1.ToString() + "', '" + total_tax_rate_details.ToString() + "', '" + txtPurchesDate.Text + "', '" + RadioButtonList1.Text + "', '" + txt_invno.Text + "', '" + txt_stockadddate.Text + "', '" + txt_narration.Text + "')");
+
+
             DbCL.executeRdr("insert into tbl_purches_due(Purches_Id,Due_amount)values('" + purchesid + "','" + tota_purchesrate1 + "')");
             Button3.Visible = false;
             txtPurchesDate.Enabled = false;

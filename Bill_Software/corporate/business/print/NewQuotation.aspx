@@ -81,6 +81,10 @@
         @page {
             margin: 6mm 6mm 6mm 16mm;
         }
+
+        .auto-style1 {
+            height: 125px;
+        }
     </style>
 </head>
 <body>
@@ -89,7 +93,7 @@
             <thead id='header'>
                 <tr>
                     <th style='width: 100%'>
-                        <img src="../WebImages/flame-ex_hdrtop.png" width="100%"></th>
+                        <img src="../WebImages/flame-ex_hdrtop.png" width="100%" height="150px"></th>
                 </tr>
                 <tr>
                     <th></th>
@@ -222,6 +226,7 @@
                         </table>
                     </td>
                 </tr>
+            </tbody>
         </table>
 
         <table border='0' width='100%'>
@@ -254,9 +259,9 @@
                 <td class='' style='text-align: left; font-weight: bold;'>Dear Sir/Madam,
                                     <asp:Label ID='lbltital' runat='server'></asp:Label>&nbsp;<asp:Label ID="lbllname" runat="server"></asp:Label></td>
             </tr>
-            <tr>
+            <%--<tr>
                 <td class="gap" style="">&nbsp</td>
-            </tr>
+            </tr>--%>
             <tr>
                 <td class='' style='text-align: justify; font-weight: 100'>
                     <span class='bold'>Thank you for showing interest in our Organization.</span>
@@ -340,20 +345,18 @@
                                 </td>
                             </tr>--%>
 
-            <tr>
+            <%--<tr>
                 <td class="gap" style="">&nbsp</td>
-            </tr>
-            <tr>
+            </tr>--%>
+            <%--<tr>
                 <td class="" style="">OUR CLIENTS</td>
-            </tr>
+            </tr>--%>
 
-            <tr>
+            <%--<tr id="clients_img" runat="server" visible="false">
                 <td class="" style="height: 250px">
-                    <%--<img src="../WebImages/ClientPageForSoftware.png"  width='100%' height="250px" />--%>
                     <img src="../WebImages/clientsbg.png" width='100%' height='250px' />
-
                 </td>
-            </tr>
+            </tr>--%>
 
             <tr>
                 <td class="gap" style="">&nbsp</td>
@@ -401,9 +404,11 @@
 
         <asp:Label ID="lblserviceamo" runat="server"></asp:Label>
 
+        <br />
 
         <asp:Label ID="lblPayment" runat="server"></asp:Label>
 
+        <br />
 
         <table border="0" width="100%" class="PAYMENTTERMS" id="tbl_paymentterms" runat="server" visible="false">
             <tr>
@@ -473,6 +478,8 @@
                 <td colspan="2" class="gap" style="">&nbsp</td>
             </tr>
         </table>
+        
+        <br />
 
         <asp:Label ID="lblPrimaryServicePoint" runat="server"></asp:Label>
 
@@ -557,8 +564,6 @@
         </table>
 
 
-
-
         <table border="0" width="100%" class="INDEMNIFICATION pagebrake" id="tbl_INDEMNIFICATION" runat="server" visible="false">
             <tr>
                 <td colspan="2" class="" style="text-align: left; font-weight: bold;">INDEMNIFICATION</td>
@@ -622,15 +627,18 @@
             </tr>
         </table>
 
-        <table border="0" width="100%" class="VALIDITYOFTHEOFFER pagebrake" id="tbl_VALIDITYOFTHEOFFER" runat="server" visible="true">
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="tbl_VALIDITYOFTHEOFFER" runat="server" visible="true">
             <tr>
-                <td colspan="2" class="" style="text-align: left; font-weight: bold;">VALIDITYOF THE OFFER</td>
-            </tr>
-            <tr>
-                <td class="" style="text-align: justify; font-weight: 100">This Offer is valid for
+                <td class="" style="text-align: left; font-weight: bold; width: 30%;">VALIDITYOF THE OFFER</td>
+                <td class="" style="text-align: left; font-weight: 100; width: 70%;">This Offer is valid for
                     <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Days from the Date of Submission.<br />
                 </td>
             </tr>
+            <%--<tr>
+                <td class="" style="text-align: justify; font-weight: 100">This Offer is valid for
+                    <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Days from the Date of Submission.<br />
+                </td>
+            </tr>--%>
             <tr>
                 <td colspan="2" class="gap" style="">&nbsp</td>
             </tr>
@@ -638,13 +646,16 @@
 
         <table border="0" width="100%" class="DELIVERY pagebrake" id="Table1" runat="server" visible="true">
             <tr>
-                <td colspan="2" class="" style="text-align: left; font-weight: bold;">DELIVERY TERMS</td>
-            </tr>
-            <tr>
-                <td class="" style="text-align: justify; font-weight: 100">Within 
+                <td class="" style="text-align: left; font-weight: bold; width: 30%;">DELIVERY TERMS</td>
+                <td class="" style="text-align: left; font-weight: 100; width: 70%;">Within 
                     <asp:Label ID="lbl_deliverytrms" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Weeks from the Date of Receipt of all Technical Clearance.<br />
                 </td>
             </tr>
+            <%--<tr>
+                <td class="" style="text-align: justify; font-weight: 100">Within 
+                    <asp:Label ID="lbl_deliverytrms" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Weeks from the Date of Receipt of all Technical Clearance.<br />
+                </td>
+            </tr>--%>
             <tr>
                 <td colspan="2" class="gap" style="">&nbsp</td>
             </tr>
@@ -652,12 +663,14 @@
 
         <table border="0" width="100%" class="DELIVERY pagebrake" id="Table2" runat="server" visible="true">
             <tr>
-                <td colspan="2" class="" style="text-align: left; font-weight: bold;">MATERIAL ACCEPTANCE</td>
-            </tr>
-            <tr>
-                <td class="" style="text-align: justify; font-weight: 100">Material once invoiced cannot be returned back
+                <td class="" style="text-align: left; font-weight: bold; width: 30%;">MATERIAL ACCEPTANCE</td>
+                <td class="" style="text-align: left; font-weight: 100; width: 70%;">Material once invoiced cannot be returned back
                 </td>
             </tr>
+            <%--<tr>
+                <td class="" style="text-align: justify; font-weight: 100">Material once invoiced cannot be returned back
+                </td>
+            </tr>--%>
             <tr>
                 <td colspan="2" class="gap" style="">&nbsp</td>
             </tr>
@@ -665,13 +678,16 @@
 
         <table border="0" width="100%" class="DELIVERY pagebrake" id="Table3" runat="server" visible="true">
             <tr>
-                <td colspan="2" class="" style="text-align: left; font-weight: bold;">PACKING & FORWARDING</td>
-            </tr>
-            <tr>
-                <td class="" style="text-align: justify; font-weight: 100">Charges will be 
+                <td class="" style="text-align: left; font-weight: bold; width: 30%;">PACKING & FORWARDING</td>
+                <td class="" style="text-align: left; font-weight: 100; width: 70%;">Charges will be 
                     <asp:Label ID="lbl_pkging" runat="server" Text="15" Font-Bold="true"></asp:Label><br />
                 </td>
             </tr>
+            <%--<tr>
+                <td class="" style="text-align: justify; font-weight: 100">Charges will be 
+                    <asp:Label ID="lbl_pkging" runat="server" Text="15" Font-Bold="true"></asp:Label><br />
+                </td>
+            </tr>--%>
             <tr>
                 <td colspan="2" class="gap" style="">&nbsp</td>
             </tr>
@@ -679,15 +695,21 @@
 
         <table border="0" width="100%" class="DELIVERY pagebrake" id="Table4" runat="server" visible="true">
             <tr>
-                <td colspan="2" class="" style="text-align: left; font-weight: bold;">SPECIAL NOTE / INSTRUCTIONS</td>
+                <td class="" style="text-align: left; font-weight: bold;">SPECIAL NOTE / INSTRUCTIONS</td>
+                <td class="" style="text-align: left; font-weight: 100; width: 70%;">
+                    <asp:Label ID="lbl_remarks" runat="server" Text="N/A"></asp:Label>&nbsp;<br />
+                </td>
             </tr>
             <tr>
-                <td class="" style="text-align: justify; font-weight: 100">
-                    <asp:Label ID="lbl_remarks" runat="server" Text="N/A"></asp:Label>&nbsp;<br />
+                <td colspan="2" class="gap" style="">&nbsp</td>
+            </tr>
+            <tr>
+                <td colspan="2" class="" style="text-align: justify; font-weight: 100">We trust the above offer is in line with your requirement and we are looking forward to receive your valued order at the earliest.<br />
+                    Please feel free to contact us for any further clarifications in this regard.<br /><br />
+                    Thanking you and assuring you of our best and prompt services always.<br />
                     <br />
-                    We trust the above offer is in line with your requirement and we are looking forward to receive your valued order at the earliest.<br />
-                    Please feel free to contact us for any further clarifications in this regard.<br />
-                    Thanking you and assuring you of our best and prompt services always.<br /><br />
+                    <br />
+                    <br />
                     Thanks & Regards,
                     <br />
                 </td>
@@ -698,9 +720,9 @@
         </table>
 
         <table border="0" width="100%" class="FORKVQAEAST">
-            <tr>
+            <%--<tr>
                 <td class="gap" style="">&nbsp</td>
-            </tr>
+            </tr>--%>
             <tr class="trheight">
                 <td class="" style="text-align: left; font-weight: bold;">FOR FLAME-EX</td>
             </tr>
@@ -714,10 +736,7 @@
                 <td class="" style="text-align: left; font-weight: bold;">Authorized Signatory</td>
             </tr>
         </table>
-        </td>
-                </tr>
-            </tbody>
-        </table>
+
         <table id='footer' border='0' width='844px'>
             <tr>
                 <td style='height: auto;' width='100%'>

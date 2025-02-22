@@ -260,8 +260,26 @@
                                     <asp:Label ID="lblpurches_id" runat="server"></asp:Label>
                                 </td>
                                 <td style="text-align: right; width: 50%; padding: 0px 5px 0px 0px;">
-                                    <span lang="en-us">&nbsp;</span>Purchasse Date:<span lang="en-us"> </span>
+                                    <span lang="en-us">&nbsp;</span>Created Date:<span lang="en-us"> </span>
                                     <asp:Label ID="lblpurches_date" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50%">Invoice No:<span lang="en-us"> </span>
+                                    <asp:Label ID="lbl_invoiceno" runat="server"></asp:Label>
+                                </td>
+                                <td style="text-align: right; width: 50%; padding: 0px 5px 0px 0px;">
+                                    <span lang="en-us">&nbsp;</span>Invoice Date:<span lang="en-us"> </span>
+                                    <asp:Label ID="lbl_invoicedate" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50%">Stock Added On:<span lang="en-us"> </span>
+                                    <asp:Label ID="lbl_stockaddedon" runat="server" Text="No Data"></asp:Label>
+                                </td>
+                                <td style="text-align: right; width: 50%; padding: 0px 5px 0px 0px;">
+                                    <%--<span lang="en-us">&nbsp;</span>Invoice Date:<span lang="en-us"> </span>
+                                    <asp:Label ID="Label10" runat="server"></asp:Label>--%>
                                 </td>
                             </tr>
                             <%--<tr>
@@ -428,6 +446,12 @@
                 <tr>
                     <td colspan="2">&nbsp;
                     <strong><span class="auto-style2">Total Purchasse Rate:-</span><asp:Label ID="lblpurches_rate" runat="server"></asp:Label>
+                    </strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">&nbsp;
+                    <strong><span class="auto-style2">Narration:-</span><asp:Label ID="lbl_narration" runat="server"></asp:Label>
                     </strong>
                     </td>
                 </tr>

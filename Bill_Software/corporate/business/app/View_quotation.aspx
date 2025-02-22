@@ -80,8 +80,12 @@
                                     <asp:Label ID="Label1" runat="server" Text="AMOUNT INCLUSIVE OF GST (INR)"></asp:Label>
                                 </td>
 
-                                <td style="text-align:center; width:10%;"> 
+                                <%--<td style="text-align:center; width:10%;"> 
                                     <asp:Label ID="Label5" runat="server" Text="Last Mailer Date"></asp:Label>
+                                </td>--%>
+
+                                <td style="text-align:center; width:10%;"> 
+                                    <asp:Label ID="Label5" runat="server" Text="CGST & SGST"></asp:Label>
                                 </td>
 
                                 <td style="text-align:center; width:5%;">
@@ -119,8 +123,12 @@
                                     <asp:Label ID="Label8" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label> /-
                                 </td>
 
-                                 <td style="text-align:center; width:10%;"> 
+                                 <%--<td style="text-align:center; width:10%;"> 
                                     <asp:Label ID="Label3" runat="server" Text='<%# Eval("mailStatusDate") %>'></asp:Label>
+                                </td>--%>
+
+                                <td style="text-align:center; width:10%;"> 
+                                    <asp:Label ID="Label3" runat="server" Text='<%# Eval("cgstOrsgst") %>'></asp:Label>
                                 </td>
 
                               

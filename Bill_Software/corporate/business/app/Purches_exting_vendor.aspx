@@ -489,10 +489,43 @@
                                 </tr>
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>Purchasse Date</td>
+                                    <td>&nbsp;<asp:Label ID="Label3" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase / Invoice Number</td>
                                     <td>
-                                        <asp:TextBox ID="txtPurchesDate" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                                        <asp:TextBox ID="txt_invno" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
                                     </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;<asp:Label ID="Label4" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase Date / Invoice Date</td>
+                                    <td>
+                                        <asp:TextBox ID="txtPurchesDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;&nbsp;Received Date (Stock Added) </td>
+                                    <td>
+                                        <asp:TextBox ID="txt_stockadddate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;&nbsp;Narration Box</td>
+                                    <td>
+                                         <asp:TextBox ID="txt_narration" runat="server" CssClass="textbox_U_style" Width="110px" Text="N/A"></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
                                     <td>&nbsp;</td>
                                 </tr>
                                 <tr>
@@ -515,7 +548,7 @@
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td colspan="2" style="text-align: center">
-                                        <asp:Button ID="Button3" runat="server" OnClick="Button3_Click" Text="Purchasse" CssClass="btn_style" />
+                                        <asp:Button ID="Button3" runat="server" OnClick="Button3_Click" Text="Add Purchasse" CssClass="btn_style" />
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
@@ -619,6 +652,7 @@
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
+
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>

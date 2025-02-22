@@ -41,9 +41,18 @@ namespace Bill_Software.corporate.business.print
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
             {
-                lblpurches_date.Text = re["Purches_date"].ToString();
+                lbl_invoicedate.Text = re["Purches_date"].ToString();
+                //lblpurches_date.Text = re["CreatedDate"].ToString();
+                //lblpurches_date.Text = Convert.ToDateTime(re["CreatedDate"]).ToString("dd-MM-yyyy");
+                lblpurches_date.Text = re["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(re["CreatedDate"]).ToString("dd-MMM-yyyy") : "N/A";
                 lblpurches_rate.Text = re["Total_purches_rate"].ToString();
                 lblsail_rate.Text = re["Total_Tax_rate"].ToString();
+
+                //Newly added on 22-02-205
+                lbl_invoiceno.Text = re["Invoice_No"].ToString();
+                lbl_stockaddedon.Text = re["Stock_Add_Date"].ToString();
+                lbl_narration.Text = re["Narration"].ToString();
+
                 string type = re["Purches_Type"].ToString();
                 if (type == "Product")
                 {

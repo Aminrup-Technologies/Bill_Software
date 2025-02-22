@@ -889,7 +889,7 @@
                                 <asp:GridView ID="gd_Service_Product" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
                                     <RowStyle BackColor="#94B8FF" />
                                     <Columns>
-                                        <asp:TemplateField HeaderText="Product/Service Code" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                        <asp:TemplateField HeaderText="Product/Service Code" Visible="false" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:TextBox>
                                             </EditItemTemplate>
@@ -898,7 +898,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Product/Service" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                        <asp:TemplateField HeaderText="Product/Service" Visible="false" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Type" runat="server" Text='<%# Bind("Type") %>'></asp:TextBox>
                                             </EditItemTemplate>
@@ -907,7 +907,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Product/Service Category" HeaderStyle-Width="10%" ItemStyle-Width="10%">
+                                        <asp:TemplateField HeaderText="Product/Service Category" Visible="false" HeaderStyle-Width="10%" ItemStyle-Width="10%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="ProductOrServiceCat" runat="server" Text='<%# Bind("ProductOrServiceCat") %>'></asp:TextBox>
                                             </EditItemTemplate>
@@ -971,7 +971,7 @@
                                                 <asp:TextBox ID="Sail_Rate" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
-                                                <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Width="80%" CssClass="center" Height="22px" onkeypress="return validate(event, this)"></asp:TextBox>
+                                                <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Width="80%" CssClass="center textbox_style" Height="22px" onkeypress="return validate(event, this)"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -989,7 +989,7 @@
                                                 <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
-                                                <asp:TextBox ID="Discount_Rate" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Text="0" CssClass="center" Height="22px" Width="80%" onkeypress="return validate(event, this)"></asp:TextBox>
+                                                <asp:TextBox ID="Discount_Rate" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Text="0" CssClass="center textbox_style" Height="22px" Width="80%" onkeypress="return validate(event, this)"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -998,7 +998,16 @@
                                                 <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
-                                                <asp:TextBox ID="Quantity" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="center" Height="22px" Width="80%" onkeypress="return validate(event, this)"></asp:TextBox>
+                                                <asp:TextBox ID="Quantity" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="center textbox_style" Height="22px" Width="80%" onkeypress="return validate(event, this)"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Remarks" HeaderStyle-Width="10%" ItemStyle-Width="5%">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="ItemRemarks" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="center textbox_style" Height="22px" Width="90%"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
