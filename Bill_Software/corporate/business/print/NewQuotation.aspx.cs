@@ -757,7 +757,7 @@ namespace Bill_Software.corporate.business.print
                         strp += "<tr>";
                         strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + (i + 1) + "</td>";
                         //strp += "<td style='text-align:left; border:2px solid #6c6c6c; font-size: 10.5px;'>" + Productname + "<br>" + specification + "</td>";
-                        if (Session["viewtype"].ToString() == "Yes")
+                        if (Session["viewtype"].ToString() == "Detailed")
                         {
                             strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
                                    "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
@@ -767,7 +767,7 @@ namespace Bill_Software.corporate.business.print
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
                                    "</td>", Productname, specification, itemno, materialno, packsize);
                         }
-                        else
+                        else if ((Session["viewtype"].ToString() == "Simple"))
                         {
                             strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
                         }

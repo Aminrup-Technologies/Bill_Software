@@ -685,6 +685,12 @@ namespace Bill_Software.corporate.business.app
                             string ProductName = ((Label)gd_Service_Product.Rows[i].FindControl("ProductName")).Text;
                             string Brand = ((Label)gd_Service_Product.Rows[i].FindControl("Brand")).Text;
                             string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
+
+                            //Newly Added as optional parameter
+                            string ItemNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemNo")).Text;
+                            string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo")).Text;
+                            string PackSize = ((TextBox)gd_Service_Product.Rows[i].FindControl("PackSize")).Text;
+
                             string Sail_Rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate")).Text;
                             string Tax_Rate = ((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate")).Text;
 
@@ -740,7 +746,43 @@ namespace Bill_Software.corporate.business.app
 
                             //cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + b + "','" + c + "','" + g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','"+ ProductOrServiceCat.ToString() + "')");
 
-                            cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat,discount_rate,new_sailrate,ItemRemarks)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + new_b + "','" + new_c + "','" + new_g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','" + ProductOrServiceCat.ToString() + "','" + Discount_Rate.ToString() + "','" + discounted_rate.ToString() + "','" + ItemRemarks.ToString() + "')");
+                            //cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit,ProductOrServiceCat,discount_rate,new_sailrate,ItemRemarks)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + new_b + "','" + new_c + "','" + new_g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "','" + ProductOrServiceCat.ToString() + "','" + Discount_Rate.ToString() + "','" + discounted_rate.ToString() + "','" + ItemRemarks.ToString() + "')");
+
+                            // Update the SQL INSERT command to include new fields
+                            cmd.CommandText = "INSERT INTO tbl_Quotaion_details " +
+                                              "(Sl_no, Quotation_no, Product_id, Product_name, Quantity, sail_rate, Service_tax_rate, " +
+                                              "Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, InvStatus, Type, Unit, " +
+                                              "ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize) " + // Newly added fields
+                                              "VALUES " +
+                                              "(@Sl_no, @Quotation_no, @Product_id, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, " +
+                                              "@Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @InvStatus, @Type, @Unit, " +
+                                              "@ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize)";
+
+                            // Using SQL Parameters to prevent SQL Injection
+                            cmd.Parameters.Clear();
+                            cmd.Parameters.AddWithValue("@Sl_no", h.ToString());
+                            cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
+                            cmd.Parameters.AddWithValue("@Product_id", Product_code);
+                            cmd.Parameters.AddWithValue("@Product_name", ProductName);
+                            cmd.Parameters.AddWithValue("@Quantity", Quantity);
+                            cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
+                            cmd.Parameters.AddWithValue("@Service_tax_rate", Tax_Rate);
+                            cmd.Parameters.AddWithValue("@Total_sail_rate", new_b);
+                            cmd.Parameters.AddWithValue("@Total_sail_rate1", new_c);
+                            cmd.Parameters.AddWithValue("@Total_sail_rate2", new_g);
+                            cmd.Parameters.AddWithValue("@specification", Brand.ToString());
+                            cmd.Parameters.AddWithValue("@InvStatus", "No");
+                            cmd.Parameters.AddWithValue("@Type", Type.ToString());
+                            cmd.Parameters.AddWithValue("@Unit", Unit.ToString());
+                            cmd.Parameters.AddWithValue("@ProductOrServiceCat", ProductOrServiceCat.ToString());
+                            cmd.Parameters.AddWithValue("@discount_rate", Discount_Rate.ToString());
+                            cmd.Parameters.AddWithValue("@new_sailrate", discounted_rate.ToString());
+                            cmd.Parameters.AddWithValue("@ItemRemarks", ItemRemarks.ToString());
+                            // Newly added parameters
+                            cmd.Parameters.AddWithValue("@ItemNo", ItemNo);
+                            cmd.Parameters.AddWithValue("@MaterialNo", MaterialNo);
+                            cmd.Parameters.AddWithValue("@PackSize", PackSize);
+
 
                             //cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,InvStatus,Type,Unit)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + Sail_Rate + "','" + Tax_Rate + "','" + b + "','" + c + "','" + g + "','" + Brand.ToString() + "','No','" + Type.ToString() + "','" + Unit.ToString() + "')");
                             cmd.ExecuteNonQuery();
@@ -772,13 +814,16 @@ namespace Bill_Software.corporate.business.app
             string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text.Trim() : DDL_DeliveryTerms.SelectedItem.Text;
             string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text.Trim() : DDL_pkgfrwd.SelectedItem.Text;
             string remarks = txt_remarks.Text.Trim();
+            //Newly Added on 23-02-2025
+            string itemview = DDL_ItemViewType.SelectedItem.Text.ToString();
 
             DbCL.Conn.Close();
             Service_tax = new_Gross_amount % 1;
             total_sail_rate_details = new_Gross_amount;
             total_sail_rate_details = Math.Round(total_sail_rate_details, 2);
             new_total_Service = Math.Round(new_total_Service, 2);
-            DbCL.executeRdr("insert into tbl_Quotation(Quotation_no,Quotation_date,Client_Id,Gross,Service_tax,Net_amount,Status1,Status2,Sl_no,status3,service_tax1,sub_total,cgstOrsgst,igst,PlaceofSupply,PaymentStatus,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks)values('" + lblqno.Text + "','" + txtquotationDate.Text + "','" + lblclientID.Text + "','" + new_Gross_amount + "','" + Service_tax + "','" + total_sail_rate_details + "','No','No','" + j.ToString() + "','No','" + new_total_Service + "','" + new_sub_total + "','" + CGSTSGSTSTATUS + "','" + IGSTSTATUS + "','" + ddlPlaceOfSupply.Text + "','No','"+txt_clientrefname.Text.ToString()+ "','" + txt_clientrefid.Text.ToString() + "','" + txt_clientrefdate.Text.ToString() + "','" + validDays.ToString() + "','" + deliveryTenure.ToString() + "','" + packageForwarding.ToString() + "','" + remarks.ToString() + "')");
+
+            DbCL.executeRdr("insert into tbl_Quotation(Quotation_no,Quotation_date,Client_Id,Gross,Service_tax,Net_amount,Status1,Status2,Sl_no,status3,service_tax1,sub_total,cgstOrsgst,igst,PlaceofSupply,PaymentStatus,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges, Remarks, DetailedView)values('" + lblqno.Text + "','" + txtquotationDate.Text + "','" + lblclientID.Text + "','" + new_Gross_amount + "','" + Service_tax + "','" + total_sail_rate_details + "','No','No','" + j.ToString() + "','No','" + new_total_Service + "','" + new_sub_total + "','" + CGSTSGSTSTATUS + "','" + IGSTSTATUS + "','" + ddlPlaceOfSupply.Text + "','No','"+txt_clientrefname.Text.ToString()+ "','" + txt_clientrefid.Text.ToString() + "','" + txt_clientrefdate.Text.ToString() + "','" + validDays.ToString() + "','" + deliveryTenure.ToString() + "','" + packageForwarding.ToString() + "','" + remarks.ToString() + "','" + itemview.ToString() + "')");
 
 
             string qutno = lblqno.Text;

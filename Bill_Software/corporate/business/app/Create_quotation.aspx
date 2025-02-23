@@ -225,6 +225,13 @@
                 return false;
             }
 
+            var ddlPkgFrwd = document.getElementById('<%= DDL_ItemViewType.ClientID %>');
+            if (ddlPkgFrwd && ddlPkgFrwd.value === "0") {
+                alert("Please select Particular View type");
+                ddlPkgFrwd.focus();
+                return false;
+            }
+
             var validDays = document.getElementById('<%= txt_valdays.ClientID %>');
             if (validDays && (isNaN(validDays.value) || validDays.value <= 0)) {
                 alert("Please enter a valid number of days greater than 0.");
@@ -966,6 +973,33 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
 
+                                        <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="10%" ItemStyle-Width="5%">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="ItemNo" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style" Height="22px" Width="90%"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Material No" HeaderStyle-Width="10%" ItemStyle-Width="5%">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="MaterialNo" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style" Height="22px" Width="90%"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Pack Size" HeaderStyle-Width="10%" ItemStyle-Width="5%">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="PackSize" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style" Height="22px" Width="90%"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:TemplateField HeaderText="Base Rate (RS)" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Sail_Rate" runat="server"></asp:TextBox>
@@ -1133,6 +1167,19 @@
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                         </tr>
+
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td style="text-align: right;">&nbsp;Particulars View Type :</td>
+                            <td>
+                                <asp:DropDownList ID="DDL_ItemViewType" runat="server" CssClass="dropdown_style">
+                                    <asp:ListItem Text="--SELECT--" Value="0" Selected="True"></asp:ListItem>
+                                    <asp:ListItem Text="Simple" Value="1"></asp:ListItem>
+                                    <asp:ListItem Text="Detailed" Value="2"></asp:ListItem>
+                                </asp:DropDownList></td>
+                            <td>&nbsp;</td>
+                        </tr>
+
                         <tr>
                             <td>&nbsp;</td>
                             <td style="text-align: right;">&nbsp;Delivery Tenure Selection (Weeks) :</td>
