@@ -518,6 +518,28 @@
             return true;
         }
 
+        function toggleReferenceFields(value) {
+            var nameField = document.getElementById('<%= txt_clientrefname.ClientID %>');
+            var idField = document.getElementById('<%= txt_clientrefid.ClientID %>');
+            var dateField = document.getElementById('<%= txt_clientrefdate.ClientID %>');
+
+            if (value === 'Yes') {
+                nameField.value = "";
+                idField.value = "";
+                dateField.value = "";
+                nameField.removeAttribute("disabled");
+                idField.removeAttribute("disabled");
+                dateField.removeAttribute("disabled");
+            } else {
+                nameField.value = "N/A";
+                idField.value = "N/A";
+                dateField.value = "01-Jan-2000";
+                nameField.setAttribute("disabled", "disabled");
+                idField.setAttribute("disabled", "disabled");
+                dateField.setAttribute("disabled", "disabled");
+            }
+        }
+
 
     </script>
 
@@ -575,6 +597,40 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
+            <td style="text-align: right;">Enable Reference Details&nbsp;:&nbsp;</td>
+            <td>
+                <asp:RadioButton ID="rbYes" runat="server" GroupName="referenceOption" Text="Yes" onclick="toggleReferenceFields('Yes')" />
+                <asp:RadioButton ID="rbNo" runat="server" GroupName="referenceOption" Text="No" Checked="true" onclick="toggleReferenceFields('No')" />
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td style="text-align: right;">&nbsp;&nbsp;Reference Person Name&nbsp;:&nbsp;</td>
+            <td>
+                <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style" Width="110px" Disabled="true"></asp:TextBox>
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td style="text-align: right;">&nbsp;Reference ID&nbsp;:&nbsp;</td>
+            <td>
+                <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style" Width="110px" Disabled="true"></asp:TextBox>
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td style="text-align: right;">&nbsp;Reference Date&nbsp;:&nbsp;</td>
+            <td>
+                <asp:TextBox ID="txt_clientrefdate" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px"
+                    class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px" Disabled="true"></asp:TextBox>
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+        <%--<tr>
+            <td>&nbsp;</td>
             <td style="text-align: right;">&nbsp;<asp:Label ID="Label2" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Reference Person Name&nbsp;:&nbsp;</td>
             <td>
                 <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style" Width="110px"></asp:TextBox></td>
@@ -593,7 +649,7 @@
             <td>
                 <asp:TextBox ID="txt_clientrefdate" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox></td>
             <td>&nbsp;</td>
-        </tr>
+        </tr>--%>
         <tr>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
@@ -1080,7 +1136,7 @@
 
                         <tr>
                             <td colspan="2" style="text-align: center">
-                                <asp:Button ID="Button4" runat="server" CssClass="btn_style" Text="Add Required Product &/or Service  against the Selected Category from the above Table" OnClientClick="return validateRowSelectionForAnotherGrid('<%= gd_Service_Product.ClientID %>');" Width="500px"/>
+                                <asp:Button ID="Button4" runat="server" CssClass="btn_style" Text="Add Required Product &/or Service  against the Selected Category from the above Table" OnClientClick="return validateRowSelectionForAnotherGrid('<%= gd_Service_Product.ClientID %>');" Width="500px" />
                             </td>
                             <td colspan="2" style="text-align: center; color: red; font-weight: bold;">Before proceeding with Payment Phase and other Terms & Conditions, Please select the final list of products</td>
                         </tr>

@@ -57,7 +57,7 @@ namespace Bill_Software.corporate.business.print
 
         private void buindalldata(string id)
         {
-            string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst,PlaceofSupply,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks,DetailedView  from tbl_Quotation where ID=@ID";
+            string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst,PlaceofSupply,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks,DetailedView,ReferenceData from tbl_Quotation where ID=@ID";
             SqlParameter[] pram = {
             new SqlParameter("@id",id)
             };
@@ -71,12 +71,34 @@ namespace Bill_Software.corporate.business.print
                 string clientid = dtmain.Rows[0]["Client_Id"].ToString();
                 lblClientCode.Text = clientid;
 
+                string refYesno = dtmain.Rows[0]["ReferenceData"].ToString();
+                // Read values once
                 string refname = dtmain.Rows[0]["ReferenceName"].ToString();
-                lbl_refname.Text = refname;
                 string refid = dtmain.Rows[0]["ReferenceId"].ToString();
-                lbl_refid.Text = refid;
                 string refdate = dtmain.Rows[0]["ReferenceDate"].ToString();
-                lbl_refdate.Text = refdate;
+
+                if (refYesno == "Yes")
+                {
+                    lbl_refname.Text = refname;
+                    lbl_refid.Text = refid;
+                    lbl_refdate.Text = refdate;
+
+                    // Perform actions based on actual values
+                    if (refname == "N/A") lbl_refname.Visible = false;
+                    if (refid == "N/A") Tr2.Visible=false;
+                    if (refdate == "1900-01-01") Tr3.Visible = false;
+                }
+                else
+                {
+                    lbl_refname.Text = refname;
+                    lbl_refid.Text = refid;
+                    lbl_refdate.Text = refdate;
+                    // Perform actions based on actual values
+                    if (refname == "N/A") lbl_refname.Visible = false;
+                    if (refid == "N/A") Tr2.Visible = false;
+                    if (refdate == "1900-01-01") Tr3.Visible = false;
+                }
+                
 
                 string valdays = dtmain.Rows[0]["ValidityDays"].ToString();
                 lbl_valdays.Text = valdays;

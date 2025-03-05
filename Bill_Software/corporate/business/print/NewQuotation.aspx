@@ -135,26 +135,42 @@
                                 <td class='add' style='vertical-align: top' width='53%'>
                                     <table border='0' width='100%' class='address'>
                                         <tr>
+                                            <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>To,</td>
+                                            <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'></td>
+                                            <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
+                                                <asp:Label ID="lblrename" runat="server" Visible="false"></asp:Label><asp:Label ID="lbl_refname" runat="server"></asp:Label></td>
+                                </td>
+                            </tr>
+                            <%--<tr>
+                                <td class='add' style='vertical-align: top' width='53%'>
+                                    <table border='0' width='100%' class='address'>
+                                        <tr>
                                             <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Kind Attention</td>
                                             <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                             <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
                                                 <asp:Label ID="lblrename" runat="server" Visible="false"></asp:Label><asp:Label ID="lbl_refname" runat="server"></asp:Label></td>
                                 </td>
-                            </tr>
-                            <tr>
+                            </tr>--%>
+                            <%--<tr>
+                                <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Kind Attention</td>
+                                <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
+                                <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
+                                    <asp:Label ID="lblrename" runat="server" Visible="false"></asp:Label><asp:Label ID="lbl_refname" runat="server"></asp:Label></td>
+                            </tr>--%>
+                            <tr id="ref_desg" runat="server" visible="false">
                                 <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'></td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>&nbsp;</td>
                                 <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lbldeg" runat="server"></asp:Label></td>
                             </tr>
                             <tr>
-                                <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Bill To</td>
+                                <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Company Name</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lblClient" runat="server"></asp:Label></td>
                             </tr>
                             <tr>
-                                <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Billing Address</td>
+                                <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Address</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="txtaddres" runat="server"></asp:Label><br />
@@ -187,7 +203,7 @@
                             <tr id="Tr1" runat="server" visible="true">
                                 <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'></td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>&nbsp;</td>
-                                <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>
+                                <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'></td>
                             </tr>
                             <tr id="Tr2" runat="server" visible="true">
                                 <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Reference ID</td>
@@ -478,7 +494,7 @@
                 <td colspan="2" class="gap" style="">&nbsp</td>
             </tr>
         </table>
-        
+
         <br />
 
         <asp:Label ID="lblPrimaryServicePoint" runat="server"></asp:Label>
@@ -705,7 +721,8 @@
             </tr>
             <tr>
                 <td colspan="2" class="" style="text-align: justify; font-weight: 100">We trust the above offer is in line with your requirement and we are looking forward to receive your valued order at the earliest.<br />
-                    Please feel free to contact us for any further clarifications in this regard.<br /><br />
+                    Please feel free to contact us for any further clarifications in this regard.<br />
+                    <br />
                     Thanking you and assuring you of our best and prompt services always.<br />
                     <br />
                     <br />
