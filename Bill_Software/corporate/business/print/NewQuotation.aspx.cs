@@ -41,6 +41,8 @@ namespace Bill_Software.corporate.business.print
         public string netamount = "";
         public int TQ = 0;
 
+        public static string viewtype = string.Empty;
+
         CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -84,21 +86,41 @@ namespace Bill_Software.corporate.business.print
                     lbl_refdate.Text = refdate;
 
                     // Perform actions based on actual values
-                    if (refname == "N/A") lbl_refname.Visible = false;
-                    if (refid == "N/A") Tr2.Visible=false;
-                    if (refdate == "1900-01-01") Tr3.Visible = false;
+                    //if (refname == "N/A") lbl_refname.Visible = false;
+                    //if (refid == "N/A") Tr2.Visible=false;
+                    //if (refdate == "1900-01-01") Tr3.Visible = false;
+                    if (string.IsNullOrEmpty(refname) || refname == "N/A")
+                        lbl_refname.Visible = false;
+
+                    if (string.IsNullOrEmpty(refid) || refid == "N/A")
+                        Tr2.Visible = false;
+
+                    if (string.IsNullOrEmpty(refdate) || refdate == "1900-01-01")
+                        Tr3.Visible = false;
+
                 }
                 else
                 {
                     lbl_refname.Text = refname;
                     lbl_refid.Text = refid;
                     lbl_refdate.Text = refdate;
+
                     // Perform actions based on actual values
-                    if (refname == "N/A") lbl_refname.Visible = false;
-                    if (refid == "N/A") Tr2.Visible = false;
-                    if (refdate == "1900-01-01") Tr3.Visible = false;
+                    //if (refname == "N/A") lbl_refname.Visible = false;
+                    //if (refid == "N/A") Tr2.Visible = false;
+                    //if (refdate == "1900-01-01") Tr3.Visible = false;
+
+                    if (string.IsNullOrEmpty(refname) || refname == "N/A")
+                        lbl_refname.Visible = false;
+
+                    if (string.IsNullOrEmpty(refid) || refid == "N/A")
+                        Tr2.Visible = false;
+
+                    if (string.IsNullOrEmpty(refdate) || refdate == "1900-01-01")
+                        Tr3.Visible = false;
+
                 }
-                
+
 
                 string valdays = dtmain.Rows[0]["ValidityDays"].ToString();
                 lbl_valdays.Text = valdays;
@@ -116,7 +138,7 @@ namespace Bill_Software.corporate.business.print
                 //lblqnumber.Text = dtmain.Rows[0]["igst"].ToString();
                 Session["cgstOrsgst"] = dtmain.Rows[0]["cgstOrsgst"].ToString();
                 Session["igst"] = dtmain.Rows[0]["igst"].ToString();
-                Session["viewtype"] = dtmain.Rows[0]["DetailedView"].ToString();
+                viewtype = dtmain.Rows[0]["DetailedView"].ToString();
 
                 string word = MoneyConvDS.MoneyConvFn(netamount);
                 //blword.Text = word.ToString();
@@ -779,7 +801,7 @@ namespace Bill_Software.corporate.business.print
                         strp += "<tr>";
                         strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + (i + 1) + "</td>";
                         //strp += "<td style='text-align:left; border:2px solid #6c6c6c; font-size: 10.5px;'>" + Productname + "<br>" + specification + "</td>";
-                        if (Session["viewtype"].ToString() == "Detailed")
+                        if (viewtype == "Detailed")
                         {
                             strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
                                    "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
@@ -789,7 +811,7 @@ namespace Bill_Software.corporate.business.print
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
                                    "</td>", Productname, specification, itemno, materialno, packsize);
                         }
-                        else if ((Session["viewtype"].ToString() == "Simple"))
+                        else if (viewtype == "Simple")
                         {
                             strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
                         }
@@ -1070,7 +1092,7 @@ namespace Bill_Software.corporate.business.print
                         strp += "<tr>";
                         strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{i + 1}</td>";
                         //strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'>{Productname}<br>{specification}</td>";
-                        if (Session["viewtype"].ToString() == "Yes")
+                        if (viewtype == "Detailed")
                         {
                             strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
                                    "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
@@ -1080,7 +1102,7 @@ namespace Bill_Software.corporate.business.print
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
                                    "</td>", Productname, specification, itemno, materialno, packsize);
                         }
-                        else
+                        else if (viewtype == "Simple")
                         {
                             strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
                         }
