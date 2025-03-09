@@ -157,31 +157,103 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.DataList DataList1;
         
         /// <summary>
-        /// labeltax1 control.
+        /// lbl_ttl1word control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label labeltax1;
+        protected global::System.Web.UI.WebControls.Label lbl_ttl1word;
         
         /// <summary>
-        /// lblsail_rate control.
+        /// lblTaxableValue control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblsail_rate;
+        protected global::System.Web.UI.WebControls.Label lblTaxableValue;
         
         /// <summary>
-        /// lblpurches_rate control.
+        /// lblstax0 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblpurches_rate;
+        protected global::System.Web.UI.WebControls.Label lblstax0;
+        
+        /// <summary>
+        /// lblnetamount control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblnetamount;
+        
+        /// <summary>
+        /// lbl_ttl2word control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_ttl2word;
+        
+        /// <summary>
+        /// lblTCSAmount control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblTCSAmount;
+        
+        /// <summary>
+        /// lblFreightCharges control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblFreightCharges;
+        
+        /// <summary>
+        /// lblOtherCharges control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblOtherCharges;
+        
+        /// <summary>
+        /// lbl_ttl2amnt control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_ttl2amnt;
+        
+        /// <summary>
+        /// lblGrandTotalWord control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblGrandTotalWord;
+        
+        /// <summary>
+        /// lblGrandTotal control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblGrandTotal;
         
         /// <summary>
         /// lbl_narration control.

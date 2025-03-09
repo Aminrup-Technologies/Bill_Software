@@ -21,6 +21,7 @@ namespace Bill_Software
                     HttpCookie cookie = Request.Cookies.Get("myCookie");
                     txtUserName.Text = cookie.Values["username"];
                     txtPassword.Attributes.Add("value", cookie.Values["password"]);
+                    lbl_crntyr.Text = DateTime.Now.Year.ToString();
                     cookie.Expires.AddYears(1);
                     Response.Cookies.Add(cookie);
 

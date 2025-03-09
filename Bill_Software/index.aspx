@@ -143,7 +143,7 @@
                                     &nbsp;
    
                                     <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" Height="16px" />
-                                    &nbsp;<sup>2024</sup>
+                                    &nbsp;<sup>2024-<asp:Label ID="lbl_crntyr" runat="server" Text="2025"></asp:Label></sup>
                                 </p>
                                 <p>
                                     &nbsp;

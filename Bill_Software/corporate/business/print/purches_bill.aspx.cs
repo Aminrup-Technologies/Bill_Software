@@ -12,25 +12,124 @@ namespace Bill_Software.corporate.business.print
     public partial class purches_bill : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
+        public decimal totalQuantity = 0;
+        public decimal totalTaxableAmount = 0;
+        public decimal totalTaxAmount = 0;
+        public decimal grandTotal = 0;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             string Purches_Id = Request.QueryString["Purches_Id"];
 
             lblpurches_id.Text = Purches_Id.ToString();
-            buindalldata();
             Buindamount();
+            DataList1.ItemDataBound += new DataListItemEventHandler(DataList1_ItemDataBound);
+            buindalldata();
+            
 
         }
         private void Buindamount()
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select sl_no,(Product_name+' '+specification) as Product_name,Quantity,vendor_rate,tax_rate,purches_rate from tbl_purches_details where Purches_id='" + lblpurches_id.Text + "' order by Id";
+            string cmdstring = "select sl_no, Product_id, (Product_name+':'+specification) as Product_name, Quantity,vendor_rate, purches_rate, tax_rate, vat_amount, total_purches_rate from tbl_purches_details where Purches_id='" + lblpurches_id.Text + "' order by Id";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
             DbCL.Conn.Close();
         }
+
+        
+
+        protected void DataList1_ItemDataBound(object sender, DataListItemEventArgs e)
+        {
+            if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+            {
+                // Get values from current row
+                Label lblQuantity = (Label)e.Item.FindControl("Label5");
+                Label lblTaxableAmount = (Label)e.Item.FindControl("Label10");
+                Label lblTaxAmount = (Label)e.Item.FindControl("Label7");
+                Label lblTotalAmount = (Label)e.Item.FindControl("Label14");
+
+                // Add to total variables
+                totalQuantity += Convert.ToDecimal(lblQuantity.Text);
+                totalTaxableAmount += Convert.ToDecimal(lblTaxableAmount.Text);
+                totalTaxAmount += Convert.ToDecimal(lblTaxAmount.Text);
+                grandTotal += Convert.ToDecimal(lblTotalAmount.Text);
+            }
+
+            // Display total in footer
+            if (e.Item.ItemType == ListItemType.Footer)
+            {
+                Label lblTotalQuantity = (Label)e.Item.FindControl("lblTotalQuantity");
+                Label lblTotalTaxableAmount = (Label)e.Item.FindControl("lblTotalTaxableAmount");
+                Label lblTotalTaxAmount = (Label)e.Item.FindControl("lblTotalTaxAmount");
+                Label lblGrandTotal = (Label)e.Item.FindControl("lblGrandTotal");
+
+                lblTotalQuantity.Text = totalQuantity.ToString("N2");
+                lblTotalTaxableAmount.Text = totalTaxableAmount.ToString("N2");
+                lblTotalTaxAmount.Text = totalTaxAmount.ToString("N2");
+                lblGrandTotal.Text = grandTotal.ToString("N2");
+
+                lblTaxableValue.Text = totalTaxableAmount.ToString("N2");
+                lblstax0.Text = totalTaxAmount.ToString("N2");
+                lblnetamount.Text = grandTotal.ToString("N2");
+                lbl_ttl1word.Text = ConvertNumberToWords((int)grandTotal) + " Only";
+            }
+        }
+
+        public string ConvertNumberToWords(int number)
+        {
+            if (number == 0)
+                return "Zero";
+
+            string words = "";
+            if (number < 0)
+            {
+                words = "Minus ";
+                number = -number;
+            }
+
+            string[] unitsMap = { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+                                    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+            string[] tensMap = { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+
+            if ((number / 100000) > 0)
+            {
+                words += ConvertNumberToWords(number / 100000) + " Lakh ";
+                number %= 100000;
+            }
+
+            if ((number / 1000) > 0)
+            {
+                words += ConvertNumberToWords(number / 1000) + " Thousand ";
+                number %= 1000;
+            }
+
+            if ((number / 100) > 0)
+            {
+                words += ConvertNumberToWords(number / 100) + " Hundred ";
+                number %= 100;
+            }
+
+            if (number > 0)
+            {
+                if (words != "")
+                    words += "and ";
+
+                if (number < 20)
+                    words += unitsMap[number];
+                else
+                {
+                    words += tensMap[number / 10];
+                    if ((number % 10) > 0)
+                        words += "-" + unitsMap[number % 10];
+                }
+            }
+
+            return words;
+        }
+
 
         private void buindalldata()
         {
@@ -45,24 +144,44 @@ namespace Bill_Software.corporate.business.print
                 //lblpurches_date.Text = re["CreatedDate"].ToString();
                 //lblpurches_date.Text = Convert.ToDateTime(re["CreatedDate"]).ToString("dd-MM-yyyy");
                 lblpurches_date.Text = re["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(re["CreatedDate"]).ToString("dd-MMM-yyyy") : "N/A";
-                lblpurches_rate.Text = re["Total_purches_rate"].ToString();
-                lblsail_rate.Text = re["Total_Tax_rate"].ToString();
+                //lblpurches_rate.Text = re["Total_purches_rate"].ToString();
+                //lblsail_rate.Text = re["Total_Tax_rate"].ToString();
 
                 //Newly added on 22-02-205
                 lbl_invoiceno.Text = re["Invoice_No"].ToString();
                 lbl_stockaddedon.Text = re["Stock_Add_Date"].ToString();
                 lbl_narration.Text = re["Narration"].ToString();
 
+                decimal dtcsAmount = Convert.ToDecimal(re["TCS_Amount"] ?? 0);
+                decimal dfreightCharges = Convert.ToDecimal(re["Delivery_Amount"] ?? 0);
+                decimal dotherCharges = Convert.ToDecimal(re["Other_Amounts"] ?? 0);
+
+                decimal total2 = dtcsAmount + dfreightCharges + dotherCharges;
+                lbl_ttl2amnt.Text = total2.ToString("N2");
+                lbl_ttl2word.Text = ConvertNumberToWords((int)total2) + " Only";
+
+                
+
+                decimal grandttl = grandTotal + total2;
+                lblGrandTotal.Text = grandttl.ToString("N2");
+                lblGrandTotalWord.Text = ConvertNumberToWords((int)grandttl) + " Only";
+
+                // Assign formatted values to labels
+                lblTCSAmount.Text = dtcsAmount.ToString("N2");
+                lblFreightCharges.Text = dfreightCharges.ToString("N2");
+                lblOtherCharges.Text = dotherCharges.ToString("N2");
+
+
                 string type = re["Purches_Type"].ToString();
                 if (type == "Product")
                 {
                     //labeltax1.Text = "Vat";
-                    labeltax1.Text = "GST";
+                    //labeltax1.Text = "GST";
                 }
                 else
                 {
                     //labeltax1.Text = "Service Tax";
-                    labeltax1.Text = "GST";
+                    //labeltax1.Text = "GST";
                 }
                 string clientid = re["Client_Id"].ToString();
                 Bindclientdetails(clientid);

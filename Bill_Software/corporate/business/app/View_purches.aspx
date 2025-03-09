@@ -80,7 +80,7 @@
                                     <asp:Label ID="Label6" runat="server" Text="Total Purchase Rate"></asp:Label>
                                 </td>
                                 <td style="text-align: center; width: 20%;">
-                                    <asp:Label ID="Label3" runat="server" Text="Total Vat"></asp:Label>
+                                    <asp:Label ID="Label3" runat="server" Text="Total TAX"></asp:Label>
                                 </td>
 
                                 <td style="text-align: center; width: 10%;">

@@ -578,7 +578,7 @@ namespace Bill_Software.corporate.business.app
                         string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
 
                         // Check if Quantity is not null, not empty, and greater than 1
-                        if (!string.IsNullOrEmpty(Quantity) && Convert.ToDouble(Quantity) > 1)
+                        if (!string.IsNullOrEmpty(Quantity) && Convert.ToDouble(Quantity) >= 1)
                         {
                             sl = sl + 1;
                             string parches_rate = (Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity)).ToString();
@@ -642,12 +642,55 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
             tota_purchesrate1 = Math.Round(tota_purchesrate1);
             total_tax_rate_details = Math.Round(total_tax_rate_details);
+
+            decimal invAmount = 0, tcsAmount = 0, deliveryAmount = 0, otherAmount = 0;
+
+            // Validate Invoice Amount
+            if (!decimal.TryParse(txt_inv_amount.Text.Trim(), out invAmount))
+            {
+                lblErrorMsg.Text = "Invalid Invoice Amount. Please enter a valid number.";
+                return;
+            }
+
+            // Validate TCS Amount
+            if (!decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount))
+            {
+                lblErrorMsg.Text = "Invalid TCS Amount. Please enter a valid number.";
+                return;
+            }
+
+            // Validate Delivery Amount
+            if (!decimal.TryParse(txt_delivery_amnt.Text.Trim(), out deliveryAmount))
+            {
+                lblErrorMsg.Text = "Invalid Delivery Amount. Please enter a valid number.";
+                return;
+            }
+
+            // Validate Other Amount
+            if (!decimal.TryParse(txt_othr_amnt.Text.Trim(), out otherAmount))
+            {
+                lblErrorMsg.Text = "Invalid Other Amount. Please enter a valid number.";
+                return;
+            }
+
+            // Perform any calculation or logic after validation
+            decimal totalAmount = invAmount + tcsAmount + deliveryAmount + otherAmount;
+
             //DbCL.executeRdr("insert into tbl_Purches(Purches_Id,Client_Id,Total_purches_rate,Total_Tax_rate,Purches_date,Purches_Type)values('" + purchesid + "','" + lblvendor_id.Text + "','" + tota_purchesrate1.ToString() + "','" + total_tax_rate_details.ToString() + "','" + txtPurchesDate.Text + "','" + RadioButtonList1.Text + "')");
 
-            DbCL.executeRdr("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration) " + "VALUES ('" + purchesid + "', '" + lblvendor_id.Text + "', '" + tota_purchesrate1.ToString() + "', '" + total_tax_rate_details.ToString() + "', '" + txtPurchesDate.Text + "', '" + RadioButtonList1.Text + "', '" + txt_invno.Text + "', '" + txt_stockadddate.Text + "', '" + txt_narration.Text + "')");
+            //DbCL.executeRdr("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration, InvoiceAmnt, TCS_Amount, Delivery_Amount, Other_Amounts, AddedById) " + "VALUES ('" + purchesid + "', '" + lblvendor_id.Text + "', '" + tota_purchesrate1.ToString() + "', '" + total_tax_rate_details.ToString() + "', '" + txtPurchesDate.Text + "', '" + RadioButtonList1.Text + "', '" + txt_invno.Text + "', '" + txt_stockadddate.Text + "', '" + txt_narration.Text + "')");
 
+            string userId = HttpContext.Current.Session["USERID"] != null ? HttpContext.Current.Session["USERID"].ToString() : "FLM03"; // Default to 0 if null
+
+            DbCL.ExecuteQuery("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration, InvoiceAmnt, TCS_Amount, Delivery_Amount, Other_Amounts, AddedById) " +
+                            "VALUES (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @Narration, @InvoiceAmnt, @TCS_Amount, @Delivery_Amount, @Other_Amounts, @AddedById)",
+                            new SqlParameter("@Purches_Id", purchesid), new SqlParameter("@Client_Id", lblvendor_id.Text), new SqlParameter("@Total_purches_rate", tota_purchesrate1), new SqlParameter("@Total_Tax_rate", total_tax_rate_details),
+                            new SqlParameter("@Purches_date", txtPurchesDate.Text), new SqlParameter("@Purches_Type", RadioButtonList1.SelectedValue), new SqlParameter("@Invoice_No", txt_invno.Text), new SqlParameter("@Stock_Add_Date", txt_stockadddate.Text),
+                            new SqlParameter("@Narration", txt_narration.Text), new SqlParameter("@InvoiceAmnt", invAmount), new SqlParameter("@TCS_Amount", tcsAmount), new SqlParameter("@Delivery_Amount", deliveryAmount),
+                            new SqlParameter("@Other_Amounts", otherAmount), new SqlParameter("@AddedById", userId));
 
             DbCL.executeRdr("insert into tbl_purches_due(Purches_Id,Due_amount)values('" + purchesid + "','" + tota_purchesrate1 + "')");
+
             Button3.Visible = false;
             txtPurchesDate.Enabled = false;
             if (RadioButtonList3.SelectedIndex == 0)

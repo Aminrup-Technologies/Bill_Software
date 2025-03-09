@@ -17,6 +17,7 @@ namespace Bill_Software.corporate.business.app
         {
             if (!IsPostBack)
             {
+                lbl_crntyr.Text = DateTime.Now.Year.ToString();
                 GetMenuControl();
             }
             HttpContext.Current.Response.Cache.SetAllowResponseInBrowserHistory(false);

@@ -48,6 +48,34 @@ namespace Bill_Software
             }
         }
 
+        public void ExecuteQuery(string sqlString, params SqlParameter[] parameters)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString()))  // Use your actual connection string
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand(sqlString, conn))
+                    {
+                        cmd.CommandTimeout = 0;
+
+                        // Add parameters if available
+                        if (parameters != null)
+                        {
+                            cmd.Parameters.AddRange(parameters);
+                        }
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception exp)
+            {
+                throw new Exception("Database error: " + exp.Message);
+            }
+        }
+
+
         public void ConnectDb()
         {
             try

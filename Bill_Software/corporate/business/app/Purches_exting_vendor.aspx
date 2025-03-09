@@ -35,6 +35,10 @@
         .redio {
             border: none;
         }
+
+        .auto-style2 {
+            height: 24px;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -55,12 +59,54 @@
                 changeYear: true
             });
         });
-    </script>
 
+        function validateForm() {
+            var invNo = document.getElementById('<%= txt_invno.ClientID %>').value.trim();
+            var purchDate = document.getElementById('<%= txtPurchesDate.ClientID %>').value.trim();
+            var invAmount = document.getElementById('<%= txt_inv_amount.ClientID %>').value.trim();
+            var tcsAmount = document.getElementById('<%= txt_tcs_amnt.ClientID %>').value.trim();
+            var deliveryAmount = document.getElementById('<%= txt_delivery_amnt.ClientID %>').value.trim();
+            var otherAmount = document.getElementById('<%= txt_othr_amnt.ClientID %>').value.trim();
 
+            // Validate Invoice Number (Should not be empty)
+            if (invNo === "") {
+                alert("Please enter the Invoice Number.");
+                return false;
+            }
 
+            // Validate Purchase Date (Should not be empty)
+            if (purchDate === "") {
+                alert("Please select a valid Purchase Date.");
+                return false;
+            }
 
-    <script type="text/javascript">
+            // Validate Invoice Amount
+            if (isNaN(invAmount) || invAmount === "") {
+                alert("Please enter a valid Invoice Amount.");
+                return false;
+            }
+
+            // Validate TCS Amount
+            if (isNaN(tcsAmount) || tcsAmount === "") {
+                alert("Please enter a valid TCS Amount.");
+                return false;
+            }
+
+            // Validate Delivery Amount
+            if (isNaN(deliveryAmount) || deliveryAmount === "") {
+                alert("Please enter a valid Delivery Amount.");
+                return false;
+            }
+
+            // Validate Other Amount
+            if (isNaN(otherAmount) || otherAmount === "") {
+                alert("Please enter a valid Other Amount.");
+                return false;
+            }
+
+            return true; // If all validations pass
+        }
+
         function ValidateField10() {
 
             if (document.getElementById('<%=cmbvendor.ClientID%>').selectedIndex == 0) {
@@ -68,14 +114,8 @@
                 document.getElementById('<%=cmbvendor.ClientID%>').focus();
                 return false;
             }
-
-
-
-
         }
-    </script>
 
-    <script type="text/javascript">
         //Function to allow only numbers to textbox
         function validate(key) {
             //getting key code of pressed key
@@ -95,6 +135,7 @@
                 }
             }
         }
+
         function validate1(key) {
             //getting key code of pressed key
             var keycode = (key.which) ? key.which : key.keyCode;
@@ -109,39 +150,18 @@
             }
 
         }
-    </script>
-    <script type="text/javascript">
+
         function ValidateDataField10() {
-
-
-
-
-
-
-
-
 
         }
 
-    </script>
-
-
-    <script type="text/javascript">
         function ValidateDataField11() {
-
-
-
             if (document.getElementById('<%=txtpaymentamount.ClientID%>').value == "") {
                 alert("Provide Payment amount.");
                 document.getElementById('<%=txtpaymentamount.ClientID%>').focus();
                 return false;
             }
-
-
-
-
         }
-
     </script>
 
     <asp:ScriptManager ID="ScriptManager1" runat="server">
@@ -394,7 +414,7 @@
                 <tr>
                     <td colspan="6">
                         <asp:Panel ID="Panel2" runat="server" Visible="false">
-                            <table cellpadding="0" cellspacing="0" class="auto-style1">
+                            <table cellpadding="0" cellspacing="0" class="style1">
                                 <tr>
                                     <td width="15%">&nbsp;</td>
                                     <td width="35%">&nbsp;</td>
@@ -498,6 +518,49 @@
 
                                 <tr>
                                     <td>&nbsp;</td>
+                                    <td>&nbsp;<asp:Label ID="Label5" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase / Invoice Amount</td>
+                                    <td>
+                                        <asp:TextBox ID="txt_inv_amount" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;TCS Amount</td>
+                                    <td>
+                                        <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;Delivery Charges</td>
+                                    <td>
+                                        <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;Other Charges</td>
+                                    <td>
+                                        <asp:TextBox ID="txt_othr_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td width="15%">&nbsp;</td>
+                                    <td width="25%">&nbsp;</td>
+                                    <td width="15%">&nbsp;</td>
+                                    <td width="25%">&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
                                     <td>&nbsp;<asp:Label ID="Label4" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase Date / Invoice Date</td>
                                     <td>
                                         <asp:TextBox ID="txtPurchesDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
@@ -515,17 +578,19 @@
                                 </tr>
 
                                 <tr>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;&nbsp;Narration Box</td>
-                                    <td>
-                                         <asp:TextBox ID="txt_narration" runat="server" CssClass="textbox_U_style" Width="110px" Text="N/A"></asp:TextBox>
+                                    <td class="auto-style2"></td>
+                                    <td class="auto-style2">&nbsp;&nbsp;Narration Box</td>
+                                    <td class="auto-style2">
+                                        <asp:TextBox ID="txt_narration" runat="server" CssClass="textbox_U_style" Width="200px" Text="N/A" TextMode="MultiLine" Rows="3"></asp:TextBox>
                                     </td>
-                                    <td>&nbsp;</td>
+                                    <td class="auto-style2"></td>
                                 </tr>
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;</td>
+                                    <td width="15%">&nbsp;</td>
+                                    <td width="25%">&nbsp;</td>
+                                    <td width="15%">&nbsp;</td>
+                                    <td width="25%">&nbsp;</td>
                                     <td>&nbsp;</td>
                                 </tr>
                                 <tr>
@@ -548,7 +613,7 @@
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td colspan="2" style="text-align: center">
-                                        <asp:Button ID="Button3" runat="server" OnClick="Button3_Click" Text="Add Purchasse" CssClass="btn_style" />
+                                        <asp:Button ID="Button3" runat="server" OnClientClick="return validateForm();" OnClick="Button3_Click" Text="Add Purchasse" CssClass="btn_style" />
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
