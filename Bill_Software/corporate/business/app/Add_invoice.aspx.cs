@@ -115,6 +115,8 @@ namespace Bill_Software.corporate.business.app
                 Panel1.Visible = true;
                 Binddetails(Quotation_no);
                 BindAllProduct(Quotation_no);
+
+                DataList1.Visible = false;
             }
         }
 
@@ -127,9 +129,9 @@ namespace Bill_Software.corporate.business.app
             SqlParameter[] pram = {
                 new SqlParameter("@Quotation_no",quotation_no),
             };
-            dtProduct=DbCL.SPreturn_dt(cmdstring, pram);
+            dtProduct = DbCL.SPreturn_dt(cmdstring, pram);
 
-            if (dtProduct.Rows.Count>0)
+            if (dtProduct.Rows.Count > 0)
             {
                 Gridview_Product.DataSource = dtProduct;
                 Gridview_Product.DataBind();
@@ -143,9 +145,9 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             string cmdstring = "select * from tbl_Quotation where Quotation_no='" + Quotation_no.ToString() + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring,DbCL.Conn);
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
-            if(re.Read())
+            if (re.Read())
             {
                 lblClient_Id.Text = re["Client_Id"].ToString();
                 lblQuotation_no.Text = re["Quotation_no"].ToString();
@@ -163,7 +165,7 @@ namespace Bill_Software.corporate.business.app
             BindclientName();
             cmbaddressfor.Items.Add("Corporate office");
             DbCL.FillCombo10(cmbaddressfor, "select Factory_name from tbl_Factory where Client_id='" + lblClient_Id.Text + "' order by Factory_name");
-            
+
             //BindInvoiceNo();
         }
 
@@ -313,65 +315,66 @@ namespace Bill_Software.corporate.business.app
 
         protected void Button1_Click(object sender, EventArgs e)
         {
-
-            if (FactoryAddress.SelectedIndex != -1)
+            if (FactoryAddress.GetSelectedIndices().Length > 0)
             {
-                //string stock_check = findstock();
-                //if (stock_check == "Yes")
-                //{
-                string quno = lblQuotation_no.Text;
-                //string dueamount = bindpaymentDetails(quno);
-                //if (dueamount == "0.00")
-                //{
+                string stock_check = findstock();
+                if (stock_check == "Yes")
+                {
+                    string quno = lblQuotation_no.Text;
+                    string dueamount = bindpaymentDetails(quno);
+                    if (dueamount == "0.00")
+                    {
+                        string invoice_no = BindInvoiceNo();
+                        int j = idreturn();
+                        j = j + 1;
 
-                string invoice_no = BindInvoiceNo();
-                int j = idreturn();
-                j = j + 1;
+                        InsertSelectedProduct(invoice_no, quno);
 
+                        Session["NetAmount"] = Math.Round(Convert.ToDouble(Session["InvTotalAmountWithGst"])) - Convert.ToDouble(txtDiscount.Text);
 
-                InsertSelectedProduct(invoice_no, quno);
+                        //DbCL.executeRdr("insert into tbl_Invoice(Invoice_No,Invoice_Date,Quotation_No,Quotation_Date,Client_ID,Gross,Service_Tax,Net_Amount,Sl_no,Service_Tax1,sub_total,discount,addressfor,status1,status2)values('" + invoice_no.ToString() + "','" + txtinvoiceDate.Text + "','" + lblQuotation_no.Text + "','" + lblQuotation_date.Text + "','" + lblClient_Id.Text + "','" + lblGross_amount.Text + "','" + lblservicetax.Text + "','" + Net_amount + "','" + j.ToString() + "','" + lblservicetax0.Text + "','" + lblsubtotal.Text + "','" + txtDiscount.Text + "','" + cmbaddressfor.Text + "','No','Active')");
 
+                        DbCL.executeRdr("insert into tbl_Invoice(Invoice_No,Invoice_Date,Quotation_No,Quotation_Date,Client_ID,Gross,Net_Amount,Sl_no,Service_Tax1,sub_total,discount,addressfor,status1,status2)values('" + invoice_no.ToString() + "','" + txtinvoiceDate.Text + "','" + lblQuotation_no.Text + "','" + lblQuotation_date.Text + "','" + lblClient_Id.Text + "','" + Session["InvTotalAmountWithGst"].ToString() + "','" + Session["NetAmount"].ToString() + "','" + j.ToString() + "','" + Session["invTotalGstAmount"].ToString() + "','" + Session["InvTotalAmountWithOutGst"].ToString() + "','" + txtDiscount.Text + "','" + cmbaddressfor.Text + "','No','Active')");
 
-                Session["NetAmount"] = Math.Round(Convert.ToDouble(Session["InvTotalAmountWithGst"])) - Convert.ToDouble(txtDiscount.Text);
+                        //DbCL.executeRdr("UPDATE Table_A SET Table_A.Invoice_No = Table_B.Invoice_No FROM tbl_invoice_payment AS Table_A INNER JOIN tbl_Invoice AS Table_B ON Table_A.Quotation_no = Table_B.Quotation_No and Table_A.Invoice_No IS NULL and Due_amount='0.00'");
 
-                //DbCL.executeRdr("insert into tbl_Invoice(Invoice_No,Invoice_Date,Quotation_No,Quotation_Date,Client_ID,Gross,Service_Tax,Net_Amount,Sl_no,Service_Tax1,sub_total,discount,addressfor,status1,status2)values('" + invoice_no.ToString() + "','" + txtinvoiceDate.Text + "','" + lblQuotation_no.Text + "','" + lblQuotation_date.Text + "','" + lblClient_Id.Text + "','" + lblGross_amount.Text + "','" + lblservicetax.Text + "','" + Net_amount + "','" + j.ToString() + "','" + lblservicetax0.Text + "','" + lblsubtotal.Text + "','" + txtDiscount.Text + "','" + cmbaddressfor.Text + "','No','Active')");
+                        //double totalQutamount = 0;
 
-                DbCL.executeRdr("insert into tbl_Invoice(Invoice_No,Invoice_Date,Quotation_No,Quotation_Date,Client_ID,Gross,Net_Amount,Sl_no,Service_Tax1,sub_total,discount,addressfor,status1,status2)values('" + invoice_no.ToString() + "','" + txtinvoiceDate.Text + "','" + lblQuotation_no.Text + "','" + lblQuotation_date.Text + "','" + lblClient_Id.Text + "','" + Session["InvTotalAmountWithGst"].ToString() + "','" + Session["NetAmount"].ToString() + "','" + j.ToString() + "','" + Session["invTotalGstAmount"].ToString() + "','" + Session["InvTotalAmountWithOutGst"].ToString() + "','" + txtDiscount.Text + "','" + cmbaddressfor.Text + "','No','Active')");
-                //DbCL.executeRdr("UPDATE Table_A SET Table_A.Invoice_No = Table_B.Invoice_No FROM tbl_invoice_payment AS Table_A INNER JOIN tbl_Invoice AS Table_B ON Table_A.Quotation_no = Table_B.Quotation_No and Table_A.Invoice_No IS NULL and Due_amount='0.00'");
-                //double totalQutamount = 0;
-                double totalQuotationValue = Convert.ToDouble(lblGross_amount.Text);
+                        double totalQuotationValue = Convert.ToDouble(lblGross_amount.Text);
 
-                //ChecktotalInvAmount(out totalQutamount, quno);
-                DbCL.executeRdr("update tbl_Quotation set Status2='Yes' where Quotation_no='" + lblQuotation_no.Text + "'");
+                        //ChecktotalInvAmount(out totalQutamount, quno);
 
-                //if (totalQutamount == totalQuotationValue)
-                //{
-                    
-                //}
+                        //if (totalQutamount == totalQuotationValue)
+                        //{
 
-                //DbCL.executeRdr("update tbl_Quotation set Status2='Yes' where Quotation_no='"+ lblQuotation_no.Text +"'");
-                //updatestock();
+                        //}
 
-                insertCorRegFacAddress(invoice_no);
+                        DbCL.executeRdr("update tbl_Quotation set Status2='Yes' where Quotation_no='"+ lblQuotation_no.Text +"'");
+                        updatestock();
 
-                PanelOK.Visible = true;
-                lblOk.Text = "Data Save Successfull...";
-                //}
-                //else
-                //{
-                //    PanelError.Visible = true;
-                //    lblErrorMsg.Text = "You don't have suffiecient stock....";
-                //}
-                Button1.Visible = false;
-                //}
-                //else
-                //{
-                //    PanelError.Visible = true;
-                //    lblErrorMsg.Text = "Full Payment Not Received...";
-                //}
+                        insertCorRegFacAddress(invoice_no);
+
+                        PanelOK.Visible = true;
+                        lblOk.Text = "Data Save Successfull...";
+                    }
+                    else
+                    {
+                        PanelError.Visible = true;
+                        lblErrorMsg.Text = "Previous Invoice Payment Not Received...";
+                    }
+                    Button1.Visible = false;
+                }
+                else
+                {
+                    PanelError.Visible = true;
+                    lblErrorMsg.Text = "You don't have suffiecient stock....";
+                }
             }
-            //PanelError.Visible = true;
-            //lblErrorMsg.Text = "Select Delivery Address...";
+            else
+            {
+                PanelError.Visible = true;
+                lblErrorMsg.Text = "Please Select Delivery Address....";
+            }
         }
 
         private void insertCorRegFacAddress(string invoice_no)
@@ -420,11 +423,11 @@ namespace Bill_Software.corporate.business.app
             SqlParameter[] pram = {
                 new SqlParameter("@Quotation_no",quno)
             };
-            SqlDataReader rdr=  DbCL.SPReturnRdr(query, pram);
+            SqlDataReader rdr = DbCL.SPReturnRdr(query, pram);
             if (rdr.Read())
             {
                 totalQutamount = Math.Round(Convert.ToDouble(rdr["totalQutamount"]), 2);
-                
+
                 //totalinvamount = Convert.ToDouble(rdr["totalinvvalue"]);
             }
             else
@@ -465,31 +468,22 @@ namespace Bill_Software.corporate.business.app
                             string SailRate = ((Label)Gridview_Product.Rows[i].FindControl("sail_rate")).Text;
                             string GstPercentage = ((Label)Gridview_Product.Rows[i].FindControl("Service_tax_rate")).Text;
                             string AmountWithGst = ((Label)Gridview_Product.Rows[i].FindControl("Total_sail_rate1")).Text;
-
                             string specifai = ((Label)Gridview_Product.Rows[i].FindControl("specification")).Text;
                             string AmountWithOutGst = ((Label)Gridview_Product.Rows[i].FindControl("Total_sail_rate2")).Text;
-
                             string InvStatus = ((Label)Gridview_Product.Rows[i].FindControl("InvStatus")).Text;
-
                             //b = Math.Round(b, 2);
-
-                           
-
-                            if (InvStatus!="Yes")
+                            if (InvStatus != "Yes")
                             {
                                 InvTotalAmountWithGst = InvTotalAmountWithGst + Convert.ToDouble(AmountWithGst);
                                 InvTotalAmountWithOutGst = InvTotalAmountWithOutGst + Convert.ToDouble(AmountWithOutGst);
                                 invTotalGstAmount = invTotalGstAmount + (InvTotalAmountWithGst - InvTotalAmountWithOutGst);
-
-
-
 
                                 Session["InvTotalAmountWithGst"] = InvTotalAmountWithGst;
                                 Session["InvTotalAmountWithOutGst"] = InvTotalAmountWithOutGst;
                                 Session["invTotalGstAmount"] = invTotalGstAmount;
 
                                 string query = "insert into tbl_Invoice_details(Quotation_no,Invoice_No,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate1,Total_sail_rate2,specification) values (@Quotation_no,@Invoice_No,@Product_id,@Product_name,@Quantity,@sail_rate,@Service_tax_rate,@Total_sail_rate1,@Total_sail_rate2,@specification)";
-                            SqlParameter[] pram = {
+                                SqlParameter[] pram = {
                                 new SqlParameter("@Quotation_no",quno),
                                 new SqlParameter("@Invoice_No",invoice_no),
                                 new SqlParameter("@Product_id",ProductCode),
@@ -501,19 +495,17 @@ namespace Bill_Software.corporate.business.app
                                 new SqlParameter("@specification",specifai),
                                 new SqlParameter("@Total_sail_rate2",AmountWithOutGst)
                             };
-                            DbCL.SPExecDB(query, pram);
+                                DbCL.SPExecDB(query, pram);
 
-                            updateqtableforproduct(quno, ProductCode, ProductName);
-                          }
-
+                                updateqtableforproduct(quno, ProductCode, ProductName);
+                            }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             string message = ex.ToString();
                         }
 
                     }
-
                 }
             }
         }
@@ -521,7 +513,7 @@ namespace Bill_Software.corporate.business.app
         private void updateqtableforproduct(string quno, string productCode, string productName)
         {
             string query = "update tbl_Quotaion_details set InvStatus=@InvStatus where Quotation_no=@Quotation_no and Product_id=@Product_id and Product_name=@Product_name";
-            SqlParameter[] pram = 
+            SqlParameter[] pram =
                 {
                    new SqlParameter("@InvStatus","Yes"),
                    new SqlParameter("@Quotation_no",quno),
@@ -531,51 +523,51 @@ namespace Bill_Software.corporate.business.app
             DbCL.SPExecDB(query, pram);
         }
 
-        //private void updatestock()
-        //{
-        //    DbCL.Sqlconnection();
-        //    DbCL.ConnectDb();
-        //    string cmdstring = "select Product_id,Product_name,Quantity from tbl_Quotaion_details where Quotation_no='" + lblQuotation_no.Text + "'";
-        //    SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-        //    SqlDataReader re = cmd.ExecuteReader();
-        //    while (re.Read())
-        //    {
-        //        string product_code = re["Product_id"].ToString();
-        //        string Product_name = re["Product_name"].ToString();
-        //        string Quantity = re["Quantity"].ToString();
-        //        updatestock1(product_code, Product_name, Quantity);
-        //    }
-        //    DbCL.Conn.Close();
-        //}
+        private void updatestock()
+        {
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Product_id,Product_name,Quantity from tbl_Quotaion_details where Quotation_no='" + lblQuotation_no.Text + "'";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            SqlDataReader re = cmd.ExecuteReader();
+            while (re.Read())
+            {
+                string product_code = re["Product_id"].ToString();
+                string Product_name = re["Product_name"].ToString();
+                string Quantity = re["Quantity"].ToString();
+                updatestock1(product_code, Product_name, Quantity);
+            }
+            DbCL.Conn.Close();
+        }
 
-        //private void updatestock1(string product_code, string Product_name, string Quantity)
-        //{
-        //    DbCL.executeRdr("update tbl_stock set Quantity=(cast(Quantity as int)-'" + Quantity.ToString() + "') where Product_id='" + product_code.ToString() + "' and Product_name='" + Product_name.ToString() + "'");
-        //}
+        private void updatestock1(string product_code, string Product_name, string Quantity)
+        {
+            DbCL.executeRdr("update tbl_stock set Quantity=(cast(Quantity as int)-'" + Quantity.ToString() + "') where Product_id='" + product_code.ToString() + "' and Product_name='" + Product_name.ToString() + "'");
+        }
 
-        //private string findstock()
-        //{
-        //    string stock = "Yes";
-        //    DbCL.Sqlconnection();
-        //    DbCL.ConnectDb();
-        //    string cmdstring = "select * from tbl_Quotaion_details where Quotation_no='"+ lblQuotation_no.Text +"'";
-        //    SqlCommand cmd = new SqlCommand(cmdstring,DbCL.Conn);
-        //    SqlDataReader re = cmd.ExecuteReader();
-        //    while (re.Read())
-        //    {
-        //        string product_code = re["Product_id"].ToString();
-        //        string product_Name = re["Product_name"].ToString();
-        //        string Quantity = re["Quantity"].ToString();
-        //        string status = findstock1(product_code, product_Name, Quantity);
-        //        if (status=="No") 
-        //        {
-        //            stock = "No";  
-        //        }
-        //    }
-        //    DbCL.Conn.Close();
-        //    return stock;
+        private string findstock()
+        {
+            string stock = "Yes";
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select * from tbl_Quotaion_details where Quotation_no='" + lblQuotation_no.Text + "'";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            SqlDataReader re = cmd.ExecuteReader();
+            while (re.Read())
+            {
+                string product_code = re["Product_id"].ToString();
+                string product_Name = re["Product_name"].ToString();
+                string Quantity = re["Quantity"].ToString();
+                string status = findstock1(product_code, product_Name, Quantity);
+                if (status == "No")
+                {
+                    stock = "No";
+                }
+            }
+            DbCL.Conn.Close();
+            return stock;
 
-        //}
+        }
 
         //private string findstock1(string product_code, string product_Name, string Quantity)
         //{
@@ -584,7 +576,7 @@ namespace Bill_Software.corporate.business.app
         //    DbCL.Sqlconnection();
         //    DbCL.ConnectDb();
         //    string cmdstring = "select Quantity from tbl_stock where Product_id='" + product_code + "' and Product_name='" + product_Name + "'";
-        //    SqlCommand cmd = new SqlCommand(cmdstring,DbCL.Conn);
+        //    SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
         //    SqlDataReader re = cmd.ExecuteReader();
         //    if (re.Read())
         //    {
@@ -608,5 +600,57 @@ namespace Bill_Software.corporate.business.app
         //    return stock;
 
         //}
+
+        private string findstock1(string product_code, string product_Name, string Quantity)
+        {
+            string stock = "No"; // Default to "No"
+            int availableQuantity = 0;
+
+            try
+            {
+                DbCL.Sqlconnection();
+                DbCL.ConnectDb();
+
+                string cmdstring = "SELECT Quantity FROM tbl_stock WHERE Product_id = @ProductId AND Product_name = @ProductName";
+                using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
+                {
+                    cmd.Parameters.AddWithValue("@ProductId", product_code ?? string.Empty);
+                    cmd.Parameters.AddWithValue("@ProductName", product_Name ?? string.Empty);
+
+                    using (SqlDataReader re = cmd.ExecuteReader())
+                    {
+                        if (re.Read())
+                        {
+                            int qty = 0;
+                            // Ensure Quantity is not null or empty, default to 0
+                            availableQuantity = re["Quantity"] != DBNull.Value && int.TryParse(re["Quantity"].ToString(), out qty) ? qty : 0;
+                        }
+                    }
+                }
+                int qt2 = 0;
+                // Ensure Quantity input is treated correctly
+                int requestedQuantity = int.TryParse(Quantity, out qt2) ? qt2 : 0;
+
+                if (availableQuantity >= requestedQuantity)
+                {
+                    stock = "Yes";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception as needed
+                //Console.WriteLine("Error: " + ex.Message);
+            }
+            finally
+            {
+                if (DbCL.Conn != null && DbCL.Conn.State == ConnectionState.Open)
+                {
+                    DbCL.Conn.Close();
+                }
+            }
+
+            return stock;
+        }
+
     }
 }

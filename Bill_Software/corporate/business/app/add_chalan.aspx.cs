@@ -109,64 +109,121 @@ namespace Bill_Software.corporate.business.app
 
         }
 
+        //protected void Button1_Click(object sender, EventArgs e)
+        //{
+
+        //    if (FactoryAddress.SelectedIndex!=-1)
+        //    {
+
+
+        //    string invoice_no = BindInvoiceNo();
+        //    int k = 1;
+        //    DataTable dt1;
+
+        //    //dt1 = dt_first;
+        //    dt1 =(DataTable) ViewState["ViewQProductData"];
+        //    if (dt1 != null)
+        //    {
+        //        Int32 i;
+        //        for (i = 0; i <= dt1.Rows.Count - 1; i++)
+        //        {
+        //            CheckBox chk = (CheckBox)(gd_Quotation.Rows[i].FindControl("chk"));
+
+        //            if (chk.Checked == true)
+        //            {
+
+        //                //string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_id")).Text;
+        //                //string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("Product_name")).Text;
+
+        //                string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_code")).Text;
+        //                string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("ProductName")).Text;
+
+        //                string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
+        //                int quantity = Convert.ToInt32(Qty);
+        //                if (quantity>0)
+        //                {
+        //                    DbCL.executeRdr("insert into tbl_Challan_details(Sl_no,Challan_no,Product_id,Product_name,Quantity)values('" + k.ToString() + "','" + invoice_no.ToString() + "','" + Product_id + "','" + Product_name + "','" + Qty + "')");
+        //                    k = k + 1;
+        //                }
+        //                //DbCL.executeRdr("insert into tbl_Challan_details(Sl_no,Challan_no,Product_id,Product_name,Quantity)values('" + k.ToString() + "','" + invoice_no.ToString() + "','" + Product_id + "','" + Product_name + "','" + Qty + "')");
+        //                //k = k + 1;
+        //            }
+
+
+        //        }
+        //    }
+
+        //    int j = idreturn();
+        //    j = j + 1;
+        //    DbCL.executeRdr("insert into tbl_Chalan(Chalan_No,Chalan_Date,Quotation_No,Quotation_Date,Client_ID,Sl_no)values('" + invoice_no.ToString() + "','" + txtinvoiceDate.Text + "','" + lblQuotation_no.Text + "','" + lblQuotation_date.Text + "','" + lblClient_Id.Text + "','" + j.ToString() + "')");
+        //    //DbCL.executeRdr("update tbl_Quotation set Status3='Yes' where Quotation_no='" + lblQuotation_no.Text + "'");
+
+        //    insertCorRegFacAddress(invoice_no);
+        //    Button1.Visible = false;
+        //    PanelOK.Visible = true;
+        //    lblOk.Text = "Data Save Successfull...";
+
+        //    }
+        //    PanelError.Visible = true;
+        //    lblErrorMsg.Text = "Please Select Delivery Address....";
+        //}
+
         protected void Button1_Click(object sender, EventArgs e)
         {
-
-            if (FactoryAddress.SelectedIndex!=-1)
+            // Ensure at least one address is selected
+            if (FactoryAddress.GetSelectedIndices().Length > 0)
             {
+                string invoice_no = BindInvoiceNo();
+                int k = 1;
+                DataTable dt1;
 
-            
-            string invoice_no = BindInvoiceNo();
-            int k = 1;
-            DataTable dt1;
-
-            //dt1 = dt_first;
-            dt1 =(DataTable) ViewState["ViewQProductData"];
-            if (dt1 != null)
-            {
-                Int32 i;
-                for (i = 0; i <= dt1.Rows.Count - 1; i++)
+                dt1 = (DataTable)ViewState["ViewQProductData"];
+                if (dt1 != null)
                 {
-                    CheckBox chk = (CheckBox)(gd_Quotation.Rows[i].FindControl("chk"));
-
-                    if (chk.Checked == true)
+                    for (int i = 0; i < dt1.Rows.Count; i++)
                     {
+                        CheckBox chk = (CheckBox)(gd_Quotation.Rows[i].FindControl("chk"));
 
-                        //string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_id")).Text;
-                        //string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("Product_name")).Text;
-
-                        string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_code")).Text;
-                        string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("ProductName")).Text;
-
-                        string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
-                        int quantity = Convert.ToInt32(Qty);
-                        if (quantity>0)
+                        if (chk.Checked)
                         {
-                            DbCL.executeRdr("insert into tbl_Challan_details(Sl_no,Challan_no,Product_id,Product_name,Quantity)values('" + k.ToString() + "','" + invoice_no.ToString() + "','" + Product_id + "','" + Product_name + "','" + Qty + "')");
-                            k = k + 1;
+                            string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_code")).Text;
+                            string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("ProductName")).Text;
+
+                            string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
+                            int quantity = Convert.ToInt32(Qty);
+
+                            if (quantity > 0)
+                            {
+                                DbCL.executeRdr($"INSERT INTO tbl_Challan_details(Sl_no, Challan_no, Product_id, Product_name, Quantity) " +
+                                                $"VALUES ('{k}', '{invoice_no}', '{Product_id}', '{Product_name}', '{Qty}')");
+                                k++;
+                            }
                         }
-                        //DbCL.executeRdr("insert into tbl_Challan_details(Sl_no,Challan_no,Product_id,Product_name,Quantity)values('" + k.ToString() + "','" + invoice_no.ToString() + "','" + Product_id + "','" + Product_name + "','" + Qty + "')");
-                        //k = k + 1;
                     }
-
-
                 }
+
+                int j = idreturn() + 1;
+                DbCL.executeRdr($"INSERT INTO tbl_Chalan(Chalan_No, Chalan_Date, Quotation_No, Quotation_Date, Client_ID, Sl_no) " +
+                                $"VALUES ('{invoice_no}', '{txtinvoiceDate.Text}', '{lblQuotation_no.Text}', '{lblQuotation_date.Text}', '{lblClient_Id.Text}', '{j}')");
+
+                insertCorRegFacAddress(invoice_no);
+                Button1.Visible = false;
+
+                // If no selection, show error message
+                PanelError.Visible = false;
+                lblErrorMsg.Text = String.Empty;
+
+                PanelOK.Visible = true;
+                lblOk.Text = "Data Save Successful...";
+
+                return; // Stop execution here if successful
             }
 
-            int j = idreturn();
-            j = j + 1;
-            DbCL.executeRdr("insert into tbl_Chalan(Chalan_No,Chalan_Date,Quotation_No,Quotation_Date,Client_ID,Sl_no)values('" + invoice_no.ToString() + "','" + txtinvoiceDate.Text + "','" + lblQuotation_no.Text + "','" + lblQuotation_date.Text + "','" + lblClient_Id.Text + "','" + j.ToString() + "')");
-            //DbCL.executeRdr("update tbl_Quotation set Status3='Yes' where Quotation_no='" + lblQuotation_no.Text + "'");
-
-            insertCorRegFacAddress(invoice_no);
-            Button1.Visible = false;
-            PanelOK.Visible = true;
-            lblOk.Text = "Data Save Successfull...";
-
-            }
+            // If no selection, show error message
             PanelError.Visible = true;
             lblErrorMsg.Text = "Please Select Delivery Address....";
         }
+
 
         private void insertCorRegFacAddress(string invoice_no)
         {
@@ -461,7 +518,7 @@ namespace Bill_Software.corporate.business.app
            
             string f = "";
             
-            f = "I2I"  + "/";
+            f = "CHL/FE"  + "/";
             string ss = findmonth();
             f = f + ss;
             int j = idreturn();

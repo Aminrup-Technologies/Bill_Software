@@ -74,6 +74,11 @@ namespace Bill_Software.corporate.business.app
                 TextBox3.Text = re["MOQ_Value"].ToString();
                 TextBox4.Text = re["SaleNote"].ToString();
                 txtproducttype.Text = re["Product_catagory"].ToString();
+                DateTime expiryDate = re.IsDBNull(re.GetOrdinal("ExpiryDate"))
+                                        ? DateTime.Today // Use today's date if NULL
+                                        : re.GetDateTime(re.GetOrdinal("ExpiryDate"));
+
+                txtfromDate.Text = expiryDate.ToString("dd-MMM-yyyy");
                 //cmbtax.Text = re["ParentId"].ToString();
             }
             DbCL.Conn.Close();

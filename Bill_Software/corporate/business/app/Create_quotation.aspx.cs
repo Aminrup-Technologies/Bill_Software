@@ -271,7 +271,8 @@ namespace Bill_Software.corporate.business.app
             //string cmdstring = "select Product_code as Ser_pro_code,Sub_Prod_Name as Ser_pro_Name,Sail_Rate as Sale_rate,Tax_Rate as service_Tax_Rate from tbl_NewProduct where Product_Name='" + cmbproduct_service.Text + "'";
 
             // string cmdstring = "select Id,Product_code,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat";
-            string cmdstring = "select Id,Product_code,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
+            //string cmdstring = "select Id,Product_code,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
+            string cmdstring = "select Id, Product_code, ProductID,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
 
             SqlParameter[] pram = {
                 new SqlParameter("@ProductOrServiceCat",cmbproduct_service.Text)
@@ -693,8 +694,9 @@ namespace Bill_Software.corporate.business.app
                                 {
                                     try
                                     {
-                                        // Retrieve values from GridView with null checks
-                                        string Product_code = ((Label)gd_Service_Product.Rows[i].FindControl("Product_code"))?.Text?.Trim() ?? "";
+                                        // Retrieve values from GridView with null checks  ProductID
+                                        string ProductId = ((Label)gd_Service_Product.Rows[i].FindControl("ProductID"))?.Text?.Trim() ?? ""; //Product ID
+                                        string Product_code = ((Label)gd_Service_Product.Rows[i].FindControl("Product_code"))?.Text?.Trim() ?? ""; //HSN Code
                                         string ProductName = ((Label)gd_Service_Product.Rows[i].FindControl("ProductName"))?.Text?.Trim() ?? "";
                                         string Brand = ((Label)gd_Service_Product.Rows[i].FindControl("Brand"))?.Text?.Trim() ?? "";
                                         string ProductOrServiceCat = ((Label)gd_Service_Product.Rows[i].FindControl("ProductOrServiceCat"))?.Text?.Trim() ?? "";
@@ -740,11 +742,11 @@ namespace Bill_Software.corporate.business.app
                                         // Insert into database using parameterized query
                                         cmd.CommandText = @"
                                         INSERT INTO tbl_Quotaion_details 
-                                        (Sl_no, Quotation_no, Product_id, Product_name, Quantity, sail_rate, Service_tax_rate, 
+                                        (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, 
                                          Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, InvStatus, Type, Unit, 
                                          ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize) 
                                         VALUES 
-                                        (@Sl_no, @Quotation_no, @Product_id, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, 
+                                        (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, 
                                          @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @InvStatus, @Type, @Unit, 
                                          @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize)";
 
@@ -752,6 +754,7 @@ namespace Bill_Software.corporate.business.app
                                         cmd.Parameters.Clear();
                                         cmd.Parameters.AddWithValue("@Sl_no", h);
                                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
+                                        cmd.Parameters.AddWithValue("@Product_Code", ProductId);
                                         cmd.Parameters.AddWithValue("@Product_id", Product_code);
                                         cmd.Parameters.AddWithValue("@Product_name", ProductName);
                                         cmd.Parameters.AddWithValue("@Quantity", Quantity);
@@ -1118,7 +1121,8 @@ namespace Bill_Software.corporate.business.app
                 //string service_Tax_Rate = "";
 
 
-                string Product_code = "";
+                string Product_code = ""; //HSN Code
+                string ProductId = ""; // Product ID
                 string ProductName = "";
                 string Brandspecification = "";
                 string Type = "";
@@ -1134,6 +1138,7 @@ namespace Bill_Software.corporate.business.app
                     CheckBox chkdtp = (CheckBox)(gridProdWithCat.Rows[i].FindControl("chkdtp"));
                     if (chkdtp.Checked == true)
                     {
+                        ProductId = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
                         Product_code = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
                         ProductName = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName")).Text;
                         //Brandspecification = ((TextBox)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
@@ -1152,12 +1157,12 @@ namespace Bill_Software.corporate.business.app
                             dtPCat = (DataTable)ViewState["PhaseProductData"];
                             int count = dtPCat.Rows.Count + 1;
 
-                            SearchProductCatwise(count, Product_code, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
+                            SearchProductCatwise(count, ProductId, Product_code, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
 
                         }
                         else
                         {
-                            SearchProductCatwise(1, Product_code, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
+                            SearchProductCatwise(1, ProductId, Product_code, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
                         }
                     }
                 }
@@ -1264,12 +1269,13 @@ namespace Bill_Software.corporate.business.app
             ViewState["pService"] = dtPCat1;
         }
 
-        private void SearchProductCatwise(int count, string Product_code, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
+        private void SearchProductCatwise(int count, string Product_code, string ProductId, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
         {
             DataRow dr;
             if (count == 1)
             {
-                dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("ProductId", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string))); 
                 dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Sail_Rate", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Tax_Rate", typeof(string)));
@@ -1297,18 +1303,20 @@ namespace Bill_Software.corporate.business.app
                         dr[6] = dtPCat.Rows[0][6].ToString();
                         dr[7] = dtPCat.Rows[0][7].ToString();
                         dr[8] = dtPCat.Rows[0][8].ToString();
+                        dr[9] = dtPCat.Rows[0][8].ToString();
                     }
                 }
                 dr = dtPCat.NewRow();
                 dr[0] = Product_code;
-                dr[1] = ProductName;
-                dr[2] = Sail_Rate;
-                dr[3] = Tax_Rate;
-                dr[4] = Quantity;
-                dr[5] = Brandspecification;
-                dr[6] = Type;
-                dr[7] = Unit;
-                dr[8] = ProductOrServiceCat;
+                dr[1] = ProductId;
+                dr[2] = ProductName;
+                dr[3] = Sail_Rate;
+                dr[4] = Tax_Rate;
+                dr[5] = Quantity;
+                dr[6] = Brandspecification;
+                dr[7] = Type;
+                dr[8] = Unit;
+                dr[9] = ProductOrServiceCat;
 
                 dtPCat.Rows.Add(dr);
             }
@@ -1316,14 +1324,15 @@ namespace Bill_Software.corporate.business.app
             {
                 dr = dtPCat.NewRow();
                 dr[0] = Product_code;
-                dr[1] = ProductName;
-                dr[2] = Sail_Rate;
-                dr[3] = Tax_Rate;
-                dr[4] = Quantity;
-                dr[5] = Brandspecification;
-                dr[6] = Type;
-                dr[7] = Unit;
-                dr[8] = ProductOrServiceCat;
+                dr[1] = ProductId;
+                dr[2] = ProductName;
+                dr[3] = Sail_Rate;
+                dr[4] = Tax_Rate;
+                dr[5] = Quantity;
+                dr[6] = Brandspecification;
+                dr[7] = Type;
+                dr[8] = Unit;
+                dr[9] = ProductOrServiceCat;
                 dtPCat.Rows.Add(dr);
 
             }

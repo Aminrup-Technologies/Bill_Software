@@ -804,12 +804,21 @@
                                 <asp:GridView ID="gridProdWithCat" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
                                     <RowStyle BackColor="#94B8FF" />
                                     <Columns>
-                                        <asp:TemplateField HeaderText="Product/Service Code">
+                                        <asp:TemplateField HeaderText="HSN CODE">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
                                                 <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Product ID">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:Label>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -952,12 +961,21 @@
                                 <asp:GridView ID="gd_Service_Product" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
                                     <RowStyle BackColor="#94B8FF" />
                                     <Columns>
-                                        <asp:TemplateField HeaderText="Product/Service Code" Visible="false" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                        <asp:TemplateField HeaderText="HSN CODE" Visible="false" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
                                                 <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Product ID" Visible="false" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:Label>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
