@@ -16,6 +16,11 @@ namespace Bill_Software.corporate.business.print
         public decimal totalTaxableAmount = 0;
         public decimal totalTaxAmount = 0;
         public decimal grandTotal = 0;
+        public decimal ProdcutTaxes = 0;
+        public decimal ProdcutTaxable = 0;
+
+        public decimal NewTaxable = 0;
+        public decimal NewTax = 0;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -71,10 +76,13 @@ namespace Bill_Software.corporate.business.print
                 lblTotalTaxAmount.Text = totalTaxAmount.ToString("N2");
                 lblGrandTotal.Text = grandTotal.ToString("N2");
 
-                lblTaxableValue.Text = totalTaxableAmount.ToString("N2");
-                lblstax0.Text = totalTaxAmount.ToString("N2");
-                lblnetamount.Text = grandTotal.ToString("N2");
-                lbl_ttl1word.Text = ConvertNumberToWords((int)grandTotal) + " Only";
+                //lblTaxableValue.Text = totalTaxableAmount.ToString("N2");
+                ProdcutTaxes = totalTaxAmount;
+                ProdcutTaxable = totalTaxableAmount;
+                lblstax0.Text = ProdcutTaxes.ToString("N2");
+                //lblnetamount.Text = grandTotal.ToString("N2");
+                //lbl_ttl1word.Text = ConvertNumberToWords((int)grandTotal) + " Only";
+                lbl_ttl1word.Text = ConvertAmountToWords((decimal)grandTotal) + " Only";
             }
         }
 
@@ -130,6 +138,24 @@ namespace Bill_Software.corporate.business.print
             return words;
         }
 
+        public string ConvertAmountToWords(decimal amount)
+        {
+            if (amount == 0)
+                return "Zero Rupees";
+
+            int integerPart = (int)amount; // Get the whole number part
+            int decimalPart = (int)((amount - integerPart) * 100); // Get the decimal (paise) part
+
+            string words = ConvertNumberToWords(integerPart) + " Rupees";
+
+            if (decimalPart > 0)
+            {
+                words += " and " + ConvertNumberToWords(decimalPart) + " Paise";
+            }
+
+            return words;
+        }
+
 
         private void buindalldata()
         {
@@ -156,15 +182,25 @@ namespace Bill_Software.corporate.business.print
                 decimal dfreightCharges = Convert.ToDecimal(re["Delivery_Amount"] ?? 0);
                 decimal dotherCharges = Convert.ToDecimal(re["Other_Amounts"] ?? 0);
 
-                decimal total2 = dtcsAmount + dfreightCharges + dotherCharges;
+                decimal total2 = dtcsAmount + dotherCharges;
                 lbl_ttl2amnt.Text = total2.ToString("N2");
-                lbl_ttl2word.Text = ConvertNumberToWords((int)total2) + " Only";
+                lbl_ttl2word.Text = ConvertAmountToWords((decimal)total2) + " Only";
 
-                
+                decimal ftax = dfreightCharges * 0.18m;
+                lblfttax.Text = ftax.ToString("N2");
 
-                decimal grandttl = grandTotal + total2;
+                decimal ttltax = ProdcutTaxes + ftax;
+                lbl_ttltax.Text = ttltax.ToString("N2");
+
+                NewTaxable = dfreightCharges + ProdcutTaxable;
+                lblTaxableValue.Text = NewTaxable.ToString("N2");
+
+                decimal ttl_purchase = NewTaxable + ttltax; 
+                lblnetamount.Text = ttl_purchase.ToString("N2");
+
+                decimal grandttl = ttl_purchase + total2;
                 lblGrandTotal.Text = grandttl.ToString("N2");
-                lblGrandTotalWord.Text = ConvertNumberToWords((int)grandttl) + " Only";
+                lblGrandTotalWord.Text = ConvertAmountToWords((decimal)grandttl) + " Only";
 
                 // Assign formatted values to labels
                 lblTCSAmount.Text = dtcsAmount.ToString("N2");

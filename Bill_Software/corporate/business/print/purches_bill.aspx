@@ -220,8 +220,22 @@
         .auto-style2 {
             font-size: medium;
         }
+
         .auto-style3 {
             height: 17px;
+        }
+        .auto-style4 {
+            font-family: Arial;
+            font-size: small;
+            font-weight: bold;
+            height: 26px;
+        }
+        .auto-style5 {
+            font-family: Arial;
+            font-size: small;
+            font-weight: bold;
+            text-align: center;
+            height: 26px;
         }
     </style>
 </head>
@@ -508,20 +522,36 @@
                     </td>
                 </tr>--%>
 
-                <tr>
+                <%--<tr>
                     <td colspan="2">
                         <table cellpadding="0" cellspacing="0" width="100%">
+
                             <tr>
-                                <td rowspan="3" bgcolor="#dbe5f1" style="padding: 0px 0px 0px 5px;">
+                                <td style="padding: 2px;"></td>
+                            </tr>
+
+                            <tr>
+                                <td rowspan="5" bgcolor="#dbe5f1" style="padding: 0px 0px 0px 5px; border-top: 1px solid #bfbfbf;">
                                     <b>
                                         <span class="style17">Amount (In Words):</span>
+                                        </br>
                                         <asp:Label ID="lbl_ttl1word" runat="server" Font-Bold="False" CssClass="style22"
                                             Style="font-family: Arial; font-size: small; font-weight: bold"></asp:Label>
                                     </b>
                                 </td>
 
+                                <!-- Freight Charges Row -->
+                            <tr>
+                                <td colspan="3" style="text-align: right; color: blue; padding: 5px 20px 5px 0; border-top: 1px solid #bfbfbf;" class="style17">Freight Charges
+                                </td>
+                                <td style="border-right: 1px solid #bfbfbf; border-left: 1px solid #bfbfbf; border-bottom: 1px solid #bfbfbf; border-top: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;"
+                                    class="style7">
+                                    <asp:Label ID="lblFreightCharges" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
                                 <!-- Taxable Value Row -->
-                                <td colspan="3" style="text-align: right; padding: 5px 20px 5px 0;" class="style17">Taxable Value
+                                <td colspan="3" style="text-align: right; padding: 5px 20px 5px 0; border-top: 1px solid #bfbfbf;" class="style17">Taxable Value
                                 </td>
                                 <td style="border-right: 1px solid #bfbfbf; border-left: 1px solid #bfbfbf; border-bottom: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;"
                                     class="style7">
@@ -557,7 +587,7 @@
                                 <td colspan="5" style="padding: 2px;"></td>
                             </tr>
 
-                            <td rowspan="5" bgcolor="#dbe5f1" style="padding: 0px 0px 0px 5px;">
+                            <td rowspan="4" bgcolor="#dbe5f1" style="padding: 0px 0px 0px 5px;">
                                     <b>
                                         <span class="style17">Amount (In Words):</span>
                                         <asp:Label ID="lbl_ttl2word" runat="server" Font-Bold="False" CssClass="style22"
@@ -572,16 +602,6 @@
                                 <td style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;"
                                     class="style7">
                                     <asp:Label ID="lblTCSAmount" runat="server"></asp:Label>
-                                </td>
-                            </tr>
-
-                            <!-- Freight Charges Row -->
-                            <tr>
-                                <td colspan="3" style="text-align: right; color: blue; padding: 5px 20px 5px 0;" class="style17">Freight Charges
-                                </td>
-                                <td style="border-right: 1px solid #bfbfbf; border-left: 1px solid #bfbfbf; border-bottom: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;"
-                                    class="style7">
-                                    <asp:Label ID="lblFreightCharges" runat="server"></asp:Label>
                                 </td>
                             </tr>
 
@@ -631,8 +651,133 @@
                             </tr>
                         </table>
                     </td>
-                </tr>
+                </tr>--%>
 
+                <tr>
+                    <td colspan="2">
+                        <table cellpadding="0" cellspacing="0" width="100%">
+
+                            <tr>
+                                <td style="padding: 2px;"></td>
+                            </tr>
+
+                            <!-- Amount in Words -->
+                            <tr>
+                                <td rowspan="5" bgcolor="#dbe5f1" style="padding: 0px 0px 0px 5px; border-top: 1px solid #bfbfbf;">
+                                    <b>
+                                        <span class="style17">Amount (In Words):</span><br />
+                                        <asp:Label ID="lbl_ttl1word" runat="server" CssClass="style22" Style="font-family: Arial; font-size: small; font-weight: bold"></asp:Label>
+                                    </b>
+                                </td>
+                            </tr>
+
+                            <!-- Freight Charges Row -->
+                            <tr>
+                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0; border-top: 1px solid #bfbfbf;">Freight Charges
+                                </td>
+                                <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
+                                    <asp:Label ID="lblFreightCharges" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- Taxable Value Row -->
+                            <tr>
+                                <td colspan="3" class="style17" style="text-align: right; padding: 5px 20px 5px 0; border-top: 1px solid #bfbfbf;">Taxable Value
+                                </td>
+                                <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
+                                    <asp:Label ID="lblTaxableValue" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- GST Amount Row -->
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding: 5px 20px 5px 0;">
+                                    <span class="style18">GST Amount</span>
+                                </td>
+                                <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
+                                    <asp:Label ID="lblstax0" runat="server"></asp:Label> + <asp:Label ID="lblfttax" runat="server"></asp:Label> = <asp:Label ID="lbl_ttltax" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- Total Purchase Row -->
+                            <tr>
+                                <td colspan="3" class="style17" style="text-align: right; background-color: #dbe5f1; font-weight: bold; padding: 5px 20px 5px 0;">Total Purchase
+                                </td>
+                                <td class="style7" style="border: 1px solid #bfbfbf; background-color: #dbe5f1; text-align: right; padding: 0px 5px 0px 2px; font-weight: bold;">
+                                    <asp:Label ID="lblnetamount" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- Blank Row for Spacing -->
+                            <tr>
+                                <td colspan="5" style="padding: 2px;"></td>
+                            </tr>
+
+                            <tr>
+                                <td rowspan="4" bgcolor="#dbe5f1" style="padding: 0px 0px 0px 5px; border-top: 1px solid #bfbfbf;">
+                                    <b>
+                                        <span class="style17">Amount (In Words):</span><br />
+                                        <asp:Label ID="lbl_ttl2word" runat="server" CssClass="style22" Style="font-family: Arial; font-size: small; font-weight: bold"></asp:Label>
+                                    </b>
+                                </td>
+                            </tr>
+
+                            <!-- TCS Amount Row -->
+                            <tr>
+                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0;">TCS Amount
+                                </td>
+                                <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
+                                    <asp:Label ID="lblTCSAmount" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- Other Charges Row -->
+                            <tr>
+                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0;">Other Charges
+                                </td>
+                                <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
+                                    <asp:Label ID="lblOtherCharges" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- Total 1 Row -->
+                            <tr>
+                                <td colspan="3" class="style17" style="text-align: right; background-color: #dbe5f1; font-weight: bold; padding: 5px 20px 5px 0;">Total 1
+                                </td>
+                                <td class="style7" style="border: 1px solid #bfbfbf; background-color: #dbe5f1; text-align: right; padding: 0px 5px 0px 2px; font-weight: bold;">
+                                    <asp:Label ID="lbl_ttl2amnt" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- Blank Row for Spacing -->
+                            <tr>
+                                <td colspan="5" style="padding: 2px;"></td>
+                            </tr>
+
+                            <!-- Grand Total Row -->
+                            <tr>
+                                <td rowspan="2" bgcolor="#dbe5f1" style="padding: 0px 0px 0px 5px;">
+                                    <b>
+                                        <span class="style17">Amount (In Words):</span><br />
+                                        <asp:Label ID="lblGrandTotalWord" runat="server" CssClass="style22" Style="font-family: Arial; font-size: small; font-weight: bold"></asp:Label>
+                                    </b>
+                                </td>
+
+                                <td colspan="3" class="auto-style4" style="text-align: right; background-color: #dbe5f1; font-weight: bold; padding: 5px 20px 5px 0;">Grand Total
+                                </td>
+                                <td class="auto-style5" style="border: 1px solid #bfbfbf; background-color: #dbe5f1; text-align: right; padding: 0px 5px 0px 2px; font-weight: bold;">
+                                    <asp:Label ID="lblGrandTotal" runat="server"></asp:Label>
+                                </td>
+                            </tr>
+
+                            <!-- Blank Row for Spacing -->
+                            <tr>
+                                <td colspan="5" style="padding: 2px;"></td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
 
 
                 <%--<tr>
