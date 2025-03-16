@@ -66,7 +66,13 @@
             var invAmount = document.getElementById('<%= txt_inv_amount.ClientID %>').value.trim();
             var tcsAmount = document.getElementById('<%= txt_tcs_amnt.ClientID %>').value.trim();
             var deliveryAmount = document.getElementById('<%= txt_delivery_amnt.ClientID %>').value.trim();
-            var otherAmount = document.getElementById('<%= txt_othr_amnt.ClientID %>').value.trim();
+
+            var otherAmount1 = document.getElementById('<%= txt_othr_amnt1.ClientID %>').value.trim();
+            var otherAmount2 = document.getElementById('<%= txt_othr_amnt2.ClientID %>').value.trim();
+            var textBox1 = document.getElementById('<%= TextBox1.ClientID %>').value.trim();
+            var textBox2 = document.getElementById('<%= TextBox2.ClientID %>').value.trim();
+
+            var vatDropdown = document.getElementById('<%= DDL_vat_parsentage.ClientID %>');
 
             // Validate Invoice Number (Should not be empty)
             if (invNo === "") {
@@ -81,10 +87,10 @@
             }
 
             // Validate Invoice Amount
-            if (isNaN(invAmount) || invAmount === "") {
-                alert("Please enter a valid Invoice Amount.");
-                return false;
-            }
+            //if (isNaN(invAmount) || invAmount === "") {
+            //    alert("Please enter a valid Invoice Amount.");
+            //    return false;
+            //}
 
             // Validate TCS Amount
             if (isNaN(tcsAmount) || tcsAmount === "") {
@@ -92,15 +98,28 @@
                 return false;
             }
 
+            // Validate VAT Percentage: Required if TCS Amount > 0
+            if (parseFloat(tcsAmount) > 0 && vatDropdown.value === "NA") {
+                alert("Please select a TCS Percentage since TCS is applied.");
+                return false;
+            }
+
+
             // Validate Delivery Amount
             if (isNaN(deliveryAmount) || deliveryAmount === "") {
                 alert("Please enter a valid Delivery Amount.");
                 return false;
             }
 
-            // Validate Other Amount
-            if (isNaN(otherAmount) || otherAmount === "") {
-                alert("Please enter a valid Other Amount.");
+            // Validate Other Charges-1: If txt_othr_amnt1 > 0, TextBox1 is required
+            if (parseFloat(otherAmount1) > 0 && textBox1 === "") {
+                alert("Please enter a description for Other Charges-1.");
+                return false;
+            }
+
+            // Validate Other Charges-2: If txt_othr_amnt2 > 0, TextBox2 is required
+            if (parseFloat(otherAmount2) > 0 && textBox2 === "") {
+                alert("Please enter a description for Other Charges-2.");
                 return false;
             }
 
@@ -117,24 +136,43 @@
         }
 
         //Function to allow only numbers to textbox
+        //function validate(key) {
+        //    //getting key code of pressed key
+        //    var keycode = (key.which) ? key.which : key.keyCode;
+        //    var phn = document.getElementById('txtfillrequar');
+        //    //comparing pressed keycodes
+        //    if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
+        //        return false;
+        //    }
+        //    else {
+        //        //Condition to check textbox contains ten numbers or not
+        //        if (phn.value.length < 50) {
+        //            return true;
+        //        }
+        //        else {
+        //            return false;
+        //        }
+        //    }
+        //}
+
         function validate(key) {
-            //getting key code of pressed key
-            var keycode = (key.which) ? key.which : key.keyCode;
-            var phn = document.getElementById('txtfillrequar');
-            //comparing pressed keycodes
-            if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
+            var keycode = key.which ? key.which : key.keyCode;
+            var inputField = key.target || key.srcElement; // Get the textbox that triggered the event
+
+            // Allow only numbers (0-9), backspace, delete, and arrow keys
+            if ((keycode < 48 || keycode > 57) && keycode !== 8 && keycode !== 46 && keycode !== 37 && keycode !== 39) {
                 return false;
             }
-            else {
-                //Condition to check textbox contains ten numbers or not
-                if (phn.value.length < 50) {
-                    return true;
-                }
-                else {
-                    return false;
-                }
+
+            // Allow max 10 digits (Modify if needed)
+            if (inputField.value.length >= 10 && keycode >= 48 && keycode <= 57) {
+                return false;
             }
+
+            return true;
         }
+
+
 
         function validate1(key) {
             //getting key code of pressed key
@@ -155,13 +193,27 @@
 
         }
 
-        function ValidateDataField11() {
+        <%--function ValidateDataField11() {
             if (document.getElementById('<%=txtpaymentamount.ClientID%>').value == "") {
                 alert("Provide Payment amount.");
                 document.getElementById('<%=txtpaymentamount.ClientID%>').focus();
                 return false;
             }
+        }--%>
+
+        function ValidateDataField11() {
+            var radioList = document.getElementById('<%= RadioButtonList3.ClientID %>'); // Get RadioButtonList
+            var selectedValue = radioList.querySelector('input[type="radio"]:checked').value; // Get selected value
+
+            if (selectedValue === "Yes") { // Run validation only if "Yes" is selected
+                if (document.getElementById('<%= txtpaymentamount.ClientID %>').value.trim() === "") {
+                    alert("Provide Payment amount.");
+                    document.getElementById('<%= txtpaymentamount.ClientID %>').focus();
+                    return false;
+                }
+            }
         }
+
     </script>
 
     <asp:ScriptManager ID="ScriptManager1" runat="server">
@@ -518,7 +570,7 @@
 
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>&nbsp;<asp:Label ID="Label5" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase / Invoice Amount</td>
+                                    <td>&nbsp;&nbsp;Purchase / Invoice Amount</td>
                                     <td>
                                         <asp:TextBox ID="txt_inv_amount" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
                                     </td>
@@ -538,19 +590,30 @@
                                     <td>&nbsp;</td>
                                     <td>&nbsp;Delivery Charges</td>
                                     <td>
-                                        <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;&nbsp;@&nbsp;&nbsp;
+                                        <asp:DropDownList ID="DDL_vat_parsentage" runat="server" CssClass="dropdown_style"></asp:DropDownList> %
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
 
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>&nbsp;Other Charges</td>
+                                    <td>&nbsp;Other Charges-1 &nbsp; <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
                                     <td>
-                                        <asp:TextBox ID="txt_othr_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_othr_amnt1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;Other Charges-2 &nbsp; <asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
+                                    <td>
+                                        <asp:TextBox ID="txt_othr_amnt2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td width="15%">&nbsp;</td>
@@ -733,7 +796,7 @@
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td colspan="2" style="text-align: center">
-                                        <asp:Button ID="btnpurchess_save" runat="server" OnClick="btnpurchess_save_Click" Text="Save" CssClass="btn_style" OnClientClick="return ValidateDataField11();" />
+                                        <asp:Button ID="btnpurchess_save" runat="server" OnClientClick="return ValidateDataField11();" OnClick="btnpurchess_save_Click" Text="Save" CssClass="btn_style"  />
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>

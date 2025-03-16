@@ -48,6 +48,32 @@ namespace Bill_Software
             }
         }
 
+        public object ExecuteScalar(string query, SqlParameter[] parameters)
+        {
+            object result = null;
+            try
+            {
+                Sqlconnection();
+                ConnectDb();
+                using (SqlCommand cmd = new SqlCommand(query, Conn))
+                {
+                    cmd.Parameters.AddRange(parameters);
+                    cmd.CommandTimeout = 0;
+                    result = cmd.ExecuteScalar(); // Gets a single value
+                }
+            }
+            catch (Exception exp)
+            {
+                throw new Exception(exp.Message);
+            }
+            finally
+            {
+                Conn.Close();
+            }
+            return result;
+        }
+
+
         public void ExecuteQuery(string sqlString, params SqlParameter[] parameters)
         {
             try

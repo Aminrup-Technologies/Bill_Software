@@ -238,6 +238,15 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblTCSAmount;
         
         /// <summary>
+        /// lblOtherCharges1name control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblOtherCharges1name;
+        
+        /// <summary>
         /// lblOtherCharges control.
         /// </summary>
         /// <remarks>

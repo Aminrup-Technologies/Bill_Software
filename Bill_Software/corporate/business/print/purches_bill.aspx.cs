@@ -179,14 +179,19 @@ namespace Bill_Software.corporate.business.print
                 lbl_narration.Text = re["Narration"].ToString();
 
                 decimal dtcsAmount = Convert.ToDecimal(re["TCS_Amount"] ?? 0);
+                
                 decimal dfreightCharges = Convert.ToDecimal(re["Delivery_Amount"] ?? 0);
-                decimal dotherCharges = Convert.ToDecimal(re["Other_Amounts"] ?? 0);
 
-                decimal total2 = dtcsAmount + dotherCharges;
+                string dotherCharges1name = re["Purches_date"].ToString();
+                lblOtherCharges1name.Text = re["otherAmount1_name"].ToString();
+                decimal dotherCharges1 = Convert.ToDecimal(re["otherAmount1"] ?? 0);
+
+                decimal total2 = dtcsAmount + dotherCharges1;
                 lbl_ttl2amnt.Text = total2.ToString("N2");
                 lbl_ttl2word.Text = ConvertAmountToWords((decimal)total2) + " Only";
 
-                decimal ftax = dfreightCharges * 0.18m;
+                //decimal ftax = dfreightCharges * 0.18m;
+                decimal ftax = dtcsAmount * Convert.ToDecimal(re["TCS_Rate"]) / 100 ;
                 lblfttax.Text = ftax.ToString("N2");
 
                 decimal ttltax = ProdcutTaxes + ftax;
@@ -205,7 +210,7 @@ namespace Bill_Software.corporate.business.print
                 // Assign formatted values to labels
                 lblTCSAmount.Text = dtcsAmount.ToString("N2");
                 lblFreightCharges.Text = dfreightCharges.ToString("N2");
-                lblOtherCharges.Text = dotherCharges.ToString("N2");
+                lblOtherCharges.Text = dotherCharges1.ToString("N2");
 
 
                 string type = re["Purches_Type"].ToString();

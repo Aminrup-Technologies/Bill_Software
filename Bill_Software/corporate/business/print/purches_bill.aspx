@@ -733,7 +733,8 @@
 
                             <!-- Other Charges Row -->
                             <tr>
-                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0;">Other Charges
+                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0;">
+                                    <asp:Label ID="lblOtherCharges1name" runat="server" Text="Label" ForeColor="Blue"></asp:Label>
                                 </td>
                                 <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
                                     <asp:Label ID="lblOtherCharges" runat="server"></asp:Label>

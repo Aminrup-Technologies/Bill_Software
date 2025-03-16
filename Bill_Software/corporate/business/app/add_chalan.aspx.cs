@@ -342,6 +342,7 @@ namespace Bill_Software.corporate.business.app
                 dtPCat.Columns.Add(new DataColumn("RemainQny", typeof(string)));
 
             }
+
             if (ViewState["ViewQProductData"] != null)
             {
                 for (int i = 0; i < dtPCat.Rows.Count + 1; i++)
@@ -397,15 +398,6 @@ namespace Bill_Software.corporate.business.app
         {
             string deliQnt = "0";
             string query = "select sum(CAST(Quantity as int)) as DeliveredQnt,Product_name from tbl_Challan_details where Challan_no in "+ chalanno + " and Product_name='"+ product_name + "' group by Product_name";
-            //SqlParameter[] pram = {
-            //    new SqlParameter("@chno",chalanno),
-            //    new SqlParameter("@pname",product_name),
-            //};
-            //DataTable dgdft = DbCL.SPreturn_dt(query, pram);
-            //if (dgdft.Rows.Count>0)
-            //{
-            //    deliQnt = dgdft.Rows[0]["DeliveredQnt"].ToString();
-            //}
             SqlDataReader rdr1 = DbCL.SPReturnRdr(query, null);
             if (rdr1.Read())
             {

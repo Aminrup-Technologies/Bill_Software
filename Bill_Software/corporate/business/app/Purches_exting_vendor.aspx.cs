@@ -121,6 +121,8 @@ namespace Bill_Software.corporate.business.app
                 //string cmdstring = "select Product_code,Product_Name from tbl_Product where Product_Name='" + cmbproduct_service.Text + "'";
                 string cmdstring = "select ProductID, ProductName from tbl_NewProduct where ProductOrServiceCat='" + cmbproduct_service.Text + "'";
                 Binddata1(cmdstring);
+
+                DDL_vat_parsentage.Items.AddRange(vatRates.Select(rate => new ListItem(rate)).ToArray());
             }
             else
             {
@@ -437,119 +439,18 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        protected void Button3_Click(object sender, EventArgs e)
+        protected void Button3_Click_old(object sender, EventArgs e)
         {
+            PanelOK.Visible = false;
+            PanelError.Visible = false;
+
             string purchesid = findpurchesId();
             int i = 0;
-
-            //string dd_chk_no = null;
-            //string dd_chk_bank = null;
-            //string dd_date = null;
-            //if (RadioButtonList2.SelectedIndex == 0)
-            //{
-            //    dd_chk_no = "";
-            //    dd_chk_bank = "";
-            //    dd_date = txtcashDate.Text;
-
-            //}
-            //else if (RadioButtonList2.SelectedIndex == 3)
-            //{
-            //    dd_chk_no = txtneftnumber.Text;
-            //    dd_chk_bank = txtbankname1.Text;
-            //    dd_date = txtneftdate.Text;
-
-            //}
-            //else
-            //{
-            //    dd_chk_no = txtDDno.Text;
-            //    dd_chk_bank = txtBankName.Text;
-            //    dd_date = txtdddate.Text;
-
-            //}
-
             DataTable dt1;
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-
             dt1 = (DataTable)ViewState["dt"];
-            //if (dt1 != null)
-            //{
-            //    for (i = 0; i <= dt1.Rows.Count - 1; i++)
-            //    {
-            //        SqlTransaction trans = null;
-            //        SqlConnection conn = null;
-            //        SqlCommand cmd = null;
-            //        try
-            //        {
-            //            string cnnString = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString();
-            //            conn = new SqlConnection(cnnString);
-
-            //            cmd = new SqlCommand { CommandType = CommandType.Text, Connection = conn };
-            //            conn.Open();
-            //            trans = conn.BeginTransaction();
-            //            cmd.Transaction = trans;
-            //            int j = i + 1;
-            //            string Ser_pro_code = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_code")).Text;
-            //            string Ser_pro_Name = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_Name")).Text;
-            //            string Vendor_rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Vendor_rate")).Text;
-            //            string tax_app = ((RadioButtonList)gd_Service_Product.Rows[i].FindControl("RadioButtonList1")).Text;
-            //            string vat_parsentage = ((DropDownList)gd_Service_Product.Rows[i].FindControl("vat_parsentage")).Text;
-            //            string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
-            //            string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
-            //            //string Sale_rate = ((Label)gd_Service_Product.Rows[i].FindControl("Sale_rate")).Text;
-            //            //string service_Tax_Rate = ((Label)gd_Service_Product.Rows[i].FindControl("service_Tax_Rate")).Text;
-            //            string parches_rate = (Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity)).ToString();
-            //            double tax_rete;
-            //            if (tax_app == "Yes")
-            //            {
-            //                double a = (Convert.ToDouble(parches_rate) * Convert.ToDouble(vat_parsentage)) / 100;
-            //                //a = Math.Round(a);
-            //                tax_rete = a;
-
-            //            }
-            //            else
-            //            {
-            //                tax_rete = 0;
-            //            }
-            //            double parches_rate111 = Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
-            //            tota_purchesrate1 = tota_purchesrate1 + Convert.ToDouble(tax_rete) + Convert.ToDouble(parches_rate);
-            //            //double b = Convert.ToDouble(Sale_rate) * Convert.ToDouble(Quantity);
-
-            //            //double total_sail_rate = b;
-            //            //double c = b * Convert.ToDouble(service_Tax_Rate) / 100;
-            //            //double total_sail_rate1 = c;
-            //            //double total_sail_rate2 = (b + c);
-            //            total_tax_rate_details = total_tax_rate_details + tax_rete;
-            //            cmd.CommandText = ("insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,Purches_date,Client_id)values('" + j.ToString() + "','" + purchesid + "','" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Vendor_rate + "','" + tax_app + "','" + vat_parsentage + "','" + Quantity + "','" + parches_rate + "','" + parches_rate111 + "','" + tax_rete + "','" + sepecification.ToString() + "','" + txtPurchesDate.Text + "','" + lblvendor_id.Text + "')");
-            //            cmd.ExecuteNonQuery();
-            //            //updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Sale_rate, service_Tax_Rate);
-
-            //            trans.Commit();
-            //            conn.Close();
-
-            //            trans.Dispose();
-            //            conn.Dispose();
-            //            cmd.Dispose();
-
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            i = 1;
-            //            if (trans != null) trans.Rollback();
-            //            throw ex;
-
-
-            //        }
-            //        finally
-            //        {
-            //            if (conn != null) conn.Close();
-
-            //        }
-
-            //    }
-            //}
-
             if (dt1 != null)
             {
                 Int32 sl = 0;
@@ -576,8 +477,6 @@ namespace Bill_Software.corporate.business.app
                         string vat_parsentage = ((DropDownList)gd_Service_Product.Rows[i].FindControl("vat_parsentage")).Text;
                         string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
                         string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
-
-                        // Check if Quantity is not null, not empty, and greater than 1
                         if (!string.IsNullOrEmpty(Quantity) && Convert.ToDouble(Quantity) >= 1)
                         {
                             sl = sl + 1;
@@ -600,8 +499,6 @@ namespace Bill_Software.corporate.business.app
 
                             cmd.CommandText = "insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,Purches_date,Client_id)" +
                                               "values(@sl_no, @Purches_id, @Product_id, @Product_name, @vendor_rate, @tax_applicable, @tax_rate, @Quantity, @purches_rate, @total_purches_rate, @vat_amount, @specification, @Purches_date, @Client_id)";
-
-                            //cmd.Parameters.AddWithValue("@sl_no", j.ToString());
                             cmd.Parameters.AddWithValue("@sl_no", sl.ToString());
                             cmd.Parameters.AddWithValue("@Purches_id", purchesid);
                             cmd.Parameters.AddWithValue("@Product_id", Ser_pro_code);
@@ -621,6 +518,13 @@ namespace Bill_Software.corporate.business.app
                             updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Vendor_rate, vat_parsentage);
                             trans.Commit();
                         }
+                        else
+                        {
+                            PanelError.Visible = true;
+                            lblErrorMsg.Text = "Invalid Quantity. Please enter a valid number.";
+                            return;
+                        }
+
                         conn.Close();
                         trans.Dispose();
                         conn.Dispose();
@@ -628,8 +532,10 @@ namespace Bill_Software.corporate.business.app
                     }
                     catch (Exception ex)
                     {
+                        PanelError.Visible = true;
+                        lblErrorMsg.Text = ex.Message;
                         if (trans != null) trans.Rollback();
-                        throw ex;
+                        //throw ex;
                     }
                     finally
                     {
@@ -637,57 +543,81 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
             }
-
-
             DbCL.Conn.Close();
+
+
             tota_purchesrate1 = Math.Round(tota_purchesrate1);
             total_tax_rate_details = Math.Round(total_tax_rate_details);
 
-            decimal invAmount = 0, tcsAmount = 0, deliveryAmount = 0, otherAmount = 0;
+            decimal invAmount = 0.0m, tcsAmount = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m, otherAmount2 = 0.00m;
+            PanelError.Visible = false; // Hide error panel initially
 
-            // Validate Invoice Amount
-            if (!decimal.TryParse(txt_inv_amount.Text.Trim(), out invAmount))
-            {
-                lblErrorMsg.Text = "Invalid Invoice Amount. Please enter a valid number.";
-                return;
-            }
-
-            // Validate TCS Amount
             if (!decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount))
             {
-                lblErrorMsg.Text = "Invalid TCS Amount. Please enter a valid number.";
+                tcsAmount = 0.00m;
+            }
+
+            if (tcsAmount > 0 && DDL_vat_parsentage.SelectedValue == "NA")
+            {
+                ShowErrorMessage("VAT Percentage selection is required when TCS Amount is greater than zero.");
                 return;
             }
 
-            // Validate Delivery Amount
             if (!decimal.TryParse(txt_delivery_amnt.Text.Trim(), out deliveryAmount))
             {
-                lblErrorMsg.Text = "Invalid Delivery Amount. Please enter a valid number.";
-                return;
+                deliveryAmount = 0.00m;
             }
 
-            // Validate Other Amount
-            if (!decimal.TryParse(txt_othr_amnt.Text.Trim(), out otherAmount))
+            if (!decimal.TryParse(txt_othr_amnt1.Text.Trim(), out otherAmount1))
             {
-                lblErrorMsg.Text = "Invalid Other Amount. Please enter a valid number.";
+                otherAmount1 = 0.00m;
+            }
+
+            if (otherAmount1 > 0 && string.IsNullOrWhiteSpace(TextBox1.Text.Trim()))
+            {
+                ShowErrorMessage("Other Charges-1 description is required when Other Amount-1 is greater than zero.");
                 return;
             }
 
-            // Perform any calculation or logic after validation
-            decimal totalAmount = invAmount + tcsAmount + deliveryAmount + otherAmount;
+            if (!decimal.TryParse(txt_othr_amnt2.Text.Trim(), out otherAmount2))
+            {
+                otherAmount2 = 0.00m;
+            }
 
-            //DbCL.executeRdr("insert into tbl_Purches(Purches_Id,Client_Id,Total_purches_rate,Total_Tax_rate,Purches_date,Purches_Type)values('" + purchesid + "','" + lblvendor_id.Text + "','" + tota_purchesrate1.ToString() + "','" + total_tax_rate_details.ToString() + "','" + txtPurchesDate.Text + "','" + RadioButtonList1.Text + "')");
+            if (otherAmount2 > 0 && string.IsNullOrWhiteSpace(TextBox2.Text.Trim()))
+            {
+                ShowErrorMessage("Other Charges-2 description is required when Other Amount-2 is greater than zero.");
+                return;
+            }
 
-            //DbCL.executeRdr("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration, InvoiceAmnt, TCS_Amount, Delivery_Amount, Other_Amounts, AddedById) " + "VALUES ('" + purchesid + "', '" + lblvendor_id.Text + "', '" + tota_purchesrate1.ToString() + "', '" + total_tax_rate_details.ToString() + "', '" + txtPurchesDate.Text + "', '" + RadioButtonList1.Text + "', '" + txt_invno.Text + "', '" + txt_stockadddate.Text + "', '" + txt_narration.Text + "')");
+            decimal totalAmount = invAmount + tcsAmount + deliveryAmount + otherAmount1 + otherAmount2;
 
             string userId = HttpContext.Current.Session["USERID"] != null ? HttpContext.Current.Session["USERID"].ToString() : "FLM03"; // Default to 0 if null
 
-            DbCL.ExecuteQuery("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration, InvoiceAmnt, TCS_Amount, Delivery_Amount, Other_Amounts, AddedById) " +
-                            "VALUES (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @Narration, @InvoiceAmnt, @TCS_Amount, @Delivery_Amount, @Other_Amounts, @AddedById)",
-                            new SqlParameter("@Purches_Id", purchesid), new SqlParameter("@Client_Id", lblvendor_id.Text), new SqlParameter("@Total_purches_rate", tota_purchesrate1), new SqlParameter("@Total_Tax_rate", total_tax_rate_details),
-                            new SqlParameter("@Purches_date", txtPurchesDate.Text), new SqlParameter("@Purches_Type", RadioButtonList1.SelectedValue), new SqlParameter("@Invoice_No", txt_invno.Text), new SqlParameter("@Stock_Add_Date", txt_stockadddate.Text),
-                            new SqlParameter("@Narration", txt_narration.Text), new SqlParameter("@InvoiceAmnt", invAmount), new SqlParameter("@TCS_Amount", tcsAmount), new SqlParameter("@Delivery_Amount", deliveryAmount),
-                            new SqlParameter("@Other_Amounts", otherAmount), new SqlParameter("@AddedById", userId));
+            DbCL.ExecuteQuery("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration, InvoiceAmnt, TCS_Amount, TCS_Rate, Delivery_Amount, otherAmount1_name, otherAmount1, otherAmount2_name, otherAmount2, AddedById, CreatedDate, TimeStamp) " +
+                "VALUES (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @Narration, @InvoiceAmnt, @TCS_Amount, @TCS_Rate, @Delivery_Amount, @otherAmount1_name, @otherAmount1, @otherAmount2_name, @otherAmount2, @AddedById, @CreatedDate, @TimeStamp)",
+
+                new SqlParameter("@Purches_Id", purchesid),
+                new SqlParameter("@Client_Id", lblvendor_id.Text),
+                new SqlParameter("@Total_purches_rate", tota_purchesrate1),
+                new SqlParameter("@Total_Tax_rate", total_tax_rate_details),
+                new SqlParameter("@Purches_date", txtPurchesDate.Text),
+                new SqlParameter("@Purches_Type", RadioButtonList1.SelectedValue),
+                new SqlParameter("@Invoice_No", txt_invno.Text),
+                new SqlParameter("@Stock_Add_Date", txt_stockadddate.Text),
+                new SqlParameter("@Narration", txt_narration.Text),
+                new SqlParameter("@InvoiceAmnt", invAmount),
+                new SqlParameter("@TCS_Amount", tcsAmount),
+                new SqlParameter("@TCS_Rate", DDL_vat_parsentage.SelectedValue), // Assuming you have a field for TCS Rate
+                new SqlParameter("@Delivery_Amount", deliveryAmount),
+                new SqlParameter("@otherAmount1_name", TextBox1.Text), // Other Charge-1 Name
+                new SqlParameter("@otherAmount1", otherAmount1),
+                new SqlParameter("@otherAmount2_name", TextBox2.Text), // Other Charge-2 Name
+                new SqlParameter("@otherAmount2", otherAmount2),
+                new SqlParameter("@AddedById", userId),
+                new SqlParameter("@CreatedDate", DateTime.Now.Date), // Setting CreatedDate to current date
+                new SqlParameter("@TimeStamp", DateTime.Now) // Setting Timestamp to current date & time
+            );
 
             DbCL.executeRdr("insert into tbl_purches_due(Purches_Id,Due_amount)values('" + purchesid + "','" + tota_purchesrate1 + "')");
 
@@ -698,16 +628,177 @@ namespace Bill_Software.corporate.business.app
                 lblpuechess_id.Text = purchesid.ToString();
                 lblpaayment_amount.Text = tota_purchesrate1.ToString();
                 Panel3.Visible = true;
-
             }
             else
             {
                 lblOk.Text = "Data Save Successfully.....";
                 PanelOK.Visible = true;
-
             }
+        }
+
+        protected void Button3_Click(object sender, EventArgs e)
+        {
+            string purchesid = findpurchesId();
+            int i = 0;
+            DataTable dt1 = (DataTable)ViewState["dt"];
+            if (dt1 == null) return;
+
+            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString()))
+            {
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        Int32 sl = 0;
+                        double tota_purchesrate1 = 0, total_tax_rate_details = 0;
+                        List<string> errorMessages = new List<string>();
+                        for (i = 0; i < dt1.Rows.Count; i++)
+                        {
+                            SqlCommand cmd = new SqlCommand()
+                            {
+                                CommandType = CommandType.Text,
+                                Connection = conn,
+                                Transaction = trans
+                            };
+
+                            string Ser_pro_code = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_code")).Text;
+                            string Ser_pro_Name = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_Name")).Text;
+                            string Vendor_rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Vendor_rate")).Text;
+                            string tax_app = ((RadioButtonList)gd_Service_Product.Rows[i].FindControl("RadioButtonList1")).Text;
+                            string vat_parsentage = ((DropDownList)gd_Service_Product.Rows[i].FindControl("vat_parsentage")).Text;
+                            string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
+                            string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
+
+                            double qty = 0;
+                            double vndr = 0; 
+                            // Convert quantity to numeric safely
+                            bool isQuantityValid = !string.IsNullOrEmpty(Quantity) && double.TryParse(Quantity, out qty) && qty > 0;
+                            bool isVendorRateValid = !string.IsNullOrEmpty(Vendor_rate) && double.TryParse(Vendor_rate, out vndr);
+                            bool isTaxAppValid = !string.IsNullOrEmpty(tax_app);
+                            bool isVatValid = !string.IsNullOrEmpty(vat_parsentage) && vat_parsentage != "NA";
+
+                            // Check if any field is filled
+                            bool isAnyFieldFilled = isQuantityValid || isVendorRateValid || isTaxAppValid || isVatValid;
+
+                            // Check if all required fields are present when any field is filled
+                            if (isAnyFieldFilled)
+                            {
+                                List<string> missingFields = new List<string>();
+
+                                if (!isQuantityValid) missingFields.Add("Quantity");
+                                if (!isVendorRateValid) missingFields.Add("Vendor Rate");
+                                if (!isTaxAppValid) missingFields.Add("Tax Applicable");
+
+                                // VAT check only if Tax is applicable
+                                if (tax_app == "Yes" && !isVatValid)
+                                {
+                                    missingFields.Add("VAT Percentage");
+                                }
+
+                                if (missingFields.Count > 0)
+                                {
+                                    errorMessages.Add($"Row {i + 1}: {string.Join(", ", missingFields)} is required.");
+                                    continue;
+                                }
+
+                                // ✅ Proceed with processing this row as all required fields are valid
+                                // Your existing insert & stock update logic here...
+                            }
+
+                            sl++;
+                            double parches_rate = Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity);
+                            double tax_rete = (tax_app == "Yes") ? (parches_rate * Convert.ToDouble(vat_parsentage)) / 100 : 0;
+                            double total_purches_rate = tax_rete + parches_rate;
+                            tota_purchesrate1 += total_purches_rate;
+                            total_tax_rate_details += tax_rete;
+
+                            cmd.CommandText = "insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,Purches_date,Client_id)" +
+                                              "values(@sl_no, @Purches_id, @Product_id, @Product_name, @vendor_rate, @tax_applicable, @tax_rate, @Quantity, @purches_rate, @total_purches_rate, @vat_amount, @specification, @Purches_date, @Client_id)";
+                            cmd.Parameters.AddWithValue("@sl_no", sl.ToString());
+                            cmd.Parameters.AddWithValue("@Purches_id", purchesid);
+                            cmd.Parameters.AddWithValue("@Product_id", Ser_pro_code);
+                            cmd.Parameters.AddWithValue("@Product_name", Ser_pro_Name);
+                            cmd.Parameters.AddWithValue("@vendor_rate", Vendor_rate);
+                            cmd.Parameters.AddWithValue("@tax_applicable", tax_app);
+                            cmd.Parameters.AddWithValue("@tax_rate", vat_parsentage);
+                            cmd.Parameters.AddWithValue("@Quantity", Quantity);
+                            cmd.Parameters.AddWithValue("@purches_rate", parches_rate);
+                            cmd.Parameters.AddWithValue("@total_purches_rate", total_purches_rate);
+                            cmd.Parameters.AddWithValue("@vat_amount", tax_rete);
+                            cmd.Parameters.AddWithValue("@specification", sepecification.ToString());
+                            cmd.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
+                            cmd.Parameters.AddWithValue("@Client_id", lblvendor_id.Text);
+                            cmd.ExecuteNonQuery();
+
+                            updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Vendor_rate, vat_parsentage);
+                        }
+
+                        // Show all error messages at once if any row had missing values
+                        if (errorMessages.Count > 0)
+                        {
+                            ShowErrorMessage(string.Join("<br>", errorMessages)); // "<br>" works for web-based UI
+                            return; // Stop further execution
+                        }
+
+                        decimal invAmount = 0.0m, tcsAmount = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m, otherAmount2 = 0.00m;
+                        decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount);
+                        decimal.TryParse(txt_delivery_amnt.Text.Trim(), out deliveryAmount);
+                        decimal.TryParse(txt_othr_amnt1.Text.Trim(), out otherAmount1);
+                        decimal.TryParse(txt_othr_amnt2.Text.Trim(), out otherAmount2);
+                        decimal totalAmount = invAmount + tcsAmount + deliveryAmount + otherAmount1 + otherAmount2;
+                        string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
+
+                        SqlCommand cmdMain = new SqlCommand("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, Narration, InvoiceAmnt, TCS_Amount, TCS_Rate, Delivery_Amount, otherAmount1_name, otherAmount1, otherAmount2_name, otherAmount2, AddedById, CreatedDate, TimeStamp) " +
+                    "VALUES (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @Narration, @InvoiceAmnt, @TCS_Amount, @TCS_Rate, @Delivery_Amount, @otherAmount1_name, @otherAmount1, @otherAmount2_name, @otherAmount2, @AddedById, @CreatedDate, @TimeStamp);", conn, trans);
+
+                        cmdMain.Parameters.AddWithValue("@Purches_Id", purchesid);
+                        cmdMain.Parameters.AddWithValue("@Client_Id", lblvendor_id.Text);
+                        cmdMain.Parameters.AddWithValue("@Total_purches_rate", tota_purchesrate1);
+                        cmdMain.Parameters.AddWithValue("@Total_Tax_rate", total_tax_rate_details);
+                        cmdMain.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
+                        cmdMain.Parameters.AddWithValue("@Purches_Type", RadioButtonList1.SelectedValue);
+                        cmdMain.Parameters.AddWithValue("@Invoice_No", txt_invno.Text);
+                        cmdMain.Parameters.AddWithValue("@Stock_Add_Date", txt_stockadddate.Text);
+                        cmdMain.Parameters.AddWithValue("@Narration", txt_narration.Text);
+                        cmdMain.Parameters.AddWithValue("@InvoiceAmnt", invAmount);
+                        cmdMain.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
+                        cmdMain.Parameters.AddWithValue("@TCS_Rate", DDL_vat_parsentage.SelectedValue); // Assuming you have a field for TCS Rate
+                        cmdMain.Parameters.AddWithValue("@Delivery_Amount", deliveryAmount);
+                        cmdMain.Parameters.AddWithValue("@otherAmount1_name", TextBox1.Text); // Other Charge-1 Name
+                        cmdMain.Parameters.AddWithValue("@otherAmount1", otherAmount1);
+                        cmdMain.Parameters.AddWithValue("@otherAmount2_name", TextBox2.Text); // Other Charge-2 Name
+                        cmdMain.Parameters.AddWithValue("@otherAmount2", otherAmount2);
+                        cmdMain.Parameters.AddWithValue("@AddedById", userId);
+                        cmdMain.Parameters.AddWithValue("@CreatedDate", DateTime.Now.Date); // Setting CreatedDate to current date
+                        cmdMain.Parameters.AddWithValue("@TimeStamp", DateTime.Now); // Setting Timestamp to current date & time
+
+                        cmdMain.ExecuteNonQuery();
+
+                        SqlCommand cmdDue = new SqlCommand("INSERT INTO tbl_purches_due (Purches_Id, Due_amount) VALUES (@Purches_Id, @Due_amount);", conn, trans);
+                        cmdDue.Parameters.AddWithValue("@Purches_Id", purchesid);
+                        cmdDue.Parameters.AddWithValue("@Due_amount", tota_purchesrate1);
+                        cmdDue.ExecuteNonQuery();
+
+                        trans.Commit();
+                        lblOk.Text = "Data Saved Successfully.....";
+                        PanelOK.Visible = true;
+                        PanelError.Visible = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        trans.Rollback();
+                        ShowErrorMessage(ex.Message);
+                    }
+                }
+            }
+        }
 
 
+        private void ShowErrorMessage(string message)
+        {
+            PanelError.Visible = true;
+            lblErrorMsg.Text = message;
         }
 
         private void updatestock(string Ser_pro_code, string Ser_pro_Name, string Quantity1, string Sale_rate, string service_Tax_Rate)
@@ -806,10 +897,7 @@ namespace Bill_Software.corporate.business.app
                 lblOk.Text = "Data Save Successfully...";
                 btnpurchess_save.Visible = false;
                 PanelError.Visible = false;
-
             }
-
-
         }
 
         private void InserttotalDate()

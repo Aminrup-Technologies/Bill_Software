@@ -275,30 +275,13 @@
                             <ItemTemplate>
                                 <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
                                     <tr>
-                                        <td style="text-align: center; width: 20%;">
-                                            <asp:Label ID="ID0" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label>
-                                        </td>
+                                        <td style="text-align: center; width: 20%;"><asp:Label ID="ID0" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label></td>
+                                        <td style="text-align: center; width: 15%;"><asp:Label ID="addshowname0" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label></td>
+                                        <td style="text-align: center; width: 20%;"><asp:Label ID="Label13" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label></td>
+                                        <td style="text-align: center; width: 10%;"><asp:Label ID="Label3" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label></td>
+                                        <td style="text-align: center; width: 20%;">Rs.<asp:Label ID="Label16" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label> /- </td>
                                         <td style="text-align: center; width: 15%;">
-                                            <asp:Label ID="addshowname0" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label>
-                                        </td>
-                                        <td style="text-align: center; width: 20%;">
-                                            <asp:Label ID="Label13" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label>
-                                        </td>
-
-                                        <td style="text-align: center; width: 10%;">
-                                            <asp:Label ID="Label3" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label>
-                                        </td>
-
-
-                                        <td style="text-align: center; width: 20%;">Rs.
-                                    <asp:Label ID="Label16" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label>
-                                            /- </td>
-                                        <td style="text-align: center; width: 15%;">
-
-                                            <asp:ImageButton ID="ImageButton1" runat="server"
-                                                CommandArgument='<%# Eval("Quotation_no") %>' CommandName="Select"
-                                                ImageUrl="~/corporate/business/WebImages/tick-icon.png"
-                                                ToolTip="Select" />
+                                            <asp:ImageButton ID="ImageButton1" runat="server" CommandArgument='<%# Eval("Quotation_no") %>' CommandName="Select" ImageUrl="~/corporate/business/WebImages/tick-icon.png" ToolTip="Select" />
                                         </td>
                                     </tr>
                                 </table>

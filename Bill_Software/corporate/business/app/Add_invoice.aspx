@@ -40,6 +40,10 @@
                 width: 100%;
                 border-top: none;
             }
+
+        .auto-style2 {
+            height: 20px;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -85,20 +89,92 @@
     </script>
 
     <script type="text/javascript">
+        function validate2(event, input) {
+            var keycode = (event.which) ? event.which : event.keyCode;
+            //console.log("Key pressed:", keycode);
+
+            // Allow only numbers (0-9), backspace (8), and delete (46)
+            if (!(keycode == 8 || keycode == 46 || (keycode >= 48 && keycode <= 57))) {
+                //console.warn("Invalid key pressed.");
+                return false;
+            }
+
+            // Delay validation to allow input update
+            setTimeout(function () {
+                validateQuantity(input);
+            }, 100);
+
+            return true;
+        }
+
+        function validateQuantity(input) {
+            console.log("Validating input:", input);
+
+            if (!input) {
+                console.error("Input field is null or undefined.");
+                return;
+            }
+
+            var row = input.closest("tr"); // Find the row of the current input
+            console.log("Found row:", row);
+
+            if (!row) {
+                console.error("Could not find parent row.");
+                return;
+            }
+
+            // Find Stock Qty in the same row
+            var stockQtyElement = row.querySelector("[id*='SQuantity']");
+            console.log("Stock Quantity Element:", stockQtyElement);
+
+            if (!stockQtyElement) {
+                console.error("Stock quantity element not found in the row.");
+                return;
+            }
+
+            var stockQty = stockQtyElement.innerText.trim();
+            var enteredQty = input.value.trim();
+            console.log("Stock Quantity:", stockQty, "Entered Quantity:", enteredQty);
+
+            if (enteredQty === "" || isNaN(enteredQty)) {
+                console.warn("Entered quantity is invalid. Resetting to 0.");
+                input.value = "0";
+                return;
+            }
+
+            stockQty = parseFloat(stockQty) || 0;
+            enteredQty = parseFloat(enteredQty) || 0;
+
+            console.log("Parsed Values - Stock:", stockQty, "Entered:", enteredQty);
+
+            var errorSpan = row.querySelector(".error-message");
+            console.log("Error message span:", errorSpan);
+
+            if (enteredQty > stockQty) {
+                console.warn("Entered quantity exceeds stock quantity.");
+                if (errorSpan) {
+                    errorSpan.style.display = "inline";
+                }
+                input.style.borderColor = "red";
+            } else {
+                console.log("Valid quantity entered.");
+                if (errorSpan) {
+                    errorSpan.style.display = "none";
+                }
+                input.style.borderColor = "#CCCCCC";
+            }
+        }
+    </script>
+
+
+
+    <script type="text/javascript">
         function ValidateField() {
-
-
-
             if (document.getElementById('<%=txtDiscount.ClientID%>').value == "") {
                 alert("Provide Discount Amount");
                 document.getElementById('<%=txtDiscount.ClientID%>').focus();
                 return false;
             }
-
-
-
-
-
         }
     </script>
 
@@ -287,9 +363,36 @@
                 <tr>
                     <td>&nbsp;</td>
                     <td colspan="4">
+                        <asp:Panel ID="Panel3" runat="server" BackColor="#EEFFDD" BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                            &nbsp;<asp:Image ID="image3" runat="server" ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
+                            &nbsp;<asp:Label ID="Label5" runat="server"></asp:Label>
+                        </asp:Panel>
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan="2">&nbsp;</td>
+                    <td colspan="2">&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan="4">
                         <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False">
                             &nbsp;<asp:Image ID="Image1" runat="server" Height="16px" ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png" Width="16px" />
                             &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
+                        </asp:Panel>
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan="4">
+                        <asp:Panel ID="Panel2" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                            &nbsp;<asp:Image ID="Image2" runat="server" Height="16px" ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png" Width="16px" />
+                            &nbsp;<asp:Label ID="Label3" runat="server"></asp:Label>
                         </asp:Panel>
                     </td>
                     <td>&nbsp;</td>
@@ -499,12 +602,21 @@
                                         <asp:Label ID="Quotation_no" runat="server" Text='<%# Bind("Quotation_no") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Product Id">
+                                <asp:TemplateField HeaderText="HSN Code">
                                     <EditItemTemplate>
                                         <asp:TextBox ID="Product_id" runat="server" Text='<%# Bind("Product_id") %>'></asp:TextBox>
                                     </EditItemTemplate>
                                     <ItemTemplate>
                                         <asp:Label ID="Product_id" runat="server" Text='<%# Bind("Product_id") %>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Product Code">
+                                    <EditItemTemplate>
+                                        <asp:TextBox ID="Product_Code" runat="server" Text='<%# Bind("Product_Code") %>'></asp:TextBox>
+                                    </EditItemTemplate>
+                                    <ItemTemplate>
+                                        <asp:Label ID="Product_Code" runat="server" Text='<%# Bind("Product_Code") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
@@ -518,13 +630,45 @@
                                 </asp:TemplateField>
 
 
-                                <asp:TemplateField HeaderText="Quantity">
+                                <asp:TemplateField HeaderText="Quoted Qty">
                                     <EditItemTemplate>
                                         <asp:TextBox ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>'></asp:TextBox>
                                     </EditItemTemplate>
                                     <ItemTemplate>
                                         <asp:Label ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>'></asp:Label>
                                     </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Invoiced Qty">
+                                    <EditItemTemplate>
+                                        <asp:TextBox ID="DeliveredQnt" runat="server" Text='<%# Bind("DeliveredQnt") %>'></asp:TextBox>
+                                    </EditItemTemplate>
+                                    <ItemTemplate>
+                                        <asp:Label ID="DeliveredQnt" runat="server" Text='<%# Bind("DeliveredQnt") %>'></asp:Label>
+                                    </ItemTemplate>
+                                    <HeaderStyle Width="10%" />
+                                    <ItemStyle Width="10%" />
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Stock Qty" HeaderStyle-BackColor="Green" ItemStyle-BackColor="LightGreen">
+                                    <EditItemTemplate>
+                                        <asp:TextBox ID="SQuantity" runat="server" Text='<%# Bind("SQuantity") %>'></asp:TextBox>
+                                    </EditItemTemplate>
+                                    <ItemTemplate>
+                                        <asp:Label ID="SQuantity" runat="server" Text='<%# Bind("SQuantity") %>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Qty Due for Invoicing">
+                                    <EditItemTemplate>
+                                        <asp:TextBox ID="TextBox7" runat="server"></asp:TextBox>
+                                    </EditItemTemplate>
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate2(event, this)">></asp:TextBox>
+                                        <span class="error-message" style="color: red; display: none;">Invalid Quantity</span>
+                                    </ItemTemplate>
+                                    <HeaderStyle Width="10%" />
+                                    <ItemStyle Width="10%" />
                                 </asp:TemplateField>
 
                                 <asp:TemplateField HeaderText="Sail Rate">
@@ -686,6 +830,58 @@
                                     </td>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;TCS Amount</td>
+                                    <td>
+                                        <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;Freight Charges</td>
+                                    <td>
+                                        <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;@
+                                        <asp:DropDownList ID="DDL_vat_parsentage" runat="server" CssClass="dropdown_style"></asp:DropDownList>
+                                        %</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;Other Charges-1 &nbsp;
+                                        <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
+                                    <td>
+                                        <asp:TextBox ID="txt_othr_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;Other Charges-2 &nbsp;
+                                        <asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
+                                    <td>
+                                        <asp:TextBox ID="TextBox3" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td class="auto-style2"></td>
+                                    <td class="auto-style2"></td>
+                                    <td class="auto-style2"></td>
+                                    <td class="auto-style2"></td>
                                 </tr>
                                 <tr>
                                     <td colspan="4" style="text-align: center">
