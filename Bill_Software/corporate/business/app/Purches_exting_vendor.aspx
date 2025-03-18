@@ -64,15 +64,35 @@
             var invNo = document.getElementById('<%= txt_invno.ClientID %>').value.trim();
             var purchDate = document.getElementById('<%= txtPurchesDate.ClientID %>').value.trim();
             var invAmount = document.getElementById('<%= txt_inv_amount.ClientID %>').value.trim();
-            var tcsAmount = document.getElementById('<%= txt_tcs_amnt.ClientID %>').value.trim();
-            var deliveryAmount = document.getElementById('<%= txt_delivery_amnt.ClientID %>').value.trim();
-
+    
             var otherAmount1 = document.getElementById('<%= txt_othr_amnt1.ClientID %>').value.trim();
             var otherAmount2 = document.getElementById('<%= txt_othr_amnt2.ClientID %>').value.trim();
             var textBox1 = document.getElementById('<%= TextBox1.ClientID %>').value.trim();
             var textBox2 = document.getElementById('<%= TextBox2.ClientID %>').value.trim();
 
+            var deliveryAmount = document.getElementById('<%= txt_delivery_amnt.ClientID %>').value.trim();
             var vatDropdown = document.getElementById('<%= DDL_vat_parsentage.ClientID %>');
+    
+            var tcsAmount = document.getElementById('<%= txt_tcs_amnt.ClientID %>').value.trim();
+            var vattcspercent = document.getElementById('<%= txt_tcs_percent.ClientID %>').value.trim();
+
+            // ✅ GridView Validation: At least one row should have Quantity >= 1
+            var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            var rows = grid.getElementsByTagName("tr");
+            var isQuantityValid = false;
+
+            for (var i = 1; i < rows.length; i++) { // Skip header row
+                var qtyInput = rows[i].querySelector("input[id*='Quantity']");
+                if (qtyInput && parseInt(qtyInput.value) >= 1) {
+                    isQuantityValid = true;
+                    break;
+                }
+            }
+
+            if (!isQuantityValid) {
+                alert("At least one row in the Product List must have Quantity >= 1.");
+                return false;
+            }
 
             // Validate Invoice Number (Should not be empty)
             if (invNo === "") {
@@ -86,12 +106,6 @@
                 return false;
             }
 
-            // Validate Invoice Amount
-            //if (isNaN(invAmount) || invAmount === "") {
-            //    alert("Please enter a valid Invoice Amount.");
-            //    return false;
-            //}
-
             // Validate TCS Amount
             if (isNaN(tcsAmount) || tcsAmount === "") {
                 alert("Please enter a valid TCS Amount.");
@@ -99,15 +113,20 @@
             }
 
             // Validate VAT Percentage: Required if TCS Amount > 0
-            if (parseFloat(tcsAmount) > 0 && vatDropdown.value === "NA") {
-                alert("Please select a TCS Percentage since TCS is applied.");
+            if (parseFloat(tcsAmount) > 0 && vattcspercent === "") {
+                alert("Please input a TCS Percentage since TCS is applied.");
                 return false;
             }
-
 
             // Validate Delivery Amount
             if (isNaN(deliveryAmount) || deliveryAmount === "") {
                 alert("Please enter a valid Delivery Amount.");
+                return false;
+            }
+
+            // Validate VAT Percentage: Required if Delivery Amount > 0
+            if (parseFloat(deliveryAmount) > 0 && vatDropdown.value === "NA") {
+                alert("Please select a Freight Percentage since Freight is applied.");
                 return false;
             }
 
@@ -122,9 +141,9 @@
                 alert("Please enter a description for Other Charges-2.");
                 return false;
             }
-
-            return true; // If all validations pass
+            return true; // ✅ If all validations pass
         }
+
 
         function ValidateField10() {
 
@@ -463,7 +482,7 @@
                     <td colspan="2">&nbsp;</td>
                     <td>&nbsp;</td>
                 </tr>
-                <tr>
+                <tr id="gridtable" runat="server" visible="true">
                     <td colspan="6">
                         <asp:Panel ID="Panel2" runat="server" Visible="false">
                             <table cellpadding="0" cellspacing="0" class="style1">
@@ -581,7 +600,9 @@
                                     <td>&nbsp;</td>
                                     <td>&nbsp;TCS Amount</td>
                                     <td>
-                                        <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;&nbsp;@&nbsp;&nbsp;
+                                        <%--<asp:DropDownList ID="DDL_tcspercent" runat="server" CssClass="dropdown_style"></asp:DropDownList>--%>
+                                        <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""></asp:TextBox> %
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>

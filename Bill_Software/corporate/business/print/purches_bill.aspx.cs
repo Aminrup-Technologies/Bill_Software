@@ -181,17 +181,54 @@ namespace Bill_Software.corporate.business.print
                 decimal dtcsAmount = Convert.ToDecimal(re["TCS_Amount"] ?? 0);
                 
                 decimal dfreightCharges = Convert.ToDecimal(re["Delivery_Amount"] ?? 0);
+                string frtRateStr = re["Delivery_Rate"]?.ToString()?.Trim(); // Get value and trim spaces
+                lbl_frtrate.Text = frtRateStr.ToString();
 
                 string dotherCharges1name = re["Purches_date"].ToString();
-                lblOtherCharges1name.Text = re["otherAmount1_name"].ToString();
-                decimal dotherCharges1 = Convert.ToDecimal(re["otherAmount1"] ?? 0);
+                lblOtherCharges1name.Text = re["otherAmount1_name"]?.ToString()?.Trim();
+                string otherAmount1Str = re["otherAmount1"]?.ToString()?.Trim();
+
+                decimal dotherCharges1 = 0;
+                decimal parsedValue = 0;
+
+                // Check if otherAmount1 has a valid decimal value
+                if (decimal.TryParse(otherAmount1Str, out parsedValue))
+                {
+                    dotherCharges1 = parsedValue;
+                }
+
+                // Check if otherAmount1_name is null/empty OR dotherCharges1 is 0/0.00
+                if (string.IsNullOrEmpty(lblOtherCharges1name.Text) || dotherCharges1 == 0)
+                {
+                    lblOtherCharges1name.Text = "";  // Hide the label text
+                    dotherCharges1 = 0;  // Reset the amount to 0
+                }
+
+                // Now use dotherCharges1 where needed
+                lblOtherCharges.Text = dotherCharges1.ToString("N2");
 
                 decimal total2 = dtcsAmount + dotherCharges1;
                 lbl_ttl2amnt.Text = total2.ToString("N2");
                 lbl_ttl2word.Text = ConvertAmountToWords((decimal)total2) + " Only";
 
                 //decimal ftax = dfreightCharges * 0.18m;
-                decimal ftax = dtcsAmount * Convert.ToDecimal(re["TCS_Rate"]) / 100 ;
+                decimal ftax = 0;
+                string tcsRateStr = re["TCS_Rate"]?.ToString()?.Trim(); // Get value and trim spaces
+                lbl_tcsrate.Text = tcsRateStr.ToString();
+
+                if (string.IsNullOrEmpty(tcsRateStr))
+                {
+                    ftax = dtcsAmount * 18 / 100; // Use 18 as the default rate
+                }
+                else if (tcsRateStr.Equals("NA", StringComparison.OrdinalIgnoreCase))
+                {
+                    ftax = dtcsAmount * 18 / 100; // Use 18 as the default rate
+                }
+                else
+                {
+                    ftax = dtcsAmount * Convert.ToDecimal(tcsRateStr) / 100; // Convert and calculate
+                }
+
                 lblfttax.Text = ftax.ToString("N2");
 
                 decimal ttltax = ProdcutTaxes + ftax;

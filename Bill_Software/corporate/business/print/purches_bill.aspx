@@ -673,7 +673,7 @@
 
                             <!-- Freight Charges Row -->
                             <tr>
-                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0; border-top: 1px solid #bfbfbf;">Freight Charges
+                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0; border-top: 1px solid #bfbfbf;">Freight Charges&nbsp;@&nbsp;<asp:Label ID="lbl_frtrate" runat="server" Text=""></asp:Label>&nbsp;%&nbsp;
                                 </td>
                                 <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
                                     <asp:Label ID="lblFreightCharges" runat="server"></asp:Label>
@@ -724,7 +724,7 @@
 
                             <!-- TCS Amount Row -->
                             <tr>
-                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0;">TCS Amount
+                                <td colspan="3" class="style17" style="text-align: right; color: blue; padding: 5px 20px 5px 0;">TCS Amount&nbsp;@&nbsp;<asp:Label ID="lbl_tcsrate" runat="server" Text=""></asp:Label>&nbsp;%&nbsp;
                                 </td>
                                 <td class="style7" style="border: 1px solid #bfbfbf; text-align: right; padding: 0px 5px 0px 2px;">
                                     <asp:Label ID="lblTCSAmount" runat="server"></asp:Label>

@@ -166,6 +166,15 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lbl_ttl1word;
         
         /// <summary>
+        /// lbl_frtrate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_frtrate;
+        
+        /// <summary>
         /// lblFreightCharges control.
         /// </summary>
         /// <remarks>
@@ -227,6 +236,15 @@ namespace Bill_Software.corporate.business.print {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lbl_ttl2word;
+        
+        /// <summary>
+        /// lbl_tcsrate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_tcsrate;
         
         /// <summary>
         /// lblTCSAmount control.
