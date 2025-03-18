@@ -170,96 +170,148 @@
 
     <script type="text/javascript">
         function ValidateField() {
-            if (document.getElementById('<%=txtDiscount.ClientID%>').value == "") {
-                alert("Provide Discount Amount");
-                document.getElementById('<%=txtDiscount.ClientID%>').focus();
+        console.log("Validation started...");
+
+        var isValid = true; // Default form validity
+
+        // Validate GridView checkboxes
+        var gridView = document.getElementById('<%= Gridview_Product.ClientID %>');
+        if (!gridView) {
+            console.error("GridView not found.");
+            return false;
+        }
+
+        var checkboxes = gridView.getElementsByTagName("input");
+        var isChecked = false;
+
+        console.log("Checking GridView checkboxes...");
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].type === "checkbox" && checkboxes[i].id.indexOf("chk") !== -1) {
+                console.log("Found checkbox:", checkboxes[i].id, "Checked:", checkboxes[i].checked);
+                if (checkboxes[i].checked) {
+                    isChecked = true;
+                    break;
+                }
+            }
+        }
+
+        if (!isChecked) {
+            console.warn("No checkbox selected in GridView.");
+            alert("Please select at least one item from the GridView.");
+            return false;
+        }
+
+        console.log("GridView validation passed.");
+
+        // Validate ListBox (FactoryAddress)
+        var listBox = document.getElementById('<%= FactoryAddress.ClientID %>');
+        if (!listBox) {
+            console.error("ListBox not found.");
+            return false;
+        }
+
+        var selectedCount = 0;
+        for (var i = 0; i < listBox.options.length; i++) {
+            if (listBox.options[i].selected) {
+                selectedCount++;
+            }
+        }
+
+        if (selectedCount === 0) {
+            console.warn("No Factory Address selected.");
+            alert("Please select at least one Factory Address.");
+            return false;
+        }
+
+        console.log("Factory Address validation passed.");
+
+        // Get elements for amount-based validation
+        var txtTcsAmnt = document.getElementById('<%= txt_tcs_amnt.ClientID %>');
+        var txtTcsPercent = document.getElementById('<%= txt_tcs_percent.ClientID %>');
+        var txtDeliveryAmnt = document.getElementById('<%= txt_delivery_amnt.ClientID %>');
+        var ddlVatPercentage = document.getElementById('<%= DDL_vat_parsentage.ClientID %>');
+        var txtOthrAmnt = document.getElementById('<%= txt_othr_amnt.ClientID %>');
+        var txtOtherCharges = document.getElementById('<%= TextBox1.ClientID %>');
+
+        // Validate TCS Amount & TCS Percent
+        if (txtTcsAmnt.value.trim() !== "" && parseFloat(txtTcsAmnt.value) > 0) {
+            if (txtTcsPercent.value.trim() === "") {
+                console.warn("TCS Percent is required when TCS Amount is greater than 0.");
+                alert("TCS TAX Percent is required when TCS Amount is greater than 0.");
+                txtTcsPercent.focus();
                 return false;
             }
         }
+
+        // Validate Freight Charges & VAT Percentage
+        if (txtDeliveryAmnt.value.trim() !== "" && parseFloat(txtDeliveryAmnt.value) > 0) {
+            if (!ddlVatPercentage.value || ddlVatPercentage.selectedIndex === 0) {
+                console.warn("TAX Percentage is required when Freight Charges are greater than 0.");
+                alert("TAX Percentage is required when Freight Charges are greater than 0.");
+                ddlVatPercentage.focus();
+                return false;
+            }
+        }
+
+        // Validate Other Charges
+        if (txtOthrAmnt.value.trim() !== "" && parseFloat(txtOthrAmnt.value) > 0) {
+            if (txtOtherCharges.value.trim() === "") {
+                console.warn("Other Charges description is required when Other Charges amount is greater than 0.");
+                alert("Other Charges description is required when Other Charges amount is greater than 0.");
+                txtOtherCharges.focus();
+                return false;
+            }
+        }
+
+        console.log("Validation successful. Form can be submitted.");
+        return true; // Allow form submission
+    }
+
     </script>
+
+
 
     <script type="text/javascript">
 
         function Check_Click(objRef) {
 
             //Get the Row based on checkbox
-
             var row = objRef.parentNode.parentNode;
-
             if (objRef.checked) {
-
                 //If checked change color to Aqua
-
                 row.style.backgroundColor = "#84e26e";
-
             }
 
             else {
 
                 //If not checked change back to original color
-
                 if (row.rowIndex % 2 == 0) {
-
                     //Alternating Row Color
-
                     row.style.backgroundColor = "#C2D69B";
-
                 }
-
                 else {
-
                     row.style.backgroundColor = "white";
-
                 }
-
             }
-
-
 
             //Get the reference of GridView
-
             var GridView = row.parentNode;
-
-
-
             //Get all input elements in Gridview
-
             var inputList = GridView.getElementsByTagName("input");
-
-
-
             for (var i = 0; i < inputList.length; i++) {
-
                 //The First element is the Header Checkbox
-
                 var headerCheckBox = inputList[0];
-
-
-
                 //Based on all or none checkboxes
-
                 //are checked check/uncheck Header Checkbox
-
                 var checked = true;
-
                 if (inputList[i].type == "checkbox" && inputList[i] != headerCheckBox) {
-
                     if (!inputList[i].checked) {
-
                         checked = false;
-
                         break;
-
                     }
-
                 }
-
             }
-
             headerCheckBox.checked = checked;
-
-
-
         }
 
     </script>
@@ -843,32 +895,34 @@
                                     <td>&nbsp;</td>
                                     <td>&nbsp;TCS Amount</td>
                                     <td>
-                                        <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"></asp:TextBox>
                                     </td>
-                                    <td>&nbsp;</td>
+                                    <td>&nbsp;@&nbsp;
+                                        <%--<asp:DropDownList ID="DDL_tcspercent" runat="server" CssClass="dropdown_style"></asp:DropDownList>--%>
+                                        <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""></asp:TextBox> %</td>
                                 </tr>
 
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;Freight Charges</td>
                                     <td>
-                                        <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"></asp:TextBox>
                                     </td>
-                                    <td>&nbsp;@
+                                    <td>&nbsp;@&nbsp;
                                         <asp:DropDownList ID="DDL_vat_parsentage" runat="server" CssClass="dropdown_style"></asp:DropDownList>
                                         %</td>
                                 </tr>
 
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>&nbsp;Other Charges-1 &nbsp;
+                                    <td>&nbsp;Other Charges &nbsp;
                                         <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
                                     <td>
-                                        <asp:TextBox ID="txt_othr_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_othr_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"></asp:TextBox>
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
-                                <tr>
+                                <%--<tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;Other Charges-2 &nbsp;
                                         <asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
@@ -876,7 +930,7 @@
                                         <asp:TextBox ID="TextBox3" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
                                     </td>
                                     <td>&nbsp;</td>
-                                </tr>
+                                </tr>--%>
                                 <tr>
                                     <td class="auto-style2"></td>
                                     <td class="auto-style2"></td>
@@ -885,7 +939,8 @@
                                 </tr>
                                 <tr>
                                     <td colspan="4" style="text-align: center">
-                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Save" OnClick="Button1_Click" OnClientClick="return ValidateField();" />
+                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Save" OnClientClick="if (!ValidateField()) return false;" OnClick="Button1_Click" />
+
                                     </td>
                                 </tr>
                                 <tr>

@@ -622,10 +622,17 @@ namespace Bill_Software.corporate.business.app
                 double discount = string.IsNullOrEmpty(txtDiscount.Text) ? 0 : Convert.ToDouble(txtDiscount.Text);
                 Session["NetAmount"] = Math.Round(invTotalWithGst) - discount;
 
+                decimal tcsAmount = 0.00m, tcsrate = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m;
+                decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount);
+                decimal.TryParse(txt_tcs_percent.Text.Trim(), out tcsrate);
+                decimal.TryParse(txt_delivery_amnt.Text.Trim(), out deliveryAmount);
+                decimal.TryParse(txt_othr_amnt.Text.Trim(), out otherAmount1);
+                string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
+
                 if (invTotalWithGst > 0)
                 {
-                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2) " +
-                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active')";
+                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById) " +
+                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById)";
 
                     SqlParameter[] parameters = {
                         new SqlParameter("@Invoice_No", invoiceNo),
@@ -639,7 +646,15 @@ namespace Bill_Software.corporate.business.app
                         new SqlParameter("@Service_Tax1", totalGstAmount),
                         new SqlParameter("@sub_total", invTotalWithoutGst),
                         new SqlParameter("@discount", discount),
-                        new SqlParameter("@addressfor", cmbaddressfor.Text)
+                        new SqlParameter("@addressfor", cmbaddressfor.Text),
+                        new SqlParameter("@TCS_Amount", tcsAmount),
+                        new SqlParameter("@TCS_Rate", tcsrate),
+                        new SqlParameter("@Delivery_Amount", deliveryAmount),
+                        new SqlParameter("@Delivery_Rate", DDL_vat_parsentage.SelectedValue),
+                        new SqlParameter("@otherAmount1_name", TextBox1.Text.Trim()),
+                        new SqlParameter("@otherAmount1", otherAmount1),
+                        new SqlParameter("@AddedById", userId),
+
                     };
                     DbCL.SPExecDB(query, parameters);
                 }
