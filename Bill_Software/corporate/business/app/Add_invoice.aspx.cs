@@ -1631,7 +1631,7 @@ namespace Bill_Software.corporate.business.app
                     stock = "Yes";
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 // Log or handle the exception as needed
                 //Console.WriteLine("Error: " + ex.Message);
@@ -1665,16 +1665,13 @@ namespace Bill_Software.corporate.business.app
                     {
                         if (re.Read())
                         {
-                            string qty = "0";
                             // Ensure Quantity is not null or empty, default to "0"
-                            availableQuantity = re["Quantity"] != DBNull.Value && !string.IsNullOrEmpty(re["Quantity"].ToString())
-                                ? re["Quantity"].ToString()
-                                : "0";
+                            availableQuantity = re["Quantity"] != DBNull.Value && !string.IsNullOrEmpty(re["Quantity"].ToString()) ? re["Quantity"].ToString() : "0";
                         }
                     }
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 // Log or handle the exception as needed
                 //Console.WriteLine("Error: " + ex.Message);

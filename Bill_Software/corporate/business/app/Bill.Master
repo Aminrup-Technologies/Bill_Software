@@ -83,6 +83,7 @@
                                     <li id="product_master" runat="server"><a href="product_master.aspx">Product Name Old</a></li>
                                     <li id="newproductparent" runat="server"><a href="newproductparent.aspx">Product Catagory</a></li>
                                     <li id="newproduct_master" runat="server"><a href="newproduct_master.aspx">Product Name</a></li>
+                                    <li id="uploader" runat="server"><a href="ImportProducts.aspx">Product Import (xml)</a></li>
                                     <%--<li id="HydrantProduct" runat="server"><a href="HydrantProduct.aspx">Hydrant Product</a></li>--%>
                                     <li id="Service_master" runat="server"><a href="Service_master.aspx">Service</a></li>
                                     <li id="Vat_master" runat="server"><a href="Vat_master.aspx">GST Rate Master</a></li>
@@ -132,13 +133,7 @@
                                         <li id="Seartch_quotation" runat="server"><a href="Seartch_quotation.aspx">Search Quotation</a></li>
                                         <li id="Delete_Quotation" runat="server"><a href="Delete_Quotation.aspx">Delete Quotation</a></li>
                                         <li id="Edit_quatation" runat="server"><a href="Edit_quatation.aspx">Edit Quotation</a></li>
-
                                         <li id="SetQuatation" runat="server"><a href="Set_quatation.aspx">Set Quotation Permission</a></li>
-
-                                        <%--<li id="CreateHydrentQuatation" runat="server"><a href="CreateHydrentQuatation.aspx">Create New Quotation</a></li>
-										<li id="ViewHydrentQuatation" runat="server"><a href="ViewHydrentQuatation.aspx">View New Quotation</a></li>
-										<li id="SearchHydrentQuatation" runat="server"><a href="SearchHydrentQuatation.aspx">Search New Quotation</a></li>
-										<li id="DeleteHydrentQuatation" runat="server"><a href="DeleteHydrentQuatation.aspx">Delete New Quotation</a></li>--%>
                                     </ul>
                             </li>
                             <li id="challan" runat="server">Challan
@@ -147,8 +142,6 @@
                                         <li id="View_chalan" runat="server"><a href="View_chalan.aspx">View Challan</a></li>
                                         <li id="seartch_chalan" runat="server"><a href="seartch_chalan.aspx">Search Challan</a></li>
                                         <li id="Delete_chalan" runat="server"><a href="Delete_chalan.aspx">Delete Challan</a></li>
-
-
                                     </ul>
                             </li>
                             <li id="proforma" runat="server">Proforma Invoice
@@ -169,16 +162,7 @@
                                         <li id="seartch_invoice" runat="server"><a href="seartch_invoice.aspx">Search Tax Invoice</a></li>
                                         <li id="Delete_invoice" runat="server"><a href="Delete_invoice.aspx">Delete Tax Invoice</a></li>
                                         <li id="Block_invoice" runat="server"><a href="Block_invoice.aspx">Block Invoice</a></li>
-
                                         <li id="InvoiceMail" runat="server"><a href="InvoiceMail.aspx">Tax Invoice Mailer</a></li>
-
-                                        <%-- <li id="hydrent_invoice" runat="server"><a href="hydrent_invoice.aspx">Create New Invoice</a></li>
-										<li id="Viewhydrent_invoice" runat="server"><a href="Viewhydrent_invoice.aspx">View New Invoice</a></li>
-										<li id="Searchhydrent_invoice" runat="server"><a href="Searchhydrent_invoice.aspx">Search New Invoice</a></li>
-										<li id="Deletehydrent_invoice" runat="server"><a href="Deletehydrent_invoice.aspx">Delete New Invoice</a></li>--%>
-
-
-                                        <%--<li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>--%>
                                     </ul>
                             </li>
                             <li id="Payment" runat="server">Payments Received
@@ -187,16 +171,10 @@
                                         <li id="View_payment" runat="server"><a href="View_payment.aspx">View Payment</a></li>
                                         <li id="seartch_payment" runat="server"><a href="seartch_payment.aspx">Search Payment</a></li>
                                         <li id="Delete_payment" runat="server"><a href="Delete_payment.aspx">Delete Payment</a></li>
-                                        <%--<li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>--%>
                                         <li id="FinalPaymentInvoice" runat="server"><a href="FinalPaymentInvoice.aspx">Final Payment Invoice</a></li>
-
                                         <%--<li id="PaymentsReceived" runat="server"><a href="PaymentsReceived.aspx">Payments Received</a></li>--%>
                                         <li id="PaymentsDue" runat="server"><a href="PaymentsDue.aspx">Payments Due</a></li>
-
-
-
                                         <li id="PaymentMail" runat="server"><a href="PaymentMail.aspx">Payment Invoice Mailer</a></li>
-
                                     </ul>
                             </li>
                             <li id="Epencess" runat="server">Payments Made
@@ -240,6 +218,20 @@
 									<ul class="nav first">
                                         <li id="AddUser" runat="server"><a href="AddUser.aspx">Create</a></li>
                                         <li id="ViewUser" runat="server"><a href="ViewUser.aspx">View</a></li>
+                                    </ul>
+                            </li>
+
+                            <li id="Hydrent" runat="server" visible="false">Quotation
+									<ul class="nav first">
+                                        <li id="CreateHydrentQuatation" runat="server"><a href="CreateHydrentQuatation.aspx">Create New Quotation</a></li>
+                                        <li id="ViewHydrentQuatation" runat="server"><a href="ViewHydrentQuatation.aspx">View New Quotation</a></li>
+                                        <li id="SearchHydrentQuatation" runat="server"><a href="SearchHydrentQuatation.aspx">Search New Quotation</a></li>
+                                        <li id="DeleteHydrentQuatation" runat="server"><a href="DeleteHydrentQuatation.aspx">Delete New Quotation</a></li>
+                                        <li id="hydrent_invoice" runat="server"><a href="hydrent_invoice.aspx">Create New Invoice</a></li>
+                                        <li id="Viewhydrent_invoice" runat="server"><a href="Viewhydrent_invoice.aspx">View New Invoice</a></li>
+                                        <li id="Searchhydrent_invoice" runat="server"><a href="Searchhydrent_invoice.aspx">Search New Invoice</a></li>
+                                        <li id="Deletehydrent_invoice" runat="server"><a href="Deletehydrent_invoice.aspx">Delete New Invoice</a></li>
+                                        <li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>
                                     </ul>
                             </li>
                         </ul>

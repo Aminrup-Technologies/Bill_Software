@@ -787,7 +787,7 @@ namespace Bill_Software.corporate.business.app
                                 }
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             i = 1;
 
