@@ -247,6 +247,7 @@
     <Content Include="corporate\business\app\HydrantProduct.aspx" />
     <Content Include="corporate\business\app\hydrent_invoice.aspx" />
     <Content Include="corporate\business\app\ImportProducts.aspx" />
+    <Content Include="corporate\business\app\Manual_Invoice.aspx" />
     <Content Include="corporate\business\app\PaymentMail.aspx" />
     <Content Include="corporate\business\app\productparent.aspx" />
     <Content Include="corporate\business\app\ProformaMail.aspx" />
@@ -693,6 +694,13 @@
     </Compile>
     <Compile Include="corporate\business\app\ImportProducts.aspx.designer.cs">
       <DependentUpon>ImportProducts.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Manual_Invoice.aspx.cs">
+      <DependentUpon>Manual_Invoice.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Manual_Invoice.aspx.designer.cs">
+      <DependentUpon>Manual_Invoice.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\PaymentMail.aspx.cs">
       <DependentUpon>PaymentMail.aspx</DependentUpon>

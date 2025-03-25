@@ -158,6 +158,7 @@
                             <li id="Invoice" runat="server">Tax Invoice
 									<ul class="nav first">
                                         <li id="Add_invoice" runat="server"><a href="Add_invoice.aspx">Create Tax Invoice</a></li>
+                                        <li id="Add_DirectInvoice" runat="server"><a href="Manual_Invoice.aspx">Create Direct Tax Invoice</a></li>
                                         <li id="View_Invoice" runat="server"><a href="View_Invoice.aspx">View Tax Invoice</a></li>
                                         <li id="seartch_invoice" runat="server"><a href="seartch_invoice.aspx">Search Tax Invoice</a></li>
                                         <li id="Delete_invoice" runat="server"><a href="Delete_invoice.aspx">Delete Tax Invoice</a></li>

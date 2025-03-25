@@ -405,10 +405,6 @@ namespace Bill_Software.corporate.business.app
             return deliQnt;
         }
 
-
-
-
-
         private void Binddetails(string Quotation_no)
         {
             DbCL.Sqlconnection();
@@ -1537,7 +1533,9 @@ namespace Bill_Software.corporate.business.app
 
         private void updatestock1(string product_code, string Product_name, string Quantity)
         {
-            DbCL.executeRdr("update tbl_stock set Quantity=(cast(Quantity as int)-'" + Quantity.ToString() + "') where Product_id='" + product_code.ToString() + "' and Product_name='" + Product_name.ToString() + "'");
+            DbCL.executeRdr("UPDATE tbl_stock SET Quantity = (CAST(Quantity AS FLOAT) - " + Quantity.ToString() + ") " +
+                "WHERE Product_id = '" + product_code.ToString() + "' AND Product_name = '" + Product_name.ToString() + "'");
+
         }
 
         private string findstock()

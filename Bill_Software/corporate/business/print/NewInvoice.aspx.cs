@@ -58,7 +58,12 @@ namespace Bill_Software.corporate.business.print
             {
                 lblinvno.Text = re["Invoice_No"].ToString();
                 lblinvdate.Text = re["Invoice_Date"].ToString();
-                lblqnumber.Text = re["Quotation_No"].ToString();
+                //lblqnumber.Text = re["Quotation_No"].ToString();
+                string quotationNo = re["Quotation_No"] != DBNull.Value ? re["Quotation_No"].ToString() : string.Empty;
+                lblqnumber.Text = !string.IsNullOrEmpty(quotationNo) ? quotationNo : "N/A"; // Default value if empty
+
+                Session["cgstOrsgsti"] = re["cgstOrsgst"].ToString();
+                Session["igsti"] = re["igst"].ToString();
 
                 string qno = re["Quotation_No"].ToString();
                 bindcgstorigst(qno);
@@ -81,6 +86,7 @@ namespace Bill_Software.corporate.business.print
                 //{
                 //    discount_row.Visible = true;
                 //}
+
                 lblSubtotal = re["sub_total"].ToString();
                 lbldiscount = re["discount"].ToString();
                 lblstax = re["Service_Tax"].ToString();
@@ -232,7 +238,10 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount()
         {
             string qno = lblqnumber.Text;
-            string status = statusvalue(qno);
+            //string status = statusvalue(qno);
+
+            // Determine status
+            string status = (lblqnumber.Text == "N/A") ? "YES" : statusvalue(lblqnumber.Text);
 
             if (status != "YES")
             {

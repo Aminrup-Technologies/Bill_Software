@@ -25,6 +25,9 @@
         .center {
             text-align: center;
         }
+        .auto-style2 {
+            height: 20px;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -86,7 +89,6 @@
                 return false;
             }
 
-            // Validate Client Reference Date
             var clientRefDate = document.getElementById('<%=txt_clientrefdate.ClientID%>').value.trim();
             if (clientRefDate === "") {
                 alert("Please enter Client Reference Date.");
@@ -94,7 +96,6 @@
                 return false;
             }
 
-            // Validate Quotation Date
             var quotationDate = document.getElementById('<%=txtquotationDate.ClientID%>').value.trim();
             if (quotationDate === "") {
                 alert("Please enter Quotation Date.");
@@ -102,7 +103,6 @@
                 return false;
             }
 
-            // Validate Place of Supply Dropdown
             if (document.getElementById('<%=ddlPlaceOfSupply.ClientID%>').selectedIndex == 0) {
                 alert("Please select Place of Supply.");
                 document.getElementById('<%=ddlPlaceOfSupply.ClientID%>').focus();
@@ -123,23 +123,20 @@
                 return false;
             }
 
-            return true; // Form is valid
+            return true;
         }
 
 
         function validateRowSelection(gridViewId) {
-            // Step 1: Get the GridView element by its ClientID
-            console.log("GridView ID being passed: " + gridViewId);
+            //console.log("GridView ID being passed: " + gridViewId);
             var gridView = document.getElementById('ContentPlaceHolder1_gridProdWithCat');
-
-            // If GridView is not found, log and exit
             if (!gridView) {
-                console.log("GridView not found. Exiting validation.");
+                //console.log("GridView not found. Exiting validation.");
                 alert("GridView not found.");
                 return false;
             }
 
-            console.log("GridView found. Proceeding with validation.");
+            //console.log("GridView found. Proceeding with validation.");
 
             // Step 2: Get all the rows in the GridView (including header row)
             var rows = gridView.getElementsByTagName('tr');
@@ -596,13 +593,13 @@
             </td>
         </tr>
         <tr>
-            <td>&nbsp;</td>
-            <td style="text-align: right;">Enable Reference Details&nbsp;:&nbsp;</td>
-            <td>
+            <td class="auto-style2"></td>
+            <td style="text-align: right;" class="auto-style2">Enable Reference Details&nbsp;:&nbsp;</td>
+            <td class="auto-style2">
                 <asp:RadioButton ID="rbYes" runat="server" GroupName="referenceOption" Text="Yes" onclick="toggleReferenceFields('Yes')" />
                 <asp:RadioButton ID="rbNo" runat="server" GroupName="referenceOption" Text="No" Checked="true" onclick="toggleReferenceFields('No')" />
             </td>
-            <td>&nbsp;</td>
+            <td class="auto-style2"></td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -750,8 +747,7 @@
                         <tr>
                             <td width="50%">Select Product &/or Service Category One by One</td>
                             <td width="50%">
-                                <asp:DropDownList ID="cmbproduct_service" runat="server" CssClass="dropdown_style">
-                                </asp:DropDownList>
+                                <asp:DropDownList ID="cmbproduct_service" runat="server" CssClass="dropdown_style"></asp:DropDownList>
                             </td>
                         </tr>
                         <tr>

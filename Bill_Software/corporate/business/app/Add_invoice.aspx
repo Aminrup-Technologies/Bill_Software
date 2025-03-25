@@ -170,12 +170,12 @@
 
     <script type="text/javascript">
         function ValidateField() {
-        console.log("Validation started...");
+            console.log("Validation started...");
 
-        var isValid = true; // Default form validity
+            var isValid = true; // Default form validity
 
-        // Validate GridView checkboxes
-        var gridView = document.getElementById('<%= Gridview_Product.ClientID %>');
+            // Validate GridView checkboxes
+            var gridView = document.getElementById('<%= Gridview_Product.ClientID %>');
         if (!gridView) {
             console.error("GridView not found.");
             return false;
@@ -203,7 +203,7 @@
 
         console.log("GridView validation passed.");
 
-        // Validate ListBox (FactoryAddress)
+            // Validate ListBox (FactoryAddress)
         var listBox = document.getElementById('<%= FactoryAddress.ClientID %>');
         if (!listBox) {
             console.error("ListBox not found.");
@@ -225,47 +225,47 @@
 
         console.log("Factory Address validation passed.");
 
-        // Get elements for amount-based validation
+            // Get elements for amount-based validation
         var txtTcsAmnt = document.getElementById('<%= txt_tcs_amnt.ClientID %>');
         var txtTcsPercent = document.getElementById('<%= txt_tcs_percent.ClientID %>');
-        var txtDeliveryAmnt = document.getElementById('<%= txt_delivery_amnt.ClientID %>');
-        var ddlVatPercentage = document.getElementById('<%= DDL_vat_parsentage.ClientID %>');
-        var txtOthrAmnt = document.getElementById('<%= txt_othr_amnt.ClientID %>');
-        var txtOtherCharges = document.getElementById('<%= TextBox1.ClientID %>');
+            var txtDeliveryAmnt = document.getElementById('<%= txt_delivery_amnt.ClientID %>');
+            var ddlVatPercentage = document.getElementById('<%= DDL_vat_parsentage.ClientID %>');
+            var txtOthrAmnt = document.getElementById('<%= txt_othr_amnt.ClientID %>');
+            var txtOtherCharges = document.getElementById('<%= TextBox1.ClientID %>');
 
-        // Validate TCS Amount & TCS Percent
-        if (txtTcsAmnt.value.trim() !== "" && parseFloat(txtTcsAmnt.value) > 0) {
-            if (txtTcsPercent.value.trim() === "") {
-                console.warn("TCS Percent is required when TCS Amount is greater than 0.");
-                alert("TCS TAX Percent is required when TCS Amount is greater than 0.");
-                txtTcsPercent.focus();
-                return false;
+            // Validate TCS Amount & TCS Percent
+            if (txtTcsAmnt.value.trim() !== "" && parseFloat(txtTcsAmnt.value) > 0) {
+                if (txtTcsPercent.value.trim() === "") {
+                    console.warn("TCS Percent is required when TCS Amount is greater than 0.");
+                    alert("TCS TAX Percent is required when TCS Amount is greater than 0.");
+                    txtTcsPercent.focus();
+                    return false;
+                }
             }
-        }
 
-        // Validate Freight Charges & VAT Percentage
-        if (txtDeliveryAmnt.value.trim() !== "" && parseFloat(txtDeliveryAmnt.value) > 0) {
-            if (!ddlVatPercentage.value || ddlVatPercentage.selectedIndex === 0) {
-                console.warn("TAX Percentage is required when Freight Charges are greater than 0.");
-                alert("TAX Percentage is required when Freight Charges are greater than 0.");
-                ddlVatPercentage.focus();
-                return false;
+            // Validate Freight Charges & VAT Percentage
+            if (txtDeliveryAmnt.value.trim() !== "" && parseFloat(txtDeliveryAmnt.value) > 0) {
+                if (!ddlVatPercentage.value || ddlVatPercentage.selectedIndex === 0) {
+                    console.warn("TAX Percentage is required when Freight Charges are greater than 0.");
+                    alert("TAX Percentage is required when Freight Charges are greater than 0.");
+                    ddlVatPercentage.focus();
+                    return false;
+                }
             }
-        }
 
-        // Validate Other Charges
-        if (txtOthrAmnt.value.trim() !== "" && parseFloat(txtOthrAmnt.value) > 0) {
-            if (txtOtherCharges.value.trim() === "") {
-                console.warn("Other Charges description is required when Other Charges amount is greater than 0.");
-                alert("Other Charges description is required when Other Charges amount is greater than 0.");
-                txtOtherCharges.focus();
-                return false;
+            // Validate Other Charges
+            if (txtOthrAmnt.value.trim() !== "" && parseFloat(txtOthrAmnt.value) > 0) {
+                if (txtOtherCharges.value.trim() === "") {
+                    console.warn("Other Charges description is required when Other Charges amount is greater than 0.");
+                    alert("Other Charges description is required when Other Charges amount is greater than 0.");
+                    txtOtherCharges.focus();
+                    return false;
+                }
             }
-        }
 
-        console.log("Validation successful. Form can be submitted.");
-        return true; // Allow form submission
-    }
+            console.log("Validation successful. Form can be submitted.");
+            return true; // Allow form submission
+        }
 
     </script>
 
@@ -899,7 +899,8 @@
                                     </td>
                                     <td>&nbsp;@&nbsp;
                                         <%--<asp:DropDownList ID="DDL_tcspercent" runat="server" CssClass="dropdown_style"></asp:DropDownList>--%>
-                                        <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""></asp:TextBox> %</td>
+                                        <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""></asp:TextBox>
+                                        %</td>
                                 </tr>
 
                                 <tr>

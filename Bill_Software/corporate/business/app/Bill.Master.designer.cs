@@ -589,6 +589,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl Add_invoice;
         
         /// <summary>
+        /// Add_DirectInvoice control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl Add_DirectInvoice;
+        
+        /// <summary>
         /// View_Invoice control.
         /// </summary>
         /// <remarks>
