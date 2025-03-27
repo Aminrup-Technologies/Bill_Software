@@ -447,7 +447,6 @@
     <Content Include="corporate\WebProperty\images\menu_bg.jpg" />
     <Content Include="corporate\WebProperty\images\right_arrow.png" />
     <Content Include="corporate\WebProperty\js\clock.js" />
-    <Content Include="idcardslogo.jpg" />
     <Content Include="Images\accent.png" />
     <Content Include="Images\bullet.png" />
     <Content Include="Images\button-bg.png" />
@@ -456,6 +455,8 @@
     <Content Include="Images\edit1.png" />
     <Content Include="Images\edit_icon.png" />
     <Content Include="Images\heroAccent.png" />
+    <Content Include="Images\idcardslogo.jpg" />
+    <Content Include="Images\Invoice.jpg" />
     <Content Include="Images\login-page-bg.jpg" />
     <Content Include="Images\orderedList0.png" />
     <Content Include="Images\orderedList1.png" />
@@ -477,7 +478,6 @@
     <Content Include="corporate\WebProperty\css\sf.woff" />
     <Content Include="corporate\business\app\Bill.Master" />
     <Content Include="index_card.aspx" />
-    <Content Include="Invoice.jpg" />
     <Content Include="jquery-3.2.1.js" />
     <Content Include="jquery-ui.css" />
     <Content Include="jquery-ui.js" />
