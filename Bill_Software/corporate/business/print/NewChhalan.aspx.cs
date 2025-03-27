@@ -114,7 +114,7 @@ namespace Bill_Software.corporate.business.print
 
         private void Buindamount(string Chalan_No)
         {
-            string query = "select Sl_no,Challan_no,Product_id,Product_name,Quantity from tbl_Challan_details where Challan_no=@Challan_no order by Product_name";
+            string query = "select Sl_no,Challan_no,Product_id,Product_code,Product_name,Quantity from tbl_Challan_details where Challan_no=@Challan_no order by Product_name";
             SqlParameter[] pram = {
                 new SqlParameter("@Challan_no",Chalan_No)
             };
@@ -135,6 +135,7 @@ namespace Bill_Software.corporate.business.print
                     string Sl_no = dtChPro.Rows[i]["Sl_no"].ToString();
                     string Challan_no = dtChPro.Rows[i]["Challan_no"].ToString();
                     string Product_id = dtChPro.Rows[i]["Product_id"].ToString();
+                    string HSN = dtChPro.Rows[i]["Product_code"].ToString();
                     string Product_name = dtChPro.Rows[i]["Product_name"].ToString();
                     int Quantity =Convert.ToInt32(dtChPro.Rows[i]["Quantity"]);
                     string hsncode= dtChPro.Rows[i]["Product_id"].ToString(); ;
@@ -144,7 +145,7 @@ namespace Bill_Software.corporate.business.print
                     strProduct.Append("<tr>");
                     strProduct.Append("<td style='width:7%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;  border-right:none;'>" + Sl_no + "</td>");
                     strProduct.Append("<td style='width:63%; border: 1px solid #bfbfbf; font-weight: bold; text-align: left;   border-right:none;'>" + Product_name + "</td>");
-                    strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; text-align: center;   border-right:none;'>" + hsncode + "</td>");
+                    strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; text-align: center;   border-right:none;'>" + HSN + "</td>");
                     strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; text-align: center;'>" + Quantity + "</td>");
                     strProduct.Append("</tr>");
                     strProduct.Append("</table>");

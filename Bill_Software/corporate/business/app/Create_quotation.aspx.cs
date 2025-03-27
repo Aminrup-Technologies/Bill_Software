@@ -782,8 +782,8 @@ namespace Bill_Software.corporate.business.app
                                         cmd.Parameters.Clear();
                                         cmd.Parameters.AddWithValue("@Sl_no", h);
                                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
-                                        cmd.Parameters.AddWithValue("@Product_Code", ProductId);
-                                        cmd.Parameters.AddWithValue("@Product_id", Product_code);
+                                        cmd.Parameters.AddWithValue("@Product_Code", Product_code);
+                                        cmd.Parameters.AddWithValue("@Product_id", ProductId );
                                         cmd.Parameters.AddWithValue("@Product_name", ProductName);
                                         cmd.Parameters.AddWithValue("@Quantity", Quantity);
                                         cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);

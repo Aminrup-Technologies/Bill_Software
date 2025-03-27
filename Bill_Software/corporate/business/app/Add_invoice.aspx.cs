@@ -233,8 +233,8 @@ namespace Bill_Software.corporate.business.app
             {
                 DataTable dtProductModified = new DataTable();
                 dtProductModified.Columns.Add("Quotation_no", typeof(string));
-                dtProductModified.Columns.Add("Product_id", typeof(string));
-                dtProductModified.Columns.Add("Product_Code", typeof(string));
+                dtProductModified.Columns.Add("Product_id", typeof(string));  //HSN CODE
+                dtProductModified.Columns.Add("Product_Code", typeof(string)); // ID
                 dtProductModified.Columns.Add("Product_name", typeof(string));
                 dtProductModified.Columns.Add("Quantity", typeof(string));
                 dtProductModified.Columns.Add("DeliveredQnt", typeof(string));
@@ -249,8 +249,8 @@ namespace Bill_Software.corporate.business.app
 
                 foreach (DataRow row in dtProduct.Rows)
                 {
-                    string product_id = row["Product_id"].ToString();
-                    string product_Code = row["Product_Code"].ToString();
+                    string HSN = row["Product_id"].ToString(); //HSN
+                    string ProductID = row["Product_Code"].ToString(); // ID
                     string product_name = row["Product_name"].ToString();
                     string quantity = row["Quantity"].ToString();
                     string sail_rate = row["sail_rate"].ToString();
@@ -263,12 +263,12 @@ namespace Bill_Software.corporate.business.app
                     // Get delivered quantity
                     string deliveredQnt = BindPreQnt(product_name, quotation_no, invoiceNos);
                     string remainQnt = (Convert.ToInt32(quantity) - Convert.ToInt32(deliveredQnt)).ToString();
-                    string stockqnty = findstock2(product_Code, product_name);
+                    string stockqnty = findstock2(ProductID, product_name);
 
                     DataRow dr = dtProductModified.NewRow();
                     dr["Quotation_no"] = quotation_no;
-                    dr["Product_id"] = product_id;
-                    dr["Product_Code"] = product_Code;
+                    dr["Product_id"] = ProductID;
+                    dr["Product_Code"] = HSN;
                     dr["Product_name"] = product_name;
                     dr["Quantity"] = quantity;
                     dr["DeliveredQnt"] = deliveredQnt;
@@ -610,9 +610,9 @@ namespace Bill_Software.corporate.business.app
             string invoiceNo = BindInvoiceNo();
             int serialNo = idreturn() + 1;
             int checkedCount = 0;
-            string status = InsertSelectedProduct(invoiceNo, quotationNo, ref checkedCount);
+            string status = InsertSelectedProductNew(invoiceNo, quotationNo, ref checkedCount);
 
-            List<string> validStatuses = new List<string> { "Completed", "Partial", "Partial + No Stock", "Pending", "Pending + No Stock" };
+            List<string> validStatuses = new List<string> { "Completed", "Partial", "Partial + No Stock", "Pending", "Pending + No Stock", "Partial + No Stock + Pending" };
             if (checkedCount > 0 && validStatuses.Contains(status))
             {
                 double invTotalWithGst = Session["InvTotalAmountWithGst"] != null ? Convert.ToDouble(Session["InvTotalAmountWithGst"]) : 0;
@@ -701,8 +701,8 @@ namespace Bill_Software.corporate.business.app
 
                         //Checker = InsertSelectedProduct(invoice_no, quno);
 
-                        int checkedCount = 0;
-                        string Checker = InsertSelectedProduct(invoice_no, quno, ref checkedCount);
+                        int checkedCount = 0; string Checker = "Completed";
+                        //string Checker = InsertSelectedProduct(invoice_no, quno, ref checkedCount);
 
                         List<string> validStatuses = new List<string> { "Completed", "Partial", "Partial + No Stock", "Pending", "Pending + No Stock" };
                         if (checkedCount > 0 && validStatuses.Contains(Checker))
@@ -1285,7 +1285,148 @@ namespace Bill_Software.corporate.business.app
             return Status;
         }
 
-        private string InsertSelectedProduct(string invoice_no, string quno, ref int checkedCount)
+        private string InsertSelectedProductNew(string invoice_no, string quno, ref int checkedCount)
+        {
+            string Status = string.Empty;
+            int completedCount = 0;
+            int noStockCount = 0;
+            int pendingCount = 0;
+            double InvTotalAmountWithGst = 0;
+            double InvTotalAmountWithOutGst = 0;
+            double invTotalGstAmount = 0;
+
+            List<string> errorMessages = new List<string>();
+            List<string> successLogs = new List<string>();
+
+            DataTable dt1;
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            dt1 = (DataTable)ViewState["dt"];
+
+            if (dt1 != null)
+            {
+                for (int i = 0; i < dt1.Rows.Count; i++)
+                {
+                    CheckBox chk = (CheckBox)(Gridview_Product.Rows[i].FindControl("chk"));
+                    if (chk.Checked)
+                    {
+                        checkedCount++;
+                        try
+                        {
+                            string ProductId = ((Label)Gridview_Product.Rows[i].FindControl("Product_id")).Text;
+                            string ProductName = ((Label)Gridview_Product.Rows[i].FindControl("Product_name")).Text;
+                            string Quantity = ((Label)Gridview_Product.Rows[i].FindControl("Quantity")).Text;
+                            string DQnt = ((Label)Gridview_Product.Rows[i].FindControl("DeliveredQnt")).Text;
+                            string SQnt = ((Label)Gridview_Product.Rows[i].FindControl("SQuantity")).Text;
+                            string RQty = ((TextBox)Gridview_Product.Rows[i].FindControl("Qty")).Text;
+                            string SailRate = ((Label)Gridview_Product.Rows[i].FindControl("sail_rate")).Text;
+                            string GstPercentage = ((Label)Gridview_Product.Rows[i].FindControl("Service_tax_rate")).Text;
+                            string InvStatus = ((Label)Gridview_Product.Rows[i].FindControl("InvStatus")).Text;
+
+                            double quotedQuantity = string.IsNullOrEmpty(Quantity) ? 0 : Convert.ToDouble(Quantity);
+                            double deliveredQuantity = string.IsNullOrEmpty(DQnt) ? 0 : Convert.ToDouble(DQnt);
+                            double stockQuantity = string.IsNullOrEmpty(SQnt) ? 0 : Convert.ToDouble(SQnt);
+                            double remainingQuantity = string.IsNullOrEmpty(RQty) ? 0 : Convert.ToDouble(RQty);
+
+                            if (InvStatus == "Yes")
+                            {
+                                completedCount++;
+                                errorMessages.Add($"⚠️ Product '{ProductName}' (Code: {ProductId}) is already invoiced.");
+                            }
+                            else if (remainingQuantity == 0)
+                            {
+                                pendingCount++;
+                                errorMessages.Add($"❌ Invalid quantity for '{ProductName}' (Code: {ProductId}) - Please enter a valid QTY.");
+                            }
+                            else if (remainingQuantity > stockQuantity)
+                            {
+                                noStockCount++;
+                                pendingCount++;
+                                errorMessages.Add($"❌ Insufficient stock for '{ProductName}' (Code: {ProductId}) - Required: {remainingQuantity}, Available: {stockQuantity}.");
+                            }
+                            else
+                            {
+                                // Calculate amounts
+                                double sailRate = string.IsNullOrEmpty(SailRate) ? 0 : Convert.ToDouble(SailRate);
+                                double gstPercentage = string.IsNullOrEmpty(GstPercentage) ? 0 : Convert.ToDouble(GstPercentage);
+                                double amountWithoutGst = remainingQuantity * sailRate;
+                                double gstAmount = (amountWithoutGst * gstPercentage) / 100;
+                                double amountWithGst = amountWithoutGst + gstAmount;
+
+                                InvTotalAmountWithGst += amountWithGst;
+                                InvTotalAmountWithOutGst += amountWithoutGst;
+                                invTotalGstAmount += gstAmount;
+
+                                // Update session values
+                                Session["InvTotalAmountWithGst"] = InvTotalAmountWithGst;
+                                Session["InvTotalAmountWithOutGst"] = InvTotalAmountWithOutGst;
+                                Session["invTotalGstAmount"] = invTotalGstAmount;
+
+                                // Insert into invoice table
+                                string query = @"INSERT INTO tbl_Invoice_details 
+                        (Quotation_no, Invoice_No, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification) 
+                        VALUES 
+                        (@Quotation_no, @Invoice_No, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate1, @Total_sail_rate2, @specification)";
+
+                                List<SqlParameter> pram = new List<SqlParameter>
+                        {
+                            new SqlParameter("@Quotation_no", quno),
+                            new SqlParameter("@Invoice_No", invoice_no),
+                            new SqlParameter("@Product_id", ProductId),
+                            new SqlParameter("@Product_Code", ((Label)Gridview_Product.Rows[i].FindControl("Product_Code")).Text),
+                            new SqlParameter("@Product_name", ProductName),
+                            new SqlParameter("@Quantity", remainingQuantity),
+                            new SqlParameter("@sail_rate", sailRate),
+                            new SqlParameter("@Service_tax_rate", gstPercentage),
+                            new SqlParameter("@Total_sail_rate1", amountWithGst),
+                            new SqlParameter("@Total_sail_rate2", amountWithoutGst),
+                            new SqlParameter("@specification", ((Label)Gridview_Product.Rows[i].FindControl("specification")).Text)
+                        };
+
+                                DbCL.SPExecDB(query, pram.ToArray());
+
+                                successLogs.Add($"✅ Product '{ProductName}' (Code: {ProductId}) successfully invoiced with Quantity: {remainingQuantity}, Amount: {amountWithGst}");
+
+                                // Update invoice status
+                                string invStatus = ((deliveredQuantity + remainingQuantity) == quotedQuantity) ? "Yes" : "No";
+                                updateqtableforproduct(quno, ProductId, ProductName, invStatus);
+
+                                // Update stock
+                                updatestock1(ProductId, ProductName, RQty);
+                                successLogs.Add($"✅ Stock updated for '{ProductName}' (Code: {ProductId}) - Deducted: {remainingQuantity}");
+
+                                if (invStatus == "No")
+                                {
+                                    pendingCount++;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            errorMessages.Add($"⚠️ Error processing Product '{Gridview_Product.Rows[i].FindControl("Product_name")}' - {ex.Message}");
+                        }
+                    }
+                }
+
+                // Show error messages if any
+                if (errorMessages.Count > 0)
+                {
+                    ShowErrorMessageSpcl(string.Join("<br>", errorMessages));
+                }
+
+                // Show success messages if any
+                if (successLogs.Count > 0)
+                {
+                    ShowSucessMessageSpcl(string.Join("<br>", successLogs));
+                }
+            }
+
+            Status = DetermineStatus(completedCount, pendingCount, noStockCount, checkedCount);
+            return Status;
+        }
+
+
+        private string InsertSelectedProduct_old270325(string invoice_no, string quno, ref int checkedCount)
         {
             string Status = string.Empty;
             int completedCount = 0;
@@ -1315,8 +1456,8 @@ namespace Bill_Software.corporate.business.app
                         {
                             List<string> missingFields = new List<string>();
 
-                            string ProductId = ((Label)Gridview_Product.Rows[i].FindControl("Product_Code")).Text; //----Product ID PRD___
-                            string ProductCode = ((Label)Gridview_Product.Rows[i].FindControl("Product_id")).Text; //--------Product HSN Code
+                            string HSN = ((Label)Gridview_Product.Rows[i].FindControl("Product_Code")).Text; //----Product HSN Code ___
+                            string ProductId = ((Label)Gridview_Product.Rows[i].FindControl("Product_id")).Text; //--------Product ID
                             string ProductName = ((Label)Gridview_Product.Rows[i].FindControl("Product_name")).Text;
                             string Quantity = ((Label)Gridview_Product.Rows[i].FindControl("Quantity")).Text;
                             string DQnt = ((Label)Gridview_Product.Rows[i].FindControl("DeliveredQnt")).Text;
@@ -1387,8 +1528,8 @@ namespace Bill_Software.corporate.business.app
                                     {
                                         new SqlParameter("@Quotation_no", quno),
                                         new SqlParameter("@Invoice_No", invoice_no),
-                                        new SqlParameter("@Product_id", ProductCode),
-                                        new SqlParameter("@Product_Code", ProductId),
+                                        new SqlParameter("@Product_id", ProductId),
+                                        new SqlParameter("@Product_Code", HSN),
                                         new SqlParameter("@Product_name", ProductName),
                                         new SqlParameter("@Quantity", remainingQuantity),
                                         new SqlParameter("@sail_rate", sailRate),
@@ -1439,9 +1580,36 @@ namespace Bill_Software.corporate.business.app
                 }
             }
 
-            Status = DetermineStatus(completedCount, pendingCount, noStockCount, checkedCount);
+            Status = DetermineStatusNew(completedCount, pendingCount, noStockCount, checkedCount);
             return Status;
         }
+
+        private string DetermineStatusNew(int completedCount, int pendingCount, int noStockCount, int checkedCount)
+        {
+            if (completedCount == checkedCount && pendingCount == 0 && noStockCount == 0)
+                return "Completed"; // ✅ All items invoiced successfully
+
+            if (completedCount > 0 && pendingCount > 0 && noStockCount == 0)
+                return "Partial"; // ✅ Some invoiced, some still pending
+
+            if (completedCount > 0 && noStockCount > 0 && pendingCount == 0)
+                return "Partial + No Stock"; // ✅ Some invoiced, some out of stock
+
+            if (completedCount > 0 && pendingCount > 0 && noStockCount > 0)
+                return "Partial + No Stock + Pending"; // ✅ Some invoiced, some pending, some out of stock
+
+            if (completedCount == 0 && pendingCount > 0 && noStockCount == 0)
+                return "Pending"; // ✅ All pending, but stock is available
+
+            if (completedCount == 0 && pendingCount > 0 && noStockCount > 0)
+                return "Pending + No Stock"; // ✅ All pending, and some items are out of stock
+
+            if (completedCount == 0 && pendingCount == 0 && noStockCount > 0)
+                return "No Stock"; // ✅ No items can be invoiced due to no stock
+
+            return "No Action"; // ✅ Default case if no changes happened
+        }
+
 
         private string DetermineStatus(int completedCount, int pendingCount, int noStockCount, int checkedCount)
         {

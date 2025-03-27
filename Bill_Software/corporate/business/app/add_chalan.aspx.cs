@@ -187,6 +187,7 @@ namespace Bill_Software.corporate.business.app
                         if (chk.Checked)
                         {
                             string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_code")).Text;
+                            string Product_Code = ((Label)gd_Quotation.Rows[i].FindControl("product_id")).Text;
                             string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("ProductName")).Text;
 
                             string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
@@ -194,8 +195,8 @@ namespace Bill_Software.corporate.business.app
 
                             if (quantity > 0)
                             {
-                                DbCL.executeRdr($"INSERT INTO tbl_Challan_details(Sl_no, Challan_no, Product_id, Product_name, Quantity) " +
-                                                $"VALUES ('{k}', '{invoice_no}', '{Product_id}', '{Product_name}', '{Qty}')");
+                                DbCL.executeRdr($"INSERT INTO tbl_Challan_details(Sl_no, Challan_no, Product_id, Product_code , Product_name, Quantity) " +
+                                                $"VALUES ('{k}', '{invoice_no}', '{Product_id}', '{Product_Code}', '{Product_name}', '{Qty}')");
                                 k++;
                             }
                         }
@@ -269,7 +270,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Sl_no,Product_id,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2 from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "'";
+            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2 from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "'";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
@@ -282,6 +283,7 @@ namespace Bill_Software.corporate.business.app
 
                     string Sl_no = MainDt.Rows[i]["Sl_no"].ToString();
                     string Product_id = MainDt.Rows[i]["Product_id"].ToString();
+                    string Product_Code = MainDt.Rows[i]["Product_Code"].ToString();
                     string Product_name = MainDt.Rows[i]["Product_name"].ToString();
                     string Quantity = MainDt.Rows[i]["Quantity"].ToString();
                     string sail_rate = MainDt.Rows[i]["sail_rate"].ToString();
@@ -293,12 +295,12 @@ namespace Bill_Software.corporate.business.app
                             dtPCat = (DataTable)ViewState["ViewQProductData"];
                             int count = dtPCat.Rows.Count + 1;
 
-                            SearchProductCatwise(count, Sl_no, Product_id, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no);
+                            SearchProductCatwise(count, Sl_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no);
 
                     }
                     else
                     {
-                            SearchProductCatwise(1, Sl_no, Product_id, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no);
+                            SearchProductCatwise(1, Sl_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no);
                     }
                     
                 }
@@ -312,7 +314,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-        private void SearchProductCatwise(int count, string sl_no, string product_id, string product_name, string quantity, string sail_rate, string service_tax_rate, string total_sail_rate2,string Quotation_no)
+        private void SearchProductCatwise(int count, string sl_no, string product_id, string Product_Code, string product_name, string quantity, string sail_rate, string service_tax_rate, string total_sail_rate2,string Quotation_no)
         {
             string Chalanno = "";
             Chalanno = bindChalanno(Quotation_no);
@@ -335,6 +337,7 @@ namespace Bill_Software.corporate.business.app
             DataRow dr;
             if (count == 1)
             {
+                dtPCat.Columns.Add(new DataColumn("Product_id", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
@@ -356,16 +359,18 @@ namespace Bill_Software.corporate.business.app
                         dr[2] = dtPCat.Rows[0][2].ToString();
                         dr[3] = dtPCat.Rows[0][3].ToString();
                         dr[4] = dtPCat.Rows[0][4].ToString();
-                        
+                        dr[5] = dtPCat.Rows[0][5].ToString();
+
                     }
                 }
                 dr = dtPCat.NewRow();
                 dr[0] = product_id;
-                dr[1] = product_name;
-                dr[2] = quantity;
-                dr[3] = DeliveredQnt;
-                dr[4] = RemainQnt;
-               
+                dr[1] = Product_Code;
+                dr[2] = product_name;
+                dr[3] = quantity;
+                dr[4] = DeliveredQnt;
+                dr[5] = RemainQnt;
+                
 
                 dtPCat.Rows.Add(dr);
             }
@@ -373,11 +378,13 @@ namespace Bill_Software.corporate.business.app
             {
                 dr = dtPCat.NewRow();
                 dr[0] = product_id;
-                dr[1] = product_name;
-                dr[2] = quantity;
-                dr[3] = DeliveredQnt;
-                dr[4] = RemainQnt;
-              
+                dr[1] = Product_Code;
+                dr[2] = product_name;
+                dr[3] = quantity;
+                dr[4] = DeliveredQnt;
+                dr[5] = RemainQnt;
+                
+
                 dtPCat.Rows.Add(dr);
 
             }

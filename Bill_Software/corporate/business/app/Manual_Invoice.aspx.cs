@@ -203,7 +203,7 @@ namespace Bill_Software.corporate.business.app
                 DataTable dtpro = new DataTable();
                 dtpro = ViewState["dtprocat"] as DataTable;
 
-                string Product_code = ""; //HSN Code
+                string HSN = ""; //HSN Code
                 string ProductId = ""; // Product ID
                 string ProductName = "";
                 string Brandspecification = "";
@@ -221,8 +221,8 @@ namespace Bill_Software.corporate.business.app
                     CheckBox chkdtp = (CheckBox)(gridProdWithCat.Rows[i].FindControl("chkdtp"));
                     if (chkdtp.Checked == true)
                     {
-                        ProductId = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
-                        Product_code = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
+                        ProductId = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text; // ProductID
+                        HSN = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text; // HSN
                         ProductName = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName")).Text;
                         Brandspecification = ((Label)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
                         Quantity = ((Label)gridProdWithCat.Rows[i].FindControl("Quantity")).Text;
@@ -238,12 +238,12 @@ namespace Bill_Software.corporate.business.app
                             dtPCat = (DataTable)ViewState["PhaseProductData"];
                             int count = dtPCat.Rows.Count + 1;
 
-                            SearchProductCatwise(count, Product_code, ProductId, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
+                            SearchProductCatwise(count, HSN, ProductId, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
 
                         }
                         else
                         {
-                            SearchProductCatwise(1, Product_code, ProductId, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
+                            SearchProductCatwise(1, HSN, ProductId, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
                         }
                     }
                 }
@@ -253,7 +253,7 @@ namespace Bill_Software.corporate.business.app
         }
 
 
-        private void SearchProductCatwise(int count, string Product_code, string ProductId, string ProductName,
+        private void SearchProductCatwise(int count, string HSN, string ProductId, string ProductName,
                                   string Brandspecification, string Quantity,
                                   string Sail_Rate, string Tax_Rate, string Type, string Unit,
                                   string ProductOrServiceCat)
@@ -288,7 +288,7 @@ namespace Bill_Software.corporate.business.app
             {
                 DataRow dr = dtPCat.NewRow();
                 dr["ProductId"] = ProductId;
-                dr["Product_code"] = Product_code;
+                dr["Product_code"] = HSN;
                 dr["ProductName"] = ProductName;
                 dr["Sail_Rate"] = Sail_Rate;
                 dr["Tax_Rate"] = Tax_Rate;
@@ -368,7 +368,7 @@ namespace Bill_Software.corporate.business.app
                     if (chk != null && chk.Checked)
                     {
                         string productId = ((Label)row.FindControl("ProductID")).Text;
-                        string productCode = ((Label)row.FindControl("Product_code")).Text;
+                        string HSN = ((Label)row.FindControl("Product_code")).Text;
                         string productName = ((Label)row.FindControl("ProductName")).Text;
                         string brand = ((Label)row.FindControl("Brand")).Text;
                         string remarks = ((TextBox)row.FindControl("ItemRemarks")).Text;
@@ -398,7 +398,7 @@ namespace Bill_Software.corporate.business.app
 
                         DataRow dr = dtSelectedProducts.NewRow();
                         dr["ProductID"] = productId;
-                        dr["Product_code"] = productCode;
+                        dr["Product_code"] = HSN;
                         dr["ProductName"] = productName;
                         dr["Brand"] = brand;
                         dr["IQuantity"] = iQuantity;
@@ -429,7 +429,7 @@ namespace Bill_Software.corporate.business.app
                             new SqlParameter("@Invoice_No", invoiceNo),
                             new SqlParameter("@Quotation_no", "N/A"),
                             new SqlParameter("@Product_id", productId),
-                            new SqlParameter("@Product_Code", productCode),
+                            new SqlParameter("@Product_Code", HSN),
                             new SqlParameter("@Product_name", productName),
                             new SqlParameter("@Quantity", iQuantity),
                             new SqlParameter("@sail_rate", sailRate),

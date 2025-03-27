@@ -654,7 +654,7 @@
                                         <asp:Label ID="Quotation_no" runat="server" Text='<%# Bind("Quotation_no") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="HSN Code">
+                                <asp:TemplateField HeaderText="Product Code">
                                     <EditItemTemplate>
                                         <asp:TextBox ID="Product_id" runat="server" Text='<%# Bind("Product_id") %>'></asp:TextBox>
                                     </EditItemTemplate>
@@ -662,16 +662,7 @@
                                         <asp:Label ID="Product_id" runat="server" Text='<%# Bind("Product_id") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-
-                                <asp:TemplateField HeaderText="Product Code">
-                                    <EditItemTemplate>
-                                        <asp:TextBox ID="Product_Code" runat="server" Text='<%# Bind("Product_Code") %>'></asp:TextBox>
-                                    </EditItemTemplate>
-                                    <ItemTemplate>
-                                        <asp:Label ID="Product_Code" runat="server" Text='<%# Bind("Product_Code") %>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-
+                               
                                 <asp:TemplateField HeaderText="Product Name">
                                     <EditItemTemplate>
                                         <asp:TextBox ID="Product_name" runat="server" Text='<%# Bind("Product_name") %>'></asp:TextBox>
@@ -681,6 +672,14 @@
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
+                                <asp:TemplateField HeaderText="HSN Code">
+                                    <EditItemTemplate>
+                                        <asp:TextBox ID="Product_Code" runat="server" Text='<%# Bind("Product_Code") %>'></asp:TextBox>
+                                    </EditItemTemplate>
+                                    <ItemTemplate>
+                                        <asp:Label ID="Product_Code" runat="server" Text='<%# Bind("Product_Code") %>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
 
                                 <asp:TemplateField HeaderText="Quoted Qty">
                                     <EditItemTemplate>

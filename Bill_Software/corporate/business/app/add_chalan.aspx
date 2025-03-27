@@ -367,8 +367,18 @@
                                                     <ItemTemplate>
                                                         <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="20%" />
-                                                    <ItemStyle Width="20%" />
+                                                    <HeaderStyle Width="15%" />
+                                                    <ItemStyle Width="15%" />
+                                                </asp:TemplateField>
+                                                <asp:TemplateField HeaderText="HSN Code">
+                                                    <EditItemTemplate>
+                                                        <asp:TextBox ID="product_id" runat="server" Text='<%# Bind("product_id") %>'></asp:TextBox>
+                                                    </EditItemTemplate>
+                                                    <ItemTemplate>
+                                                        <asp:Label ID="product_id" runat="server" Text='<%# Bind("product_id") %>'></asp:Label>
+                                                    </ItemTemplate>
+                                                    <HeaderStyle Width="15%" />
+                                                    <ItemStyle Width="15%" />
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Product Name / Service Name">
                                                     <EditItemTemplate>
@@ -411,8 +421,8 @@
                                                     <ItemTemplate>
                                                         <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate(event)"></asp:TextBox>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="20%" />
-                                                    <ItemStyle Width="20%" />
+                                                    <HeaderStyle Width="15%" />
+                                                    <ItemStyle Width="15%" />
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Create">
                                                     <EditItemTemplate>
