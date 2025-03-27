@@ -834,7 +834,7 @@
                                 <tr>
                                     <td>Quotation No</td>
                                     <td>
-                                        <asp:Label ID="lblQuotation_no" runat="server" Font-Bold="true" ForeColor="Blue"></asp:Label>
+                                        <asp:Label ID="lblQuotation_no" runat="server" Font-Bold="true" ForeColor="Blue"></asp:Label> | <asp:Label ID="lbl_servicename" runat="server" Font-Bold="true" ForeColor="Blue"></asp:Label>
                                     </td>
                                     <td>Quotation Date</td>
                                     <td>

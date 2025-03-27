@@ -415,7 +415,8 @@ namespace Bill_Software.corporate.business.app
             if (re.Read())
             {
                 lblClient_Id.Text = re["Client_Id"].ToString();
-                lblQuotation_no.Text = re["Quotation_no"].ToString();
+                string qutno = re["Quotation_no"].ToString();
+                lblQuotation_no.Text = qutno.ToString();
                 lblQuotation_date.Text = re["Quotation_date"].ToString();
 
                 lblGross_amount.Text = re["Gross"].ToString();
@@ -424,6 +425,8 @@ namespace Bill_Software.corporate.business.app
                 lblservicetax0.Text = re["service_tax1"].ToString();
                 lblsubtotal.Text = re["sub_total"].ToString();
                 string clientcode = lblClient_Id.Text;
+
+                bindServiceDetails(qutno);
                 bindFactoryAddress(clientcode);
             }
             DbCL.Conn.Close();
@@ -627,8 +630,8 @@ namespace Bill_Software.corporate.business.app
 
                 if (invTotalWithGst > 0)
                 {
-                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById) " +
-                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById)";
+                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById, PServiceName) " +
+                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById, @PServiceName)";
 
                     SqlParameter[] parameters = {
                         new SqlParameter("@Invoice_No", invoiceNo),
@@ -650,6 +653,7 @@ namespace Bill_Software.corporate.business.app
                         new SqlParameter("@otherAmount1_name", TextBox1.Text.Trim()),
                         new SqlParameter("@otherAmount1", otherAmount1),
                         new SqlParameter("@AddedById", userId),
+                        new SqlParameter("@PServiceName", lbl_servicename.Text.ToString()),
 
                     };
                     DbCL.SPExecDB(query, parameters);
@@ -830,6 +834,19 @@ namespace Bill_Software.corporate.business.app
                 due = rdr["Due_amount"].ToString();
             }
             return due;
+        }
+
+        private void bindServiceDetails(string quno)
+        {
+            string query = "select PrimaryService from tbl_QutPrimaryService where qut_no=@Quotation_No";
+            SqlParameter[] pram = {
+                new SqlParameter("@Quotation_No",quno)
+            };
+            SqlDataReader rdr = DbCL.SPReturnRdr(query, pram);
+            while (rdr.Read())
+            {
+                lbl_servicename.Text = rdr["PrimaryService"].ToString();
+            }
         }
 
         private void ChecktotalInvAmount(out double totalQutamount, string quno)
@@ -1298,8 +1315,8 @@ namespace Bill_Software.corporate.business.app
                         {
                             List<string> missingFields = new List<string>();
 
-                            string ProductId = ((Label)Gridview_Product.Rows[i].FindControl("Product_Code")).Text;
-                            string ProductCode = ((Label)Gridview_Product.Rows[i].FindControl("Product_id")).Text;
+                            string ProductId = ((Label)Gridview_Product.Rows[i].FindControl("Product_Code")).Text; //----Product ID PRD___
+                            string ProductCode = ((Label)Gridview_Product.Rows[i].FindControl("Product_id")).Text; //--------Product HSN Code
                             string ProductName = ((Label)Gridview_Product.Rows[i].FindControl("Product_name")).Text;
                             string Quantity = ((Label)Gridview_Product.Rows[i].FindControl("Quantity")).Text;
                             string DQnt = ((Label)Gridview_Product.Rows[i].FindControl("DeliveredQnt")).Text;
@@ -1363,12 +1380,8 @@ namespace Bill_Software.corporate.business.app
                                     Session["InvTotalAmountWithOutGst"] = InvTotalAmountWithOutGst;
                                     Session["invTotalGstAmount"] = invTotalGstAmount;
 
-                                    string query = @"INSERT INTO tbl_Invoice_details 
-                                    (Quotation_no, Invoice_No, Product_id, Product_Code, Product_name, Quantity, sail_rate, 
-                                    Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification) 
-                                    VALUES 
-                                    (@Quotation_no, @Invoice_No, @Product_id, @Product_Code, @Product_name, @Quantity, 
-                                    @sail_rate, @Service_tax_rate, @Total_sail_rate1, @Total_sail_rate2, @specification)";
+                                    string query = @"INSERT INTO tbl_Invoice_details (Quotation_no, Invoice_No, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification) 
+                                    VALUES (@Quotation_no, @Invoice_No, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate1, @Total_sail_rate2, @specification)";
 
                                     List<SqlParameter> pram = new List<SqlParameter>
                                     {

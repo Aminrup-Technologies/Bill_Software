@@ -158,6 +158,37 @@ namespace Bill_Software.corporate.business.app
 
         }
 
+        protected void ToggleGridColumns()
+        {
+            if (gd_Service_Product.Columns.Count > 10) // Prevent index out-of-range error
+            {
+                bool isQuotation = rbQt.Checked; // Check if Quotation is selected
+
+                gd_Service_Product.Columns[15].Visible = !isQuotation; // Delivery Date
+                gd_Service_Product.Columns[16].Visible = !isQuotation; // Department
+
+                // Loop through GridView rows to apply validation only when columns are visible
+                foreach (GridViewRow row in gd_Service_Product.Rows)
+                {
+                    TextBox txtDeliveryDate = (TextBox)row.FindControl("DeliveryDate");
+                    TextBox txtDepartment = (TextBox)row.FindControl("Department");
+
+                    RequiredFieldValidator rfvDeliveryDate = (RequiredFieldValidator)row.FindControl("rfvDeliveryDate");
+                    RequiredFieldValidator rfvDepartment = (RequiredFieldValidator)row.FindControl("rfvDepartment");
+
+                    if (txtDeliveryDate != null && rfvDeliveryDate != null)
+                    {
+                        rfvDeliveryDate.Enabled = !isQuotation; // Enable validation only when visible
+                    }
+
+                    if (txtDepartment != null && rfvDepartment != null)
+                    {
+                        rfvDepartment.Enabled = !isQuotation; // Enable validation only when visible
+                    }
+                }
+            }
+        }
+
         private void Bindquotationno()
         {
             string prefix = "QTN/FE/";  // Default prefix
@@ -662,6 +693,7 @@ namespace Bill_Software.corporate.business.app
             int j = idreturn();
             j = j + 1;
             int i = 0;
+            string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
 
             DataTable dt1;
             DbCL.Sqlconnection();
@@ -709,6 +741,8 @@ namespace Bill_Software.corporate.business.app
                                         string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo"))?.Text?.Trim() ?? "";
                                         string PackSize = ((TextBox)gd_Service_Product.Rows[i].FindControl("PackSize"))?.Text?.Trim() ?? "";
                                         string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks"))?.Text?.Trim() ?? "";
+                                        string DeliveryDate = ((TextBox)gd_Service_Product.Rows[i].FindControl("DeliveryDate"))?.Text?.Trim() ?? "";
+                                        string Department = ((TextBox)gd_Service_Product.Rows[i].FindControl("Department"))?.Text?.Trim() ?? "";
 
                                         // Validate and convert numeric fields
                                         decimal Quantity = .0m;
@@ -741,14 +775,8 @@ namespace Bill_Software.corporate.business.app
 
                                         // Insert into database using parameterized query
                                         cmd.CommandText = @"
-                                        INSERT INTO tbl_Quotaion_details 
-                                        (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, 
-                                         Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, InvStatus, Type, Unit, 
-                                         ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize) 
-                                        VALUES 
-                                        (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, 
-                                         @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @InvStatus, @Type, @Unit, 
-                                         @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize)";
+                                        INSERT INTO tbl_Quotaion_details (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById) VALUES 
+                                        (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)";
 
                                         // Add parameters
                                         cmd.Parameters.Clear();
@@ -774,7 +802,10 @@ namespace Bill_Software.corporate.business.app
                                         cmd.Parameters.AddWithValue("@ItemNo", ItemNo);
                                         cmd.Parameters.AddWithValue("@MaterialNo", MaterialNo);
                                         cmd.Parameters.AddWithValue("@PackSize", PackSize);
-
+                                        //Below are newly added on 26-03-2025
+                                        cmd.Parameters.AddWithValue("@DeliveryDate", DeliveryDate);
+                                        cmd.Parameters.AddWithValue("@Department", Department);
+                                        cmd.Parameters.AddWithValue("@AddedById", userId);
                                         // Execute query
                                         cmd.ExecuteNonQuery();
                                         trans.Commit();
@@ -846,6 +877,14 @@ namespace Bill_Software.corporate.business.app
                 string referenceId = referenceOption == "No" ? "N/A" : txt_clientrefid.Text?.Trim();
                 string referenceDate = referenceOption == "No" ? "1900-01-01" : txt_clientrefdate.Text?.Trim();
 
+
+                string recordtyp = rbPo.Checked ? "Purchase Order" : "Quotation";
+                string DO_number = recordtyp == "Quotation" ? "N/A" : txb_donumber.Text?.Trim();
+                string PO_number = recordtyp == "Quotation" ? "N/A" : txb_ponumber.Text?.Trim();
+                string PO_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_podate.Text?.Trim();
+                string ValStart_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_strtdt.Text?.Trim();
+                string ValEnd_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_enddt.Text?.Trim();
+
                 total_sail_rate_details = new_Gross_amount;
                 total_sail_rate_details = Math.Round(total_sail_rate_details, 2);
                 new_total_Service = Math.Round(new_total_Service, 2);
@@ -855,8 +894,8 @@ namespace Bill_Software.corporate.business.app
                 {
                     conn.Open();
                     using (SqlCommand cmd = new SqlCommand("INSERT INTO tbl_Quotation " +
-                        "(Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView) " +
-                        "VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView)", conn))
+                        "(Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById) " +
+                        "VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById)", conn))
                     {
                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text?.Trim());
                         cmd.Parameters.AddWithValue("@Quotation_date", txtquotationDate.Text?.Trim());
@@ -871,9 +910,6 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@igst", IGSTSTATUS);
                         cmd.Parameters.AddWithValue("@PlaceofSupply", ddlPlaceOfSupply.Text?.Trim());
                         cmd.Parameters.AddWithValue("@ReferenceData", referenceOption);
-                        //cmd.Parameters.AddWithValue("@ReferenceName", txt_clientrefname.Text?.Trim());
-                        //cmd.Parameters.AddWithValue("@ReferenceId", txt_clientrefid.Text?.Trim());
-                        //cmd.Parameters.AddWithValue("@ReferenceDate", txt_clientrefdate.Text?.Trim());
                         cmd.Parameters.AddWithValue("@ReferenceName", referenceName);
                         cmd.Parameters.AddWithValue("@ReferenceId", referenceId);
                         cmd.Parameters.AddWithValue("@ReferenceDate", referenceDate);
@@ -882,6 +918,15 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@PackingCharges", packageForwarding);
                         cmd.Parameters.AddWithValue("@Remarks", remarks);
                         cmd.Parameters.AddWithValue("@DetailedView", itemview);
+
+                        cmd.Parameters.AddWithValue("@RecordType", recordtyp);
+                        cmd.Parameters.AddWithValue("@DO_Number", DO_number);
+                        cmd.Parameters.AddWithValue("@PO_Number", PO_number);
+                        cmd.Parameters.AddWithValue("@PO_Date", PO_Date);
+                        cmd.Parameters.AddWithValue("@Validity_StartDate", ValStart_Date);
+                        cmd.Parameters.AddWithValue("@Validity_EndDate", ValEnd_Date);
+                        cmd.Parameters.AddWithValue("@AddedById", userId);
+                        //cmd.Parameters.AddWithValue("@AddedOn", itemview);
 
                         cmd.ExecuteNonQuery();
                     }
@@ -1105,21 +1150,11 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnAddProduct_Click(object sender, EventArgs e)
         {
-            //Panel4.Visible = true;
-            //Panel3.Visible = false;
             gridProdWithCat.Visible = true;
             if (ViewState["dtprocat"] != null)
             {
                 DataTable dtpro = new DataTable();
                 dtpro = ViewState["dtprocat"] as DataTable;
-
-                //string Ser_pro_code = "";
-                //string Ser_pro_Name = "";
-                //string specification = "";
-
-                //string Sale_rate = "";
-                //string service_Tax_Rate = "";
-
 
                 string Product_code = ""; //HSN Code
                 string ProductId = ""; // Product ID
@@ -1173,7 +1208,6 @@ namespace Bill_Software.corporate.business.app
                 {
                     dtPservice = (DataTable)ViewState["pService"];
                     int count1 = dtPservice.Rows.Count + 1;
-                    //TakePservice(count1, pservice);
 
                     string service = "";
                     string status = "NO";
@@ -1195,31 +1229,6 @@ namespace Bill_Software.corporate.business.app
                     TakePservice(1, pservice);
                 }
             }
-
-
-            //private void factoryaddress(string id)
-            //{
-            //    DbCL.Sqlconnection();
-            //    DbCL.ConnectDb();
-            //    string cmdstring = "select Factory_name,Address1,Address2,city,State,pin from tbl_Factory where Client_id="+id.ToString()+"";
-            //    SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            //    SqlDataAdapter da = new SqlDataAdapter(cmd);
-            //    SqlDataReader DR1 = cmd.ExecuteReader();
-            //    while (DR1.Read())
-            //    {
-            //        //cmbfactoryaddress.Items.Add(DR1["factory_name"].ToString());
-            //        string fac = DR1["Factory_name"].ToString();
-            //        string add1 = DR1["Address1"].ToString();
-            //        string add2 = DR1["Address2"].ToString();
-            //        string city = DR1["city"].ToString();
-            //        string State = DR1["State"].ToString();
-            //        string pin = DR1["pin"].ToString();
-            //        string d = a + ", " + b + " - " + c;
-            //        listsite.Items.Add(d);
-            //    }
-            //    DbCL.Conn.Close();
-            //}
-
 
             // added on 30-Jan-2025, To hide the Products Grid after selection of Products for Quotes Creation
             gridProdWithCat.Visible = false;
@@ -1269,7 +1278,7 @@ namespace Bill_Software.corporate.business.app
             ViewState["pService"] = dtPCat1;
         }
 
-        private void SearchProductCatwise(int count, string Product_code, string ProductId, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
+        private void SearchProductCatwise_New(int count, string Product_code, string ProductId, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
         {
             DataRow dr;
             if (count == 1)
@@ -1348,5 +1357,61 @@ namespace Bill_Software.corporate.business.app
             }
             ViewState["PhaseProductData"] = dtPCat;
         }
+
+
+        private void SearchProductCatwise(int count, string Product_code, string ProductId, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
+        {
+            DataRow dr;
+
+            if (count == 1)
+            {
+                dtPCat.Columns.Add(new DataColumn("ProductId", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Sail_Rate", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Tax_Rate", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Brand", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Type", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Unit", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("ProductOrServiceCat", typeof(string)));
+
+                // **New Columns**
+                dtPCat.Columns.Add(new DataColumn("DeliveryDate", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Department", typeof(string)));
+            }
+
+            if (ViewState["PhaseProductData"] != null)
+            {
+                dtPCat = (DataTable)ViewState["PhaseProductData"];
+            }
+
+            dr = dtPCat.NewRow();
+            dr["ProductId"] = ProductId;
+            dr["Product_code"] = Product_code;
+            dr["ProductName"] = ProductName;
+            dr["Sail_Rate"] = Sail_Rate;
+            dr["Tax_Rate"] = Tax_Rate;
+            dr["Quantity"] = Quantity;
+            dr["Brand"] = Brandspecification;
+            dr["Type"] = Type;
+            dr["Unit"] = Unit;
+            dr["ProductOrServiceCat"] = ProductOrServiceCat;
+
+            // **New Columns Default Values**
+            dr["DeliveryDate"] = ""; // Or fetch from database if available
+            dr["Department"] = "";
+
+            dtPCat.Rows.Add(dr);
+
+            gd_Service_Product.DataSource = dtPCat;
+            gd_Service_Product.DataBind();
+
+            ViewState["PhaseProductData"] = dtPCat;
+
+            // **Set Column Visibility Based on Radio Button Selection**
+            ToggleGridColumns();
+        }
+
     }
 }

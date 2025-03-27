@@ -371,18 +371,30 @@ namespace Bill_Software.corporate.business.app
                         string productCode = ((Label)row.FindControl("Product_code")).Text;
                         string productName = ((Label)row.FindControl("ProductName")).Text;
                         string brand = ((Label)row.FindControl("Brand")).Text;
+                        string remarks = ((TextBox)row.FindControl("ItemRemarks")).Text;
+
                         decimal iQuantity = Convert.ToDecimal(((TextBox)row.FindControl("IQuantity")).Text);
                         decimal sailRate = Convert.ToDecimal(((TextBox)row.FindControl("Sail_Rate")).Text);
                         decimal taxRate = Convert.ToDecimal(((Label)row.FindControl("Tax_Rate")).Text);
                         decimal discountRate = Convert.ToDecimal(((TextBox)row.FindControl("Discount_Rate")).Text);
-                        string remarks = ((TextBox)row.FindControl("ItemRemarks")).Text;
-                        //string remarks = ((TextBox)row.FindControl("ItemRemarks")).Text;
 
-                        decimal amountBeforeTax = iQuantity * sailRate;
-                        decimal discountAmount = (amountBeforeTax * discountRate) / 100;
-                        decimal amountAfterDiscount = amountBeforeTax - discountAmount;
-                        decimal taxAmount = (amountAfterDiscount * taxRate) / 100;
-                        decimal amountAfterTax = amountAfterDiscount + taxAmount;
+                        // Ensure valid values to avoid division errors
+                        sailRate = sailRate > 0 ? sailRate : 0;
+                        taxRate = taxRate > 0 ? taxRate : 0;
+                        discountRate = discountRate > 0 ? discountRate : 0;
+
+                        // Calculate values with rounding for better accuracy
+                        decimal amountBeforeTax = Math.Round(iQuantity * sailRate, 2);
+                        decimal discountAmount = Math.Round((amountBeforeTax * discountRate) / 100, 2);
+                        decimal amountAfterDiscount = Math.Round(amountBeforeTax - discountAmount, 2);
+                        decimal taxAmount = Math.Round((amountAfterDiscount * taxRate) / 100, 2);
+                        decimal amountAfterTax = Math.Round(amountAfterDiscount + taxAmount, 2);
+
+                        //decimal amountBeforeTax = iQuantity * sailRate;
+                        //decimal discountAmount = (amountBeforeTax * discountRate) / 100;
+                        //decimal amountAfterDiscount = amountBeforeTax - discountAmount;
+                        //decimal taxAmount = (amountAfterDiscount * taxRate) / 100;
+                        //decimal amountAfterTax = amountAfterDiscount + taxAmount;
 
                         DataRow dr = dtSelectedProducts.NewRow();
                         dr["ProductID"] = productId;
@@ -409,8 +421,8 @@ namespace Bill_Software.corporate.business.app
                         Session["InvTotalAmountWithOutGst"] = totalAmountBeforeTax;
                         Session["invTotalGstAmount"] = totalTaxAmount;
 
-                        string queryDetails = @"INSERT INTO tbl_Invoice_details (Invoice_No, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification, AddedById) 
-                                        VALUES (@Invoice_No, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @AddedById)";
+                        string queryDetails = @"INSERT INTO tbl_Invoice_details (Invoice_No, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discountRate, Total_sail_rate1, Total_sail_rate2, specification, AddedById) 
+                                        VALUES (@Invoice_No, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discountRate, @Total_sail_rate1, @Total_sail_rate2, @specification, @AddedById)";
 
                         List<SqlParameter> pram = new List<SqlParameter>
                         {
@@ -422,6 +434,7 @@ namespace Bill_Software.corporate.business.app
                             new SqlParameter("@Quantity", iQuantity),
                             new SqlParameter("@sail_rate", sailRate),
                             new SqlParameter("@Service_tax_rate", taxRate),
+                            new SqlParameter("@discountRate", discountRate),
                             new SqlParameter("@Total_sail_rate1", amountAfterTax),
                             new SqlParameter("@Total_sail_rate2", amountBeforeTax),
                             new SqlParameter("@specification", brand),
@@ -442,13 +455,32 @@ namespace Bill_Software.corporate.business.app
 
             try
             {
-                double invTotalWithGst = Session["InvTotalAmountWithGst"] != null ? Convert.ToDouble(Session["InvTotalAmountWithGst"]) : 0;
-                double invTotalWithoutGst = Session["InvTotalAmountWithOutGst"] != null ? Convert.ToDouble(Session["InvTotalAmountWithOutGst"]) : 0;
-                double totalGstAmount = Session["invTotalGstAmount"] != null ? Convert.ToDouble(Session["invTotalGstAmount"]) : 0;
-                double totalNetAmount = Session["NetAmount"] != null ? Convert.ToDouble(Session["NetAmount"]) : 0;
-                double discount = 0;
+                //double invTotalWithGst = Session["InvTotalAmountWithGst"] != null ? Convert.ToDouble(Session["InvTotalAmountWithGst"]) : 0;
+                //double invTotalWithoutGst = Session["InvTotalAmountWithOutGst"] != null ? Convert.ToDouble(Session["InvTotalAmountWithOutGst"]) : 0;
+                //double totalGstAmount = Session["invTotalGstAmount"] != null ? Convert.ToDouble(Session["invTotalGstAmount"]) : 0;
+                //double totalNetAmount = Session["NetAmount"] != null ? Convert.ToDouble(Session["NetAmount"]) : 0;
+                //double discount = 0;
+                //string selectedValue = RadioButtonGst.SelectedValue;
+                //totalNetAmount = Math.Round(invTotalWithGst) - discount;
+
                 string selectedValue = RadioButtonGst.SelectedValue;
-                totalNetAmount = Math.Round(invTotalWithGst) - discount;
+                // Declare variables before using TryParse
+                double invTotalWithGst = 0;
+                double invTotalWithoutGst = 0;
+                double totalGstAmount = 0;
+                double totalNetAmount = 0;
+                double discount = 0;
+
+                // Safely retrieve session values and parse them
+                double.TryParse(Session["InvTotalAmountWithGst"]?.ToString(), out invTotalWithGst);
+                double.TryParse(Session["InvTotalAmountWithOutGst"]?.ToString(), out invTotalWithoutGst);
+                double.TryParse(Session["invTotalGstAmount"]?.ToString(), out totalGstAmount);
+                double.TryParse(Session["NetAmount"]?.ToString(), out totalNetAmount);
+                double.TryParse(Session["DiscountAmount"]?.ToString(), out discount);
+
+                // Calculate net amount correctly
+                totalNetAmount = Math.Round(invTotalWithGst - discount, 2);
+
 
                 decimal tcsAmount = 0.00m, tcsrate = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m;
                 decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount);
@@ -459,8 +491,8 @@ namespace Bill_Software.corporate.business.app
 
                 if (invTotalWithGst > 0)
                 {
-                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById, cgstOrsgst, igst) " +
-                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById, @cgstOrsgst, @igst)";
+                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById, cgstOrsgst, igst, PServiceName) " +
+                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById, @cgstOrsgst, @igst, @PServiceName)";
 
                     SqlParameter[] parameters = {
                         new SqlParameter("@Invoice_No", invoiceNo),
@@ -483,7 +515,8 @@ namespace Bill_Software.corporate.business.app
                         new SqlParameter("@otherAmount1", otherAmount1),
                         new SqlParameter("@AddedById", userId),
                         new SqlParameter("@cgstOrsgst", selectedValue == "1" ? "YES" : (object)DBNull.Value),
-                        new SqlParameter("@igst", selectedValue == "0" ? "YES" : (object)DBNull.Value)
+                        new SqlParameter("@igst", selectedValue == "0" ? "YES" : (object)DBNull.Value),
+                        new SqlParameter("@PServiceName", cmbproduct_service.SelectedItem.Text.ToString())
                     };
                     DbCL.SPExecDB(query, parameters);
                     logBuilder.AppendLine($"Invoice {invoiceNo} inserted successfully.");

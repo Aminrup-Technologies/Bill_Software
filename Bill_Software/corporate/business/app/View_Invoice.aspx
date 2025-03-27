@@ -74,14 +74,13 @@
                                 <td style="text-align:center; width:8%;">
                                     <asp:Label ID="Label13" runat="server" Text="GST (INR)"></asp:Label>
                                 </td>
-                                
-                                
+                                                              
                                 <td style="text-align:center; width:8%;"> 
                                     <asp:Label ID="Label1" runat="server" Text="AMOUNT INCLUSIVE OF GST (INR)"></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:6%;">
+                                <%--<td style="text-align:center; width:6%;">
                                     <asp:Label ID="Label10" runat="server" Text="LAST MAILER DATE"></asp:Label>
-                                </td>
+                                </td>--%>
                                 <td style="text-align:center; width:4%;">
                                     <asp:Label ID="edit" runat="server" Text="Buyers View"></asp:Label>
                                 </td>
@@ -121,14 +120,13 @@
                                 <td style="text-align:center; width:8%;">
                                     <asp:Label ID="Label16" runat="server" Text='<%# Eval("Gst") %>'></asp:Label>
                                 </td>
-                               
-                                
+                                                          
                                 <td style="text-align:center; width:8%;"> 
                                     <asp:Label ID="Label8" runat="server" Text='<%# Eval("Net_Amount") %>'></asp:Label>
                                 </td>
-                                <td style="text-align:center; width:6%;">
+                                <%--<td style="text-align:center; width:6%;">
                                     <asp:Label ID="status2" runat="server" Text='<%# Eval("mailDate") %>'></asp:Label>
-                                </td>
+                                </td>--%>
                                 
                                 <td style="text-align:center; width:4%;">
                                     <a href = "#" title="Print Invoice..." onclick="window.open('/corporate/business/print/NewInvoice.aspx?ID=<%# DataBinder.Eval (Container.DataItem,"ID")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">

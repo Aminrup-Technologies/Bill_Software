@@ -8,6 +8,10 @@
             width: 100%;
         }
 
+            .auto-style1 tr {
+                height: 10px;
+            }
+
         .style2 {
             color: #FFFFFF;
             font-weight: bold;
@@ -25,6 +29,7 @@
         .center {
             text-align: center;
         }
+
         .auto-style2 {
             height: 20px;
         }
@@ -537,13 +542,39 @@
             }
         }
 
+        function togglePanel() {
+            var rbQt = document.getElementById('<%= rbQt.ClientID %>');
+            var panel = document.getElementById('<%= PO_DataInputs.ClientID %>');
+            var poFields = document.querySelectorAll('.po-mandatory'); // Select all mandatory fields
+
+            if (rbQt.checked) {
+                panel.style.display = 'none'; // Hide panel if Quotation is selected
+
+                // Remove 'required' attribute from PO fields
+                poFields.forEach(function (field) {
+                    field.removeAttribute('required');
+                });
+            } else {
+                panel.style.display = 'block'; // Show panel if Purchase Order is selected
+
+                // Add 'required' attribute to PO fields
+                poFields.forEach(function (field) {
+                    field.setAttribute('required', 'required');
+                });
+            }
+        }
+
+        // Call function on page load to set initial visibility and field validation
+        window.onload = function () {
+            togglePanel();
+        };
 
     </script>
 
 
     <%--<asp:UpdatePanel ID="UpdatePanel1" runat="server">--%>
     <%--<ContentTemplate>--%>
-    <table cellpadding="0" cellspacing="0" class="auto-style1">
+    <table cellpadding="1" cellspacing="1" class="auto-style1">
         <tr>
             <td colspan="4" bgcolor="#19658A"><span class="style2">&nbsp;Create Quotation</span></td>
         </tr>
@@ -576,6 +607,14 @@
             </td>
             <td>&nbsp;</td>
         </tr>
+
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+
         <tr>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
@@ -716,6 +755,67 @@
                         <asp:ListItem Value="0"> IGST </asp:ListItem>
                     </asp:RadioButtonList>
 
+                </asp:Panel>
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+
+
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;<asp:Label ID="lbl_recordtype" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>Select Record / Document Type</td>
+            <td>&nbsp;
+                <asp:RadioButton ID="rbQt" runat="server" GroupName="recordOption" Text="Quotation" Checked="true" AutoPostBack="false" OnClick="togglePanel()" />
+                <asp:RadioButton ID="rbPo" runat="server" GroupName="recordOption" Text="Purchase Order" AutoPostBack="false" OnClick="togglePanel()" />
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td colspan="2">
+                <asp:Panel ID="PO_DataInputs" runat="server" Visible="true">
+                    <table cellpadding="2" cellspacing="2" class="auto-style1">
+                        <tr>
+                            <td width="50%" style="text-align: right;">&nbsp;<asp:Label ID="Label2" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>&nbsp;Delivery Order No.</td>
+                            <td width="50%">
+                                <asp:TextBox ID="txb_donumber" runat="server" CssClass="textbox_style po-mandatory" Width="110px"></asp:TextBox></td>
+                        </tr>
+                        <tr>
+                            <td width="50%" style="text-align: right;">&nbsp;<asp:Label ID="Label8" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>&nbsp;Ref. Contract No.</td>
+                            <td width="50%">
+                                <asp:TextBox ID="txb_ponumber" runat="server" CssClass="textbox_style po-mandatory" Width="110px"></asp:TextBox></td>
+                        </tr>
+                        <tr>
+                            <td width="50%" style="text-align: right;">&nbsp;<asp:Label ID="Label5" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase Order Date</td>
+                            <td width="50%">
+                                <asp:TextBox ID="txb_podate" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px" class="datepicker po-mandatory" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50%" style="text-align: right;">&nbsp;<asp:Label ID="Label6" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>&nbsp;Validity Start Date</td>
+                            <td width="50%">
+                                <asp:TextBox ID="txb_strtdt" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px" class="datepicker po-mandatory" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50%" style="text-align: right;">&nbsp;<asp:Label ID="Label7" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>&nbsp;Validity End Date</td>
+                            <td width="50%">
+                                <asp:TextBox ID="txb_enddt" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px" class="datepicker po-mandatory" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                            </td>
+                        </tr>
+                    </table>
                 </asp:Panel>
             </td>
             <td>&nbsp;</td>
@@ -1002,7 +1102,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Extra Specifications" HeaderStyle-Width="15%" ItemStyle-Width="15%">
+                                        <asp:TemplateField HeaderText="Extra Specifications" HeaderStyle-Width="10%" ItemStyle-Width="10%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:TextBox>
                                             </EditItemTemplate>
@@ -1108,10 +1208,30 @@
 
                                         <asp:TemplateField HeaderText="Remarks" HeaderStyle-Width="10%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
-                                                <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
+                                                <asp:TextBox ID="TextBox9" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
                                                 <asp:TextBox ID="ItemRemarks" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="center textbox_style" Height="22px" Width="90%"></asp:TextBox>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Delivery Date" HeaderStyle-Width="10%" ItemStyle-Width="10%" Visible="false">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker"></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="DeliveryDate" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="datepicker center textbox_style" Height="22px" Width="90%"></asp:TextBox>
+                                                <asp:RequiredFieldValidator ID="rfvDeliveryDate" runat="server" ControlToValidate="DeliveryDate" ErrorMessage="*" ForeColor="Red" Display="Dynamic" />
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField HeaderText="Department" HeaderStyle-Width="10%" ItemStyle-Width="10%" Visible="false">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="Department" runat="server"></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="Department" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="center textbox_style" Height="22px" Width="90%"></asp:TextBox>
+                                                <asp:RequiredFieldValidator ID="rfvDepartment" runat="server" ControlToValidate="Department" ErrorMessage="*" ForeColor="Red" Display="Dynamic" />
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
