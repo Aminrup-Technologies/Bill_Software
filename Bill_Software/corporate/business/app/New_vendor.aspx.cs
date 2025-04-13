@@ -138,7 +138,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-            string cmdString = "SELECT TOP 1 Vendor_Id FROM tbl_Vendor WHERE Vendor_Id LIKE 'AA%' ORDER BY Vendor_Id DESC";
+            string cmdString = "SELECT TOP 1 Vendor_Id FROM tbl_Vendor ORDER BY Id DESC";
             using (SqlCommand com = new SqlCommand(cmdString, DbCL.Conn))
             {
                 using (SqlDataReader dr = com.ExecuteReader())

@@ -258,7 +258,7 @@
 
                 <tr>
                     <td class="style5" colspan="2">
-                        <span lang="en-us"><span class="style6">&nbsp;</span><span class="style9">PURCHASE VOUCHER</span></span></td>
+                        <span lang="en-us"><span class="style6">&nbsp;</span><span class="style9">PURCHASE INVOICE</span></span></td>
                 </tr>
 
                 <tr>

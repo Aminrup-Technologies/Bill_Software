@@ -67,7 +67,7 @@
                             <li id="Dashboard" runat="server">Dashboard
 								<!--sub menu start here-->
                                 <ul class="nav first">
-                                    <li id="Data_Mastering" runat="server"><a href="">Data Mastering</a>
+                                    <li id="Data_Mastering" runat="server"><a href="#">Master Data</a>
                                         <ul class="nav first1">
                                             <li id="master_State" runat="server"><a href="master_State.aspx">State Master</a></li>
                                             <li id="master_city" runat="server"><a href="master_city.aspx">City Master</a></li>
@@ -94,14 +94,14 @@
                                 <!--sub menu end here-->
                             </li>
 
-                            <li id="Vendor" runat="server">Vendor
+                            <li id="Vendor" runat="server">Principle
 									<ul class="nav first">
-                                        <li id="New_vendor" runat="server"><a href="New_vendor.aspx">Create Vendor</a></li>
-                                        <li id="View_vendor" runat="server"><a href="View_vendor.aspx">View Vendor</a></li>
-                                        <li id="Delete_vendor" runat="server"><a href="Delete_vendor.aspx">Delete Vendor</a></li>
+                                        <li id="New_vendor" runat="server"><a href="New_vendor.aspx">Create Principle</a></li>
+                                        <li id="View_vendor" runat="server"><a href="View_vendor.aspx">View Principle</a></li>
+                                        <li id="Delete_vendor" runat="server"><a href="Delete_vendor.aspx">Delete Principle</a></li>
                                         <%--<li id="Purchase_price_fixt_new_client" runat="server"><a href="Purches_new_vendor.aspx">Fix Purchasse Price To New Vendor</a></li>--%>
                                         <%-- <li id="Vendor_quotation" runat="server"><a href="Vendor_quotation.aspx">Add Vendor Quotation</a></li>--%>
-                                        <li id="Purches_exting_vendor" runat="server"><a href="Purches_exting_vendor.aspx">Purchase Add</a></li>
+                                        <li id="Purches_exting_vendor" runat="server"><a href="Purches_exting_vendor.aspx">Add Purchase</a></li>
                                         <li id="View_purches" runat="server"><a href="View_purches.aspx">View Purchase</a></li>
                                         <li id="seartch_purtch" runat="server"><a href="seartch_purtch.aspx">Search Purchase</a></li>
                                         <li id="Delete_purtches" runat="server"><a href="Delete_purtches.aspx">Delete Purchase</a></li>
@@ -117,19 +117,20 @@
                                     </ul>
                             </li>
 
-                            <li id="Client" runat="server">Client
+                            <li id="Client" runat="server">Customer
 									<ul class="nav first">
-                                        <li id="New_client" runat="server"><a href="New_client.aspx">Add Client</a></li>
-                                        <li id="View_client" runat="server"><a href="View_client.aspx">View Client</a></li>
-                                        <li id="Delete_client" runat="server"><a href="Delete_client.aspx">Delete Client</a></li>
-                                        <li id="Representative" runat="server"><a href="Representative.aspx">Add Representatives</a></li>
+                                        <li id="New_client" runat="server"><a href="New_client.aspx">Add Customer</a></li>
+                                        <li id="View_client" runat="server"><a href="View_client.aspx">View Customer</a></li>
+                                        <li id="Delete_client" runat="server"><a href="Delete_client.aspx">Delete Customer</a></li>
+                                        <li id="Representative" runat="server"><a href="Representative.aspx">Add Customer SPOC</a></li>
                                         <li id="AddFactory" runat="server"><a href="AddFactory.aspx">Add Factory</a></li>
                                     </ul>
                             </li>
-                            <li id="Quotatio" runat="server">Quotation
+                            <li id="Quotatio" runat="server">Quotation / PO
 									<ul class="nav first">
-                                        <li id="Create_quotation" runat="server"><a href="Create_quotation.aspx">Create Quotation</a></li>
+                                        <li id="Create_quotation" runat="server"><a href="Create_quotation.aspx">Create Quotation / PO</a></li>
                                         <li id="View_quotation" runat="server"><a href="View_quotation.aspx">View Quotation</a></li>
+                                        <li id="View_po" runat="server"><a href="View_PurchaseOrder.aspx">View Purchase Order</a></li>
                                         <li id="Seartch_quotation" runat="server"><a href="Seartch_quotation.aspx">Search Quotation</a></li>
                                         <li id="Delete_Quotation" runat="server"><a href="Delete_Quotation.aspx">Delete Quotation</a></li>
                                         <li id="Edit_quatation" runat="server"><a href="Edit_quatation.aspx">Edit Quotation</a></li>

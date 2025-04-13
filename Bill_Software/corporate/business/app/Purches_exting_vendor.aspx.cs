@@ -626,15 +626,45 @@ namespace Bill_Software.corporate.business.app
             SqlDataReader re = cmd10.ExecuteReader();
             if (re.Read())
             {
-                DbCL.executeRdr("update tbl_stock set Quantity=(cast(Quantity as int)+'" + Quantity1.ToString() + "'),Sail_Rate='" + Sale_rate + "',Service_tax_rate='" + service_Tax_Rate + "' where Product_id='" + Ser_pro_code + "' and Product_name='" + Ser_pro_Name + "'");
+                //DbCL.executeRdr("UPDATE tbl_stock SET Quantity = CAST(CAST(Quantity AS DECIMAL(18,3)) + " + Quantity1 + " AS VARCHAR(50)), Sail_Rate = '" + Sale_rate + "', Service_tax_rate = '" + service_Tax_Rate + "' WHERE Product_id = '" + Ser_pro_code + "' AND Product_name = '" + Ser_pro_Name + "'");
 
-                DbCL.executeRdr("UPDATE tbl_NewProduct SET Quantity=(CAST(Quantity AS INT) + '" + Quantity1.ToString() + "'), Sail_Rate='" + Sale_rate + "', Tax_Rate='" + service_Tax_Rate + "' WHERE ProductID='" + Ser_pro_code + "' AND ProductName='" + Ser_pro_Name + "'");
+                //DbCL.executeRdr("UPDATE tbl_NewProduct SET Quantity = CAST(CAST(Quantity AS DECIMAL(18,3)) + " + Quantity1 + " AS VARCHAR(50)), Sail_Rate = '" + Sale_rate + "', Tax_Rate = '" + service_Tax_Rate + "' WHERE ProductID = '" + Ser_pro_code + "' AND ProductName = '" + Ser_pro_Name + "'");
+
+                DbCL.executeRdr(
+                    "UPDATE tbl_stock " +
+                    "SET Quantity = CAST(CAST(Quantity AS DECIMAL(18,3)) + " + Quantity1 + " AS VARCHAR(50)), " +
+                    "Sail_Rate = '" + Sale_rate + "', " +
+                    "Service_tax_rate = '" + service_Tax_Rate + "' " +
+                    "WHERE Product_id = '" + Ser_pro_code + "' AND Product_name = '" + Ser_pro_Name + "' " +
+                    "AND ISNUMERIC(Quantity) = 1"
+                );
+
+                DbCL.executeRdr(
+                    "UPDATE tbl_NewProduct " +
+                    "SET Quantity = CAST(CAST(Quantity AS DECIMAL(18,3)) + " + Quantity1 + " AS NVARCHAR(100)), " +
+                    "Sail_Rate = '" + Sale_rate + "', " +
+                    "Tax_Rate = '" + service_Tax_Rate + "' " +
+                    "WHERE ProductID = '" + Ser_pro_code + "' AND ProductName = '" + Ser_pro_Name + "' " +
+                    "AND ISNUMERIC(Quantity) = 1"
+                );
+
+
             }
             else
             {
-                DbCL.executeRdr("insert into tbl_stock(Product_id,Product_name,Quantity,Sail_Rate,Service_tax_rate)values('" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Quantity1 + "','" + Sale_rate + "','" + service_Tax_Rate + "')");
+                //DbCL.executeRdr("insert into tbl_stock(Product_id,Product_name,Quantity,Sail_Rate,Service_tax_rate)values('" + Ser_pro_code + "','" + Ser_pro_Name + "','" + Quantity1 + "','" + Sale_rate + "','" + service_Tax_Rate + "')");
 
-                DbCL.executeRdr("INSERT INTO tbl_NewProduct (ProductID, ProductName, Quantity, Sail_Rate, Tax_Rate) VALUES ('" + Ser_pro_code + "', '" + Ser_pro_Name + "', '" + Quantity1 + "', '" + Sale_rate + "', '" + service_Tax_Rate + "')");
+                //DbCL.executeRdr("INSERT INTO tbl_NewProduct (ProductID, ProductName, Quantity, Sail_Rate, Tax_Rate) VALUES ('" + Ser_pro_code + "', '" + Ser_pro_Name + "', '" + Quantity1 + "', '" + Sale_rate + "', '" + service_Tax_Rate + "')");
+
+                DbCL.executeRdr(
+                    "INSERT INTO tbl_stock (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate) " +
+                    "VALUES ('" + Ser_pro_code + "', '" + Ser_pro_Name + "', '" + Quantity1 + "', '" + Sale_rate + "', '" + service_Tax_Rate + "')"
+                );
+
+                DbCL.executeRdr(
+                    "INSERT INTO tbl_NewProduct (ProductID, ProductName, Quantity, Sail_Rate, Tax_Rate) " +
+                    "VALUES ('" + Ser_pro_code + "', '" + Ser_pro_Name + "', '" + Quantity1 + "', '" + Sale_rate + "', '" + service_Tax_Rate + "')"
+                );
             }
             DbCL.Conn.Close();
         }
@@ -759,8 +789,6 @@ namespace Bill_Software.corporate.business.app
             cmd.Parameters.AddWithValue("@Purchess_Date", txtPurchesDate.Text);
             cmd.Parameters.AddWithValue("@Client_Id", lblvendor_id.Text);
             cmd.Parameters.AddWithValue("@Net_amount", lblpaayment_amount.Text);
-
-
             cmd.Parameters.AddWithValue("@Given_amount", txtpaymentamount.Text);
             cmd.Parameters.AddWithValue("@type", RadioButtonList2.Text);
             cmd.Parameters.AddWithValue("@Ch_no", no.ToString());

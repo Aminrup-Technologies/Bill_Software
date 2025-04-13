@@ -272,6 +272,7 @@
     <Content Include="corporate\business\app\Update_vendor.aspx" />
     <Content Include="corporate\business\app\ViewHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Viewhydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\View_PurchaseOrder.aspx" />
     <Content Include="corporate\business\app\View_vendor.aspx" />
     <Content Include="corporate\business\app\Delete_vendor.aspx" />
     <Content Include="corporate\business\app\New_client.aspx" />
@@ -360,6 +361,7 @@
     <Content Include="corporate\business\print\NewPaymentInvoice.aspx" />
     <Content Include="corporate\business\print\NewPaymentInvoiceDuplicate.aspx" />
     <Content Include="corporate\business\print\NewProformaInvoice.aspx" />
+    <Content Include="corporate\business\print\NewPurchaseOrder.aspx" />
     <Content Include="corporate\business\print\NewQuotation.aspx" />
     <Content Include="corporate\business\print\Patty_cash_expencess_voutcher.aspx" />
     <Content Include="corporate\business\print\proforma_invoice.aspx" />
@@ -869,6 +871,13 @@
     </Compile>
     <Compile Include="corporate\business\app\Viewhydrent_invoice.aspx.designer.cs">
       <DependentUpon>Viewhydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_PurchaseOrder.aspx.cs">
+      <DependentUpon>View_PurchaseOrder.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_PurchaseOrder.aspx.designer.cs">
+      <DependentUpon>View_PurchaseOrder.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\View_vendor.aspx.cs">
       <DependentUpon>View_vendor.aspx</DependentUpon>
@@ -1485,6 +1494,13 @@
     </Compile>
     <Compile Include="corporate\business\print\NewProformaInvoice.aspx.designer.cs">
       <DependentUpon>NewProformaInvoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewPurchaseOrder.aspx.cs">
+      <DependentUpon>NewPurchaseOrder.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewPurchaseOrder.aspx.designer.cs">
+      <DependentUpon>NewPurchaseOrder.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\print\NewQuotation.aspx.cs">
       <DependentUpon>NewQuotation.aspx</DependentUpon>

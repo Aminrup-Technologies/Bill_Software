@@ -12,14 +12,13 @@ using System.Threading;
 
 namespace Bill_Software.corporate.business.print
 {
-    public partial class NewQuotation : System.Web.UI.Page
+    public partial class NewPurchaseOrder : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
+
         public string taxorvat = "";
         public string proOrser = "";
-
         public string psid = "";
-
         public string str = "";
         public string strp = "";
 
@@ -40,10 +39,10 @@ namespace Bill_Software.corporate.business.print
 
         public string netamount = "";
         public int TQ = 0;
-
         public static string viewtype = string.Empty;
 
         CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
@@ -56,7 +55,6 @@ namespace Bill_Software.corporate.business.print
                 //BindVatamount();
             }
         }
-
         private void buindalldata(string id)
         {
             string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst,PlaceofSupply,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks,DetailedView,ReferenceData from tbl_Quotation where ID=@ID";
@@ -172,7 +170,7 @@ namespace Bill_Software.corporate.business.print
                 {
                     string pserv = dtpr.Rows[i]["PrimaryService"].ToString();
                     string primaryserviceDetails = bindterms1(pserv);
-                    if (primaryserviceDetails!="")
+                    if (primaryserviceDetails != "")
                     {
                         strServTerm.Append("<table border='0' width='100%' class='PrimaryService'>");
                         strServTerm.Append("<tr><td colspan='2' class='' style='text-align: left; font-weight: bold;'>");
@@ -183,7 +181,7 @@ namespace Bill_Software.corporate.business.print
                         strServTerm.Append("<tr><td colspan='2' class='gap' style=''>&nbsp</td></tr>");
                         strServTerm.Append(" </table>");
                     }
-                    
+
                 }
                 //TextInfo textInfo1 = cultureInfo.TextInfo;
                 if (Session["pserTerm"] != null)
@@ -205,7 +203,7 @@ namespace Bill_Software.corporate.business.print
             cmd.CommandType = CommandType.Text;
             cmd.CommandTimeout = 0;
             cmd.Parameters.AddWithValue("@PrimaryService", pserv.ToString());
-            
+
             SqlDataReader re = cmd.ExecuteReader();
 
             if (re.Read())
@@ -1337,7 +1335,7 @@ namespace Bill_Software.corporate.business.print
                 string Address1 = dtClient.Rows[0]["Address1"].ToString();
                 string Address2 = dtClient.Rows[0]["Address2"].ToString();
                 string add = "";
-                if (Address1 == Address2 || Address2 =="(Blank)" || Address2 == "N/A" || Address2 == string.Empty)
+                if (Address1 == Address2 || Address2 == "(Blank)" || Address2 == "N/A" || Address2 == string.Empty)
                 {
                     add = Address1;
                 }
@@ -1433,7 +1431,7 @@ namespace Bill_Software.corporate.business.print
                     {
                         PrimaryService = PrimaryService +" , "+ Service;
                     }*/
-          }
+        }
         private void generatelavel(int count, string qutno)
         {
             string PrimaryService = "";
@@ -1448,14 +1446,14 @@ namespace Bill_Software.corporate.business.print
             while (re.Read())
             {
                 string name = re["PrimaryService"].ToString();
-                name= "“"+name + "”";
+                name = "“" + name + "”";
                 if (count == 1 || flag == 1)
                 {
                     //service = "“" + re["PrimaryService"].ToString() + "”";
                     service = name;
                     flag = flag + 1;
                 }
-                
+
                 else if (flag == count)
                 {
                     service = service + " & " + name.ToString();
@@ -1474,7 +1472,7 @@ namespace Bill_Software.corporate.business.print
             lblservice.Text = textInfo1.ToTitleCase(PrimaryService.ToString().ToLower());
             lblPrimaryService.Text = textInfo1.ToTitleCase(PrimaryService.ToString().ToLower());
         }
-    
+
         protected void Button1_Click(object sender, EventArgs e)
         {
 

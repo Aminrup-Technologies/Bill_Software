@@ -1,10 +1,10 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="NewQuotation.aspx.cs" Inherits="Bill_Software.corporate.business.print.NewQuotation" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="NewPurchaseOrder.aspx.cs" Inherits="Bill_Software.corporate.business.print.NewPurchaseOrder" %>
 
 <!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>Quotation Page</title>
+    <title>Purchase Order Page</title>
     <link rel="shortcut icon" href="../../Image/kvqafabioc.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
     <style type="text/css">
@@ -95,8 +95,14 @@
                 <tr>
                     <th></th>
                 </tr>
-
+                <tr>
+                    <td colspan='4' style="text-align: right; font-weight: bold; font-size: 30px; color: #e31e24;">PURCHASE / DELIVERY ORDER</td>
+                </tr>
+                <tr>
+                    <td class="sub" style="text-align: right; font-weight: bold;  font-size: 15px;">Received from the Customer</td>
+                </tr>
             </thead>
+
             <tfoot style='width: 100%;'>
                 <tr>
                     <td width='100%'>
@@ -110,6 +116,7 @@
                     </td>
                 </tr>
             </tfoot>
+
             <tbody style="font-family: 'Century Gothic'; font-size: 12px; padding: 3px 5px; border: 0px solid #c6c7cc;">
                 <tr>
                     <td id='bodycontain' width='100%' style='font-weight: bold'>
@@ -258,9 +265,9 @@
                 <td class='gap' style='text-align: center; font-weight: bold;'>&nbsp</td>
             </tr>
             <tr>
-                <td class='sub' style='text-align: center; font-weight: bold; font-size: 12px; text-decoration: underline;'>Sub: Commercial Proposal for
+                <td class='sub' style='text-align: center; font-weight: bold; font-size: 12px; text-decoration: underline;'>Sub: Commercial Requiremnts for
                                     <asp:Label ID='lblservice' runat='server'></asp:Label>
-                    <asp:Label ID='lblprimary_service' runat='server'></asp:Label></td>
+                    <asp:Label ID='lblprimary_service' runat='server'></asp:Label> delivery</td>
             </tr>
             <tr>
                 <td class='gap' style='text-align: center; font-weight: bold;'>&nbsp</td>
@@ -269,7 +276,7 @@
 
         <table border='0' width='100%' class='bodytext pagebrake'>
             <tr>
-                <td class='' style='text-align: left; font-weight: bold;'>Dear Sir/Madam,
+                <td class='' style='text-align: left; font-weight: bold;'>To Flame-ex Team,
                                     <asp:Label ID='lbltital' runat='server'></asp:Label>&nbsp;<asp:Label ID="lbllname" runat="server"></asp:Label></td>
             </tr>
             <%--<tr>

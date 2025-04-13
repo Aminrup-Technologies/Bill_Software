@@ -1,16 +1,13 @@
 ﻿<%@ Page Title="Create Quotations" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Create_quotation.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm19" %>
-
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-
-
     <style type="text/css">
         .auto-style1 {
             width: 100%;
         }
 
-            .auto-style1 tr {
-                height: 10px;
-            }
+        .auto-style1 tr {
+            height: 10px;
+        }
 
         .style2 {
             color: #FFFFFF;
@@ -35,6 +32,7 @@
         }
     </style>
 </asp:Content>
+
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
     <script src="calender/jquery-1.7.1.js" type="text/javascript" language="javascript"></script>
@@ -54,31 +52,13 @@
             });
         });
 
-        <%--function ValidateField() {
-            if (document.getElementById('<%=cmbClient.ClientID%>').selectedIndex == 0) {
-                alert("Please Select Client.");
-                document.getElementById('<%=cmbClient.ClientID%>').focus();
-                return false;
-            }
-
-            // Validate the Client Reference Name TextBox
-            var clientRefName = document.getElementById('<%=txt_clientrefname.ClientID%>').value.trim();
-            if (clientRefName === "") {
-                alert("Please Enter Client Reference Name.");
-                document.getElementById('<%=txt_clientrefname.ClientID%>').focus();
-                return false;
-            }
-        }--%>
-
         function ValidateField() {
-            // Validate Client Dropdown
             if (document.getElementById('<%=cmbClient.ClientID%>').selectedIndex == 0) {
                 alert("Please select a Client.");
                 document.getElementById('<%=cmbClient.ClientID%>').focus();
                 return false;
             }
 
-            // Validate Client Reference Name
             var clientRefName = document.getElementById('<%=txt_clientrefname.ClientID%>').value.trim();
             if (clientRefName === "") {
                 alert("Please enter Client Reference Name.");
@@ -86,7 +66,6 @@
                 return false;
             }
 
-            // Validate Client Reference ID
             var clientRefId = document.getElementById('<%=txt_clientrefid.ClientID%>').value.trim();
             if (clientRefId === "") {
                 alert("Please enter Client Reference ID.");
@@ -114,7 +93,6 @@
                 return false;
             }
 
-            // Validate GST RadioButton Selection
             var gstOptions = document.getElementById('<%=RadioButtonGst.ClientID%>').getElementsByTagName('input');
             var gstSelected = false;
             for (var i = 0; i < gstOptions.length; i++) {
@@ -127,7 +105,6 @@
                 alert("Please select a GST option.");
                 return false;
             }
-
             return true;
         }
 
@@ -285,17 +262,43 @@
                 remarks.focus();
                 return false;
             }
+            var grid = document.getElementById('<%= GridView3.ClientID %>');
+            var rows = grid.getElementsByTagName('tr');
+            var isValid = true;
+
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var amountPerInput = row.querySelector('[id$="AmountPer"]');
+
+                if (amountPerInput) {
+                    var amount = parseFloat(amountPerInput.value);
+                    if (isNaN(amount) || amount < 0 || amount > 100) {
+                        alert("Please enter a valid Payment Percentage (0-100) for each row.");
+                        amountPerInput.focus();
+                        isValid = false;
+                        break;
+                    }
+
+                    // If only one row, set AmountPer to 100
+                    if (rows.length === 1 && amount !== 100) {
+                        alert("If only one row is present, AmountPer must be 100.");
+                        amountPerInput.focus();
+                        isValid = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!isValid) {
+                return false;
+            }
 
             return true;
         }
 
         function validate(key, element) {
             var keycode = (key.which) ? key.which : key.keyCode;
-
-            // Reference the element that triggered the event
             var phn = element;
-
-            // Allow numbers (0-9), backspace (8), and delete (46)
             if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
                 return false;
             } else {
@@ -307,36 +310,6 @@
             var keycode = (key.which) ? key.which : key.keyCode;
             return keycode !== 39;  // Block right arrow key
         }
-
-        //function validate(key) {
-        //    var keycode = (key.which) ? key.which : key.keyCode;
-        //    var phn = document.getElementById('txtfillrequar');
-        //    if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
-        //        return false;
-        //    }
-        //    else {
-        //        if (phn.value.length < 50) {
-        //            return true;
-        //        }
-        //        else {
-        //            return false;
-        //        }
-        //    }
-        //}
-
-        //function validate1(key) {
-        //    //getting key code of pressed key
-        //    var keycode = (key.which) ? key.which : key.keyCode;
-        //    var phn = document.getElementById('txtfillrequar');
-        //    //comparing pressed keycodes
-        //    if ((keycode == 39)) {
-        //        return false;
-        //    }
-        //    else {
-        //        return true;
-
-        //    }
-        //}
 
         function ValidateDataField10() {
 
@@ -420,47 +393,6 @@
                 manualInputRow.style.display = "none";
             }
         }
-
-
-        //function validateRowSelectionForAnotherGrid(gridViewId) {
-        //    // Step 1: Get the GridView element by its ClientID
-        //    console.log("GridView ID being passed: " + gridViewId);
-        //    var gridView = document.getElementById('ContentPlaceHolder1_gd_Service_Product');
-
-        //    // If GridView is not found, log and exit
-        //    if (!gridView) {
-        //        console.log("GridView not found. Exiting validation.");
-        //        alert("GridView not found.");
-        //        return false;
-        //    }
-
-        //    console.log("GridView found. Proceeding with validation.");
-
-        //    // Step 2: Get all the rows in the GridView (including header row)
-        //    var rows = gridView.getElementsByTagName('tr');
-        //    var isRowSelected = false;
-
-        //    // Loop through each row to check if any row is selected
-        //    for (var i = 0; i < rows.length; i++) {
-        //        // Find the checkbox inside the row
-        //        var checkBox = rows[i].querySelector("input[type='checkbox']");
-
-        //        if (checkBox && checkBox.checked) {
-        //            isRowSelected = true;
-        //            break;  // Exit the loop if at least one row is selected
-        //        }
-        //    }
-
-        //    // Log the result of the row selection
-        //    if (isRowSelected) {
-        //        console.log("At least one row is selected.");
-        //        return true;  // At least one row is selected
-        //    } else {
-        //        console.log("No row is selected.");
-        //        alert("Please select at least one row.");
-        //        return false;  // No row is selected
-        //    }
-        //}
 
         function validateRowSelectionForAnotherGrid(gridViewId) {
             console.log("GridView ID being passed: " + gridViewId);
@@ -607,7 +539,16 @@
             </td>
             <td>&nbsp;</td>
         </tr>
-
+        <tr>
+            <td>&nbsp;</td>
+            <td colspan="4">
+                <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                    &nbsp;<asp:Image ID="Image1" runat="server" Height="16px" ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png" Width="16px" />
+                    &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
+                </asp:Panel>
+            </td>
+            <td>&nbsp;</td>
+        </tr>
         <tr>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
@@ -771,7 +712,7 @@
             <td>&nbsp;</td>
             <td>&nbsp;<asp:Label ID="lbl_recordtype" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>Select Record / Document Type</td>
             <td>&nbsp;
-                <asp:RadioButton ID="rbQt" runat="server" GroupName="recordOption" Text="Quotation" Checked="true" AutoPostBack="false" OnClick="togglePanel()" />
+                <asp:RadioButton ID="rbQt" runat="server" GroupName="recordOption" Text="Quotation" Checked="true" AutoPostBack="false" OnClick="togglePanel()" />&nbsp;&nbsp;
                 <asp:RadioButton ID="rbPo" runat="server" GroupName="recordOption" Text="Purchase Order" AutoPostBack="false" OnClick="togglePanel()" />
             </td>
             <td>&nbsp;</td>

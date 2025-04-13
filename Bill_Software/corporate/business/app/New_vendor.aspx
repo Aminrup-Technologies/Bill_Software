@@ -91,7 +91,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <table class="style1">
         <tr>
-            <td bgcolor="#19658A" colspan="6">&nbsp;<span class="style2">Create Vendor</span>&nbsp;</td>
+            <td bgcolor="#19658A" colspan="6">&nbsp;<span class="style2">Create Principle</span>&nbsp;</td>
         </tr>
         <tr>
             <td width="10%">&nbsp;</td>
@@ -120,7 +120,7 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
-            <td width="15%">&nbsp;<span class="style3">*</span>Vendor Name&nbsp;</td>
+            <td width="15%">&nbsp;<span class="style3">*</span>Principle / Vendor Name&nbsp;</td>
             <td width="25%">
                 <asp:TextBox ID="txtvendorName" runat="server" CssClass="textbox_style"
                     Width="250px"></asp:TextBox>

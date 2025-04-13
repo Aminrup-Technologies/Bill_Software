@@ -82,11 +82,11 @@ namespace Bill_Software.corporate.business.print
                 lblstax0.Text = ProdcutTaxes.ToString("N2");
                 //lblnetamount.Text = grandTotal.ToString("N2");
                 //lbl_ttl1word.Text = ConvertNumberToWords((int)grandTotal) + " Only";
-                lbl_ttl1word.Text = ConvertAmountToWords((decimal)grandTotal) + " Only";
+                lbl_ttl1word.Text = ConvertAmountToWords((long)grandTotal) + " Only";
             }
         }
 
-        public string ConvertNumberToWords(int number)
+        public string ConvertNumberToWords(long number)
         {
             if (number == 0)
                 return "Zero";
@@ -99,8 +99,14 @@ namespace Bill_Software.corporate.business.print
             }
 
             string[] unitsMap = { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-                                    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+                            "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
             string[] tensMap = { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+
+            if ((number / 10000000) > 0)
+            {
+                words += ConvertNumberToWords(number / 10000000) + " Crore ";
+                number %= 10000000;
+            }
 
             if ((number / 100000) > 0)
             {
@@ -138,13 +144,14 @@ namespace Bill_Software.corporate.business.print
             return words;
         }
 
+
         public string ConvertAmountToWords(decimal amount)
         {
             if (amount == 0)
                 return "Zero Rupees";
 
-            int integerPart = (int)amount; // Get the whole number part
-            int decimalPart = (int)((amount - integerPart) * 100); // Get the decimal (paise) part
+            long integerPart = (long)amount;
+            int decimalPart = (int)((amount - integerPart) * 100);
 
             string words = ConvertNumberToWords(integerPart) + " Rupees";
 
@@ -155,6 +162,7 @@ namespace Bill_Software.corporate.business.print
 
             return words;
         }
+
 
 
         private void buindalldata()
