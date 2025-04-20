@@ -39,6 +39,10 @@
         .auto-style2 {
             height: 24px;
         }
+
+        .textbox_style21 {
+            text-align: center;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -64,7 +68,7 @@
             var invNo = document.getElementById('<%= txt_invno.ClientID %>').value.trim();
             var purchDate = document.getElementById('<%= txtPurchesDate.ClientID %>').value.trim();
             var invAmount = document.getElementById('<%= txt_inv_amount.ClientID %>').value.trim();
-    
+
             var otherAmount1 = document.getElementById('<%= txt_othr_amnt1.ClientID %>').value.trim();
             var otherAmount2 = document.getElementById('<%= txt_othr_amnt2.ClientID %>').value.trim();
             var textBox1 = document.getElementById('<%= TextBox1.ClientID %>').value.trim();
@@ -72,7 +76,7 @@
 
             var deliveryAmount = document.getElementById('<%= txt_delivery_amnt.ClientID %>').value.trim();
             var vatDropdown = document.getElementById('<%= DDL_vat_parsentage.ClientID %>');
-    
+
             var tcsAmount = document.getElementById('<%= txt_tcs_amnt.ClientID %>').value.trim();
             var vattcspercent = document.getElementById('<%= txt_tcs_percent.ClientID %>').value.trim();
 
@@ -205,11 +209,9 @@
                 return true;
 
             }
-
         }
 
         function ValidateDataField10() {
-
         }
 
         <%--function ValidateDataField11() {
@@ -233,7 +235,54 @@
             }
         }
 
+        function calculateDiscount(changedInput) {
+            console.log("Triggered calculateDiscount");
+
+            var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            var rows = grid.getElementsByTagName("tr");
+
+            for (var i = 1; i < rows.length; i++) {
+                if (rows[i].contains(changedInput)) {
+                    var row = rows[i];
+
+                    var rateInput = row.querySelector("input[id*='Vendor_rate']");
+                    var qtyInput = row.querySelector("input[id*='Quantity']");
+                    var percentInput = row.querySelector("input[id*='DiscountPercent']");
+                    var amountInput = row.querySelector("input[id*='DiscountAmount']");
+                    var taxableAmountInput = row.querySelector("input[id*='TaxableAmount']");
+
+                    var rate = rateInput && rateInput.value ? parseFloat(rateInput.value) : 0;
+                    var qty = qtyInput && qtyInput.value ? parseFloat(qtyInput.value) : 0;
+                    var total = rate * qty;
+
+                    var percent = percentInput && percentInput.value ? parseFloat(percentInput.value) : 0;
+                    var amount = amountInput && amountInput.value ? parseFloat(amountInput.value) : 0;
+
+                    if (changedInput === percentInput) {
+                        amount = ((percent / 100) * total);
+                        amountInput.value = amount.toFixed(2);
+                        console.log("Discount % changed. Amount:", amount.toFixed(2));
+                    } else if (changedInput === amountInput) {
+                        percent = total !== 0 ? ((amount / total) * 100) : 0;
+                        percentInput.value = percent.toFixed(2);
+                        console.log("Discount Amount changed. %:", percent.toFixed(2));
+                    }
+
+                    // Update Taxable Amount
+                    var taxable = total - amount;
+                    if (taxableAmountInput) {
+                        taxableAmountInput.value = taxable.toFixed(2);
+                        console.log("Taxable Amount:", taxable.toFixed(2));
+                    }
+
+                    break;
+                }
+            }
+        }
+
+
     </script>
+
 
     <asp:ScriptManager ID="ScriptManager1" runat="server">
     </asp:ScriptManager>
@@ -523,35 +572,6 @@
                                                         <asp:TextBox ID="sepecification" runat="server" CssClass="textbox_style21" onkeypress="return validate1(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px" Width="250px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
-                                                <asp:TemplateField HeaderText="Vendor Rate">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="TextBox4" runat="server"></asp:TextBox>
-                                                    </EditItemTemplate>
-                                                    <ItemTemplate>
-                                                        <%--<asp:Label ID="Vendor_rate" runat="server" Text='<%# Bind("Vendor_rate") %>'></asp:Label>--%>
-                                                        <asp:TextBox ID="Vendor_rate" runat="server" CssClass="textbox_style21" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
-                                                        <%--<asp:TextBox ID="Vendor_rate" runat="server" CssClass="textbox_style21" onkeypress="return validate(event)" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Height="22px"></asp:TextBox>--%>
-                                                    </ItemTemplate>
-
-                                                </asp:TemplateField>
-                                                <asp:TemplateField HeaderText="Tax Applicable">
-
-                                                    <ItemTemplate>
-                                                        <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal">
-                                                            <asp:ListItem>Yes</asp:ListItem>
-                                                            <asp:ListItem Selected="True">No</asp:ListItem>
-                                                        </asp:RadioButtonList>
-                                                    </ItemTemplate>
-
-                                                </asp:TemplateField>
-                                                <asp:TemplateField HeaderText="Input %(VAT/SERVICE TAX)">
-
-                                                    <ItemTemplate>
-                                                        <asp:DropDownList ID="vat_parsentage" runat="server" CssClass="dropdown_style">
-                                                        </asp:DropDownList>
-                                                    </ItemTemplate>
-
-                                                </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Quantity">
                                                     <EditItemTemplate>
                                                         <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
@@ -560,8 +580,50 @@
                                                         <asp:TextBox ID="Quantity" runat="server" CssClass="textbox_style21" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
+                                                <asp:TemplateField HeaderText="Vendor Rate">
+                                                    <EditItemTemplate>
+                                                        <asp:TextBox ID="TextBox4" runat="server"></asp:TextBox>
+                                                    </EditItemTemplate>
+                                                    <ItemTemplate>
+                                                        <asp:TextBox ID="Vendor_rate" runat="server" CssClass="textbox_style21" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
+                                                <asp:TemplateField HeaderText="Dis. %">
+                                                    <ItemTemplate>
+                                                        <asp:TextBox ID="DiscountPercent" runat="server" CssClass="textbox_style21"
+                                                            onkeyup="calculateDiscount(this)"
+                                                            BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px" Width="60px"></asp:TextBox>
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
 
-
+                                                <asp:TemplateField HeaderText="Disc. Amount">
+                                                    <ItemTemplate>
+                                                        <asp:TextBox ID="DiscountAmount" runat="server" CssClass="textbox_style21"
+                                                            onkeyup="calculateDiscount(this)"
+                                                            BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px" Width="80px"></asp:TextBox>
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
+                                                <asp:TemplateField HeaderText="Taxable Amount">
+                                                    <ItemTemplate>
+                                                        <asp:TextBox ID="TaxableAmount" runat="server" CssClass="textbox_style21"
+                                                            ReadOnly="true" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid"
+                                                            Height="22px" Width="100px"></asp:TextBox>
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
+                                                <asp:TemplateField HeaderText="Tax Applicable">
+                                                    <ItemTemplate>
+                                                        <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal">
+                                                            <asp:ListItem>Yes</asp:ListItem>
+                                                            <asp:ListItem Selected="True">No</asp:ListItem>
+                                                        </asp:RadioButtonList>
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
+                                                <asp:TemplateField HeaderText="Input %">
+                                                    <ItemTemplate>
+                                                        <asp:DropDownList ID="vat_parsentage" runat="server" CssClass="dropdown_style">
+                                                        </asp:DropDownList>
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
 
                                             </Columns>
                                             <FooterStyle BackColor="#CCCC99" />
@@ -580,13 +642,24 @@
                                 </tr>
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>&nbsp;<asp:Label ID="Label3" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase / Invoice Number</td>
+                                    <td>&nbsp;<asp:Label ID="Label3" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase / Invoice Number </td>
                                     <td>
                                         <asp:TextBox ID="txt_invno" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        &nbsp;&nbsp;Ref. / Buyer's Order No :&nbsp;&nbsp;
+                                        <asp:TextBox ID="txt_reforder" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;(optional)
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
-
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;<asp:Label ID="Label4" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase Date / Invoice Date</td>
+                                    <td>
+                                        <asp:TextBox ID="txtPurchesDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                                        &nbsp;&nbsp;Ref. / Buyer's Order Date :&nbsp;&nbsp;
+                                        <asp:TextBox ID="txt_refordrdate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>&nbsp;(optional)
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;&nbsp;Purchase / Invoice Amount</td>
@@ -595,14 +668,20 @@
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
-
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                </tr>
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;TCS Amount</td>
                                     <td>
                                         <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;&nbsp;@&nbsp;&nbsp;
                                         <%--<asp:DropDownList ID="DDL_tcspercent" runat="server" CssClass="dropdown_style"></asp:DropDownList>--%>
-                                        <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""></asp:TextBox> %
+                                        <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""></asp:TextBox>
+                                        %
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
@@ -612,27 +691,31 @@
                                     <td>&nbsp;Delivery Charges</td>
                                     <td>
                                         <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;&nbsp;@&nbsp;&nbsp;
-                                        <asp:DropDownList ID="DDL_vat_parsentage" runat="server" CssClass="dropdown_style"></asp:DropDownList> %
+                                        <asp:DropDownList ID="DDL_vat_parsentage" runat="server" CssClass="dropdown_style"></asp:DropDownList>
+                                        %
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
 
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>&nbsp;Other Charges-1 &nbsp; <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
+                                    <td>&nbsp;Other Charges-1 &nbsp;
+                                        <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
                                     <td>
-                                        <asp:TextBox ID="txt_othr_amnt1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_othr_amnt1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;(Taxable)
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
 
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td>&nbsp;Other Charges-2 &nbsp; <asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
+                                    <td>&nbsp;Other Charges-2 &nbsp;
+                                        <asp:TextBox ID="TextBox2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox></td>
                                     <td>
-                                        <asp:TextBox ID="txt_othr_amnt2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                        <asp:TextBox ID="txt_othr_amnt2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;(Non-Taxable)
                                     </td>
-                                    <td>&nbsp;</td>
+                                    <td>
+                                    </td>
                                 </tr>
 
                                 <tr>
@@ -643,20 +726,22 @@
                                     <td width="25%">&nbsp;</td>
                                     <td>&nbsp;</td>
                                 </tr>
-                                <tr>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;<asp:Label ID="Label4" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase Date / Invoice Date</td>
-                                    <td>
-                                        <asp:TextBox ID="txtPurchesDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
-                                    </td>
-                                    <td>&nbsp;</td>
-                                </tr>
+
 
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;&nbsp;Received Date (Stock Added) </td>
                                     <td>
                                         <asp:TextBox ID="txt_stockadddate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;&nbsp;Received Location (Shipped To) </td>
+                                    <td>
+                                        <asp:DropDownList ID="DDL_ShippedTo" runat="server" CssClass="dropdown_style"></asp:DropDownList>
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
@@ -817,7 +902,7 @@
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td colspan="2" style="text-align: center">
-                                        <asp:Button ID="btnpurchess_save" runat="server" OnClientClick="return ValidateDataField11();" OnClick="btnpurchess_save_Click" Text="Save" CssClass="btn_style"  />
+                                        <asp:Button ID="btnpurchess_save" runat="server" OnClientClick="return ValidateDataField11();" OnClick="btnpurchess_save_Click" Text="Save" CssClass="btn_style" />
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>

@@ -85,6 +85,24 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lbl_invoicedate;
         
         /// <summary>
+        /// Label15 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label Label15;
+        
+        /// <summary>
+        /// Label16 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label Label16;
+        
+        /// <summary>
         /// lbl_stockaddedon control.
         /// </summary>
         /// <remarks>
@@ -94,6 +112,15 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lbl_stockaddedon;
         
         /// <summary>
+        /// Label10 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label Label10;
+        
+        /// <summary>
         /// lblcompanyName control.
         /// </summary>
         /// <remarks>
@@ -101,6 +128,15 @@ namespace Bill_Software.corporate.business.print {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblcompanyName;
+        
+        /// <summary>
+        /// lblcompanyNameTo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblcompanyNameTo;
         
         /// <summary>
         /// lbladdress1 control.
@@ -121,6 +157,24 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lbladdress2;
         
         /// <summary>
+        /// lbladdress1To control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbladdress1To;
+        
+        /// <summary>
+        /// lbladdress2To control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbladdress2To;
+        
+        /// <summary>
         /// lblcity control.
         /// </summary>
         /// <remarks>
@@ -139,6 +193,24 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblPin;
         
         /// <summary>
+        /// lblcityTo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblcityTo;
+        
+        /// <summary>
+        /// lblPinTo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPinTo;
+        
+        /// <summary>
         /// lblstate control.
         /// </summary>
         /// <remarks>
@@ -146,6 +218,15 @@ namespace Bill_Software.corporate.business.print {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblstate;
+        
+        /// <summary>
+        /// lblstateTo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblstateTo;
         
         /// <summary>
         /// DataList1 control.
@@ -184,6 +265,24 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblFreightCharges;
         
         /// <summary>
+        /// lblOtherCharges1name control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblOtherCharges1name;
+        
+        /// <summary>
+        /// lblOtherCharges1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblOtherCharges1;
+        
+        /// <summary>
         /// lblTaxableValue control.
         /// </summary>
         /// <remarks>
@@ -209,6 +308,15 @@ namespace Bill_Software.corporate.business.print {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblfttax;
+        
+        /// <summary>
+        /// lbl_othr1_tax control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_othr1_tax;
         
         /// <summary>
         /// lbl_ttltax control.
@@ -256,22 +364,22 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblTCSAmount;
         
         /// <summary>
-        /// lblOtherCharges1name control.
+        /// lblOtherCharges2name control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblOtherCharges1name;
+        protected global::System.Web.UI.WebControls.Label lblOtherCharges2name;
         
         /// <summary>
-        /// lblOtherCharges control.
+        /// lblOtherCharges2 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblOtherCharges;
+        protected global::System.Web.UI.WebControls.Label lblOtherCharges2;
         
         /// <summary>
         /// lbl_ttl2amnt control.

@@ -7,6 +7,7 @@
         }
 
         .style2 {
+            font-size:12px;
             color: #FFFFFF;
             font-weight: bold;
         }
@@ -36,19 +37,13 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <table cellpadding="0" cellspacing="0" class="auto-style1">
         <tr>
-            <td colspan="4" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;View Purchase</span></td>
+            <td colspan="4" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;View Added Purchase</span></td>
         </tr>
         <tr>
             <td width="15%">&nbsp;</td>
             <td width="35%">&nbsp;</td>
             <td width="35%">&nbsp;</td>
             <td width="15%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -67,53 +62,78 @@
                     <HeaderTemplate>
                         <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
                             <tr>
-                                <td style="text-align: center; width: 15%;">
+                                <td style="text-align: center; width: 6%;">
                                     <asp:Label ID="showid" runat="server" Text="Purchase ID"></asp:Label>
                                 </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="showrm" runat="server" Text="Purchase Date"></asp:Label>
+                                <td style="text-align: center; width: 8%;">
+                                    <asp:Label ID="showrm" runat="server" Text="Creation Date"></asp:Label>
                                 </td>
-                                <td style="text-align: center; width: 25%;">
+                                <td style="text-align: center; width: 14%;">
                                     <asp:Label ID="Label2" runat="server" Text="Vendor Name"></asp:Label>
                                 </td>
-                                <td style="text-align: center; width: 20%;">
-                                    <asp:Label ID="Label6" runat="server" Text="Total Purchase Rate"></asp:Label>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="lblInvoiceNo" runat="server" Text="Invoice No"></asp:Label>
                                 </td>
-                                <td style="text-align: center; width: 20%;">
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="lblInvoiceDate" runat="server" Text="Invoice Date"></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="Label1" runat="server" Text="Order No."></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="Label8" runat="server" Text="Order Date"></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="Label12" runat="server" Text="Shipped To"></asp:Label>
+                                </td>
+                                
+                                <td style="text-align: center; width: 8%;">
                                     <asp:Label ID="Label3" runat="server" Text="Total TAX"></asp:Label>
                                 </td>
-
-                                <td style="text-align: center; width: 10%;">
+                                <td style="text-align: center; width: 8%;">
+                                    <asp:Label ID="Label6" runat="server" Text="Total Purchase Rate"></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 6%;">
                                     <asp:Label ID="edit" runat="server" Text="View"></asp:Label>
                                 </td>
                             </tr>
                         </table>
                     </HeaderTemplate>
+
                     <ItemTemplate>
                         <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
                             <tr>
-                                <td style="text-align: center; width: 15%;">
+                                <td style="text-align: center; width: 6%;">
                                     <asp:Label ID="ID" runat="server" Text='<%# Eval("Purches_Id") %>'></asp:Label>
                                 </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="addshowname" runat="server" Text='<%# Eval("Purches_date") %>'></asp:Label>
+                                <td style="text-align: center; width: 8%;">
+                                    <asp:Label ID="addshowname" runat="server" Text='<%# Eval("TimeStamp") %>'></asp:Label>
                                 </td>
-                                <td style="text-align: center; width: 25%;">
+                                <td style="text-align: center; width: 14%;">
                                     <asp:Label ID="Label4" runat="server" Text='<%# Eval("Vendor_Name") %>'></asp:Label>
                                 </td>
-                                <td style="text-align: center; width: 20%;">Rs. 
-                                    <asp:Label ID="Label7" runat="server" Text='<%# Eval("Total_purches_rate") %>'></asp:Label>
-                                    /-
-                                </td>
-                                <td style="text-align: center; width: 20%;">Rs. 
-                                    <asp:Label ID="Label5" runat="server" Text='<%# Eval("Total_Tax_rate") %>'></asp:Label>
-                                    /-
-                                </td>
-
                                 <td style="text-align: center; width: 10%;">
-                                    <a href="#" title="Print Purchasse Bill..." onclick="window.open('/corporate/business/print/purches_bill.aspx?Purches_Id=<%# DataBinder.Eval (Container.DataItem,"Purches_Id")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
-                                        <img alt="" height="25px" src="../WebImages/viewicon.png" />
-
+                                    <asp:Label ID="lblInvNo" runat="server" Text='<%# Eval("Invoice_No") %>'></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="lblInvDate" runat="server" Text='<%# Eval("Purches_date") %>'></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="Label9" runat="server" Text='<%# Eval("BuyerOrderNo") %>'></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="Label10" runat="server" Text='<%# Eval("OrderDate") %>'></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 10%;">
+                                    <asp:Label ID="Label11" runat="server" Text='<%# Eval("ShippedToStoreName") %>'></asp:Label>
+                                </td>
+                                <td style="text-align: center; width: 8%;">Rs. <asp:Label ID="Label5" runat="server" Text='<%# Eval("Total_Tax_rate") %>'></asp:Label>/-</td>
+                                <td style="text-align: center; width: 8%;">Rs. <asp:Label ID="Label7" runat="server" Text='<%# Eval("Total_purches_rate") %>'></asp:Label>/-</td>
+                                
+                                <td style="text-align: center; width: 6%;">
+                                    <a href="#" title="Print Purchase Bill..." onclick="window.open('/corporate/business/print/purches_bill.aspx?Purches_Id=<%# DataBinder.Eval(Container.DataItem,"Purches_Id")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
+                                        <img alt="" height="22px" src="../WebImages/viewicon.png" />
+                                    </a>
                                 </td>
                             </tr>
                         </table>
