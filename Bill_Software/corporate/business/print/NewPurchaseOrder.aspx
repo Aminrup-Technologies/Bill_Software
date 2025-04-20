@@ -79,8 +79,9 @@
             margin: 6mm 6mm 6mm 16mm;
         }
 
-        .auto-style1 {
-            height: 125px;
+        .auto-style2 {
+            line-height: 0.5px;
+            height: 7px;
         }
     </style>
 </head>
@@ -99,7 +100,7 @@
                     <td colspan='4' style="text-align: right; font-weight: bold; font-size: 30px; color: #e31e24;">PURCHASE / DELIVERY ORDER</td>
                 </tr>
                 <tr>
-                    <td class="sub" style="text-align: right; font-weight: bold;  font-size: 15px;">Received from the Customer</td>
+                    <td class="sub" style="text-align: right; font-weight: bold; font-size: 15px;">Received from the Customer</td>
                 </tr>
             </thead>
 
@@ -139,7 +140,7 @@
                                 <td class='add' style='vertical-align: top' width='53%'>
                                     <table border='0' width='100%' class='address'>
                                         <tr>
-                                            <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>To,</td>
+                                            <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>From,</td>
                                             <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'></td>
                                             <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
                                                 <asp:Label ID="lblrename" runat="server" Visible="false"></asp:Label><asp:Label ID="lbl_refname" runat="server"></asp:Label></td>
@@ -171,7 +172,7 @@
                                 <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Company Name</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
-                                    <asp:Label ID="lblClient" runat="server"></asp:Label></td>
+                                    <asp:Label ID="lblClient" runat="server"></asp:Label>&nbsp;[<asp:Label ID="lblClientCode" runat="server"></asp:Label>]</td>
                             </tr>
                             <tr>
                                 <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Address</td>
@@ -187,27 +188,29 @@
                     <td class='qno' style='vertical-align: top; background-color: #d9d3d3;' width='45%'>
                         <table border='0' width='100%' class='quotation'>
                             <tr>
-                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Quotation Date</td>
+                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Record Creation Date</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lbldate" runat="server"></asp:Label></td>
                             </tr>
                             <tr>
-                                <td class="" style='width: 38%; vertical-align: top; padding: 1px 5px;'>Quotation Number</td>
+                                <td class="" style='width: 38%; vertical-align: top; padding: 1px 5px;'>ERP Record Number</td>
                                 <td class="" style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class="" style='width: 60%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lblqnumber" runat="server"></asp:Label></td>
                             </tr>
                             <tr id="client_code" runat="server" visible="true">
-                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Client Code</td>
+                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>ARC / P.O No</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>
-                                    <asp:Label ID="lblClientCode" runat="server"></asp:Label></td>
+                                    <asp:Label ID="lbl_ponumber" runat="server" ForeColor="DarkBlue" Text="ARC / P.O. No"></asp:Label>&nbsp[<asp:Label ID="lbl_podate" runat="server" Text="ARC / PO Date"></asp:Label>]</td>
                             </tr>
                             <tr id="Tr1" runat="server" visible="true">
-                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'></td>
-                                <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>&nbsp;</td>
-                                <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'></td>
+                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Delivery Order No</td>
+                                <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
+                                <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>
+                                    <asp:Label ID="lbl_donumber" runat="server" ForeColor="Red" Text="D.O. No"></asp:Label>
+                                </td>
                             </tr>
                             <tr id="Tr2" runat="server" visible="true">
                                 <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Reference ID</td>
@@ -267,7 +270,8 @@
             <tr>
                 <td class='sub' style='text-align: center; font-weight: bold; font-size: 12px; text-decoration: underline;'>Sub: Commercial Requiremnts for
                                     <asp:Label ID='lblservice' runat='server'></asp:Label>
-                    <asp:Label ID='lblprimary_service' runat='server'></asp:Label> delivery</td>
+                    <asp:Label ID='lblprimary_service' runat='server'></asp:Label>
+                    delivery</td>
             </tr>
             <tr>
                 <td class='gap' style='text-align: center; font-weight: bold;'>&nbsp</td>
@@ -284,7 +288,7 @@
             </tr>--%>
             <tr>
                 <td class='' style='text-align: justify; font-weight: 100'>
-                    <span class='bold'>Thank you for showing interest in our Organization.</span>
+                    <span class='bold'>Please arrange to deliver below Line Items</span>
                 </td>
             </tr>
             <tr>
@@ -298,7 +302,7 @@
             <tr>
                 <td class='' style='text-align: justify; font-weight: 100'>This is with reference to our discussion for 
                                     <asp:Label ID="lblPrimaryService" runat="server"></asp:Label>
-                    , We are pleased to submit our best proposal as below:
+                    against above mentioned ARC/ P.O. & D.O. Number, We are pleased to submit our requirements specifications as below:
                 </td>
             </tr>
 
@@ -312,7 +316,7 @@
                                 </td>
                             </tr>--%>
 
-            <tr id="CompIntro" runat="server" visible="true">
+            <tr id="CompIntro" runat="server" visible="false">
                 <td class='' style='text-align: justify; font: italic; font-weight: 100'>Started in the year 2004, with <span class='bold'>A&A Associates</span> as the first company of the group followed by <span class='bold'>Flame Ex</span> , A&A Group has positioned itself as a premier <span class='bold'>Industrial Distribution Company</span> in the Eastern part of India.
                 </td>
             </tr>
@@ -357,7 +361,7 @@
                 </td>
             </tr>
             <tr>
-                <td class="gap" style="">&nbsp</td>
+                <td class="auto-style2"></td>
             </tr>
             <%--<tr>
                                 <td class="" style="text-align: justify; font-weight: 100;">
@@ -419,7 +423,18 @@
                             </tr>
                         </table>--%>
 
+
+        <br />
         <asp:Label ID="lblserviceamo" runat="server"></asp:Label>
+
+        <br />
+        <table border="0" width="100%">
+            <tr>
+                <td colspan='4' style="text-align: right; font-weight: bold; font-size: 30px; color: #e31e24;">Delivery Schedules</td>
+            </tr>
+        </table>
+        <asp:Label ID="lblProductDetails" runat="server"></asp:Label>
+
 
         <br />
 
