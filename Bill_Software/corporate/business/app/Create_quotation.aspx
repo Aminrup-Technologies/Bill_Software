@@ -453,26 +453,26 @@
         }
 
         function toggleReferenceFields(value) {
+            document.getElementById('<%= hdnRefOption.ClientID %>').value = value;
+
             var nameField = document.getElementById('<%= txt_clientrefname.ClientID %>');
             var idField = document.getElementById('<%= txt_clientrefid.ClientID %>');
             var dateField = document.getElementById('<%= txt_clientrefdate.ClientID %>');
 
             if (value === 'Yes') {
-                nameField.value = "";
-                idField.value = "";
-                dateField.value = "";
-                nameField.removeAttribute("disabled");
-                idField.removeAttribute("disabled");
-                dateField.removeAttribute("disabled");
+                nameField.readOnly = false;
+                idField.readOnly = false;
+                dateField.readOnly = false;
             } else {
                 nameField.value = "N/A";
                 idField.value = "N/A";
                 dateField.value = "01-Jan-2000";
-                nameField.setAttribute("disabled", "disabled");
-                idField.setAttribute("disabled", "disabled");
-                dateField.setAttribute("disabled", "disabled");
+                nameField.readOnly = true;
+                idField.readOnly = true;
+                dateField.readOnly = true;
             }
         }
+
 
         function togglePanel() {
             var rbQt = document.getElementById('<%= rbQt.ClientID %>');
@@ -503,9 +503,10 @@
 
     </script>
 
-
+    <asp:HiddenField ID="hdnRefOption" runat="server" />
     <%--<asp:UpdatePanel ID="UpdatePanel1" runat="server">--%>
     <%--<ContentTemplate>--%>
+
     <table cellpadding="1" cellspacing="1" class="auto-style1">
         <tr>
             <td colspan="4" bgcolor="#19658A"><span class="style2">&nbsp;Create Quotation</span></td>
@@ -585,7 +586,7 @@
             <td>&nbsp;</td>
             <td style="text-align: right;">&nbsp;&nbsp;Reference Person Name&nbsp;:&nbsp;</td>
             <td>
-                <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style" Width="110px" Disabled="true"></asp:TextBox>
+                <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style" Width="110px" ReadOnly="true"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
@@ -593,7 +594,7 @@
             <td>&nbsp;</td>
             <td style="text-align: right;">&nbsp;Reference ID&nbsp;:&nbsp;</td>
             <td>
-                <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style" Width="110px" Disabled="true"></asp:TextBox>
+                <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style" Width="110px" ReadOnly="true"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
@@ -602,7 +603,7 @@
             <td style="text-align: right;">&nbsp;Reference Date&nbsp;:&nbsp;</td>
             <td>
                 <asp:TextBox ID="txt_clientrefdate" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px"
-                    class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px" Disabled="true"></asp:TextBox>
+                    class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px" ReadOnly="true"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
@@ -1445,6 +1446,7 @@
             </td>
         </tr>
     </table>
+
     <%--</ContentTemplate>--%>
     <%--<Triggers>
                 <asp:PostBackTrigger ControlID="Button1"  />

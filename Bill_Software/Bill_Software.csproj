@@ -484,6 +484,8 @@
     <Content Include="jquery-ui.css" />
     <Content Include="jquery-ui.js" />
     <Content Include="Print\id_card1.aspx" />
+    <None Include="Properties\PublishProfiles\exc.aagroupindia.com - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\flamexuat.aminruptechnologies.co.in - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />

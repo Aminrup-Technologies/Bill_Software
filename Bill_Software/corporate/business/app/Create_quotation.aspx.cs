@@ -43,61 +43,54 @@ namespace Bill_Software.corporate.business.app
             {
                 Response.Redirect("~/index.aspx");
             }
+
             if (!IsPostBack)
             {
-                //Gross_amount = 0;
                 new_Gross_amount = 0;
                 Service_tax = 0;
                 total_sail_rate_details = 0;
-                //total_Service = 0;
-                //sub_total = 0;
-
                 new_total_Service = 0;
                 new_sub_total = 0;
 
-                // Set default values on initial page load
-                rbNo.Checked = true;
                 txt_clientrefname.Text = "N/A";
                 txt_clientrefid.Text = "N/A";
                 txt_clientrefdate.Text = "01-Jan-2000";
 
-                // Ensure the fields are disabled by default
-                txt_clientrefname.Attributes["disabled"] = "disabled";
-                txt_clientrefid.Attributes["disabled"] = "disabled";
-                txt_clientrefdate.Attributes["disabled"] = "disabled";
+                txt_clientrefname.ReadOnly = true;
+                txt_clientrefid.ReadOnly = true;
+                txt_clientrefdate.ReadOnly = true;
 
-                //Dt = null;
-                Dt = new DataTable("Table");
+                rbNo.Checked = true;
+                rbYes.Checked = false;
+
                 DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
                 DbCL.FillCombo(ddlPlaceOfSupply, "Select City_Name from tbl_City order by City_Name asc");
                 txtquotationDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
 
+                Dt = new DataTable("Table");
             }
             else
             {
-                if (rbNo.Checked == true)
-                {
-                    rbNo.Checked = true;
-                    txt_clientrefname.Text = "N/A";
-                    txt_clientrefid.Text = "N/A";
-                    txt_clientrefdate.Text = "01-Jan-2000";
+                // Handle postback logic to restore field states
+                string refOption = hdnRefOption.Value;
 
-                    // Ensure the fields are disabled by default
-                    txt_clientrefname.Attributes["disabled"] = "disabled";
-                    txt_clientrefid.Attributes["disabled"] = "disabled";
-                    txt_clientrefdate.Attributes["disabled"] = "disabled";
+                if (refOption == "Yes")
+                {
+                    rbYes.Checked = true;
+                    rbNo.Checked = false;
+
+                    txt_clientrefname.ReadOnly = false;
+                    txt_clientrefid.ReadOnly = false;
+                    txt_clientrefdate.ReadOnly = false;
                 }
                 else
                 {
-                    //rbNo.Checked = true;
-                    //txt_clientrefname.Text = "N/A";
-                    //txt_clientrefid.Text = "N/A";
-                    //txt_clientrefdate.Text = "01-Jan-2000";
+                    rbNo.Checked = true;
+                    rbYes.Checked = false;
 
-                    //// Ensure the fields are disabled by default
-                    //txt_clientrefname.Attributes["disabled"] = "disabled";
-                    //txt_clientrefid.Attributes["disabled"] = "disabled";
-                    //txt_clientrefdate.Attributes["disabled"] = "disabled";
+                    txt_clientrefname.ReadOnly = true;
+                    txt_clientrefid.ReadOnly = true;
+                    txt_clientrefdate.ReadOnly = true;
                 }
             }
         }
@@ -909,7 +902,7 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private void Magician()
+        private void MagicianOLD()
         {
             Bindquotationno();
 

@@ -48,6 +48,36 @@ namespace Bill_Software
             }
         }
 
+
+        public void executeRdrNew(string sql, Dictionary<string, object> parameters)
+        {
+            try
+            {
+                Sqlconnection();
+                ConnectDb();
+                SqlCommand cmd = new SqlCommand(sql, Conn);
+                cmd.CommandTimeout = 0;
+
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        cmd.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                    }
+                }
+
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception exp)
+            {
+                throw new Exception(exp.Message);
+            }
+            finally
+            {
+                Conn.Close();
+            }
+        }
+
         public object ExecuteScalar(string query, SqlParameter[] parameters)
         {
             object result = null;
