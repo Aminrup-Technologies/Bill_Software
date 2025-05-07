@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -52,16 +53,16 @@ namespace Bill_Software.corporate.business.app
                 new_total_Service = 0;
                 new_sub_total = 0;
 
-                txt_clientrefname.Text = "N/A";
-                txt_clientrefid.Text = "N/A";
-                txt_clientrefdate.Text = "01-Jan-2000";
+                //txt_clientrefname.Text = "N/A";
+                //txt_clientrefid.Text = "N/A";
+                //txt_clientrefdate.Text = "01-Jan-2000";
 
-                txt_clientrefname.ReadOnly = true;
-                txt_clientrefid.ReadOnly = true;
-                txt_clientrefdate.ReadOnly = true;
+                //txt_clientrefname.ReadOnly = true;
+                //txt_clientrefid.ReadOnly = true;
+                //txt_clientrefdate.ReadOnly = true;
 
-                rbNo.Checked = true;
-                rbYes.Checked = false;
+                //rbNo.Checked = true;
+                //rbYes.Checked = false;
 
                 DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
                 DbCL.FillCombo(ddlPlaceOfSupply, "Select City_Name from tbl_City order by City_Name asc");
@@ -69,34 +70,60 @@ namespace Bill_Software.corporate.business.app
 
                 Dt = new DataTable("Table");
             }
-            else
-            {
-                // Handle postback logic to restore field states
-                string refOption = hdnRefOption.Value;
+            //else
+            //{
+            //    // Handle postback logic to restore field states
+            //    string refOption = hdnRefOption.Value;
 
-                if (refOption == "Yes")
-                {
-                    rbYes.Checked = true;
-                    rbNo.Checked = false;
+            //    if (refOption == "Yes")
+            //    {
+            //        rbYes.Checked = true;
+            //        rbNo.Checked = false;
 
-                    txt_clientrefname.ReadOnly = false;
-                    txt_clientrefid.ReadOnly = false;
-                    txt_clientrefdate.ReadOnly = false;
-                }
-                else
-                {
-                    rbNo.Checked = true;
-                    rbYes.Checked = false;
+            //        //txt_clientrefname.ReadOnly = false;
+            //        //txt_clientrefid.ReadOnly = false;
+            //        //txt_clientrefdate.ReadOnly = false;
+            //    }
+            //    else
+            //    {
+            //        rbNo.Checked = true;
+            //        rbYes.Checked = false;
 
-                    txt_clientrefname.ReadOnly = true;
-                    txt_clientrefid.ReadOnly = true;
-                    txt_clientrefdate.ReadOnly = true;
-                }
-            }
+            //        txt_clientrefname.ReadOnly = true;
+            //        txt_clientrefid.ReadOnly = true;
+            //        txt_clientrefdate.ReadOnly = true;
+            //    }
+            //}
         }
 
         protected void Button1_Click(object sender, EventArgs e)
         {
+            if (hdnRefOption.Value == "Yes")
+            {
+                if (string.IsNullOrWhiteSpace(txt_clientrefname.Text) ||
+                    string.IsNullOrWhiteSpace(txt_clientrefid.Text) ||
+                    string.IsNullOrWhiteSpace(txt_clientrefdate.Text))
+                {
+                    PanelError.Visible = true;
+                    lblErrorMsg.Text = "Please fill all reference details.";
+                    return;
+                }
+
+                // Optional: Add date format validation
+                DateTime parsedDate;
+                if (!DateTime.TryParseExact(
+                        txt_clientrefdate.Text.Trim(),           // Trim to remove extra spaces
+                        "dd-MMM-yyyy",                           // Expected format (e.g., 01-Jan-2000)
+                        System.Globalization.CultureInfo.InvariantCulture, // Use invariant culture
+                        System.Globalization.DateTimeStyles.None,
+                        out parsedDate))
+                {
+                    PanelError.Visible = true;
+                    lblErrorMsg.Text = "Enter date in valid format (e.g., 01-Jan-2000).";
+                    return;
+                }
+
+            }
 
             Panel1.Visible = true;
             cmbClient.Enabled = false;
@@ -893,10 +920,32 @@ namespace Bill_Software.corporate.business.app
                     PanelOK.Visible = true;
                     Button3.Visible = false;
                 }
+                //catch (Exception ex)
+                //{
+                //    try { trans?.Rollback(); } catch { }
+                //    lblErrorMsg.Text = "Error occurred: " + ex.Message;
+                //    PanelError.Visible = true;
+                //}
+
                 catch (Exception ex)
                 {
                     try { trans?.Rollback(); } catch { }
-                    lblErrorMsg.Text = "Error occurred: " + ex.Message;
+
+                    // Build a more complete error message
+                    StringBuilder errorMsg = new StringBuilder();
+                    errorMsg.AppendLine("An error occurred:");
+                    errorMsg.AppendLine(ex.Message);
+
+                    if (ex.InnerException != null)
+                    {
+                        errorMsg.AppendLine("Inner Exception:");
+                        errorMsg.AppendLine(ex.InnerException.ToString());
+                    }
+
+                    errorMsg.AppendLine("Stack Trace:");
+                    errorMsg.AppendLine(ex.StackTrace);
+
+                    lblErrorMsg.Text = errorMsg.ToString().Replace(Environment.NewLine, "<br/>");
                     PanelOK.Visible = true;
                 }
             }

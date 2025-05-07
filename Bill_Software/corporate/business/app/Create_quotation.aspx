@@ -463,6 +463,9 @@
                 nameField.readOnly = false;
                 idField.readOnly = false;
                 dateField.readOnly = false;
+                nameField.value = "";
+                idField.value = "";
+                dateField.value = "";
             } else {
                 nameField.value = "N/A";
                 idField.value = "N/A";
@@ -472,6 +475,8 @@
                 dateField.readOnly = true;
             }
         }
+
+
 
 
         function togglePanel() {
@@ -503,7 +508,7 @@
 
     </script>
 
-    <asp:HiddenField ID="hdnRefOption" runat="server" />
+    <asp:HiddenField ID="hdnRefOption" runat="server" Value="No"/>
     <%--<asp:UpdatePanel ID="UpdatePanel1" runat="server">--%>
     <%--<ContentTemplate>--%>
 
@@ -586,7 +591,7 @@
             <td>&nbsp;</td>
             <td style="text-align: right;">&nbsp;&nbsp;Reference Person Name&nbsp;:&nbsp;</td>
             <td>
-                <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style" Width="110px" ReadOnly="true"></asp:TextBox>
+                <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style" Width="110px"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
@@ -594,7 +599,7 @@
             <td>&nbsp;</td>
             <td style="text-align: right;">&nbsp;Reference ID&nbsp;:&nbsp;</td>
             <td>
-                <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style" Width="110px" ReadOnly="true"></asp:TextBox>
+                <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style"  Width="110px"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
@@ -603,7 +608,7 @@
             <td style="text-align: right;">&nbsp;Reference Date&nbsp;:&nbsp;</td>
             <td>
                 <asp:TextBox ID="txt_clientrefdate" runat="server" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px"
-                    class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px" ReadOnly="true"></asp:TextBox>
+                    class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>

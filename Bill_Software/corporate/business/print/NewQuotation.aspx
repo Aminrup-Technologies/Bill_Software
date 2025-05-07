@@ -191,7 +191,7 @@
                                 <td class="" style='width: 60%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lblqnumber" runat="server"></asp:Label></td>
                             </tr>
-                            <tr id="client_code" runat="server" visible="true">
+                            <tr id="client_code" runat="server" visible="false">
                                 <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Client Code</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>

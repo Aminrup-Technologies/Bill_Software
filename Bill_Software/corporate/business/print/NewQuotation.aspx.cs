@@ -39,7 +39,7 @@ namespace Bill_Software.corporate.business.print
         DataTable dtpSer = new DataTable();
 
         public string netamount = "";
-        public int TQ = 0;
+        public double TQ = 0;
 
         public static string viewtype = string.Empty;
 
@@ -720,12 +720,12 @@ namespace Bill_Software.corporate.business.print
                         string materialno = dtp.Rows[i]["MaterialNo"].ToString();
                         string packsize = dtp.Rows[i]["PackSize"].ToString();
 
-                        int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
+                        double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
                         TQ = TQ + Quantity;
                         double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
                         double discountrate = Math.Round((Convert.ToDouble(dtp.Rows[i]["new_sailrate"])), 2);
-                        int gstper = Convert.ToInt32(dtp.Rows[i]["Service_tax_rate"]);
-                        int discper = Convert.ToInt32(dtp.Rows[i]["discount_rate"]);
+                        double gstper = Convert.ToDouble(dtp.Rows[i]["Service_tax_rate"]);
+                        double discper = Convert.ToDouble(dtp.Rows[i]["discount_rate"]);
                         //double QuantityBaserateAmo = Math.Round((Quantity * baserate), 2);
                         //string QuantityBaserateAmo1 = DoFormat(QuantityBaserateAmo);
 
@@ -1075,12 +1075,12 @@ namespace Bill_Software.corporate.business.print
                         string materialno = dtp.Rows[i]["MaterialNo"].ToString();
                         string packsize = dtp.Rows[i]["PackSize"].ToString();
 
-                        int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
+                        double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
                         TQ += Quantity;
                         double baserate = Math.Round(Convert.ToDouble(dtp.Rows[i]["sail_rate"]), 2);
                         double discountrate = Math.Round(Convert.ToDouble(dtp.Rows[i]["new_sailrate"]), 2);
-                        int gstper = Convert.ToInt32(dtp.Rows[i]["Service_tax_rate"]);
-                        int discper = Convert.ToInt32(dtp.Rows[i]["discount_rate"]);
+                        double gstper = Convert.ToDouble(dtp.Rows[i]["Service_tax_rate"]);
+                        double discper = Convert.ToDouble(dtp.Rows[i]["discount_rate"]);
                         double new_QuantityBaserateAmo = Math.Round(Quantity * discountrate, 2);
                         string itemremarks = dtp.Rows[i]["ItemRemarks"].ToString();
                         string new_QuantityBaserateAmo1 = DoFormat(new_QuantityBaserateAmo);
