@@ -946,7 +946,7 @@ namespace Bill_Software.corporate.business.app
                     errorMsg.AppendLine(ex.StackTrace);
 
                     lblErrorMsg.Text = errorMsg.ToString().Replace(Environment.NewLine, "<br/>");
-                    PanelOK.Visible = true;
+                    PanelError.Visible = true;
                 }
             }
         }

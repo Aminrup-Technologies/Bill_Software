@@ -1,13 +1,14 @@
 ﻿<%@ Page Title="Create Quotations" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Create_quotation.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm19" %>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
         .auto-style1 {
             width: 100%;
         }
 
-        .auto-style1 tr {
-            height: 10px;
-        }
+            .auto-style1 tr {
+                height: 10px;
+            }
 
         .style2 {
             color: #FFFFFF;
@@ -508,7 +509,7 @@
 
     </script>
 
-    <asp:HiddenField ID="hdnRefOption" runat="server" Value="No"/>
+    <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
     <%--<asp:UpdatePanel ID="UpdatePanel1" runat="server">--%>
     <%--<ContentTemplate>--%>
 
@@ -599,7 +600,7 @@
             <td>&nbsp;</td>
             <td style="text-align: right;">&nbsp;Reference ID&nbsp;:&nbsp;</td>
             <td>
-                <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style"  Width="110px"></asp:TextBox>
+                <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style" Width="110px"></asp:TextBox>
             </td>
             <td>&nbsp;</td>
         </tr>
