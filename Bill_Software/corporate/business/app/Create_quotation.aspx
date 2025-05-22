@@ -477,32 +477,24 @@
             }
         }
 
-
-
-
         function togglePanel() {
             var rbQt = document.getElementById('<%= rbQt.ClientID %>');
             var panel = document.getElementById('<%= PO_DataInputs.ClientID %>');
-            var poFields = document.querySelectorAll('.po-mandatory'); // Select all mandatory fields
+            var poFields = document.querySelectorAll('.po-mandatory');
 
             if (rbQt.checked) {
-                panel.style.display = 'none'; // Hide panel if Quotation is selected
-
-                // Remove 'required' attribute from PO fields
+                panel.style.display = 'none';
                 poFields.forEach(function (field) {
                     field.removeAttribute('required');
                 });
             } else {
-                panel.style.display = 'block'; // Show panel if Purchase Order is selected
-
-                // Add 'required' attribute to PO fields
+                panel.style.display = 'block';
                 poFields.forEach(function (field) {
                     field.setAttribute('required', 'required');
                 });
             }
         }
 
-        // Call function on page load to set initial visibility and field validation
         window.onload = function () {
             togglePanel();
         };
@@ -900,7 +892,7 @@
                                             <ItemTemplate>
                                                 <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
                                             </ItemTemplate>
-                                        </asp:TemplateField>                                     
+                                        </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Specification">
                                             <EditItemTemplate>
@@ -1062,7 +1054,7 @@
                                                 <asp:TextBox ID="Specification" runat="server" Text='<%# Bind("Specification") %>'></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
-                                                <asp:TextBox ID="Specification" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style21" Height="22px" Width="250px" onkeypress="return validate1(event)"></asp:TextBox>
+                                                <asp:TextBox ID="Specification" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style21" Height="22px" Width="80%" onkeypress="return validate1(event)"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -1090,7 +1082,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
 
-                                        <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="10%" ItemStyle-Width="5%">
+                                        <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
@@ -1099,7 +1091,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Material No" HeaderStyle-Width="10%" ItemStyle-Width="5%">
+                                        <asp:TemplateField HeaderText="Material No" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
@@ -1108,7 +1100,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Pack Size" HeaderStyle-Width="10%" ItemStyle-Width="5%">
+                                        <asp:TemplateField HeaderText="Pack Size" HeaderStyle-Width="8%" ItemStyle-Width="8%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
@@ -1126,7 +1118,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="GST Rate (%)" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                        <asp:TemplateField HeaderText="GST (%)" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Tax_Rate" runat="server"></asp:TextBox>
                                             </EditItemTemplate>
@@ -1161,7 +1153,11 @@
                                                 <asp:TextBox ID="ItemRemarks" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="center textbox_style" Height="22px" Width="90%"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
-
+                                        <asp:TemplateField HeaderText="SL" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="txtOrder" runat="server" Width="80%" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Height="22px" CssClass="center textbox_style" />
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
                                         <asp:TemplateField HeaderText="Delivery Date" HeaderStyle-Width="10%" ItemStyle-Width="10%" Visible="false">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker"></asp:TextBox>
@@ -1182,19 +1178,13 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Order / SL" HeaderStyle-Width="10%" ItemStyle-Width="10%">
-                                            <ItemTemplate>
-                                                <asp:TextBox ID="txtOrder" runat="server" Width="80%" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Height="22px" CssClass="center textbox_style" />
-                                            </ItemTemplate>
-                                        </asp:TemplateField>
-
                                         <asp:TemplateField HeaderText="Select" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="TextBox6" runat="server" checked="true"></asp:TextBox>
                                             </EditItemTemplate>
 
                                             <HeaderTemplate>
-                                                <asp:CheckBox ID="checkAll" runat="server" onclick="checkAll(this);" />
+                                                <asp:CheckBox ID="checkAll" runat="server" Text="All" onclick="checkAll(this);" />
                                             </HeaderTemplate>
 
                                             <ItemTemplate>
@@ -1273,7 +1263,7 @@
                                                             <asp:TextBox ID="PhaseDesc" runat="server" Text='<%# Bind("PhaseDesc") %>' Width="80%" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" TextMode="MultiLine"></asp:TextBox>
                                                         </ItemTemplate>
                                                     </asp:TemplateField>
-                                                    
+
                                                     <asp:CommandField ButtonType="Button" HeaderText="Delete" ShowDeleteButton="True" HeaderStyle-Width="5%" ItemStyle-Width="5%" />
                                                 </Columns>
                                                 <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />

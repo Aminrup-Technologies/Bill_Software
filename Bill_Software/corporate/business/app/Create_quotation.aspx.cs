@@ -212,8 +212,8 @@ namespace Bill_Software.corporate.business.app
             {
                 bool isQuotation = rbQt.Checked; // Check if Quotation is selected
 
-                gd_Service_Product.Columns[15].Visible = !isQuotation; // Delivery Date
-                gd_Service_Product.Columns[16].Visible = !isQuotation; // Department
+                gd_Service_Product.Columns[17].Visible = !isQuotation; // Delivery Date
+                gd_Service_Product.Columns[18].Visible = !isQuotation; // Department
 
                 // Loop through GridView rows to apply validation only when columns are visible
                 foreach (GridViewRow row in gd_Service_Product.Rows)
@@ -359,11 +359,6 @@ namespace Bill_Software.corporate.business.app
             gridProdWithCat.Visible = true;
 
             DataTable dtproductWithCat = new DataTable();
-            //string cmdstring = "select Product_code as Ser_pro_code,Sub_Prod_Name as Ser_pro_Name,Sail_Rate as Sale_rate,Tax_Rate as service_Tax_Rate from tbl_NewProduct where Product_Name='" + cmbproduct_service.Text + "'";
-
-            // string cmdstring = "select Id,Product_code,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat";
-            //string cmdstring = "select Id,Product_code,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
-            //string cmdstring = "select Id, Product_code, ProductID,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
             string cmdstring = "select Id, Product_code, ProductID,ProductOrServiceCat,Brand, ProductName,Specification,Type,Sail_Rate,Tax_Rate,Unit  from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Id,ProductName";
 
             SqlParameter[] pram = {
