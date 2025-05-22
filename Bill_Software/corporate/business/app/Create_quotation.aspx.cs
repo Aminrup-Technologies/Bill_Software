@@ -363,7 +363,8 @@ namespace Bill_Software.corporate.business.app
 
             // string cmdstring = "select Id,Product_code,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat";
             //string cmdstring = "select Id,Product_code,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
-            string cmdstring = "select Id, Product_code, ProductID,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
+            //string cmdstring = "select Id, Product_code, ProductID,ProductOrServiceCat,ProductName,Type,Sail_Rate,Tax_Rate,Unit,Brand from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
+            string cmdstring = "select Id, Product_code, ProductID,ProductOrServiceCat,Brand, ProductName,Specification,Type,Sail_Rate,Tax_Rate,Unit  from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Id,ProductName";
 
             SqlParameter[] pram = {
                 new SqlParameter("@ProductOrServiceCat",cmbproduct_service.Text)
@@ -739,7 +740,7 @@ namespace Bill_Software.corporate.business.app
             string IGSTSTATUS = RadioButtonGst.SelectedIndex != 0 ? "YES" : "";
 
             int slNo = idreturn() + 1;
-            int h = 0;
+            //int h = 0;
 
             string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
             DataTable dt1 = (DataTable)ViewState["PhaseProductData"];
@@ -762,7 +763,7 @@ namespace Bill_Software.corporate.business.app
                             CheckBox chk = (CheckBox)(gd_Service_Product.Rows[i].FindControl("chk"));
                             if (chk.Checked)
                             {
-                                h++;
+                                //h++;
 
                                 // Get GridView controls safely
                                 string ProductId = ((Label)gd_Service_Product.Rows[i].FindControl("ProductID"))?.Text?.Trim() ?? "";
@@ -773,14 +774,14 @@ namespace Bill_Software.corporate.business.app
                                 string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type"))?.Text?.Trim() ?? "";
                                 string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit"))?.Text?.Trim() ?? "";
                                 string InvStatus = "No";
-
+                                string Specification = ((TextBox)gd_Service_Product.Rows[i].FindControl("Specification"))?.Text?.Trim() ?? "~";
                                 string ItemNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemNo"))?.Text?.Trim() ?? "";
                                 string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo"))?.Text?.Trim() ?? "";
                                 string PackSize = ((TextBox)gd_Service_Product.Rows[i].FindControl("PackSize"))?.Text?.Trim() ?? "";
                                 string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks"))?.Text?.Trim() ?? "";
                                 string DeliveryDate = ((TextBox)gd_Service_Product.Rows[i].FindControl("DeliveryDate"))?.Text?.Trim() ?? "";
                                 string Department = ((TextBox)gd_Service_Product.Rows[i].FindControl("Department"))?.Text?.Trim() ?? "";
-
+                                string h = ((TextBox)gd_Service_Product.Rows[i].FindControl("txtOrder")).Text;
                                 decimal qty;
                                 if (!decimal.TryParse(((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity"))?.Text?.Trim(), out qty))
                                     throw new ArgumentException("Invalid Quantity");
@@ -813,9 +814,9 @@ namespace Bill_Software.corporate.business.app
 
                                 using (SqlCommand cmd = new SqlCommand(@"
                             INSERT INTO tbl_Quotaion_details 
-                            (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById) 
+                            (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById) 
                             VALUES 
-                            (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)", conn, trans))
+                            (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)", conn, trans))
                                 {
                                     cmd.Parameters.AddWithValue("@Sl_no", h);
                                     cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
@@ -829,6 +830,7 @@ namespace Bill_Software.corporate.business.app
                                     cmd.Parameters.AddWithValue("@Total_sail_rate1", Total_sail_rate1);
                                     cmd.Parameters.AddWithValue("@Total_sail_rate2", Total_sail_rate2);
                                     cmd.Parameters.AddWithValue("@specification", Brand);
+                                    cmd.Parameters.AddWithValue("@Misc", Specification);
                                     cmd.Parameters.AddWithValue("@InvStatus", InvStatus);
                                     cmd.Parameters.AddWithValue("@Type", Type);
                                     cmd.Parameters.AddWithValue("@Unit", Unit);
@@ -1011,7 +1013,7 @@ namespace Bill_Software.corporate.business.app
                                         string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type"))?.Text?.Trim() ?? "";
                                         string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit"))?.Text?.Trim() ?? "";
                                         string InvStatus = "No";
-
+                                        string Specification = ((TextBox)gd_Service_Product.Rows[i].FindControl("Specification"))?.Text?.Trim() ?? "~";
                                         // Optional Fields
                                         string ItemNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemNo"))?.Text?.Trim() ?? "";
                                         string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo"))?.Text?.Trim() ?? "";
@@ -1019,6 +1021,8 @@ namespace Bill_Software.corporate.business.app
                                         string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks"))?.Text?.Trim() ?? "";
                                         string DeliveryDate = ((TextBox)gd_Service_Product.Rows[i].FindControl("DeliveryDate"))?.Text?.Trim() ?? "";
                                         string Department = ((TextBox)gd_Service_Product.Rows[i].FindControl("Department"))?.Text?.Trim() ?? "";
+
+                                        string Slorder = ((TextBox)gd_Service_Product.Rows[i].FindControl("txtOrder"))?.Text?.Trim() ?? h.ToString();
 
                                         // Validate and convert numeric fields
                                         decimal Quantity = .0m;
@@ -1051,12 +1055,12 @@ namespace Bill_Software.corporate.business.app
 
                                         // Insert into database using parameterized query
                                         cmd.CommandText = @"
-                                        INSERT INTO tbl_Quotaion_details (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById) VALUES 
-                                        (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)";
+                                        INSERT INTO tbl_Quotaion_details (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById) VALUES 
+                                        (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)";
 
                                         // Add parameters
                                         cmd.Parameters.Clear();
-                                        cmd.Parameters.AddWithValue("@Sl_no", h);
+                                        cmd.Parameters.AddWithValue("@Sl_no", Slorder);
                                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
                                         cmd.Parameters.AddWithValue("@Product_Code", Product_code);
                                         cmd.Parameters.AddWithValue("@Product_id", ProductId);
@@ -1068,6 +1072,7 @@ namespace Bill_Software.corporate.business.app
                                         cmd.Parameters.AddWithValue("@Total_sail_rate1", Total_sail_rate1);
                                         cmd.Parameters.AddWithValue("@Total_sail_rate2", Total_sail_rate2);
                                         cmd.Parameters.AddWithValue("@specification", Brand);
+                                        cmd.Parameters.AddWithValue("@Misc", Specification);
                                         cmd.Parameters.AddWithValue("@InvStatus", InvStatus);
                                         cmd.Parameters.AddWithValue("@Type", Type);
                                         cmd.Parameters.AddWithValue("@Unit", Unit);
@@ -1559,6 +1564,7 @@ namespace Bill_Software.corporate.business.app
                 string ProductId = ""; // Product ID
                 string ProductName = "";
                 string Brandspecification = "";
+                string Specification = "";
                 string Type = "";
                 string Sail_Rate = "";
                 string Tax_Rate = "";
@@ -1575,8 +1581,8 @@ namespace Bill_Software.corporate.business.app
                         ProductId = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
                         Product_code = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
                         ProductName = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName")).Text;
-                        //Brandspecification = ((TextBox)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
                         Brandspecification = ((Label)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
+                        Specification = ((Label)gridProdWithCat.Rows[i].FindControl("Specification")).Text;
                         //Quantity = ((TextBox)gridProdWithCat.Rows[i].FindControl("Quantity")).Text;
                         Quantity = ((Label)gridProdWithCat.Rows[i].FindControl("Quantity")).Text;
                         //Sail_Rate = ((TextBox)gridProdWithCat.Rows[i].FindControl("Sail_Rate")).Text;
@@ -1591,12 +1597,12 @@ namespace Bill_Software.corporate.business.app
                             dtPCat = (DataTable)ViewState["PhaseProductData"];
                             int count = dtPCat.Rows.Count + 1;
 
-                            SearchProductCatwise(count, ProductId, Product_code, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
+                            SearchProductCatwise(count, ProductId, Product_code, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
 
                         }
                         else
                         {
-                            SearchProductCatwise(1, ProductId, Product_code, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
+                            SearchProductCatwise(1, ProductId, Product_code, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
                         }
                     }
                 }
@@ -1758,7 +1764,7 @@ namespace Bill_Software.corporate.business.app
         }
 
 
-        private void SearchProductCatwise(int count, string Product_code, string ProductId, string ProductName, string Brandspecification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
+        private void SearchProductCatwise(int count, string Product_code, string ProductId, string ProductName, string Brandspecification, string Specification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat)
         {
             DataRow dr;
 
@@ -1767,6 +1773,7 @@ namespace Bill_Software.corporate.business.app
                 dtPCat.Columns.Add(new DataColumn("ProductId", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("Specification", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Sail_Rate", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Tax_Rate", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
@@ -1774,7 +1781,7 @@ namespace Bill_Software.corporate.business.app
                 dtPCat.Columns.Add(new DataColumn("Type", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Unit", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("ProductOrServiceCat", typeof(string)));
-
+                dtPCat.Columns.Add(new DataColumn("Order", typeof(int)));
                 // **New Columns**
                 dtPCat.Columns.Add(new DataColumn("DeliveryDate", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("Department", typeof(string)));
@@ -1789,6 +1796,7 @@ namespace Bill_Software.corporate.business.app
             dr["ProductId"] = ProductId;
             dr["Product_code"] = Product_code;
             dr["ProductName"] = ProductName;
+            dr["Specification"] = Specification;
             dr["Sail_Rate"] = Sail_Rate;
             dr["Tax_Rate"] = Tax_Rate;
             dr["Quantity"] = Quantity;

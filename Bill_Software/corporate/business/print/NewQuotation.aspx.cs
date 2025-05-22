@@ -610,7 +610,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             //string cmdstring = "select Sl_no,Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
-            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
+            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Misc, Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Sl_no, ItemNo";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno)
                                       };
@@ -716,6 +716,7 @@ namespace Bill_Software.corporate.business.print
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
                         string specification = dtp.Rows[i]["specification"].ToString();
+                        string Misc = dtp.Rows[i]["Misc"].ToString();
                         string itemno = dtp.Rows[i]["ItemNo"].ToString();
                         string materialno = dtp.Rows[i]["MaterialNo"].ToString();
                         string packsize = dtp.Rows[i]["PackSize"].ToString();
@@ -806,14 +807,20 @@ namespace Bill_Software.corporate.business.print
                             strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
                                    "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Make: {1}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {2}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {3}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
-                                   "</td>", Productname, specification, itemno, materialno, packsize);
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Specification: {2}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {3}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {4}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {5}</div>" +
+                                   "</td>", Productname, specification, Misc, itemno, materialno, packsize);
                         }
                         else if (viewtype == "Simple")
                         {
-                            strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
+                            //strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
+                            strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'>" +
+                                    $"<span style='font-weight: bold; color: black;'>{Productname}</span><br>" +
+                                    $"&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make: {specification}</span><br>" +
+                                    $"&nbsp;&nbsp;<span style='font-size: 10px; color: #555;'>Specification: {Misc}</span>" +
+                                    $"</td>";
                         }
                         strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + HSN + "</td>";
                         strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + Quantity + "</td>";
@@ -1071,6 +1078,7 @@ namespace Bill_Software.corporate.business.print
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
                         string specification = dtp.Rows[i]["specification"].ToString();
+                        string Misc = dtp.Rows[i]["Misc"].ToString();
                         string itemno = dtp.Rows[i]["ItemNo"].ToString();
                         string materialno = dtp.Rows[i]["MaterialNo"].ToString();
                         string packsize = dtp.Rows[i]["PackSize"].ToString();
@@ -1097,14 +1105,19 @@ namespace Bill_Software.corporate.business.print
                             strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
                                    "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Make: {1}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {2}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {3}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
-                                   "</td>", Productname, specification, itemno, materialno, packsize);
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Specification: {2}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {3}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {4}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {5}</div>" +
+                                   "</td>", Productname, specification, Misc, itemno, materialno, packsize);
                         }
                         else if (viewtype == "Simple")
                         {
-                            strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'><span style='font-weight: bold; color: black;'>{Productname}</span><br>&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make:{specification}</span></td>";
+                            strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'>" +
+                                    $"<span style='font-weight: bold; color: black;'>{Productname}</span><br>" +
+                                    $"&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make: {specification}</span><br>" +
+                                    $"&nbsp;&nbsp;<span style='font-size: 10px; color: #555;'>Specification: {Misc}</span>" +
+                                    $"</td>";
                         }
 
                         strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{HSN}</td>";
@@ -1282,7 +1295,7 @@ namespace Bill_Software.corporate.business.print
                 //strPayment.Append("</td></tr><tr><td class='gap' style=''>&nbsp</td></tr></table>");
 
                 strPayment.Append("<table border='0' width='100%' class='Payment pagebrake' style='border-collapse: collapse;'>");
-                strPayment.Append("<tr><td style='text-align: left; font-weight: bold;'>SCHEDULE OF PAYMENTS</td></tr>");
+                strPayment.Append("<tr><td style='text-align: left; font-weight: bold;'>PAYMENT TERMS / SCHEDULE OF PAYMENTS</td></tr>");
                 strPayment.Append("<tr><td>");
 
                 // Inner Table (Actual Payment Table)
@@ -1291,7 +1304,7 @@ namespace Bill_Software.corporate.business.print
                 // Header Row
                 strPayment.Append("<tr>");
                 strPayment.Append("<th style='width: 10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>S.NO</th>");
-                strPayment.Append("<th style='width: 70%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT PHASE</th>");
+                strPayment.Append("<th style='width: 70%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT TERMS / PAYMENT PHASE</th>");
                 strPayment.Append("<th style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT (INR)</th>");
                 strPayment.Append("</tr>");
 
@@ -1308,7 +1321,7 @@ namespace Bill_Software.corporate.business.print
 
                     strPayment.Append("<tr>");
                     strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; text-align: center;'>" + (i + 1) + "</td>");
-                    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align: left;'>" + dtpayphase.Rows[i]["phase_type"].ToString() + " " + dtpayphase.Rows[i]["PhaseDesc"].ToString() + "</td>");
+                    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align: left;'>" + dtpayphase.Rows[i]["amountper"].ToString() + "% " + dtpayphase.Rows[i]["phase_type"].ToString() + " " + dtpayphase.Rows[i]["PhaseDesc"].ToString() + "</td>");
                     strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" + finalamo1 + "</td>");
                     strPayment.Append("</tr>");
                 }

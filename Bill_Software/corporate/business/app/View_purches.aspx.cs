@@ -28,7 +28,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select top(50) tbl_Purches.Purches_Id, tbl_Purches.TimeStamp, tbl_Purches.Purches_date,tbl_Purches.Total_purches_rate,tbl_Purches.Total_Tax_rate, tbl_Purches.Invoice_No, tbl_Purches.Purches_date, tbl_Purches.BuyerOrderNo, tbl_Purches.OrderDate, tbl_Purches.ShippedToStoreName, tbl_Vendor.Vendor_Name from tbl_Purches inner join tbl_Vendor on tbl_Purches.Client_Id=tbl_Vendor.Vendor_Id order by tbl_Purches.Purches_date DESC";
+            string cmdstring = "select tbl_Purches.Purches_Id, tbl_Purches.TimeStamp, tbl_Purches.Purches_date,tbl_Purches.Total_purches_rate,tbl_Purches.Total_Tax_rate, tbl_Purches.Invoice_No, tbl_Purches.Purches_date, tbl_Purches.BuyerOrderNo, tbl_Purches.OrderDate, tbl_Purches.ShippedToStoreName, tbl_Vendor.Vendor_Name from tbl_Purches inner join tbl_Vendor on tbl_Purches.Client_Id=tbl_Vendor.Vendor_Id order by tbl_Purches.Purches_date DESC";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();

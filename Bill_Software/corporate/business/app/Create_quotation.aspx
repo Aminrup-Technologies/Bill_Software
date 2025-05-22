@@ -583,8 +583,8 @@
             <td class="auto-style2"></td>
             <td style="text-align: right;" class="auto-style2">Enable Reference Details&nbsp;:&nbsp;</td>
             <td class="auto-style2">
-                <asp:RadioButton ID="rbYes" runat="server" GroupName="referenceOption" Text="Yes" onclick="toggleReferenceFields('Yes')" />
-                <asp:RadioButton ID="rbNo" runat="server" GroupName="referenceOption" Text="No" Checked="true" onclick="toggleReferenceFields('No')" />
+                <asp:RadioButton ID="rbYes" runat="server" GroupName="referenceOption" Text="Yes" Checked="true" onclick="toggleReferenceFields('Yes')" />
+                <asp:RadioButton ID="rbNo" runat="server" GroupName="referenceOption" Text="No" onclick="toggleReferenceFields('No')" />
             </td>
             <td class="auto-style2"></td>
         </tr>
@@ -884,6 +884,15 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
+                                        <asp:TemplateField HeaderText="Brand Name">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:TemplateField HeaderText="Product/Service Name">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:TextBox>
@@ -891,14 +900,14 @@
                                             <ItemTemplate>
                                                 <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
                                             </ItemTemplate>
-                                        </asp:TemplateField>
+                                        </asp:TemplateField>                                     
 
-                                        <asp:TemplateField HeaderText="Extra Specifications">
+                                        <asp:TemplateField HeaderText="Specification">
                                             <EditItemTemplate>
-                                                <asp:TextBox ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:TextBox>
+                                                <asp:Label ID="Specification" runat="server" Text='<%# Bind("Specification") %>'></asp:Label>
                                             </EditItemTemplate>
                                             <ItemTemplate>
-                                                <asp:Label ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:Label>
+                                                <asp:Label ID="Specification" runat="server" Text='<%# Bind("Specification") %>'></asp:Label>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -910,17 +919,6 @@
                                                 <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label>
                                             </ItemTemplate>
                                         </asp:TemplateField>
-
-
-
-                                        <%--   <asp:TemplateField HeaderText="EXTRA SPECIFICATIONS">
-                                            <EditItemTemplate>
-                                                <asp:TextBox ID="TextBox4" runat="server"></asp:TextBox>
-                                            </EditItemTemplate>
-                                            <ItemTemplate>
-                                                <asp:TextBox ID="specification" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style21" Height="22px" Width="250px" onkeypress="return validate1(event)"></asp:TextBox>
-                                               </ItemTemplate>
-                                        </asp:TemplateField>--%>
 
                                         <asp:TemplateField HeaderText="Base Rate (RS)">
                                             <EditItemTemplate>
@@ -1041,6 +1039,15 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
+                                        <asp:TemplateField HeaderText="Brand Name" HeaderStyle-Width="10%" ItemStyle-Width="10%">
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:TextBox>
+                                            </EditItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="Brand" runat="server" Text='<%# Bind("Brand") %>' onkeypress="return validate(event, this)"></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:TemplateField HeaderText="Product/Service Name" HeaderStyle-Width="10%" ItemStyle-Width="10%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:TextBox>
@@ -1050,12 +1057,12 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Extra Specifications" HeaderStyle-Width="10%" ItemStyle-Width="10%">
+                                        <asp:TemplateField HeaderText="Specification" HeaderStyle-Width="10%" ItemStyle-Width="10%">
                                             <EditItemTemplate>
-                                                <asp:TextBox ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:TextBox>
+                                                <asp:TextBox ID="Specification" runat="server" Text='<%# Bind("Specification") %>'></asp:TextBox>
                                             </EditItemTemplate>
                                             <ItemTemplate>
-                                                <asp:Label ID="Brand" runat="server" Text='<%# Bind("Brand") %>' onkeypress="return validate(event, this)"></asp:Label>
+                                                <asp:TextBox ID="Specification" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style21" Height="22px" Width="250px" onkeypress="return validate1(event)"></asp:TextBox>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
@@ -1068,14 +1075,6 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <%-- <asp:TemplateField HeaderText="Specification">
-                                            <EditItemTemplate>
-                                                <asp:TextBox ID="TextBox4" runat="server"></asp:TextBox>
-                                            </EditItemTemplate>
-                                            <ItemTemplate>
-                                                <asp:TextBox ID="specification" runat="server" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" CssClass="textbox_style21" Height="22px" Width="250px" onkeypress="return validate1(event)"></asp:TextBox>
-                                            </ItemTemplate>
-                                        </asp:TemplateField>--%>
                                         <%-- <asp:TemplateField HeaderText="Tax Applicable">
                                             <ItemTemplate>
                                                 <asp:RadioButtonList ID="RadioButtonList2" runat="server" RepeatDirection="Horizontal">
@@ -1183,6 +1182,12 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
+                                        <asp:TemplateField HeaderText="Order / SL" HeaderStyle-Width="10%" ItemStyle-Width="10%">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="txtOrder" runat="server" Width="80%" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Height="22px" CssClass="center textbox_style" />
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:TemplateField HeaderText="Select" HeaderStyle-Width="5%" ItemStyle-Width="5%">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="TextBox6" runat="server" checked="true"></asp:TextBox>
@@ -1241,9 +1246,18 @@
                                             <asp:ListBox ID="listPhaseType" runat="server" Font-Size="14px" multiple="true" SelectionMode="Multiple" Rows="7" Width="250px" BackColor="#94b8ff" OnTextChanged="listPhaseType_TextChanged" AutoPostBack="True"></asp:ListBox></td>
                                         <td width="5%"></td>
                                         <td width="40%">
-                                            <asp:GridView ID="GridView3" runat="server" AutoGenerateColumns="False" BorderWidth="1px" BackColor="#94b8ff" CellPadding="3" CellSpacing="2" BorderStyle="None" BorderColor="#DEBA84" OnRowDeleting="GridView3_RowDeleting">
+                                            <asp:GridView ID="GridView3" runat="server" AutoGenerateColumns="False" BorderWidth="1px" BackColor="White" BorderColor="#E8F3FF" CellPadding="3" CellSpacing="2" BorderStyle="Solid" OnRowDeleting="GridView3_RowDeleting" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
+                                                <RowStyle BackColor="#94B8FF" />
                                                 <Columns>
-                                                    <asp:TemplateField HeaderText="Payment Phase">
+                                                    <asp:TemplateField HeaderText="Payment %" HeaderStyle-Width="25%" ItemStyle-Width="25%">
+                                                        <%--<EditItemTemplate>
+                                                            <asp:TextBox ID="AmountPer" runat="server"  Text=""></asp:TextBox>
+                                                        </EditItemTemplate>--%>
+                                                        <ItemTemplate>
+                                                            <asp:TextBox ID="AmountPer" runat="server" AutoPostBack="true" Text='<%# Bind("AmountPer") %>' Width="75%" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Height="22px" OnTextChanged="AmountPer_TextChanged"></asp:TextBox>
+                                                        </ItemTemplate>
+                                                    </asp:TemplateField>
+                                                    <asp:TemplateField HeaderText="Payment Phase / Term" HeaderStyle-Width="25%" ItemStyle-Width="25%">
                                                         <EditItemTemplate>
                                                             <asp:TextBox ID="PaymentPhase" runat="server" Text='<%# Bind("PaymentPhase") %>'></asp:TextBox>
                                                         </EditItemTemplate>
@@ -1251,25 +1265,19 @@
                                                             <asp:Label ID="PaymentPhase" runat="server" Text='<%# Bind("PaymentPhase") %>'></asp:Label>
                                                         </ItemTemplate>
                                                     </asp:TemplateField>
-                                                    <asp:TemplateField HeaderText="Phase Description">
+                                                    <asp:TemplateField HeaderText="Phase Description / Instruction" HeaderStyle-Width="25%" ItemStyle-Width="45%">
                                                         <EditItemTemplate>
-                                                            <asp:TextBox ID="PhaseDesc" runat="server" Text='<%# Bind("PhaseDesc") %>' TextMode="MultiLine"></asp:TextBox>
+                                                            <asp:TextBox ID="PhaseDesc" runat="server" Text='<%# Bind("PhaseDesc") %>' Width="80%" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" TextMode="MultiLine"></asp:TextBox>
                                                         </EditItemTemplate>
                                                         <ItemTemplate>
-                                                            <asp:TextBox ID="PhaseDesc" runat="server" Text='<%# Bind("PhaseDesc") %>' TextMode="MultiLine"></asp:TextBox>
-                                                        </ItemTemplate>
-
-                                                    </asp:TemplateField>
-                                                    <asp:TemplateField HeaderText="Payment %age">
-                                                        <%--<EditItemTemplate>
-                                                            <asp:TextBox ID="AmountPer" runat="server"  Text=""></asp:TextBox>
-                                                        </EditItemTemplate>--%>
-                                                        <ItemTemplate>
-                                                            <asp:TextBox ID="AmountPer" runat="server" AutoPostBack="true" Text='<%# Bind("AmountPer") %>' OnTextChanged="AmountPer_TextChanged"></asp:TextBox>
+                                                            <asp:TextBox ID="PhaseDesc" runat="server" Text='<%# Bind("PhaseDesc") %>' Width="80%" BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" TextMode="MultiLine"></asp:TextBox>
                                                         </ItemTemplate>
                                                     </asp:TemplateField>
-                                                    <asp:CommandField ButtonType="Button" HeaderText="Delete" ShowDeleteButton="True" />
+                                                    
+                                                    <asp:CommandField ButtonType="Button" HeaderText="Delete" ShowDeleteButton="True" HeaderStyle-Width="5%" ItemStyle-Width="5%" />
                                                 </Columns>
+                                                <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                                <AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />
                                             </asp:GridView>
                                         </td>
                                     </tr>

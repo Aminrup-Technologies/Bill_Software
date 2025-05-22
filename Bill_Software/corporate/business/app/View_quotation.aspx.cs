@@ -50,7 +50,7 @@ namespace Bill_Software.corporate.business.app
                 //}
 
                 //rbQt.Checked = true;
-                string cmdstring = "select top(50) tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.cgstOrsgst,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.RecordType='Quotation' order by tbl_Quotation.ID desc";
+                string cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID,tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount,tbl_Quotation.cgstOrsgst,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.RecordType='Quotation' order by CAST(tbl_Quotation.Quotation_date as date) desc";
                 Binddata(cmdstring);
 
                 //Binder();

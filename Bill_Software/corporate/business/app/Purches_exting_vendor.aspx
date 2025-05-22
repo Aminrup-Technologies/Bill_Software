@@ -80,14 +80,14 @@
             var tcsAmount = document.getElementById('<%= txt_tcs_amnt.ClientID %>').value.trim();
             var vattcspercent = document.getElementById('<%= txt_tcs_percent.ClientID %>').value.trim();
 
-            // ✅ GridView Validation: At least one row should have Quantity >= 1
             var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
-            var rows = grid.getElementsByTagName("tr");
+            var rows = grid.querySelectorAll("tbody tr");
+
             var isQuantityValid = false;
 
-            for (var i = 1; i < rows.length; i++) { // Skip header row
+            for (var i = 0; i < rows.length; i++) {
                 var qtyInput = rows[i].querySelector("input[id*='Quantity']");
-                if (qtyInput && parseInt(qtyInput.value) >= 1) {
+                if (qtyInput && parseFloat(qtyInput.value.trim()) >= 1) {
                     isQuantityValid = true;
                     break;
                 }
@@ -98,54 +98,104 @@
                 return false;
             }
 
-            // Validate Invoice Number (Should not be empty)
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var qtyInput = row.querySelector("input[id*='Quantity']");
+                var rateInput = row.querySelector("input[id*='Vendor_rate']");
+                var discInput = row.querySelector("input[id*='Disc']");
+                var taxRadioSelected = row.querySelector("input[id*='RadioButtonList1']:checked");
+                var vatDropdownRow = row.querySelector("select[id*='vat_parsentage']");
+                var ordertxt = row.querySelector("input[id*='txtOrder']");
+                // Skip completely empty rows (template/footer/header etc.)
+                if (!qtyInput && !rateInput && !discInput && !ordertxt) continue;
+                var serProCodeLabel = row.querySelector("span[id*='Ser_pro_code']");
+                var serProCodeTextbox = row.querySelector("input[id*='TextBox2']");
+
+                var serProCode = `Row ${i + 1}`;
+                if (serProCodeTextbox && serProCodeTextbox.value) {
+                    serProCode = serProCodeTextbox.value.trim();
+                } else if (serProCodeLabel && serProCodeLabel.innerText) {
+                    serProCode = serProCodeLabel.innerText.trim();
+                }
+
+                var qty = qtyInput ? qtyInput.value.trim() : "";
+                var rate = rateInput ? rateInput.value.trim() : "";
+                var disc = discInput ? discInput.value.trim() : "";
+                var vatValue = vatDropdownRow ? vatDropdownRow.value : "NA";
+                var taxApplicable = taxRadioSelected ? taxRadioSelected.value : "";
+                var order = ordertxt ? ordertxt.value.trim() : "";
+
+                var isRowTouched = (qty !== "" && parseFloat(qty) > 0) ||
+                   (rate !== "" && parseFloat(rate) > 0) ||
+                   (disc !== "" && parseFloat(disc) > 0) ||
+                   (vatValue !== "NA") ||
+                   (order !== "" && parseFloat(order) >= 0);
+
+                if (isRowTouched) {
+                    console.log(`Row ${i + 1} | Product Code: ${serProCode} | Qty: ${qty} | Rate: ${rate} | Disc: ${disc} | Tax Applicable: ${taxApplicable} | VAT: ${vatValue} | Order: ${order}`);
+
+                    if (qty === "" || isNaN(qty) || parseFloat(qty) <= 0) {
+                        alert(`Please enter a valid Quantity for Product Code ${serProCode}.`);
+                        return false;
+                    }
+
+                    if (rate === "" || isNaN(rate) || parseFloat(rate) < 0) {
+                        alert(`Please enter a valid Rate for Product Code: ${serProCode}.`);
+                        return false;
+                    }
+
+                    if (!taxApplicable) {
+                        alert(`Please select Tax Applicable for Product Code: ${serProCode}.`);
+                        return false;
+                    }
+
+                    if (taxApplicable === "Yes" && (vatValue === "" || vatValue === "NA")) {
+                        alert(`Please select VAT Percentage for Product Code: ${serProCode} since Tax is applicable.`);
+                        return false;
+                    }
+
+                    if (order === "" || isNaN(order) || parseFloat(order) < 0) {
+                        alert(`Please enter a valid Order / SL for Product Code: ${serProCode}.`);
+                        return false;
+                    }
+                }
+            }
+
+            // Final checks
             if (invNo === "") {
                 alert("Please enter the Invoice Number.");
                 return false;
             }
-
-            // Validate Purchase Date (Should not be empty)
             if (purchDate === "") {
                 alert("Please select a valid Purchase Date.");
                 return false;
             }
-
-            // Validate TCS Amount
-            if (isNaN(tcsAmount) || tcsAmount === "") {
+            if (tcsAmount === "" || isNaN(tcsAmount)) {
                 alert("Please enter a valid TCS Amount.");
                 return false;
             }
-
-            // Validate VAT Percentage: Required if TCS Amount > 0
             if (parseFloat(tcsAmount) > 0 && vattcspercent === "") {
                 alert("Please input a TCS Percentage since TCS is applied.");
                 return false;
             }
-
-            // Validate Delivery Amount
-            if (isNaN(deliveryAmount) || deliveryAmount === "") {
+            if (deliveryAmount === "" || isNaN(deliveryAmount)) {
                 alert("Please enter a valid Delivery Amount.");
                 return false;
             }
-
-            // Validate VAT Percentage: Required if Delivery Amount > 0
             if (parseFloat(deliveryAmount) > 0 && vatDropdown.value === "NA") {
-                alert("Please select a Freight Percentage since Freight is applied.");
+                alert("Please select a Freight VAT Percentage since Freight is applied.");
                 return false;
             }
-
-            // Validate Other Charges-1: If txt_othr_amnt1 > 0, TextBox1 is required
             if (parseFloat(otherAmount1) > 0 && textBox1 === "") {
                 alert("Please enter a description for Other Charges-1.");
                 return false;
             }
-
-            // Validate Other Charges-2: If txt_othr_amnt2 > 0, TextBox2 is required
             if (parseFloat(otherAmount2) > 0 && textBox2 === "") {
                 alert("Please enter a description for Other Charges-2.");
                 return false;
             }
-            return true; // ✅ If all validations pass
+
+            return true;
         }
 
 
@@ -284,7 +334,7 @@
     </script>
 
 
-    <asp:ScriptManager ID="ScriptManager1" runat="server">
+    <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
     </asp:ScriptManager>
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
@@ -322,6 +372,14 @@
                         </asp:Panel>
                     </td>
                     <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan="2">&nbsp;</td>
+                    <td colspan="2">&nbsp;</td>
+                    <td>
+                        <asp:Label ID="lblLog" runat="server" Text="" Visible="true"></asp:Label>
+                    </td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
@@ -531,6 +589,8 @@
                     <td colspan="2">&nbsp;</td>
                     <td>&nbsp;</td>
                 </tr>
+
+
                 <tr id="gridtable" runat="server" visible="true">
                     <td colspan="6">
                         <asp:Panel ID="Panel2" runat="server" Visible="false">
@@ -551,7 +611,7 @@
                                                         <asp:TextBox ID="TextBox2" runat="server" Text='<%# Bind("Ser_pro_code") %>'></asp:TextBox>
                                                     </EditItemTemplate>
                                                     <ItemTemplate>
-                                                        <asp:Label ID="Ser_pro_code" runat="server" Text='<%# Bind("Ser_pro_code") %>'></asp:Label>
+                                                        <asp:Label ID="Ser_pro_code" runat="server" Text='<%# Eval("Ser_pro_code") %>'></asp:Label>
                                                     </ItemTemplate>
 
                                                 </asp:TemplateField>
@@ -574,7 +634,7 @@
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Quantity">
                                                     <EditItemTemplate>
-                                                        <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
+                                                        <asp:TextBox ID="TextBox9" runat="server"></asp:TextBox>
                                                     </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:TextBox ID="Quantity" runat="server" CssClass="textbox_style21" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
@@ -625,6 +685,18 @@
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
+                                                <asp:TemplateField HeaderText="Order">
+                                                    <ItemTemplate>
+                                                        <asp:TextBox ID="txtOrder" runat="server" Width="50px" />
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
+
+                                                <%--<asp:TemplateField HeaderText="Order">
+                                                    <ItemTemplate>
+                                                        <asp:Button ID="btnUp" runat="server" Text="↑" CommandName="MoveUp" CommandArgument='<%# Container.DataItemIndex %>' />
+                                                        <asp:Button ID="btnDown" runat="server" Text="↓" CommandName="MoveDown" CommandArgument='<%# Container.DataItemIndex %>' />
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>--%>
                                             </Columns>
                                             <FooterStyle BackColor="#CCCC99" />
                                             <PagerStyle BackColor="White" ForeColor="Black" HorizontalAlign="Right" />
@@ -634,6 +706,13 @@
                                         </asp:GridView>
                                     </td>
                                 </tr>
+                                <%--<tr>
+                                    <td>&nbsp;</td>
+                                    <td colspan="2" style="text-align: center">
+                                        <asp:Button ID="btnApplyOrder" runat="server" Text="Apply Order" CssClass="btn_style" OnClick="btnApplyOrder_Click" />
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>--%>
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>
@@ -714,8 +793,7 @@
                                     <td>
                                         <asp:TextBox ID="txt_othr_amnt2" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>&nbsp;(Non-Taxable)
                                     </td>
-                                    <td>
-                                    </td>
+                                    <td></td>
                                 </tr>
 
                                 <tr>
@@ -933,4 +1011,21 @@
 
         </ContentTemplate>
     </asp:UpdatePanel>
+    <script type="text/javascript">
+        Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function (sender, args) {
+            if (args.get_error()) {
+                alert("AJAX Error: " + args.get_error().message);
+                args.set_errorHandled(true); // Prevent default ugly yellow screen
+            }
+        });
+
+        // JS handler to catch UpdatePanel AJAX errors
+        Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function (sender, args) {
+            if (args.get_error()) {
+                alert("AJAX Error: " + args.get_error().message);
+                args.set_errorHandled(true);
+            }
+        });
+    </script>
+
 </asp:Content>

@@ -37,7 +37,7 @@ namespace Bill_Software.corporate.business.print
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select sl_no, Product_id, (Product_name+':'+specification) as Product_name, Quantity, vendor_rate, purches_rate, DiscountPercent, DiscountAmount,TaxableAmount, tax_rate, vat_amount, total_purches_rate from tbl_purches_details where Purches_id='" + lblpurches_id.Text + "' order by Id";
+            string cmdstring = "select sl_no, Product_id, (Product_name+':'+specification) as Product_name, Quantity, vendor_rate, purches_rate, DiscountPercent, DiscountAmount,TaxableAmount, tax_rate, vat_amount, total_purches_rate from tbl_purches_details where Purches_id='" + lblpurches_id.Text + "' order by sl_no";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
@@ -291,7 +291,8 @@ namespace Bill_Software.corporate.business.print
                 //lblTCSAmount.Text = dtcsAmount.ToString("N2");
                 lblFreightCharges.Text = dfreightCharges.ToString("N2");
 
-                decimal grandttl = ttl_purchase + total2 + dotherCharges2;
+                //decimal grandttl = ttl_purchase + total2 + dotherCharges2;
+                decimal grandttl = ttl_purchase + total2;
                 lblGrandTotal.Text = grandttl.ToString("N2");
                 lblGrandTotalWord.Text = ConvertAmountToWords((decimal)grandttl) + " Only";
 

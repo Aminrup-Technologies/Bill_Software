@@ -203,13 +203,13 @@
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'></td>
                             </tr>
                             <tr id="Tr2" runat="server" visible="true">
-                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Reference ID</td>
+                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>RFQ No.</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lbl_refid" runat="server"></asp:Label></td>
                             </tr>
-                            <tr id="Tr3" runat="server" visible="true">
-                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>Reference Date</td>
+                            <tr id="Tr3" runat="server" visible="false">
+                                <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>RFQ Date</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lbl_refdate" runat="server"></asp:Label></td>
@@ -258,7 +258,7 @@
                 <td class='gap' style='text-align: center; font-weight: bold;'>&nbsp</td>
             </tr>
             <tr>
-                <td class='sub' style='text-align: center; font-weight: bold; font-size: 12px; text-decoration: underline;'>Sub: Commercial Proposal for
+                <td class='sub' style='text-align: center; font-weight: bold; font-size: 12px; text-decoration: underline;'>Sub: RFQ for
                                     <asp:Label ID='lblservice' runat='server'></asp:Label>
                     <asp:Label ID='lblprimary_service' runat='server'></asp:Label></td>
             </tr>
@@ -275,11 +275,11 @@
             <%--<tr>
                 <td class="gap" style="">&nbsp</td>
             </tr>--%>
-            <tr>
+            <%--<tr>
                 <td class='' style='text-align: justify; font-weight: 100'>
                     <span class='bold'>Thank you for showing interest in our Organization.</span>
                 </td>
-            </tr>
+            </tr>--%>
             <tr>
                 <td class="gap" style="">&nbsp</td>
             </tr>
@@ -669,7 +669,7 @@
             </tr>
         </table>
 
-        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table2" runat="server" visible="true">
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table2" runat="server" visible="false">
             <tr>
                 <td class="" style="text-align: left; font-weight: bold; width: 30%;">MATERIAL ACCEPTANCE</td>
                 <td class="" style="text-align: left; font-weight: 100; width: 70%;">Material once invoiced cannot be returned back

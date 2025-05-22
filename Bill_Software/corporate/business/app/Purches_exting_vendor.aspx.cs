@@ -7,6 +7,7 @@ using System.Web.UI.WebControls;
 using System.Data.SqlClient;
 using System.Data;
 using System.Configuration;
+using System.Text;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -288,7 +289,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-        private void newgrid1()
+        private void newgrid1_old()
         {
             DataTable dt;
             dt = first_datatable;
@@ -322,6 +323,45 @@ namespace Bill_Software.corporate.business.app
                 Dt.Rows.Add(dr);
             }
         }
+
+        private void newgrid1()
+        {
+            DataTable dt = first_datatable;
+
+            // Ensure Dt is initialized
+            if (Dt == null)
+                Dt = new DataTable();
+
+            // Clear existing columns and rows if needed
+            Dt.Clear();
+            Dt.Columns.Clear();
+
+            // Add necessary columns
+            Dt.Columns.Add("Ser_pro_code", typeof(string));
+            Dt.Columns.Add("Ser_pro_Name", typeof(string));
+
+            //// Add the "Order" column here
+            if (!Dt.Columns.Contains("Order"))
+            {
+                Dt.Columns.Add("Order", typeof(int));
+            }
+
+            // Add rows from first_datatable
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                DataRow dr = Dt.NewRow();
+                dr["Ser_pro_code"] = dt.Rows[i][0].ToString();
+                dr["Ser_pro_Name"] = dt.Rows[i][1].ToString();
+
+                // Initialize order, e.g., by default assign sequential order
+                //dr["Order"] = i + 1;
+
+                Dt.Rows.Add(dr);
+            }
+        }
+
+
+
 
         private void newgrid1New()
         {
@@ -357,7 +397,7 @@ namespace Bill_Software.corporate.business.app
         }
 
 
-        private void newgrid()
+        private void newgrid_old()
         {
             DataTable dt;
             dt = first_datatable;
@@ -381,6 +421,131 @@ namespace Bill_Software.corporate.business.app
 
             }
         }
+
+        private void newgrid()
+        {
+            DataTable dt = first_datatable;
+
+            if (Dt == null)
+                Dt = new DataTable();
+
+            Dt.Clear();
+            Dt.Columns.Clear();
+
+            // Add columns
+            Dt.Columns.Add("Ser_pro_code", typeof(string));
+            Dt.Columns.Add("Ser_pro_Name", typeof(string));
+
+            // Add the Order column
+            Dt.Columns.Add("Order", typeof(int));
+
+            // Fill rows with default Order values (1-based index)
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                DataRow dr = Dt.NewRow();
+                dr["Ser_pro_code"] = dt.Rows[i][0].ToString();
+                dr["Ser_pro_Name"] = dt.Rows[i][1].ToString();
+                //dr["Order"] = i + 1;  // default ordering sequence
+                Dt.Rows.Add(dr);
+            }
+        }
+
+        protected void btnApplyOrder_Click(object sender, EventArgs e)
+        {
+            if (ViewState["dt"] == null)
+            {
+                // No data to work with
+                return;
+            }
+
+            DataTable dt = (DataTable)ViewState["dt"];
+
+            // Read order numbers from TextBoxes
+            for (int i = 0; i < gd_Service_Product.Rows.Count; i++)
+            {
+                GridViewRow row = gd_Service_Product.Rows[i];
+                TextBox txtOrder = (TextBox)row.FindControl("txtOrder");
+                string orderValue = txtOrder.Text.Trim();
+
+                // You can validate and use this orderValue for your logic
+                // For example, store it in a new column or a dictionary for later processing
+
+                // Example: just print/debug
+                System.Diagnostics.Debug.WriteLine($"Row {i}, Order entered: {orderValue}");
+            }
+
+            // Now you can use this ordering data as you want (e.g., sort dt, reorder rows, save order in DB, etc.)
+        }
+
+
+
+
+        protected void gd_Service_Product_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            try
+            {
+                // Null check on ViewState["dt"]
+                if (ViewState["dt"] == null)
+                {
+                    throw new Exception("ViewState[\"dt\"] is null.");
+                }
+
+                DataTable dt = ViewState["dt"] as DataTable;
+
+                if (dt == null || dt.Rows.Count == 0)
+                {
+                    throw new Exception("DataTable is null or empty.");
+                }
+
+                int index;
+                // Parse and validate index
+                if (!int.TryParse(e.CommandArgument.ToString(), out index))
+                {
+                    throw new Exception("CommandArgument is not a valid integer.");
+                }
+
+                if (index < 0 || index >= dt.Rows.Count)
+                {
+                    throw new Exception($"Index {index} is out of bounds.");
+                }
+
+                // Swap logic
+                if (e.CommandName == "MoveUp" && index > 0)
+                {
+                    SwapRows(dt, index, index - 1);
+                }
+                else if (e.CommandName == "MoveDown" && index < dt.Rows.Count - 1)
+                {
+                    SwapRows(dt, index, index + 1);
+                }
+
+                // Rebind to grid
+                ViewState["dt"] = dt;
+                gd_Service_Product.DataSource = dt;
+                gd_Service_Product.DataBind();
+            }
+            catch (Exception ex)
+            {
+                // Optional: Display on UI or log
+                // lblError.Text = "Grid operation failed: " + ex.Message;
+                throw new Exception("Grid bind failed: " + ex.Message, ex);
+            }
+        }
+
+
+        private void SwapRows(DataTable table, int index1, int index2)
+        {
+            if (table == null || index1 < 0 || index2 < 0 || index1 >= table.Rows.Count || index2 >= table.Rows.Count)
+                throw new ArgumentOutOfRangeException("Index out of range in SwapRows.");
+
+            DataRow temp = table.NewRow();
+            temp.ItemArray = table.Rows[index1].ItemArray;
+            table.Rows[index1].ItemArray = table.Rows[index2].ItemArray;
+            table.Rows[index2].ItemArray = temp.ItemArray;
+        }
+
+
+
 
         protected void gd_Service_Product_RowDataBound(object sender, GridViewRowEventArgs e)
         {
@@ -627,180 +792,463 @@ namespace Bill_Software.corporate.business.app
         //}
 
 
+        //protected void Button3_Click(object sender, EventArgs e)
+        //{
+        //    string purchesid = findpurchesId();
+        //    int i = 0;
+        //    DataTable dt1 = (DataTable)ViewState["dt"];
+        //    if (dt1 == null) return;
+
+        //    using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString()))
+        //    {
+        //        conn.Open();
+        //        using (SqlTransaction trans = conn.BeginTransaction())
+        //        {
+        //            try
+        //            {
+        //                Int32 sl = 0;
+        //                double tota_purchesrate1 = 0, total_tax_rate_details = 0;
+        //                List<string> errorMessages = new List<string>();
+
+        //                // Loop to insert details into tbl_purches_details
+        //                for (i = 0; i < dt1.Rows.Count; i++)
+        //                {
+        //                    SqlCommand cmd = new SqlCommand()
+        //                    {
+        //                        CommandType = CommandType.Text,
+        //                        Connection = conn,
+        //                        Transaction = trans
+        //                    };
+
+        //                    string Ser_pro_code = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_code")).Text;
+        //                    string Ser_pro_Name = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_Name")).Text;
+        //                    string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
+        //                    string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
+        //                    string Vendor_rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Vendor_rate")).Text;
+        //                    string tax_app = ((RadioButtonList)gd_Service_Product.Rows[i].FindControl("RadioButtonList1")).Text;
+        //                    string vat_parsentage = ((DropDownList)gd_Service_Product.Rows[i].FindControl("vat_parsentage")).Text;
+
+        //                    // New Fields for Discount and Taxable Amount
+        //                    string discountPercent = ((TextBox)gd_Service_Product.Rows[i].FindControl("DiscountPercent")).Text;
+        //                    string discountAmount = ((TextBox)gd_Service_Product.Rows[i].FindControl("DiscountAmount")).Text;
+        //                    string taxableAmount = ((TextBox)gd_Service_Product.Rows[i].FindControl("TaxableAmount")).Text;
+
+        //                    double qty = 0;
+        //                    double vndr = 0;
+        //                    double discPercent = 0, discAmount = 0, taxableAmt = 0;
+
+        //                    bool isQuantityValid = !string.IsNullOrEmpty(Quantity) && double.TryParse(Quantity, out qty) && qty > 0;
+        //                    bool isVendorRateValid = !string.IsNullOrEmpty(Vendor_rate) && double.TryParse(Vendor_rate, out vndr);
+        //                    bool isTaxAppValid = !string.IsNullOrEmpty(tax_app);
+        //                    bool isVatValid = !string.IsNullOrEmpty(vat_parsentage) && vat_parsentage != "NA";
+        //                    bool isDiscountValid = double.TryParse(discountPercent, out discPercent) && discPercent >= 0;
+        //                    bool isDiscountAmountValid = double.TryParse(discountAmount, out discAmount);
+        //                    bool isTaxableAmountValid = double.TryParse(taxableAmount, out taxableAmt);
+
+        //                    bool isAnyFieldFilled = isQuantityValid || isVendorRateValid || isTaxAppValid || isVatValid;
+
+        //                    if (isAnyFieldFilled)
+        //                    {
+        //                        List<string> missingFields = new List<string>();
+
+        //                        if (!isQuantityValid) missingFields.Add("Quantity");
+        //                        if (!isVendorRateValid) missingFields.Add("Vendor Rate");
+        //                        if (!isTaxAppValid) missingFields.Add("Tax Applicable");
+
+        //                        if (tax_app == "Yes" && !isVatValid)
+        //                        {
+        //                            missingFields.Add("VAT Percentage");
+        //                        }
+
+        //                        if (missingFields.Count > 0)
+        //                        {
+        //                            errorMessages.Add($"Row {i + 1}: {string.Join(", ", missingFields)} is required.");
+        //                            continue;
+        //                        }
+        //                    }
+
+        //                    sl++;
+        //                    double parches_rate = Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity); ///Total Purchase without Discount Calculations
+        //                    double discountAmountCalculated = (discPercent > 0) ? (parches_rate * discPercent) / 100 : discAmount;
+        //                    double taxableAmountCalculated = parches_rate - discountAmountCalculated;
+
+
+        //                    double tax_rete = (tax_app == "Yes") ? (taxableAmountCalculated * Convert.ToDouble(vat_parsentage)) / 100 : 0;
+        //                    double total_purches_rate = tax_rete + taxableAmountCalculated;
+
+        //                    tota_purchesrate1 += total_purches_rate;
+        //                    total_tax_rate_details += tax_rete;
+
+        //                    // Insert into tbl_purches_details including new columns
+        //                    cmd.CommandText = "insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,DiscountPercent,DiscountAmount,TaxableAmount,ShippedToLoc,ShippedDate,Purches_date,Client_id)" +
+        //                                      "values(@sl_no, @Purches_id, @Product_id, @Product_name, @vendor_rate, @tax_applicable, @tax_rate, @Quantity, @purches_rate, @total_purches_rate, @vat_amount, @specification, @DiscountPercent, @DiscountAmount, @TaxableAmount, @ShippedToLoc, @ShippedDate, @Purches_date, @Client_id)";
+        //                    cmd.Parameters.AddWithValue("@sl_no", sl.ToString());
+        //                    cmd.Parameters.AddWithValue("@Purches_id", purchesid);
+        //                    cmd.Parameters.AddWithValue("@Product_id", Ser_pro_code);
+        //                    cmd.Parameters.AddWithValue("@Product_name", Ser_pro_Name);
+        //                    cmd.Parameters.AddWithValue("@vendor_rate", Vendor_rate);
+        //                    cmd.Parameters.AddWithValue("@tax_applicable", tax_app);
+        //                    cmd.Parameters.AddWithValue("@tax_rate", vat_parsentage);
+        //                    cmd.Parameters.AddWithValue("@Quantity", Quantity);
+        //                    cmd.Parameters.AddWithValue("@purches_rate", parches_rate); //Purchase Rate w/o Discount
+        //                    cmd.Parameters.AddWithValue("@total_purches_rate", total_purches_rate);
+        //                    cmd.Parameters.AddWithValue("@vat_amount", tax_rete);
+        //                    cmd.Parameters.AddWithValue("@specification", sepecification.ToString());
+        //                    cmd.Parameters.AddWithValue("@DiscountPercent", discPercent);
+        //                    cmd.Parameters.AddWithValue("@DiscountAmount", discountAmountCalculated);
+        //                    cmd.Parameters.AddWithValue("@TaxableAmount", taxableAmountCalculated); //Purchase Rate w Discount
+        //                    cmd.Parameters.AddWithValue("@ShippedToLoc", DDL_ShippedTo.SelectedValue);
+        //                    cmd.Parameters.AddWithValue("@ShippedDate", txt_stockadddate.Text);
+        //                    cmd.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
+        //                    cmd.Parameters.AddWithValue("@Client_id", lblvendor_id.Text);
+        //                    cmd.ExecuteNonQuery();
+
+        //                    updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Vendor_rate, vat_parsentage, DDL_ShippedTo.SelectedValue, DDL_ShippedTo.SelectedItem.Text, txt_stockadddate.Text);
+        //                }
+
+        //                // Main insertion into tbl_Purches
+        //                decimal invAmount = 0.0m, tcsAmount = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m, otherAmount2 = 0.00m;
+        //                decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount);
+        //                decimal.TryParse(txt_delivery_amnt.Text.Trim(), out deliveryAmount);
+        //                decimal.TryParse(txt_othr_amnt1.Text.Trim(), out otherAmount1);
+        //                decimal.TryParse(txt_othr_amnt2.Text.Trim(), out otherAmount2);
+        //                decimal totalAmount = invAmount + tcsAmount + deliveryAmount + otherAmount1 + otherAmount2;
+        //                string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
+
+        //                SqlCommand cmdMain = new SqlCommand("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, BuyerOrderNo, OrderDate, Narration, InvoiceAmnt, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, otherAmount2_name, otherAmount2, AddedById, CreatedDate, TimeStamp, ShippedToStoreId, ShippedToStoreName) " +
+        //                    "VALUES (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @BuyerOrderNo, @OrderDate, @Narration, @InvoiceAmnt, @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @otherAmount2_name, @otherAmount2, @AddedById, @CreatedDate, @TimeStamp, @ShippedToStoreId, @ShippedToStoreName );", conn, trans);
+
+        //                cmdMain.Parameters.AddWithValue("@Purches_Id", purchesid);
+        //                cmdMain.Parameters.AddWithValue("@Client_Id", lblvendor_id.Text);
+        //                cmdMain.Parameters.AddWithValue("@Total_purches_rate", tota_purchesrate1);
+        //                cmdMain.Parameters.AddWithValue("@Total_Tax_rate", total_tax_rate_details);
+        //                cmdMain.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
+        //                cmdMain.Parameters.AddWithValue("@Purches_Type", RadioButtonList1.SelectedValue);
+        //                cmdMain.Parameters.AddWithValue("@Invoice_No", txt_invno.Text);
+        //                cmdMain.Parameters.AddWithValue("@Stock_Add_Date", txt_stockadddate.Text);
+
+        //                cmdMain.Parameters.AddWithValue("@BuyerOrderNo", string.IsNullOrEmpty(txt_reforder.Text) ? (object)DBNull.Value : txt_reforder.Text);
+        //                cmdMain.Parameters.AddWithValue("@OrderDate", string.IsNullOrEmpty(txt_refordrdate.Text) ? (object)DBNull.Value : txt_refordrdate.Text);
+
+        //                cmdMain.Parameters.AddWithValue("@Narration", txt_narration.Text);
+        //                cmdMain.Parameters.AddWithValue("@InvoiceAmnt", invAmount);
+        //                cmdMain.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
+        //                cmdMain.Parameters.AddWithValue("@TCS_Rate", txt_tcs_percent.Text);
+        //                cmdMain.Parameters.AddWithValue("@Delivery_Amount", deliveryAmount);
+        //                cmdMain.Parameters.AddWithValue("@Delivery_Rate", DDL_vat_parsentage.SelectedValue);
+        //                cmdMain.Parameters.AddWithValue("@otherAmount1_name", TextBox1.Text);
+        //                cmdMain.Parameters.AddWithValue("@otherAmount1", otherAmount1);
+        //                cmdMain.Parameters.AddWithValue("@otherAmount2_name", TextBox2.Text);
+        //                cmdMain.Parameters.AddWithValue("@otherAmount2", otherAmount2);
+        //                cmdMain.Parameters.AddWithValue("@AddedById", userId);
+        //                cmdMain.Parameters.AddWithValue("@CreatedDate", DateTime.Now.Date);
+        //                cmdMain.Parameters.AddWithValue("@TimeStamp", DateTime.Now);
+        //                cmdMain.Parameters.AddWithValue("@ShippedToStoreId", DDL_ShippedTo.SelectedValue);
+        //                cmdMain.Parameters.AddWithValue("@ShippedToStoreName", DDL_ShippedTo.SelectedItem.Text);
+
+        //                cmdMain.ExecuteNonQuery();
+
+        //                SqlCommand cmdDue = new SqlCommand("INSERT INTO tbl_purches_due (Purches_Id, Due_amount) VALUES (@Purches_Id, @Due_amount);", conn, trans);
+        //                cmdDue.Parameters.AddWithValue("@Purches_Id", purchesid);
+        //                cmdDue.Parameters.AddWithValue("@Due_amount", tota_purchesrate1);
+        //                cmdDue.ExecuteNonQuery();
+
+        //                trans.Commit();
+        //                lblOk.Text = "Data Saved Successfully.....";
+        //                PanelOK.Visible = true;
+        //                PanelError.Visible = false;
+        //                gridtable.Visible = false;
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                trans.Rollback();
+        //                ShowErrorMessage(ex.Message);
+        //            }
+        //        }
+        //    }
+        //}
+
+
+        private T FindControlSafe<T>(GridViewRow row, string controlId, StringBuilder logBuilder, int rowIndex) where T : Control
+        {
+            T control = row.FindControl(controlId) as T;
+            if (control == null)
+            {
+                logBuilder.AppendLine($"[ROW {rowIndex + 1}] Missing control: {controlId}");
+            }
+            return control;
+        }
+
+        private bool ValidateFormFields(out string errorMessage)
+        {
+            List<string> missingFields = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(txtPurchesDate.Text)) missingFields.Add("Purchase Date");
+            if (string.IsNullOrWhiteSpace(txt_stockadddate.Text)) missingFields.Add("Stock Add Date");
+            if (string.IsNullOrWhiteSpace(lblvendor_id.Text)) missingFields.Add("Vendor ID");
+            if (DDL_ShippedTo.SelectedIndex <= 0) missingFields.Add("Shipped To Location");
+
+            if (missingFields.Count > 0)
+            {
+                errorMessage = "Missing required form fields: " + string.Join(", ", missingFields);
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
+        }
+
         protected void Button3_Click(object sender, EventArgs e)
         {
+            StringBuilder logBuilder = new StringBuilder();
             string purchesid = findpurchesId();
-            int i = 0;
-            DataTable dt1 = (DataTable)ViewState["dt"];
-            if (dt1 == null) return;
+            logBuilder.AppendLine($"[INFO] Starting purchase entry. Purchase ID: {purchesid}");
 
+            string topFormError ="";
+            if (!ValidateFormFields(out topFormError))
+            {
+                ShowErrorMessage(topFormError);
+                return;
+            }
+
+            // Step 1: Validate and collect data
+            DataTable dt = ((DataTable)ViewState["dt"]);
+            if (dt == null)
+            {
+                ShowErrorMessage("[ERROR] No data found in ViewState.");
+                return;
+            }
+
+            // Step 2: Update Order column and validate
+            List<string> validationErrors = new List<string>();
+            List<DataRow> validRows = new List<DataRow>();
+
+            for (int i = 0; i < gd_Service_Product.Rows.Count; i++)
+            {
+                GridViewRow row = gd_Service_Product.Rows[i];
+                string rowHeader = $"[ROW {i + 1}]";
+
+                TextBox txtOrder = FindControlSafe<TextBox>(row, "txtOrder", logBuilder, i);
+                int orderVal = 0;
+                if (txtOrder != null && int.TryParse(txtOrder.Text.Trim(), out orderVal))
+                    dt.Rows[i]["Order"] = orderVal;
+                else
+                    dt.Rows[i]["Order"] = 9999;
+            }
+
+            DataView sortedView = dt.DefaultView;
+            sortedView.Sort = "Order ASC";
+            DataTable sortedTable = sortedView.ToTable();
+
+            List<ValidatedRow> parsedRows = new List<ValidatedRow>();
+            for (int i = 0; i < sortedTable.Rows.Count; i++)
+            {
+                GridViewRow row = gd_Service_Product.Rows[i];
+                string rowHeader = $"[ROW {i + 1}]";
+
+                var lblCode = FindControlSafe<Label>(row, "Ser_pro_code", logBuilder, i);
+                var lblName = FindControlSafe<Label>(row, "Ser_pro_Name", logBuilder, i);
+                var txtSpec = FindControlSafe<TextBox>(row, "sepecification", logBuilder, i);
+                var txtQty = FindControlSafe<TextBox>(row, "Quantity", logBuilder, i);
+                var txtRate = FindControlSafe<TextBox>(row, "Vendor_rate", logBuilder, i);
+                var rblTax = FindControlSafe<RadioButtonList>(row, "RadioButtonList1", logBuilder, i);
+                var ddlVat = FindControlSafe<DropDownList>(row, "vat_parsentage", logBuilder, i);
+                var txtDiscPct = FindControlSafe<TextBox>(row, "DiscountPercent", logBuilder, i);
+                var txtDiscAmt = FindControlSafe<TextBox>(row, "DiscountAmount", logBuilder, i);
+                var txtTaxAmt = FindControlSafe<TextBox>(row, "TaxableAmount", logBuilder, i);
+                var txtOrder = FindControlSafe<TextBox>(row, "txtOrder", logBuilder, i);
+
+                if (lblCode == null || lblName == null || txtSpec == null || txtQty == null || txtRate == null ||
+                    rblTax == null || ddlVat == null || txtDiscPct == null || txtDiscAmt == null || txtTaxAmt == null || txtOrder == null)
+                {
+                    validationErrors.Add($"{rowHeader} Missing one or more required fields.");
+                    continue;
+                }
+
+                // Skip row if either Quantity or Rate is blank
+                if (string.IsNullOrWhiteSpace(txtQty.Text) || string.IsNullOrWhiteSpace(txtRate.Text))
+                {
+                    //logBuilder.AppendLine($"{rowHeader} Skipped (Quantity or Rate not provided).");
+                    continue;
+                }
+                double qty=0; double rate=0; double discPct=0; double discAmt=0;
+                if (!double.TryParse(txtQty.Text, out qty) || qty <= 0 ||
+                    !double.TryParse(txtRate.Text, out rate))
+                {
+                    validationErrors.Add($"{rowHeader} Invalid Quantity or Vendor Rate.");
+                    continue;
+                }
+                
+                double.TryParse(txtDiscPct.Text, out discPct);
+                double.TryParse(txtDiscAmt.Text, out discAmt);
+                double vat = 0;
+                if (rblTax.SelectedValue == "Yes")
+                {
+                    if (!double.TryParse(ddlVat.SelectedValue, out vat))
+                    {
+                        validationErrors.Add($"{rowHeader} VAT required but invalid.");
+                        continue;
+                    }
+                }
+
+                double purchesRate = qty * rate;
+                double discount = discPct > 0 ? purchesRate * discPct / 100 : discAmt;
+                double taxable = purchesRate - discount;
+                double tax = rblTax.SelectedValue == "Yes" ? taxable * vat / 100 : 0;
+                double totalRate = taxable + tax;
+
+                parsedRows.Add(new ValidatedRow
+                {
+                    RowIndex = i,
+                    Code = lblCode.Text,
+                    Name = lblName.Text,
+                    Specification = txtSpec.Text,
+                    Quantity = qty,
+                    Rate = rate,
+                    TaxApplicable = rblTax.SelectedValue,
+                    VatRate = ddlVat.SelectedValue,
+                    DiscountPercent = discPct,
+                    DiscountAmount = discount,
+                    TaxableAmount = taxable,
+                    TaxAmount = tax,
+                    TotalPurchaseRate = totalRate,
+                    Order = txtOrder.Text
+                });
+            }
+
+            if (validationErrors.Count > 0)
+            {
+                ShowErrorMessage(string.Join("<br/>", validationErrors));
+                return;
+            }
+
+            // Step 3: Insert inside transaction
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString()))
             {
                 conn.Open();
-                using (SqlTransaction trans = conn.BeginTransaction())
+                SqlTransaction trans = conn.BeginTransaction();
+                try
                 {
-                    try
+                    double grandTotal = 0, grandTax = 0;
+                    foreach (var item in parsedRows)
                     {
-                        Int32 sl = 0;
-                        double tota_purchesrate1 = 0, total_tax_rate_details = 0;
-                        List<string> errorMessages = new List<string>();
+                        SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_purches_details 
+                (sl_no, Purches_id, Product_id, Product_name, vendor_rate, tax_applicable, tax_rate, Quantity, purches_rate, total_purches_rate, vat_amount, specification, DiscountPercent, DiscountAmount, TaxableAmount, ShippedToLoc, ShippedDate, Purches_date, Client_id) 
+                VALUES 
+                (@sl_no, @Purches_id, @Product_id, @Product_name, @vendor_rate, @tax_applicable, @tax_rate, @Quantity, @purches_rate, @total_purches_rate, @vat_amount, @specification, @DiscountPercent, @DiscountAmount, @TaxableAmount, @ShippedToLoc, @ShippedDate, @Purches_date, @Client_id)", conn, trans);
 
-                        // Loop to insert details into tbl_purches_details
-                        for (i = 0; i < dt1.Rows.Count; i++)
-                        {
-                            SqlCommand cmd = new SqlCommand()
-                            {
-                                CommandType = CommandType.Text,
-                                Connection = conn,
-                                Transaction = trans
-                            };
-
-                            string Ser_pro_code = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_code")).Text;
-                            string Ser_pro_Name = ((Label)gd_Service_Product.Rows[i].FindControl("Ser_pro_Name")).Text;
-                            string sepecification = ((TextBox)gd_Service_Product.Rows[i].FindControl("sepecification")).Text;
-                            string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
-                            string Vendor_rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Vendor_rate")).Text;
-                            string tax_app = ((RadioButtonList)gd_Service_Product.Rows[i].FindControl("RadioButtonList1")).Text;
-                            string vat_parsentage = ((DropDownList)gd_Service_Product.Rows[i].FindControl("vat_parsentage")).Text;
-
-                            // New Fields for Discount and Taxable Amount
-                            string discountPercent = ((TextBox)gd_Service_Product.Rows[i].FindControl("DiscountPercent")).Text;
-                            string discountAmount = ((TextBox)gd_Service_Product.Rows[i].FindControl("DiscountAmount")).Text;
-                            string taxableAmount = ((TextBox)gd_Service_Product.Rows[i].FindControl("TaxableAmount")).Text;
-
-                            double qty = 0;
-                            double vndr = 0;
-                            double discPercent = 0, discAmount = 0, taxableAmt = 0;
-
-                            bool isQuantityValid = !string.IsNullOrEmpty(Quantity) && double.TryParse(Quantity, out qty) && qty > 0;
-                            bool isVendorRateValid = !string.IsNullOrEmpty(Vendor_rate) && double.TryParse(Vendor_rate, out vndr);
-                            bool isTaxAppValid = !string.IsNullOrEmpty(tax_app);
-                            bool isVatValid = !string.IsNullOrEmpty(vat_parsentage) && vat_parsentage != "NA";
-                            bool isDiscountValid = double.TryParse(discountPercent, out discPercent) && discPercent >= 0;
-                            bool isDiscountAmountValid = double.TryParse(discountAmount, out discAmount);
-                            bool isTaxableAmountValid = double.TryParse(taxableAmount, out taxableAmt);
-
-                            bool isAnyFieldFilled = isQuantityValid || isVendorRateValid || isTaxAppValid || isVatValid;
-
-                            if (isAnyFieldFilled)
-                            {
-                                List<string> missingFields = new List<string>();
-
-                                if (!isQuantityValid) missingFields.Add("Quantity");
-                                if (!isVendorRateValid) missingFields.Add("Vendor Rate");
-                                if (!isTaxAppValid) missingFields.Add("Tax Applicable");
-
-                                if (tax_app == "Yes" && !isVatValid)
-                                {
-                                    missingFields.Add("VAT Percentage");
-                                }
-
-                                if (missingFields.Count > 0)
-                                {
-                                    errorMessages.Add($"Row {i + 1}: {string.Join(", ", missingFields)} is required.");
-                                    continue;
-                                }
-                            }
-
-                            sl++;
-                            double parches_rate = Convert.ToDouble(Vendor_rate) * Convert.ToDouble(Quantity); ///Total Purchase without Discount Calculations
-                            double discountAmountCalculated = (discPercent > 0) ? (parches_rate * discPercent) / 100 : discAmount;
-                            double taxableAmountCalculated = parches_rate - discountAmountCalculated;
-
-                            
-                            double tax_rete = (tax_app == "Yes") ? (taxableAmountCalculated * Convert.ToDouble(vat_parsentage)) / 100 : 0;
-                            double total_purches_rate = tax_rete + taxableAmountCalculated;
-
-                            tota_purchesrate1 += total_purches_rate;
-                            total_tax_rate_details += tax_rete;
-
-                            // Insert into tbl_purches_details including new columns
-                            cmd.CommandText = "insert into tbl_purches_details(sl_no,Purches_id,Product_id,Product_name,vendor_rate,tax_applicable,tax_rate,Quantity,purches_rate,total_purches_rate,vat_amount,specification,DiscountPercent,DiscountAmount,TaxableAmount,ShippedToLoc,ShippedDate,Purches_date,Client_id)" +
-                                              "values(@sl_no, @Purches_id, @Product_id, @Product_name, @vendor_rate, @tax_applicable, @tax_rate, @Quantity, @purches_rate, @total_purches_rate, @vat_amount, @specification, @DiscountPercent, @DiscountAmount, @TaxableAmount, @ShippedToLoc, @ShippedDate, @Purches_date, @Client_id)";
-                            cmd.Parameters.AddWithValue("@sl_no", sl.ToString());
-                            cmd.Parameters.AddWithValue("@Purches_id", purchesid);
-                            cmd.Parameters.AddWithValue("@Product_id", Ser_pro_code);
-                            cmd.Parameters.AddWithValue("@Product_name", Ser_pro_Name);
-                            cmd.Parameters.AddWithValue("@vendor_rate", Vendor_rate);
-                            cmd.Parameters.AddWithValue("@tax_applicable", tax_app);
-                            cmd.Parameters.AddWithValue("@tax_rate", vat_parsentage);
-                            cmd.Parameters.AddWithValue("@Quantity", Quantity);
-                            cmd.Parameters.AddWithValue("@purches_rate", parches_rate); //Purchase Rate w/o Discount
-                            cmd.Parameters.AddWithValue("@total_purches_rate", total_purches_rate);
-                            cmd.Parameters.AddWithValue("@vat_amount", tax_rete);
-                            cmd.Parameters.AddWithValue("@specification", sepecification.ToString());
-                            cmd.Parameters.AddWithValue("@DiscountPercent", discPercent);
-                            cmd.Parameters.AddWithValue("@DiscountAmount", discountAmountCalculated);
-                            cmd.Parameters.AddWithValue("@TaxableAmount", taxableAmountCalculated); //Purchase Rate w Discount
-                            cmd.Parameters.AddWithValue("@ShippedToLoc", DDL_ShippedTo.SelectedValue);
-                            cmd.Parameters.AddWithValue("@ShippedDate", txt_stockadddate.Text);
-                            cmd.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
-                            cmd.Parameters.AddWithValue("@Client_id", lblvendor_id.Text);
-                            cmd.ExecuteNonQuery();
-
-                            updatestock(Ser_pro_code, Ser_pro_Name, Quantity, Vendor_rate, vat_parsentage, DDL_ShippedTo.SelectedValue, DDL_ShippedTo.SelectedItem.Text, txt_stockadddate.Text);
-                        }
-
-                        // Main insertion into tbl_Purches
-                        decimal invAmount = 0.0m, tcsAmount = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m, otherAmount2 = 0.00m;
-                        decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount);
-                        decimal.TryParse(txt_delivery_amnt.Text.Trim(), out deliveryAmount);
-                        decimal.TryParse(txt_othr_amnt1.Text.Trim(), out otherAmount1);
-                        decimal.TryParse(txt_othr_amnt2.Text.Trim(), out otherAmount2);
-                        decimal totalAmount = invAmount + tcsAmount + deliveryAmount + otherAmount1 + otherAmount2;
-                        string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
-
-                        SqlCommand cmdMain = new SqlCommand("INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, BuyerOrderNo, OrderDate, Narration, InvoiceAmnt, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, otherAmount2_name, otherAmount2, AddedById, CreatedDate, TimeStamp, ShippedToStoreId, ShippedToStoreName) " +
-                            "VALUES (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @BuyerOrderNo, @OrderDate, @Narration, @InvoiceAmnt, @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @otherAmount2_name, @otherAmount2, @AddedById, @CreatedDate, @TimeStamp, @ShippedToStoreId, @ShippedToStoreName );", conn, trans);
-
-                        cmdMain.Parameters.AddWithValue("@Purches_Id", purchesid);
-                        cmdMain.Parameters.AddWithValue("@Client_Id", lblvendor_id.Text);
-                        cmdMain.Parameters.AddWithValue("@Total_purches_rate", tota_purchesrate1);
-                        cmdMain.Parameters.AddWithValue("@Total_Tax_rate", total_tax_rate_details);
-                        cmdMain.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
-                        cmdMain.Parameters.AddWithValue("@Purches_Type", RadioButtonList1.SelectedValue);
-                        cmdMain.Parameters.AddWithValue("@Invoice_No", txt_invno.Text);
-                        cmdMain.Parameters.AddWithValue("@Stock_Add_Date", txt_stockadddate.Text);
-
-                        cmdMain.Parameters.AddWithValue("@BuyerOrderNo", string.IsNullOrEmpty(txt_reforder.Text) ? (object)DBNull.Value : txt_reforder.Text);
-                        cmdMain.Parameters.AddWithValue("@OrderDate", string.IsNullOrEmpty(txt_refordrdate.Text) ? (object)DBNull.Value : txt_refordrdate.Text);
-
-                        cmdMain.Parameters.AddWithValue("@Narration", txt_narration.Text);
-                        cmdMain.Parameters.AddWithValue("@InvoiceAmnt", invAmount);
-                        cmdMain.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
-                        cmdMain.Parameters.AddWithValue("@TCS_Rate", txt_tcs_percent.Text);
-                        cmdMain.Parameters.AddWithValue("@Delivery_Amount", deliveryAmount);
-                        cmdMain.Parameters.AddWithValue("@Delivery_Rate", DDL_vat_parsentage.SelectedValue);
-                        cmdMain.Parameters.AddWithValue("@otherAmount1_name", TextBox1.Text);
-                        cmdMain.Parameters.AddWithValue("@otherAmount1", otherAmount1);
-                        cmdMain.Parameters.AddWithValue("@otherAmount2_name", TextBox2.Text);
-                        cmdMain.Parameters.AddWithValue("@otherAmount2", otherAmount2);
-                        cmdMain.Parameters.AddWithValue("@AddedById", userId);
-                        cmdMain.Parameters.AddWithValue("@CreatedDate", DateTime.Now.Date);
-                        cmdMain.Parameters.AddWithValue("@TimeStamp", DateTime.Now);
-                        cmdMain.Parameters.AddWithValue("@ShippedToStoreId", DDL_ShippedTo.SelectedValue);
-                        cmdMain.Parameters.AddWithValue("@ShippedToStoreName", DDL_ShippedTo.SelectedItem.Text);
-
-                        cmdMain.ExecuteNonQuery();
-
-                        SqlCommand cmdDue = new SqlCommand("INSERT INTO tbl_purches_due (Purches_Id, Due_amount) VALUES (@Purches_Id, @Due_amount);", conn, trans);
-                        cmdDue.Parameters.AddWithValue("@Purches_Id", purchesid);
-                        cmdDue.Parameters.AddWithValue("@Due_amount", tota_purchesrate1);
-                        cmdDue.ExecuteNonQuery();
-
-                        trans.Commit();
-                        lblOk.Text = "Data Saved Successfully.....";
-                        PanelOK.Visible = true;
-                        PanelError.Visible = false;
-                        gridtable.Visible = false;
+                        cmd.Parameters.AddWithValue("@sl_no", item.Order);
+                        cmd.Parameters.AddWithValue("@Purches_id", purchesid);
+                        cmd.Parameters.AddWithValue("@Product_id", item.Code);
+                        cmd.Parameters.AddWithValue("@Product_name", item.Name);
+                        cmd.Parameters.AddWithValue("@vendor_rate", item.Rate);
+                        cmd.Parameters.AddWithValue("@tax_applicable", item.TaxApplicable);
+                        cmd.Parameters.AddWithValue("@tax_rate", item.VatRate);
+                        cmd.Parameters.AddWithValue("@Quantity", item.Quantity);
+                        cmd.Parameters.AddWithValue("@purches_rate", item.Quantity * item.Rate);
+                        cmd.Parameters.AddWithValue("@total_purches_rate", item.TotalPurchaseRate);
+                        cmd.Parameters.AddWithValue("@vat_amount", item.TaxAmount);
+                        cmd.Parameters.AddWithValue("@specification", item.Specification);
+                        cmd.Parameters.AddWithValue("@DiscountPercent", item.DiscountPercent);
+                        cmd.Parameters.AddWithValue("@DiscountAmount", item.DiscountAmount);
+                        cmd.Parameters.AddWithValue("@TaxableAmount", item.TaxableAmount);
+                        cmd.Parameters.AddWithValue("@ShippedToLoc", DDL_ShippedTo.SelectedValue);
+                        cmd.Parameters.AddWithValue("@ShippedDate", txt_stockadddate.Text);
+                        cmd.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
+                        cmd.Parameters.AddWithValue("@Client_id", lblvendor_id.Text);
+                        cmd.ExecuteNonQuery();
+                        logBuilder.AppendLine("[SUCCESS] Purchase Records Added successfully.");
+                        updatestock(item.Code, item.Name, item.Quantity.ToString(), item.Rate.ToString(), item.VatRate, DDL_ShippedTo.SelectedValue, DDL_ShippedTo.SelectedItem.Text, txt_stockadddate.Text);
+                        logBuilder.AppendLine("[SUCCESS] Sock Records Added / Updated successfully.");
+                        grandTotal += item.TotalPurchaseRate;
+                        grandTax += item.TaxAmount;
                     }
-                    catch (Exception ex)
-                    {
-                        trans.Rollback();
-                        ShowErrorMessage(ex.Message);
-                    }
+
+
+                    SqlCommand cmdMain = new SqlCommand(@"INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, BuyerOrderNo, OrderDate, Narration, InvoiceAmnt, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, otherAmount2_name, otherAmount2, AddedById, CreatedDate, TimeStamp, ShippedToStoreId, ShippedToStoreName) VALUES 
+                    (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @BuyerOrderNo, @OrderDate, @Narration, @InvoiceAmnt, @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @otherAmount2_name, @otherAmount2, @AddedById, @CreatedDate, @TimeStamp, @ShippedToStoreId, @ShippedToStoreName);", conn, trans);
+
+                    decimal tcsAmount = 0, deliveryAmount = 0, otherAmount1 = 0, otherAmount2 = 0;
+                    string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
+
+                    decimal.TryParse(txt_tcs_amnt.Text, out tcsAmount);
+                    decimal.TryParse(txt_delivery_amnt.Text, out deliveryAmount);
+                    decimal.TryParse(txt_othr_amnt1.Text, out otherAmount1);
+                    decimal.TryParse(txt_othr_amnt2.Text, out otherAmount2);
+
+                    cmdMain.Parameters.AddWithValue("@Purches_Id", string.IsNullOrWhiteSpace(purchesid) ? Guid.NewGuid().ToString() : purchesid);
+                    cmdMain.Parameters.AddWithValue("@Client_Id", string.IsNullOrWhiteSpace(lblvendor_id.Text) ? (object)DBNull.Value : lblvendor_id.Text);
+                    cmdMain.Parameters.AddWithValue("@Total_purches_rate", grandTotal > 0 ? grandTotal : 0);
+                    cmdMain.Parameters.AddWithValue("@Total_Tax_rate", grandTax >= 0 ? grandTax : 0);
+                    cmdMain.Parameters.AddWithValue("@Purches_date", txtPurchesDate.Text);
+                    cmdMain.Parameters.AddWithValue("@Purches_Type", string.IsNullOrWhiteSpace(RadioButtonList1.SelectedValue) ? "Product" : RadioButtonList1.SelectedValue);
+                    cmdMain.Parameters.AddWithValue("@Invoice_No", string.IsNullOrWhiteSpace(txt_invno.Text) ? "NA" : txt_invno.Text);
+                    cmdMain.Parameters.AddWithValue("@Stock_Add_Date", string.IsNullOrWhiteSpace(txt_stockadddate.Text) ? (object)DBNull.Value : txt_stockadddate.Text);
+                    cmdMain.Parameters.AddWithValue("@BuyerOrderNo", string.IsNullOrWhiteSpace(txt_reforder.Text) ? (object)DBNull.Value : txt_reforder.Text);
+                    cmdMain.Parameters.AddWithValue("@OrderDate", string.IsNullOrWhiteSpace(txt_refordrdate.Text) ? (object)DBNull.Value : txt_refordrdate.Text);
+                    cmdMain.Parameters.AddWithValue("@Narration", string.IsNullOrWhiteSpace(txt_narration.Text) ? "NA" : txt_narration.Text);
+                    cmdMain.Parameters.AddWithValue("@InvoiceAmnt", "0.00");
+                    cmdMain.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
+                    cmdMain.Parameters.AddWithValue("@TCS_Rate", string.IsNullOrWhiteSpace(txt_tcs_percent.Text) ? "0" : txt_tcs_percent.Text);
+                    cmdMain.Parameters.AddWithValue("@Delivery_Amount", deliveryAmount);
+                    cmdMain.Parameters.AddWithValue("@Delivery_Rate", string.IsNullOrWhiteSpace(DDL_vat_parsentage.SelectedValue) ? "0" : DDL_vat_parsentage.SelectedValue);
+                    cmdMain.Parameters.AddWithValue("@otherAmount1_name", string.IsNullOrWhiteSpace(TextBox1.Text) ? "" : TextBox1.Text);
+                    cmdMain.Parameters.AddWithValue("@otherAmount1", otherAmount1);
+                    cmdMain.Parameters.AddWithValue("@otherAmount2_name", string.IsNullOrWhiteSpace(TextBox2.Text) ? "" : TextBox2.Text);
+                    cmdMain.Parameters.AddWithValue("@otherAmount2", otherAmount2);
+                    cmdMain.Parameters.AddWithValue("@AddedById", userId);
+                    cmdMain.Parameters.AddWithValue("@CreatedDate", DateTime.Now.Date);
+                    cmdMain.Parameters.AddWithValue("@TimeStamp", DateTime.Now);
+                    cmdMain.Parameters.AddWithValue("@ShippedToStoreId", string.IsNullOrWhiteSpace(DDL_ShippedTo.SelectedValue) ? "STR001" : DDL_ShippedTo.SelectedValue);
+                    cmdMain.Parameters.AddWithValue("@ShippedToStoreName", string.IsNullOrWhiteSpace(DDL_ShippedTo.SelectedItem?.Text) ? "Central Warehouse [Jamshedpur]" : DDL_ShippedTo.SelectedItem.Text);
+                    cmdMain.ExecuteNonQuery();
+                    logBuilder.AppendLine("[SUCCESS] Purchase Register Updated successfully.");
+                    SqlCommand cmdDue = new SqlCommand("INSERT INTO tbl_purches_due (Purches_Id, Due_amount) VALUES (@Purches_Id, @Due_amount)", conn, trans);
+                    cmdDue.Parameters.AddWithValue("@Purches_Id", purchesid);
+                    cmdDue.Parameters.AddWithValue("@Due_amount", grandTotal);
+                    cmdDue.ExecuteNonQuery();
+
+                    trans.Commit();
+                    logBuilder.AppendLine("[SUCCESS] All Purchase data committed successfully.");
+                    lblOk.Text = logBuilder.ToString().Replace("\n", "<br/>");
+                    PanelOK.Visible = true;
+                    PanelError.Visible = false;
+                    gridtable.Visible = false;
+                }
+                catch (Exception ex)
+                {
+                    trans.Rollback();
+                    ShowErrorMessage("[ERROR] Transaction failed: " + ex.Message);
                 }
             }
+        }
+
+        class ValidatedRow
+        {
+            public int RowIndex;
+            public string Code;
+            public string Name;
+            public string Specification;
+            public double Quantity;
+            public double Rate;
+            public string TaxApplicable;
+            public string VatRate;
+            public double DiscountPercent;
+            public double DiscountAmount;
+            public double TaxableAmount;
+            public double TaxAmount;
+            public double TotalPurchaseRate;
+            public string Order;
+        }
+
+
+        private void ShowLogMessage(string message, bool success, string purchesId = "")
+        {
+            lblLog.Text = "<pre>" + message + "</pre>";
+            lblOk.Text = success ? $"✅ Purchase saved successfully. ID: {purchesId}" : "❌ Failed to save purchase.";
+            PanelOK.Visible = success;
+            PanelError.Visible = !success;
+            gridtable.Visible = false;
         }
 
 

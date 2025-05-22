@@ -225,7 +225,7 @@ namespace Bill_Software.corporate.business.print
                         INNER JOIN tbl_Quotaion_details qd 
                             ON cd.Sl_no = qd.Sl_no AND c.Quotation_No = qd.Quotation_no
                         WHERE cd.Challan_no = @Challan_no
-                        ORDER BY cd.Product_name";
+                        ORDER BY qd.ItemNo";
 
                                             SqlParameter[] detailParam = {
                             new SqlParameter("@Challan_no", chalanNo)
@@ -753,7 +753,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             //string cmdstring = "select Sl_no,Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
-            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
+            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by ItemNo";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno)
                                       };
