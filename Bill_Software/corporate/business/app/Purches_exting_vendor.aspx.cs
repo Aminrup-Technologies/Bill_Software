@@ -1168,7 +1168,7 @@ namespace Bill_Software.corporate.business.app
                     SqlCommand cmdMain = new SqlCommand(@"INSERT INTO tbl_Purches (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, Invoice_No, Stock_Add_Date, BuyerOrderNo, OrderDate, Narration, InvoiceAmnt, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, otherAmount2_name, otherAmount2, AddedById, CreatedDate, TimeStamp, ShippedToStoreId, ShippedToStoreName) VALUES 
                     (@Purches_Id, @Client_Id, @Total_purches_rate, @Total_Tax_rate, @Purches_date, @Purches_Type, @Invoice_No, @Stock_Add_Date, @BuyerOrderNo, @OrderDate, @Narration, @InvoiceAmnt, @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @otherAmount2_name, @otherAmount2, @AddedById, @CreatedDate, @TimeStamp, @ShippedToStoreId, @ShippedToStoreName);", conn, trans);
 
-                    decimal tcsAmount = 0, deliveryAmount = 0, otherAmount1 = 0, otherAmount2 = 0;
+                    decimal tcsAmount = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m, otherAmount2 = 0.00m;
                     string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
 
                     decimal.TryParse(txt_tcs_amnt.Text, out tcsAmount);
@@ -1187,7 +1187,7 @@ namespace Bill_Software.corporate.business.app
                     cmdMain.Parameters.AddWithValue("@BuyerOrderNo", string.IsNullOrWhiteSpace(txt_reforder.Text) ? (object)DBNull.Value : txt_reforder.Text);
                     cmdMain.Parameters.AddWithValue("@OrderDate", string.IsNullOrWhiteSpace(txt_refordrdate.Text) ? (object)DBNull.Value : txt_refordrdate.Text);
                     cmdMain.Parameters.AddWithValue("@Narration", string.IsNullOrWhiteSpace(txt_narration.Text) ? "NA" : txt_narration.Text);
-                    cmdMain.Parameters.AddWithValue("@InvoiceAmnt", "0.00");
+                    cmdMain.Parameters.AddWithValue("@InvoiceAmnt", string.IsNullOrWhiteSpace(txt_inv_amount.Text) ? "0.00" : txt_inv_amount.Text);
                     cmdMain.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
                     cmdMain.Parameters.AddWithValue("@TCS_Rate", string.IsNullOrWhiteSpace(txt_tcs_percent.Text) ? "0" : txt_tcs_percent.Text);
                     cmdMain.Parameters.AddWithValue("@Delivery_Amount", deliveryAmount);

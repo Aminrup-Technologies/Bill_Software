@@ -121,13 +121,22 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblChadate;
         
         /// <summary>
-        /// lblqnumber control.
+        /// lblpnumber control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblqnumber;
+        protected global::System.Web.UI.WebControls.Label lblpnumber;
+        
+        /// <summary>
+        /// lblpdate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblpdate;
         
         /// <summary>
         /// lblplaceofsup1 control.
@@ -155,6 +164,24 @@ namespace Bill_Software.corporate.business.print {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblplaceofsup3;
+        
+        /// <summary>
+        /// gst_row control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow gst_row;
+        
+        /// <summary>
+        /// pan_row control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow pan_row;
         
         /// <summary>
         /// lblProductDetails control.

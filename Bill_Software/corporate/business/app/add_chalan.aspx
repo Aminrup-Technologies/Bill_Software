@@ -127,8 +127,8 @@
 
 
             if (document.getElementById('<%=FactoryAddress.ClientID%>').SelectedIndex == -1) {
-            alert("Provide Delivery Address ");
-            document.getElementById('<%=FactoryAddress.ClientID%>').focus();
+                alert("Provide Delivery Address ");
+                document.getElementById('<%=FactoryAddress.ClientID%>').focus();
                 return false;
             }
 
@@ -240,13 +240,14 @@
                 </tr>
                 <tr>
                     <td colspan="6">
-                        <asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemCommand="DataList1_ItemCommand">
-                            <FooterStyle BackColor="White" ForeColor="#000066" />
-                            <AlternatingItemStyle BackColor="#94B8FF" />
-                            <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
-                            <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
-                            <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
-                            <HeaderTemplate>
+                        <asp:Panel ID="Panel2" runat="server" Visible="true">
+                            <asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemCommand="DataList1_ItemCommand">
+                                <FooterStyle BackColor="White" ForeColor="#000066" />
+                                <AlternatingItemStyle BackColor="#94B8FF" />
+                                <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
+                                <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
+                                <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                <%--<HeaderTemplate>
                                 <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
                                     <tr>
                                         <td style="text-align: center; width: 20%;">
@@ -285,8 +286,73 @@
                                         </td>
                                     </tr>
                                 </table>
-                            </ItemTemplate>
-                        </asp:DataList>
+                            </ItemTemplate>--%>
+
+                                <HeaderTemplate>
+                                    <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
+                                        <tr>
+                                            <td style="text-align: center; width: 6%;">
+                                                <asp:Label ID="LabelSL0" runat="server" Text="SL No"></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 16%;">
+                                                <asp:Label ID="showid0" runat="server" Text="Quotation no"></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 10%;">
+                                                <asp:Label ID="showrm0" runat="server" Text="Quotation Date"></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 10%;">
+                                                <asp:Label ID="Label17" runat="server" Text="DO Number"></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 10%;">
+                                                <asp:Label ID="Label18" runat="server" Text="PO Number"></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 16%;">
+                                                <asp:Label ID="Label9" runat="server" Text="Client Name"></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 15%;">
+                                                <asp:Label ID="Label1" runat="server" Text="Product Catagory"></asp:Label>
+                                            </td>
+
+                                            <td style="text-align: center; width: 13%;">
+                                                <asp:Label ID="Label12" runat="server" Text="Net Amount"></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 4%;">
+                                                <asp:Label ID="edit0" runat="server" Text="Select"></asp:Label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </HeaderTemplate>
+
+                                <ItemTemplate>
+                                    <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
+                                        <tr>
+                                            <td style="text-align: center; width: 6%;">
+                                                <asp:Label ID="LabelSL" runat="server" Text='<%# Container.ItemIndex + 1 %>'></asp:Label>
+                                            </td>
+                                            <td style="text-align: center; width: 16%;">
+                                                <asp:Label ID="ID0" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label></td>
+                                            <td style="text-align: center; width: 10%;">
+                                                <asp:Label ID="addshowname0" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label></td>
+                                            <td style="text-align: center; width: 10%;">
+                                                <asp:Label ID="Label17val" runat="server" Text='<%# Eval("DO_Number") %>'></asp:Label></td>
+                                            <td style="text-align: center; width: 10%;">
+                                                <asp:Label ID="Label18val" runat="server" Text='<%# Eval("PO_Number") %>'></asp:Label></td>
+                                            <td style="text-align: center; width: 16%;">
+                                                <asp:Label ID="Label13" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label></td>
+                                            <td style="text-align: center; width: 15%;">
+                                                <asp:Label ID="Label3" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label></td>
+
+                                            <td style="text-align: center; width: 13%;">Rs.<asp:Label ID="Label16" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label>
+                                                /- </td>
+                                            <td style="text-align: center; width: 4%;">
+                                                <asp:ImageButton ID="ImageButton1" runat="server" CommandArgument='<%# Eval("Quotation_no") %>' CommandName="Select" ImageUrl="~/corporate/business/WebImages/tick-icon.png" ToolTip="Select" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </ItemTemplate>
+
+                            </asp:DataList>
+                        </asp:Panel>
                     </td>
                 </tr>
                 <tr>
@@ -301,41 +367,36 @@
                         <asp:Panel ID="Panel1" runat="server" Visible="false">
                             <table class="auto-style1">
                                 <tr>
-                                    <td width="13%">&nbsp;</td>
-                                    <td width="37%">&nbsp;</td>
-                                    <td width="13%">&nbsp;Challan Date</td>
-                                    <td width="37%">
-                                        <asp:TextBox ID="txtinvoiceDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Quotation No</td>
-                                    <td>
-                                        <asp:Label ID="lblQuotation_no" runat="server"></asp:Label>
-                                    </td>
-                                    <td>Quotation Date</td>
-                                    <td>
-                                        <asp:Label ID="lblQuotation_date" runat="server"></asp:Label>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Client ID</td>
-                                    <td>
-                                        <asp:Label ID="lblClient_Id" runat="server"></asp:Label>
-                                    </td>
                                     <td>Client Name</td>
                                     <td>
-                                        <asp:Label ID="lblClientName" runat="server"></asp:Label>
+                                        <asp:Label ID="lblClientName" ForeColor="#0000cc" Font-Bold="true" runat="server"></asp:Label>&nbsp;[<asp:Label ID="lblClient_Id" runat="server"></asp:Label>]
+                                    </td>
+                                    <td>P.O. No</td>
+                                    <td>
+                                        <asp:Label ID="lbl_ponumber" runat="server"></asp:Label>
                                     </td>
                                 </tr>
+
+                                <tr>
+                                    <td width="13%">ERP Record No</td>
+                                    <td width="37%">
+                                        <asp:Label ID="lblQuotation_no" runat="server" Font-Bold="true" ForeColor="#cc3300"></asp:Label>&nbsp;Created on&nbsp;<asp:Label ID="lblQuotation_date" Font-Bold="true" ForeColor="#993300" runat="server"></asp:Label>
+                                    </td>
+                                    <td width="13%">&nbsp;D.O. Number</td>
+                                    <td width="37%">
+                                        <asp:Label ID="lbl_donumber" runat="server"></asp:Label>
+                                    </td>
+                                </tr>
+
                                 <tr>
                                     <td>Quotation Amount</td>
                                     <td>
                                         <asp:Label ID="lblGross_amount" runat="server" Visible="False"></asp:Label>
                                         <asp:Label ID="lblNet_amount" runat="server"></asp:Label>
                                     </td>
-                                    <td>&nbsp;</td>
+                                    <td>&nbsp;Challan/ Delivery Date</td>
                                     <td>
+                                        <asp:TextBox ID="txtinvoiceDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" ForeColor="#ff3300" Font-Bold="true" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
                                         <asp:Label ID="lblservicetax" runat="server" Visible="False"></asp:Label>
                                     </td>
                                 </tr>
@@ -351,91 +412,105 @@
                                 <tr>
                                     <td style="">Delivery Address:</td>
                                     <td colspan="2">
-                                        <asp:ListBox ID="FactoryAddress" runat="server" AutoPostBack="True" BorderStyle="Solid" BorderWidth="1px" Font-Size="10px" multiple="true" Rows="3" SelectionMode="Multiple" Width="550px"></asp:ListBox>
+                                        <asp:ListBox ID="FactoryAddress" runat="server" AutoPostBack="True" BorderStyle="Solid" BorderWidth="1px" Font-Bold="true" Font-Size="10px" multiple="true" Rows="3" SelectionMode="Multiple" Width="550px"></asp:ListBox>
                                     </td>
-                                    <td>&nbsp;</td>
+                                    <td>&nbsp;<asp:Label ID="Label2" runat="server" Text="<--- | Select Delivery Address" Font-Italic="true"></asp:Label></td>
                                 </tr>
                                 <tr>
                                     <td colspan="4">
                                         <asp:GridView ID="gd_Quotation" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
                                             <RowStyle BackColor="#94B8FF" />
                                             <Columns>
+
+                                                <asp:TemplateField HeaderText="SL No">
+                                                    <ItemTemplate>
+                                                        <asp:Label ID="lblSL" runat="server" Text='<%# Container.DataItemIndex + 1 %>'></asp:Label>
+                                                    </ItemTemplate>
+                                                    <HeaderStyle Width="5%" />
+                                                    <ItemStyle Width="5%" />
+                                                </asp:TemplateField>
+
                                                 <asp:TemplateField HeaderText="Product ID / Service ID">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="15%" />
-                                                    <ItemStyle Width="15%" />
+                                                    <HeaderStyle Width="10%" />
+                                                    <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
+
                                                 <asp:TemplateField HeaderText="HSN Code">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="product_id" runat="server" Text='<%# Bind("product_id") %>'></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:Label ID="product_id" runat="server" Text='<%# Bind("product_id") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="15%" />
-                                                    <ItemStyle Width="15%" />
+                                                    <HeaderStyle Width="8%" />
+                                                    <ItemStyle Width="8%" />
                                                 </asp:TemplateField>
+
                                                 <asp:TemplateField HeaderText="Product Name / Service Name">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="30%" />
-                                                    <ItemStyle Width="30%" />
+                                                    <HeaderStyle Width="20%" />
+                                                    <ItemStyle Width="20%" />
                                                 </asp:TemplateField>
 
+                                                <asp:TemplateField HeaderText="Item No">
+                                                    <ItemTemplate>
+                                                        <asp:Label ID="ItemNo" runat="server" Text='<%# Bind("ItemNo") %>'></asp:Label>
+                                                    </ItemTemplate>
+                                                    <HeaderStyle Width="7%" />
+                                                    <ItemStyle Width="7%" />
+                                                </asp:TemplateField>
+
+                                                <asp:TemplateField HeaderText="Material No">
+                                                    <ItemTemplate>
+                                                        <asp:Label ID="MaterialNo" runat="server" Text='<%# Bind("MaterialNo") %>'></asp:Label>
+                                                    </ItemTemplate>
+                                                    <HeaderStyle Width="7%" />
+                                                    <ItemStyle Width="7%" />
+                                                </asp:TemplateField>
+
+                                                <asp:TemplateField HeaderText="Pack Size">
+                                                    <ItemTemplate>
+                                                        <asp:Label ID="PackSize" runat="server" Text='<%# Bind("PackSize") %>'></asp:Label>
+                                                    </ItemTemplate>
+                                                    <HeaderStyle Width="6%" />
+                                                    <ItemStyle Width="6%" />
+                                                </asp:TemplateField>
 
                                                 <asp:TemplateField HeaderText="Quoted Quantity">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>'></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:Label ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="10%" />
-                                                    <ItemStyle Width="10%" />
+                                                    <HeaderStyle Width="6%" />
+                                                    <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
 
                                                 <asp:TemplateField HeaderText="Delivered Quantity">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="DeliveredQnt" runat="server" Text='<%# Bind("DeliveredQnt") %>'></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:Label ID="DeliveredQnt" runat="server" Text='<%# Bind("DeliveredQnt") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="10%" />
-                                                    <ItemStyle Width="10%" />
+                                                    <HeaderStyle Width="6%" />
+                                                    <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
 
                                                 <asp:TemplateField HeaderText="Quantity Due for Delivery">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="TextBox7" runat="server"></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate(event)"></asp:TextBox>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="15%" />
-                                                    <ItemStyle Width="15%" />
+                                                    <HeaderStyle Width="5%" />
+                                                    <ItemStyle Width="5%" HorizontalAlign="Center" />
                                                 </asp:TemplateField>
+
                                                 <asp:TemplateField HeaderText="Create">
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="TextBox1" runat="server"></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <HeaderTemplate>
                                                         <asp:CheckBox ID="checkAll" runat="server" onclick="checkAll(this);" />
                                                     </HeaderTemplate>
                                                     <ItemTemplate>
                                                         <asp:CheckBox ID="chk" runat="server" />
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="10%" />
-                                                    <ItemStyle Width="10%" />
+                                                    <HeaderStyle Width="5%" />
+                                                    <ItemStyle Width="5%" />
                                                 </asp:TemplateField>
 
                                             </Columns>
@@ -445,6 +520,8 @@
                                             <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
                                             <AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />
                                         </asp:GridView>
+
+
                                     </td>
                                 </tr>
                                 <tr>

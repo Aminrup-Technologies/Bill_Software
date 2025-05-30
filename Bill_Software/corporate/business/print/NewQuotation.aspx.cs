@@ -39,7 +39,7 @@ namespace Bill_Software.corporate.business.print
         DataTable dtpSer = new DataTable();
 
         public string netamount = "";
-        public double TQ = 0;
+        public double TotalQuantity = 0;
 
         public static string viewtype = string.Empty;
 
@@ -172,7 +172,7 @@ namespace Bill_Software.corporate.business.print
                 {
                     string pserv = dtpr.Rows[i]["PrimaryService"].ToString();
                     string primaryserviceDetails = bindterms1(pserv);
-                    if (primaryserviceDetails!="")
+                    if (primaryserviceDetails != "")
                     {
                         strServTerm.Append("<table border='0' width='100%' class='PrimaryService'>");
                         strServTerm.Append("<tr><td colspan='2' class='' style='text-align: left; font-weight: bold;'>");
@@ -183,7 +183,7 @@ namespace Bill_Software.corporate.business.print
                         strServTerm.Append("<tr><td colspan='2' class='gap' style=''>&nbsp</td></tr>");
                         strServTerm.Append(" </table>");
                     }
-                    
+
                 }
                 //TextInfo textInfo1 = cultureInfo.TextInfo;
                 if (Session["pserTerm"] != null)
@@ -205,7 +205,7 @@ namespace Bill_Software.corporate.business.print
             cmd.CommandType = CommandType.Text;
             cmd.CommandTimeout = 0;
             cmd.Parameters.AddWithValue("@PrimaryService", pserv.ToString());
-            
+
             SqlDataReader re = cmd.ExecuteReader();
 
             if (re.Read())
@@ -317,7 +317,7 @@ namespace Bill_Software.corporate.business.print
         //                string HSN = dtp.Rows[i]["HSN"].ToString();
         //                string Productname = dtp.Rows[i]["Product_name"].ToString();
         //                int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
-        //                TQ = TQ + Quantity;
+        //                TotalQuantity = TotalQuantity + Quantity;
         //                double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
         //                int gstper = Convert.ToInt32(dtp.Rows[i]["Service_tax_rate"]);
         //                double QuantityBaserateAmo = Math.Round((Quantity * baserate), 2);
@@ -373,7 +373,7 @@ namespace Bill_Software.corporate.business.print
 
         //            strp += "<td style='border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;  border-right:none; border-top:none;background-color:#d9d3d3' colspan='3'>GRAND TOTAL</td>";
 
-        //            strp += "<td style='width:8%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
+        //            strp += "<td style='width:8%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TotalQuantity.ToString() + "</td>";
         //            strp += "<td style='width:7%; border:1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
         //            strp += "<td style='width:5%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
         //            strp += "<td style='width:5%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
@@ -491,7 +491,7 @@ namespace Bill_Software.corporate.business.print
         //                string HSN = dtp.Rows[i]["HSN"].ToString();
         //                string Productname = dtp.Rows[i]["Product_name"].ToString();
         //                int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
-        //                TQ = TQ + Quantity;
+        //                TotalQuantity = TotalQuantity + Quantity;
         //                double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
         //                int gstper = Convert.ToInt32(dtp.Rows[i]["Service_tax_rate"]);
         //                double QuantityBaserateAmo = Math.Round((Quantity * baserate), 2);
@@ -545,7 +545,7 @@ namespace Bill_Software.corporate.business.print
 
 
         //            strp += "<td style='border:1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none; background-color:#d9d3d3' colspan='3'>GRAND TOTAL</td>";
-        //            strp += "<td style='width:8%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
+        //            strp += "<td style='width:8%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TotalQuantity.ToString() + "</td>";
         //            strp += "<td style='width:7%; border:1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
         //            strp += "<td style='width:5%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
 
@@ -722,7 +722,7 @@ namespace Bill_Software.corporate.business.print
                         string packsize = dtp.Rows[i]["PackSize"].ToString();
 
                         double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
-                        TQ = TQ + Quantity;
+                        TotalQuantity = TotalQuantity + Quantity;
                         double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
                         double discountrate = Math.Round((Convert.ToDouble(dtp.Rows[i]["new_sailrate"])), 2);
                         double gstper = Convert.ToDouble(dtp.Rows[i]["Service_tax_rate"]);
@@ -849,7 +849,7 @@ namespace Bill_Software.corporate.business.print
                     //strp += "<table class='' style='border:0' width='100%'>";
                     //strp += "<tr>";
                     //strp += "<td style='border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; border-right:none; word-wrap: break-word; border-top:none; background-color:#d9d3d3' colspan='4'>GRAND TOTAL</td>";
-                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
+                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'>" + TotalQuantity.ToString() + "</td>";
                     //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'></td>";
                     //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;  font-size: 10px; word-wrap: break-word; border-right:none; border-top:none; background-color:#d9d3d3'></td>";
                     //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center; font-size: 10px; word-wrap: break-word;  border-right:none; border-top:none; background-color:#d9d3d3'></td>";
@@ -866,7 +866,7 @@ namespace Bill_Software.corporate.business.print
                     //strp += "<table class='' style='border:2px solid #6c6c6c; border-collapse: collapse;' width='100%'>";
                     //strp += "<tr style='background-color:#d9d3d3;'>";
                     //strp += "<td style='border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; border-right:none; word-wrap: break-word; border-top:none;' colspan='3'>GRAND TOTAL</td>";
-                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + TQ.ToString() + "</td>";
+                    //strp += "<td style='width:6%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;'>" + TotalQuantity.ToString() + "</td>";
                     //strp += "<td style='width:20%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-right:none; border-top:none;' colspan='4'></td>";
                     //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold; text-align: right; font-size: 10px; word-wrap: break-word; border-top:none;'>" + new_SUBTOTAL1.ToString() + "</td>";
                     //strp += "<td style='width:13%; border: 2px solid #6c6c6c; font-weight: bold; text-align: center; font-size: 10px; word-wrap: break-word; border-top:none;'></td>";
@@ -876,7 +876,7 @@ namespace Bill_Software.corporate.business.print
                     //// GRAND TOTAL ROW
                     //strp += "<tr style='background-color:#d9d3d3; font-weight:bold;'>";
                     //strp += "<td colspan='3' style='border:2px solid #6c6c6c; text-align:center;'>GRAND TOTAL</td>";
-                    //strp += "<td style='border:2px solid #6c6c6c; text-align:center;'>" + TQ + "</td>";
+                    //strp += "<td style='border:2px solid #6c6c6c; text-align:center;'>" + TotalQuantity + "</td>";
                     //strp += "<td colspan='4' style='border:2px solid #6c6c6c;'></td>";
                     //strp += "<td style='border:2px solid #6c6c6c; text-align:right;'>" + new_SUBTOTAL1 + "</td>";
                     //strp += "<td style='border:2px solid #6c6c6c;'>&nbsp;</td>";
@@ -917,7 +917,7 @@ namespace Bill_Software.corporate.business.print
                     strp += "<tfoot>";
                     strp += "<tr style='background-color:#d9d3d3; font-weight: bold;'>";
                     strp += "<td colspan='3' style='border: 2px solid #6c6c6c; text-align: center;'>GRAND TOTAL</td>";
-                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{TQ}</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{TotalQuantity}</td>";
                     strp += "<td colspan='4' style='border: 2px solid #6c6c6c;'></td>";
                     //strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{new_TOTALIGST}</td>";
                     strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_SUBTOTAL1}</td>";
@@ -1024,7 +1024,7 @@ namespace Bill_Software.corporate.business.print
                     //    string Productname = dtp.Rows[i]["Product_name"].ToString();
                     //    string specification = dtp.Rows[i]["specification"].ToString();
                     //    int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
-                    //    TQ = TQ + Quantity;
+                    //    TotalQuantity = TotalQuantity + Quantity;
                     //    double baserate = Math.Round((Convert.ToDouble(dtp.Rows[i]["sail_rate"])), 2);
                     //    double discountrate = Math.Round((Convert.ToDouble(dtp.Rows[i]["new_sailrate"])), 2);
                     //    int gstper = Convert.ToInt32(dtp.Rows[i]["Service_tax_rate"]);
@@ -1075,27 +1075,58 @@ namespace Bill_Software.corporate.business.print
 
                     for (int i = 0; i < dtp.Rows.Count; i++)
                     {
-                        string HSN = dtp.Rows[i]["HSN"].ToString();
-                        string Productname = dtp.Rows[i]["Product_name"].ToString();
-                        string specification = dtp.Rows[i]["specification"].ToString();
-                        string Misc = dtp.Rows[i]["Misc"].ToString();
-                        string itemno = dtp.Rows[i]["ItemNo"].ToString();
-                        string materialno = dtp.Rows[i]["MaterialNo"].ToString();
-                        string packsize = dtp.Rows[i]["PackSize"].ToString();
+                        //string HSN_Code = dtp.Rows[i]["HSN"].ToString();
+                        //string Productname = dtp.Rows[i]["Product_name"].ToString();
+                        //string Product_specification = dtp.Rows[i]["specification"].ToString();
+                        //string Product_MiscInfo = dtp.Rows[i]["Misc"].ToString();
+                        //string Product_itemno = dtp.Rows[i]["ItemNo"].ToString();
+                        //string Product_materialno = dtp.Rows[i]["MaterialNo"].ToString();
+                        //string Product_packsize = dtp.Rows[i]["PackSize"].ToString();
 
-                        double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
-                        TQ += Quantity;
-                        double baserate = Math.Round(Convert.ToDouble(dtp.Rows[i]["sail_rate"]), 2);
-                        double discountrate = Math.Round(Convert.ToDouble(dtp.Rows[i]["new_sailrate"]), 2);
-                        double gstper = Convert.ToDouble(dtp.Rows[i]["Service_tax_rate"]);
-                        double discper = Convert.ToDouble(dtp.Rows[i]["discount_rate"]);
+                        //double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
+                        //TotalQuantity += Quantity;
+                        //double baserate = Math.Round(Convert.ToDouble(dtp.Rows[i]["sail_rate"]), 2);
+                        //double discountrate = Math.Round(Convert.ToDouble(dtp.Rows[i]["new_sailrate"]), 2);
+                        //double gstper = Convert.ToDouble(dtp.Rows[i]["Service_tax_rate"]);
+                        //double discper = Convert.ToDouble(dtp.Rows[i]["discount_rate"]);
+                        //double new_QuantityBaserateAmo = Math.Round(Quantity * discountrate, 2);
+                        //string itemremarks = dtp.Rows[i]["ItemRemarks"].ToString();
+                        //string new_QuantityBaserateAmo1 = DoFormat(new_QuantityBaserateAmo);
+                        //double new_gstamount = Math.Round((new_QuantityBaserateAmo * gstper) / 100, 2);
+                        //new_TOTALIGST += new_gstamount;
+                        //new_SUBTOTAL += new_QuantityBaserateAmo;
+                        //new_TOTALGST += new_gstamount;
+
+                        string HSN_Code = dtp.Rows[i]["HSN"]?.ToString() ?? "";
+                        string Productname = dtp.Rows[i]["Product_name"]?.ToString() ?? "";
+                        string Product_specification = dtp.Rows[i]["specification"]?.ToString() ?? "";
+                        string Product_MiscInfo = dtp.Rows[i]["Misc"]?.ToString() ?? "";
+                        string Product_itemno = dtp.Rows[i]["ItemNo"]?.ToString() ?? "";
+                        string Product_materialno = dtp.Rows[i]["MaterialNo"]?.ToString() ?? "";
+                        string Product_packsize = dtp.Rows[i]["PackSize"]?.ToString() ?? "";
+                        string itemremarks = dtp.Rows[i]["ItemRemarks"]?.ToString() ?? "";
+
+                        // Parse and validate numeric fields safely
+                        double Quantity = TryParseDouble(dtp.Rows[i]["Quantity"]);
+                        TotalQuantity += Quantity;
+
+                        double baserate = Math.Round(TryParseDouble(dtp.Rows[i]["sail_rate"]), 2);
+                        double discountrate = Math.Round(TryParseDouble(dtp.Rows[i]["new_sailrate"]), 2);
+                        double gstper = TryParseDouble(dtp.Rows[i]["Service_tax_rate"]);
+                        double discper = TryParseDouble(dtp.Rows[i]["discount_rate"]);
+
                         double new_QuantityBaserateAmo = Math.Round(Quantity * discountrate, 2);
-                        string itemremarks = dtp.Rows[i]["ItemRemarks"].ToString();
                         string new_QuantityBaserateAmo1 = DoFormat(new_QuantityBaserateAmo);
+
                         double new_gstamount = Math.Round((new_QuantityBaserateAmo * gstper) / 100, 2);
+
                         new_TOTALIGST += new_gstamount;
                         new_SUBTOTAL += new_QuantityBaserateAmo;
                         new_TOTALGST += new_gstamount;
+
+                        // Helper method
+
+
 
                         strp += "<tr>";
                         strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{i + 1}</td>";
@@ -1109,18 +1140,18 @@ namespace Bill_Software.corporate.business.print
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {3}</div>" +
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {4}</div>" +
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {5}</div>" +
-                                   "</td>", Productname, specification, Misc, itemno, materialno, packsize);
+                                   "</td>", Productname, Product_specification, Product_MiscInfo, Product_itemno, Product_materialno, Product_packsize);
                         }
                         else if (viewtype == "Simple")
                         {
                             strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'>" +
                                     $"<span style='font-weight: bold; color: black;'>{Productname}</span><br>" +
-                                    $"&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make: {specification}</span><br>" +
-                                    $"&nbsp;&nbsp;<span style='font-size: 10px; color: #555;'>Specification: {Misc}</span>" +
+                                    $"&nbsp;&nbsp;<span style='font-style: italic; font-size: 10px; color: gray;'>Make: {Product_specification}</span><br>" +
+                                    $"&nbsp;&nbsp;<span style='font-size: 10px; color: #555;'>Specification: {Product_MiscInfo}</span>" +
                                     $"</td>";
                         }
 
-                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{HSN}</td>";
+                        strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{HSN_Code}</td>";
                         strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{Quantity}</td>";
                         strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{baserate}</td>";
                         strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{discper}</td>";
@@ -1145,7 +1176,7 @@ namespace Bill_Software.corporate.business.print
                     strp += "<tfoot>";
                     strp += "<tr style='background-color:#d9d3d3; font-weight: bold;'>";
                     strp += "<td colspan='3' style='border: 2px solid #6c6c6c; text-align: center;'>GRAND TOTAL</td>";
-                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{TQ}</td>";
+                    strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{TotalQuantity}</td>";
                     strp += "<td colspan='4' style='border: 2px solid #6c6c6c;'></td>";
                     //strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{new_TOTALIGST}</td>";
                     strp += $"<td style='border: 2px solid #6c6c6c; text-align: right;'>{new_SUBTOTAL1}</td>";
@@ -1192,7 +1223,7 @@ namespace Bill_Software.corporate.business.print
                     //strp += "<table class='' style='border:0' width='100%'>";
                     //strp += "<tr>";
                     //strp += "<td style='border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none; background-color:#d9d3d3' colspan='3'>GRAND TOTAL</td>";
-                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TQ.ToString() + "</td>";
+                    //strp += "<td style='width:8%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'>" + TotalQuantity.ToString() + "</td>";
                     //strp += "<td style='width:7%; border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
                     //strp += "<td style='width:5%; border: 2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
                     //strp += "<td style='width:7%; border:2px solid #6c6c6c; font-weight: bold;  text-align: center;   border-right:none; border-top:none;background-color:#d9d3d3'></td>";
@@ -1255,6 +1286,14 @@ namespace Bill_Software.corporate.business.print
                 lblserviceamo.Text = strp.ToString();
             }
         }
+
+        double TryParseDouble(object val)
+        {
+            if (val == null) return 0.0;
+            double result;
+            return double.TryParse(val.ToString().Trim(), out result) ? result : 0.0;
+        }
+
         private void bindpayment(string qutno)
         {
             string cmdstring = "select phase_type,PhaseDesc,amountper from tbl_QutPaymentPhase where qut_no=@qut_no order by id";
@@ -1309,22 +1348,53 @@ namespace Bill_Software.corporate.business.print
                 strPayment.Append("</tr>");
 
                 // Data Rows
+                //for (int i = 0; i < dtpayphase.Rows.Count; i++)
+                //{
+                //    string amoper = dtpayphase.Rows[i]["amountper"].ToString();
+                //    double amountper = Convert.ToDouble(amoper);
+                //    double netamo = Convert.ToDouble(netamount);
+                //    double amount = (netamo * amountper) / 100;
+
+                //    double finalamo = Math.Round(amount, 2);
+                //    string finalamo1 = DoFormat(finalamo);
+
+                //    strPayment.Append("<tr>");
+                //    strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; text-align: center;'>" + (i + 1) + "</td>");
+                //    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align: left;'>" + dtpayphase.Rows[i]["amountper"].ToString() + "% " + dtpayphase.Rows[i]["phase_type"].ToString() + " " + dtpayphase.Rows[i]["PhaseDesc"].ToString() + "</td>");
+                //    strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" + finalamo1 + "</td>");
+                //    strPayment.Append("</tr>");
+                //}
+
                 for (int i = 0; i < dtpayphase.Rows.Count; i++)
                 {
-                    string amoper = dtpayphase.Rows[i]["amountper"].ToString();
-                    double amountper = Convert.ToDouble(amoper);
-                    double netamo = Convert.ToDouble(netamount);
-                    double amount = (netamo * amountper) / 100;
+                    // Safely get the percentage string and parse it
+                    string amoper = dtpayphase.Rows[i]["amountper"]?.ToString().Trim();
+                    double amountper = 0.0;
 
+                    // Try to parse amountper, default to 0.0 if parsing fails
+                    if (!double.TryParse(amoper, out amountper) || amountper < 0)
+                        amountper = 0.0;
+
+                    double netamo = 0.0;
+
+                    // Try to parse netamount, default to 0.0 if parsing fails
+                    if (!double.TryParse(netamount?.ToString(), out netamo) || netamo < 0)
+                        netamo = 0.0;
+
+                    double amount = (netamo * amountper) / 100;
                     double finalamo = Math.Round(amount, 2);
-                    string finalamo1 = DoFormat(finalamo);
+                    string finalamo1 = DoFormat(finalamo); // assuming this returns string like "0.00"
 
                     strPayment.Append("<tr>");
                     strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; text-align: center;'>" + (i + 1) + "</td>");
-                    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align: left;'>" + dtpayphase.Rows[i]["amountper"].ToString() + "% " + dtpayphase.Rows[i]["phase_type"].ToString() + " " + dtpayphase.Rows[i]["PhaseDesc"].ToString() + "</td>");
+                    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align: left;'>" +
+                        (string.IsNullOrWhiteSpace(amoper) ? "0%" : amountper + "% ") +
+                        (dtpayphase.Rows[i]["phase_type"]?.ToString() ?? "") + " " +
+                        (dtpayphase.Rows[i]["PhaseDesc"]?.ToString() ?? "") + "</td>");
                     strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" + finalamo1 + "</td>");
                     strPayment.Append("</tr>");
                 }
+
 
                 // Close Inner Table
                 strPayment.Append("</table>");
@@ -1350,7 +1420,7 @@ namespace Bill_Software.corporate.business.print
                 string Address1 = dtClient.Rows[0]["Address1"].ToString();
                 string Address2 = dtClient.Rows[0]["Address2"].ToString();
                 string add = "";
-                if (Address1 == Address2 || Address2 =="(Blank)" || Address2 == "N/A" || Address2 == string.Empty)
+                if (Address1 == Address2 || Address2 == "(Blank)" || Address2 == "N/A" || Address2 == string.Empty)
                 {
                     add = Address1;
                 }
@@ -1446,7 +1516,7 @@ namespace Bill_Software.corporate.business.print
                     {
                         PrimaryService = PrimaryService +" , "+ Service;
                     }*/
-          }
+        }
         private void generatelavel(int count, string qutno)
         {
             string PrimaryService = "";
@@ -1461,14 +1531,14 @@ namespace Bill_Software.corporate.business.print
             while (re.Read())
             {
                 string name = re["PrimaryService"].ToString();
-                name= "“"+name + "”";
+                name = "“" + name + "”";
                 if (count == 1 || flag == 1)
                 {
                     //service = "“" + re["PrimaryService"].ToString() + "”";
                     service = name;
                     flag = flag + 1;
                 }
-                
+
                 else if (flag == count)
                 {
                     service = service + " & " + name.ToString();
@@ -1487,7 +1557,7 @@ namespace Bill_Software.corporate.business.print
             lblservice.Text = textInfo1.ToTitleCase(PrimaryService.ToString().ToLower());
             lblPrimaryService.Text = textInfo1.ToTitleCase(PrimaryService.ToString().ToLower());
         }
-    
+
         protected void Button1_Click(object sender, EventArgs e)
         {
 

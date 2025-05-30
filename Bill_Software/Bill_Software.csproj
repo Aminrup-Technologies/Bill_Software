@@ -241,6 +241,7 @@
     <Content Include="corporate\business\app\calender\jquery.ui.datepicker.js" />
     <Content Include="corporate\business\app\calender\jquery.ui.widget.js" />
     <Content Include="corporate\business\app\CreateHydrentQuatation.aspx" />
+    <Content Include="corporate\business\app\daily_rpt.aspx" />
     <Content Include="corporate\business\app\DeleteHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Deletehydrent_invoice.aspx" />
     <Content Include="corporate\business\app\home.aspx" />
@@ -656,6 +657,13 @@
     </Compile>
     <Compile Include="corporate\business\app\CreateHydrentQuatation.aspx.designer.cs">
       <DependentUpon>CreateHydrentQuatation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\daily_rpt.aspx.cs">
+      <DependentUpon>daily_rpt.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\daily_rpt.aspx.designer.cs">
+      <DependentUpon>daily_rpt.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\DeleteHydrentQuatation.aspx.cs">
       <DependentUpon>DeleteHydrentQuatation.aspx</DependentUpon>
