@@ -35,7 +35,7 @@ namespace Bill_Software.corporate.business.app
 
             //string cmdstring = "select a.ID,a.Invoice_No,a.Invoice_Date,a.Quotation_No,a.Quotation_Date,a.Net_Amount, Service_Tax1 as Gst,a.mailDate, (a.Net_Amount-Service_Tax1) as sub_total, b.Client_Name,c.PServiceName from tbl_Invoice as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID order by a.ID desc";
 
-            string cmdstring = "SELECT a.ID, a.Invoice_No, a.Invoice_Date, a.Quotation_No, a.Quotation_Date, TRY_CAST(a.Net_Amount AS FLOAT) AS Net_Amount, TRY_CAST(Service_Tax1 AS FLOAT) AS Gst, a.mailDate, TRY_CAST(a.Net_Amount AS FLOAT) - TRY_CAST(Service_Tax1 AS FLOAT) AS sub_total, b.Client_Name, c.PServiceName FROM tbl_Invoice AS a LEFT OUTER JOIN tbl_QuoPriSerTogather AS c ON a.Quotation_No = c.qutno LEFT OUTER JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID ORDER BY a.ID DESC;";
+            string cmdstring = "SELECT a.ID, a.Invoice_No, a.Invoice_Date, a.Quotation_No, a.Quotation_Date, TRY_CAST(a.Net_Amount AS FLOAT) AS Net_Amount, TRY_CAST(Service_Tax1 AS FLOAT) AS Gst, a.mailDate, TRY_CAST(a.Net_Amount AS FLOAT) - TRY_CAST(Service_Tax1 AS FLOAT) AS sub_total, b.Client_Name, c.PServiceName FROM tbl_Invoice AS a LEFT OUTER JOIN tbl_QuoPriSerTogather AS c ON a.Quotation_No = c.qutno LEFT OUTER JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID ORDER BY CAST(a.Invoice_Date as Date) DESC;";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();

@@ -850,6 +850,53 @@ namespace Bill_Software.corporate.business.app
                 {
                     PaymentMail.Visible = false;
                 }
+
+                //-------------Daily Reports-------------------------------------//
+
+                if (dtm.Rows[0]["SalesTeam"].ToString() == "Yes")
+                {
+                    SalesTeam.Visible = true;
+                }
+                else if (dtm.Rows[0]["SalesTeam"].ToString() == "No")
+                {
+                    SalesTeam.Visible = false;
+                }
+
+                if (dtm.Rows[0]["DailyReports"].ToString() == "Yes")
+                {
+                    daily_reporting.Visible = true;
+                }
+                else if (dtm.Rows[0]["DailyReports"].ToString() == "No")
+                {
+                    daily_reporting.Visible = false;
+                }
+
+                if (dtm.Rows[0]["SalesSubmit"].ToString() == "Yes")
+                {
+                    vw_dailyrpts.Visible = true;
+                }
+                else if (dtm.Rows[0]["SalesSubmit"].ToString() == "No")
+                {
+                    vw_dailyrpts.Visible = false;
+                }
+
+                if (dtm.Rows[0]["SalesView"].ToString() == "Yes")
+                {
+                    vw_dailyrpts.Visible = true;
+                }
+                else if (dtm.Rows[0]["SalesView"].ToString() == "No")
+                {
+                    vw_dailyrpts.Visible = false;
+                }
+
+                if (dtm.Rows[0]["MgmntView"].ToString() == "Yes")
+                {
+                    srch_dailyrpts.Visible = true;
+                }
+                else if (dtm.Rows[0]["MgmntView"].ToString() == "No")
+                {
+                    srch_dailyrpts.Visible = false;
+                }
             }
         }
 

@@ -22,24 +22,24 @@ namespace Bill_Software.corporate.business.app
             if (!IsPostBack)
             {
                 string EMPID = Request.QueryString["User_Id"];
-                
-                
+
+
                 BindDesignation(EMPID);
             }
         }
 
         private void BindDesignation(string empid)
         {
-            string query = "select User_Id,Name,Home,home1,settings,Dashboard,Data_Mastering,master_State,master_city,AddIndustry,PaymentPhase,AddPrimaryService,PrimaryServiceTerms,productparent,product_master,newproductparent,newproduct_master,Service_master,Vat_master,Service_Tax_Master,Expenses_Head,Vendor,New_vendor,View_vendor,Delete_vendor,Purches_exting_vendor,View_purches,seartch_purtch,Delete_purtches,Purchess_payment,add_payment_purchess,View_purchess_payment,Seartch_purchess_payments,Delete_purches_payment,Client,New_client,View_client,Delete_client,Representative,AddFactory,Quotatio,Create_quotation,View_quotation,Seartch_quotation,Delete_Quotation,Edit_quatation,challan,add_chalan,View_chalan,seartch_chalan,Delete_chalan,proforma,Add_proforma,View_proforma,Seartch_proforma,Delete_proforma,Invoice,Add_invoice,View_Invoice,seartch_invoice,Delete_invoice,Block_invoice,Payment,add_payment,View_payment,seartch_payment,Delete_payment,Epencess,general_expences,patty_cash_expences,view_expencess_head,view_patty_cash_expenses,Delete_general_expencess,Delete_patty_cash_expenses,Reports,Payment_due,Purchess_due,PurchaseRequisition,RequisitionManual,RequisitionManualView,RequisitionManualSearch,RequisitionManualDelete,Users,AddUser,ViewUser,SetQuatation,ProformaMail,InvoiceMail,PaymentMail,FinalPaymentInvoice,PaymentsDue from tbl_Designation where User_Id=@User_Id";
+            string query = "select User_Id,Name,Home,home1,settings,Dashboard,Data_Mastering,master_State,master_city,AddIndustry,PaymentPhase,AddPrimaryService,PrimaryServiceTerms,productparent,product_master,newproductparent,newproduct_master,Service_master,Vat_master,Service_Tax_Master,Expenses_Head,Vendor,New_vendor,View_vendor,Delete_vendor,Purches_exting_vendor,View_purches,seartch_purtch,Delete_purtches,Purchess_payment,add_payment_purchess,View_purchess_payment,Seartch_purchess_payments,Delete_purches_payment,Client,New_client,View_client,Delete_client,Representative,AddFactory,Quotatio,Create_quotation,View_quotation,Seartch_quotation,Delete_Quotation,Edit_quatation,challan,add_chalan,View_chalan,seartch_chalan,Delete_chalan,proforma,Add_proforma,View_proforma,Seartch_proforma,Delete_proforma,Invoice,Add_invoice,View_Invoice,seartch_invoice,Delete_invoice,Block_invoice,Payment,add_payment,View_payment,seartch_payment,Delete_payment,Epencess,general_expences,patty_cash_expences,view_expencess_head,view_patty_cash_expenses,Delete_general_expencess,Delete_patty_cash_expenses,Reports,Payment_due,Purchess_due,PurchaseRequisition,RequisitionManual,RequisitionManualView,RequisitionManualSearch,RequisitionManualDelete,Users,AddUser,ViewUser,SetQuatation,ProformaMail,InvoiceMail,PaymentMail,FinalPaymentInvoice,PaymentsDue, SalesTeam, DailyReports, SalesSubmit, SalesView, MgmntView from tbl_Designation where User_Id=@User_Id";
             SqlParameter[] pram = {
                 new SqlParameter("@User_Id",empid)
             };
 
             dtuse = DbCL.SPreturn_dt(query, pram);
-            if (dtuse.Rows.Count>0)
+            if (dtuse.Rows.Count > 0)
             {
                 lblEmpId.Text = empid;
-                lblEmpName.Text= dtuse.Rows[0]["Name"].ToString();
+                lblEmpName.Text = dtuse.Rows[0]["Name"].ToString();
 
                 Home.Text = dtuse.Rows[0]["Home"].ToString();
                 home1.Text = dtuse.Rows[0]["home1"].ToString();
@@ -136,7 +136,13 @@ namespace Bill_Software.corporate.business.app
 
                 PaymentsDue.Text = dtuse.Rows[0]["PaymentsDue"].ToString();
 
-                
+                SalesTeam.SelectedValue = dtuse.Rows[0]["SalesTeam"].ToString();
+                DailyReports.SelectedValue = dtuse.Rows[0]["DailyReports"].ToString();
+                SalesSubmit.SelectedValue = dtuse.Rows[0]["SalesSubmit"].ToString();
+                SalesView.SelectedValue = dtuse.Rows[0]["SalesView"].ToString();
+                MgmntView.SelectedValue = dtuse.Rows[0]["MgmntView"].ToString();
+
+
             }
         }
 
@@ -145,7 +151,7 @@ namespace Bill_Software.corporate.business.app
             if (lblEmpId.Text != "")
             {
 
-                string query = "update tbl_Designation set Home=@Home,home1=@home1,settings=@settings,Dashboard=@Dashboard,Data_Mastering=@Data_Mastering,master_State=@master_State,master_city=@master_city,AddIndustry=@AddIndustry,PaymentPhase=@PaymentPhase,AddPrimaryService=@AddPrimaryService,PrimaryServiceTerms=@PrimaryServiceTerms,productparent=@productparent,product_master=@product_master,newproductparent=@newproductparent,newproduct_master=@newproduct_master,Service_master=@Service_master,Vat_master=@Vat_master,Service_Tax_Master=@Service_Tax_Master,Expenses_Head=@Expenses_Head,Vendor=@Vendor,New_vendor=@New_vendor,View_vendor=@View_vendor,Delete_vendor=@Delete_vendor,Purches_exting_vendor=@Purches_exting_vendor,View_purches=@View_purches,seartch_purtch=@seartch_purtch,Delete_purtches=@Delete_purtches,Purchess_payment=@Purchess_payment,add_payment_purchess=@add_payment_purchess,View_purchess_payment=@View_purchess_payment,Seartch_purchess_payments=@Seartch_purchess_payments,Delete_purches_payment=@Delete_purches_payment,Client=@Client,New_client=@New_client,View_client=@View_client,Delete_client=@Delete_client,Representative=@Representative,AddFactory=@AddFactory,Quotatio=@Quotatio,Create_quotation=@Create_quotation,View_quotation=@View_quotation,Seartch_quotation=@Seartch_quotation,Delete_Quotation=@Delete_Quotation,Edit_quatation=@Edit_quatation,challan=@challan,add_chalan=@add_chalan,View_chalan=@View_chalan,seartch_chalan=@seartch_chalan,Delete_chalan=@Delete_chalan,proforma=@proforma,Add_proforma=@Add_proforma,View_proforma=@View_proforma,Seartch_proforma=@Seartch_proforma,Delete_proforma=@Delete_proforma,Invoice=@Invoice,Add_invoice=@Add_invoice,View_Invoice=@View_Invoice,seartch_invoice=@seartch_invoice,Delete_invoice=@Delete_invoice,Block_invoice=@Block_invoice,Payment=@Payment,add_payment=@add_payment,View_payment=@View_payment,seartch_payment=@seartch_payment,Delete_payment=@Delete_payment,Epencess=@Epencess,general_expences=@general_expences,patty_cash_expences=@patty_cash_expences,view_expencess_head=@view_expencess_head,view_patty_cash_expenses=@view_patty_cash_expenses,Delete_general_expencess=@Delete_general_expencess,Delete_patty_cash_expenses=@Delete_patty_cash_expenses,Reports=@Reports,Payment_due=@Payment_due,Purchess_due=@Purchess_due,PurchaseRequisition=@PurchaseRequisition,RequisitionManual=@RequisitionManual,RequisitionManualView=@RequisitionManualView,RequisitionManualSearch=@RequisitionManualSearch,RequisitionManualDelete=@RequisitionManualDelete,AddUser=@AddUser,Users=@Users,ViewUser=@ViewUser,SetQuatation=@SetQuatation,ProformaMail=@ProformaMail,InvoiceMail=@InvoiceMail,PaymentMail=@PaymentMail,FinalPaymentInvoice=@FinalPaymentInvoice,PaymentsDue=@PaymentsDue where User_Id=@User_Id";
+                string query = "update tbl_Designation set Home=@Home,home1=@home1,settings=@settings,Dashboard=@Dashboard,Data_Mastering=@Data_Mastering,master_State=@master_State,master_city=@master_city,AddIndustry=@AddIndustry,PaymentPhase=@PaymentPhase,AddPrimaryService=@AddPrimaryService,PrimaryServiceTerms=@PrimaryServiceTerms,productparent=@productparent,product_master=@product_master,newproductparent=@newproductparent,newproduct_master=@newproduct_master,Service_master=@Service_master,Vat_master=@Vat_master,Service_Tax_Master=@Service_Tax_Master,Expenses_Head=@Expenses_Head,Vendor=@Vendor,New_vendor=@New_vendor,View_vendor=@View_vendor,Delete_vendor=@Delete_vendor,Purches_exting_vendor=@Purches_exting_vendor,View_purches=@View_purches,seartch_purtch=@seartch_purtch,Delete_purtches=@Delete_purtches,Purchess_payment=@Purchess_payment,add_payment_purchess=@add_payment_purchess,View_purchess_payment=@View_purchess_payment,Seartch_purchess_payments=@Seartch_purchess_payments,Delete_purches_payment=@Delete_purches_payment,Client=@Client,New_client=@New_client,View_client=@View_client,Delete_client=@Delete_client,Representative=@Representative,AddFactory=@AddFactory,Quotatio=@Quotatio,Create_quotation=@Create_quotation,View_quotation=@View_quotation,Seartch_quotation=@Seartch_quotation,Delete_Quotation=@Delete_Quotation,Edit_quatation=@Edit_quatation,challan=@challan,add_chalan=@add_chalan,View_chalan=@View_chalan,seartch_chalan=@seartch_chalan,Delete_chalan=@Delete_chalan,proforma=@proforma,Add_proforma=@Add_proforma,View_proforma=@View_proforma,Seartch_proforma=@Seartch_proforma,Delete_proforma=@Delete_proforma,Invoice=@Invoice,Add_invoice=@Add_invoice,View_Invoice=@View_Invoice,seartch_invoice=@seartch_invoice,Delete_invoice=@Delete_invoice,Block_invoice=@Block_invoice,Payment=@Payment,add_payment=@add_payment,View_payment=@View_payment,seartch_payment=@seartch_payment,Delete_payment=@Delete_payment,Epencess=@Epencess,general_expences=@general_expences,patty_cash_expences=@patty_cash_expences,view_expencess_head=@view_expencess_head,view_patty_cash_expenses=@view_patty_cash_expenses,Delete_general_expencess=@Delete_general_expencess,Delete_patty_cash_expenses=@Delete_patty_cash_expenses,Reports=@Reports,Payment_due=@Payment_due,Purchess_due=@Purchess_due,PurchaseRequisition=@PurchaseRequisition,RequisitionManual=@RequisitionManual,RequisitionManualView=@RequisitionManualView,RequisitionManualSearch=@RequisitionManualSearch,RequisitionManualDelete=@RequisitionManualDelete,AddUser=@AddUser,Users=@Users,ViewUser=@ViewUser,SetQuatation=@SetQuatation,ProformaMail=@ProformaMail,InvoiceMail=@InvoiceMail,PaymentMail=@PaymentMail,FinalPaymentInvoice=@FinalPaymentInvoice,PaymentsDue=@PaymentsDue,SalesTeam=@SalesTeam,DailyReports=@DailyReports,SalesSubmit=@SalesSubmit,SalesView=@SalesView, MgmntView = @MgmntView where User_Id =@User_Id";
                 SqlParameter[] pram = {
 
                     new SqlParameter("@Home",Home.Text),
@@ -242,8 +248,13 @@ namespace Bill_Software.corporate.business.app
                     new SqlParameter("@PaymentMail",PaymentMail.Text),
                     new SqlParameter("@FinalPaymentInvoice",FinalPaymentInvoice.Text),
 
-                    new SqlParameter("@PaymentsDue",PaymentsDue.Text)
+                    new SqlParameter("@PaymentsDue",PaymentsDue.Text),
 
+                    new SqlParameter("@SalesTeam", SalesTeam.Text),
+                    new SqlParameter("@DailyReports", DailyReports.Text),
+                    new SqlParameter("@SalesSubmit", SalesSubmit.Text),
+                    new SqlParameter("@SalesView", SalesView.Text),
+                    new SqlParameter("@MgmntView", MgmntView.Text)
                 };
 
                 DbCL.SPExecDB(query, pram);

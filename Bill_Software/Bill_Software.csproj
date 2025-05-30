@@ -257,6 +257,7 @@
     <Content Include="corporate\business\app\SearchHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Searchhydrent_invoice.aspx" />
     <Content Include="corporate\business\app\settings.aspx" />
+    <Content Include="corporate\business\app\srch_dailyrpts.aspx" />
     <Content Include="corporate\business\app\Update\contactno.aspx" />
     <Content Include="corporate\business\app\Update\emailid.aspx" />
     <Content Include="corporate\business\app\Update\name.aspx" />
@@ -346,6 +347,7 @@
     <Content Include="corporate\business\app\FinalPaymentInvoice.aspx" />
     <Content Include="corporate\business\app\PaymentsReceived.aspx" />
     <Content Include="corporate\business\app\PaymentsDue.aspx" />
+    <Content Include="corporate\business\app\vw_dailyrpts.aspx" />
     <Content Include="corporate\business\print\bill.aspx" />
     <Content Include="corporate\business\print\billduplicate.aspx" />
     <Content Include="corporate\business\print\chhalan.aspx" />
@@ -769,6 +771,13 @@
     </Compile>
     <Compile Include="corporate\business\app\settings.aspx.designer.cs">
       <DependentUpon>settings.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\srch_dailyrpts.aspx.cs">
+      <DependentUpon>srch_dailyrpts.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\srch_dailyrpts.aspx.designer.cs">
+      <DependentUpon>srch_dailyrpts.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\Update\contactno.aspx.cs">
       <DependentUpon>contactno.aspx</DependentUpon>
@@ -1392,6 +1401,13 @@
     </Compile>
     <Compile Include="corporate\business\app\PaymentsDue.aspx.designer.cs">
       <DependentUpon>PaymentsDue.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\vw_dailyrpts.aspx.cs">
+      <DependentUpon>vw_dailyrpts.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\vw_dailyrpts.aspx.designer.cs">
+      <DependentUpon>vw_dailyrpts.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\print\bill.aspx.cs">
       <DependentUpon>bill.aspx</DependentUpon>
