@@ -123,7 +123,7 @@
                                         Text="View" Target="_blank" />
                                 </td>
                                 <td style="text-align: center; width: 6%;">
-                                    <asp:Label ID="lblCreatedDate" runat="server" Text='<%# Eval("CreatedDate", "{0:yyyy-MM-dd HH:mm}") %>'></asp:Label>
+                                    <asp:Label ID="lblCreatedDate" runat="server" Text='<%# Eval("TimeStamp", "{0:yyyy-MM-dd HH:mm}") %>'></asp:Label>
                                 </td>
                             </tr>
                         </table>

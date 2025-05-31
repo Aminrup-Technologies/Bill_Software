@@ -60,7 +60,7 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@VisitDate", txtVisitDate.Text.Trim());
                         cmd.Parameters.AddWithValue("@Salesperson", txtSalesperson.Text.Trim());
                         cmd.Parameters.AddWithValue("@CustomerName", txtCustomerName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Department", ddlDepartment.SelectedValue);
+                        cmd.Parameters.AddWithValue("@Department", txtDepartment.Text.Trim());
                         cmd.Parameters.AddWithValue("@ContactPerson", txtContactPerson.Text.Trim());
                         cmd.Parameters.AddWithValue("@VisitType", ddlVisitType.SelectedValue);
                         cmd.Parameters.AddWithValue("@DiscussionPoints", txtDiscussion.Text.Trim());
@@ -161,7 +161,7 @@ namespace Bill_Software.corporate.business.app
             txtVisitDate.Text = string.Empty;
             txtSalesperson.Text = string.Empty;
             txtCustomerName.Text = string.Empty;
-            ddlDepartment.SelectedIndex = 0;
+            txtDepartment.Text = string.Empty;
             txtContactPerson.Text = string.Empty;
             ddlVisitType.SelectedIndex = 0;
             txtDiscussion.Text = string.Empty;
@@ -185,7 +185,7 @@ namespace Bill_Software.corporate.business.app
             txtVisitDate.Text = string.Empty;
             txtSalesperson.Text = string.Empty;
             txtCustomerName.Text = string.Empty;
-            ddlDepartment.SelectedIndex = 0;
+            txtDepartment.Text = string.Empty;
             txtContactPerson.Text = string.Empty;
             ddlVisitType.SelectedIndex = 0;
             txtDiscussion.Text = string.Empty;

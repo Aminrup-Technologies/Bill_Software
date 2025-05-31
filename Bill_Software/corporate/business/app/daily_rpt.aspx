@@ -40,34 +40,34 @@
 
         function validateSalesVisitForm() {
             const visitDate = document.getElementById('<%= txtVisitDate.ClientID %>').value.trim();
-        const salesperson = document.getElementById('<%= txtSalesperson.ClientID %>').value.trim();
-        const customerName = document.getElementById('<%= txtCustomerName.ClientID %>').value.trim();
-        const department = document.getElementById('<%= ddlDepartment.ClientID %>').value;
-        const contactPerson = document.getElementById('<%= txtContactPerson.ClientID %>').value.trim();
-        const visitType = document.getElementById('<%= ddlVisitType.ClientID %>').value;
-        const Discussion = document.getElementById('<%= txtDiscussion.ClientID %>').value.trim();
-        const followUp = document.getElementById('<%= ddlFollowUp.ClientID %>').value;
-        const status = document.getElementById('<%= ddlStatus.ClientID %>').value;
+            const salesperson = document.getElementById('<%= txtSalesperson.ClientID %>').value.trim();
+            const customerName = document.getElementById('<%= txtCustomerName.ClientID %>').value.trim();
+            const department = document.getElementById('<%= txtDepartment.ClientID %>').value.trim();
+            const contactPerson = document.getElementById('<%= txtContactPerson.ClientID %>').value.trim();
+            const visitType = document.getElementById('<%= ddlVisitType.ClientID %>').value;
+            const Discussion = document.getElementById('<%= txtDiscussion.ClientID %>').value.trim();
+            const followUp = document.getElementById('<%= ddlFollowUp.ClientID %>').value;
+            const status = document.getElementById('<%= ddlStatus.ClientID %>').value;
 
-        let errorMsg = '';
+            let errorMsg = '';
 
-        if (visitDate === '') errorMsg += '• Visit Date is required.\n';
-        if (salesperson === '') errorMsg += '• Salesperson Name is required.\n';
-        if (customerName === '') errorMsg += '• Customer Name is required.\n';
-        if (department === '') errorMsg += '• Please select a Department.\n';
-        if (contactPerson === '') errorMsg += '• Contact Person is required.\n';
-        if (visitType === '') errorMsg += '• Please select a Visit Type.\n';
-        if (Discussion === '') errorMsg += '• Discussion Summary is required.\n';
-        if (followUp === '') errorMsg += '• Please select Follow-Up.\n';
-        if (status === '') errorMsg += '• Please select Status.\n';
+            if (visitDate === '') errorMsg += '• Visit Date is required.\n';
+            if (salesperson === '') errorMsg += '• Salesperson Name is required.\n';
+            if (customerName === '') errorMsg += '• Customer Name is required.\n';
+            if (department === '') errorMsg += '• Please select a Department.\n';
+            if (contactPerson === '') errorMsg += '• Contact Person is required.\n';
+            if (visitType === '') errorMsg += '• Please select a Visit Type.\n';
+            if (Discussion === '') errorMsg += '• Discussion Summary is required.\n';
+            if (followUp === '') errorMsg += '• Please select Follow-Up.\n';
+            if (status === '') errorMsg += '• Please select Status.\n';
 
-        if (errorMsg !== '') {
-            alert('Please fix the following errors:\n\n' + errorMsg);
-            return false;
+            if (errorMsg !== '') {
+                alert('Please fix the following errors:\n\n' + errorMsg);
+                return false;
+            }
+
+            return true;
         }
-
-        return true;
-    }
     </script>
 
 
@@ -161,13 +161,7 @@
                     <td>&nbsp;</td>
                     <td><span class="style3">*</span>Department</td>
                     <td>
-                        <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="dropdown_style">
-                            <asp:ListItem Text="-- Select Department --" Value="" />
-                            <asp:ListItem>Sales</asp:ListItem>
-                            <asp:ListItem>Production</asp:ListItem>
-                            <asp:ListItem>HR</asp:ListItem>
-                            <asp:ListItem>Finance</asp:ListItem>
-                        </asp:DropDownList>
+                        <asp:TextBox ID="txtDepartment" runat="server" CssClass="textbox_style"></asp:TextBox>
                     </td>
                     <td>&nbsp;</td>
                 </tr>

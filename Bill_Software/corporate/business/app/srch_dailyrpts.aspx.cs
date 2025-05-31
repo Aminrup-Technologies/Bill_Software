@@ -34,19 +34,19 @@ namespace Bill_Software.corporate.business.app
             if (RadioButtonList1.SelectedIndex == 0)
             {
                 BuindCompanyId();
-                cmdstring = "select * from tbl_SalesVisitReport where CreatedByCode='" + lblclientId.Text + "' order by Id desc";
+                cmdstring = "select * from tbl_SalesVisitReport where CreatedByCode='" + lblclientId.Text + "' order by VisitDate , TimeStamp desc";
 
                 Buinddatagrid(cmdstring);
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
-                cmdstring = "select * from tbl_SalesVisitReport where VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by ID desc";
+                cmdstring = "select * from tbl_SalesVisitReport where VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by VisitDate , TimeStamp desc";
                 Buinddatagrid(cmdstring);
             }
             else
             {
                 BuindCompanyId();
-                cmdstring = "select * from tbl_SalesVisitReport where CreatedByCode='" + lblclientId.Text + "' and VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by ID desc";
+                cmdstring = "select * from tbl_SalesVisitReport where CreatedByCode='" + lblclientId.Text + "' and VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by VisitDate , TimeStamp desc";
                 Buinddatagrid(cmdstring);
             }
             btnSertch.Visible = false;
