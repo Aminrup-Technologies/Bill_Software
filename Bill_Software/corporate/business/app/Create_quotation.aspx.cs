@@ -7,6 +7,7 @@ using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
+using System.Configuration;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -239,6 +240,23 @@ namespace Bill_Software.corporate.business.app
 
         private void Bindquotationno()
         {
+            string prefix = "QTN/FE/";
+            if (rbPo.Checked)
+            {
+                prefix = "PO/FE/";
+            }
+
+            string ss = findmonth();  // e.g., "24-25/"
+            int j = idreturn_New(prefix + ss);  // Get last used number for that prefix
+            j += 1;
+
+            string quotationNo = prefix + ss + j.ToString();  // e.g., "QTN/FE/24-25/5"
+            lblqno.Text = quotationNo;
+        }
+
+
+        private void Bindquotationno_OLD()
+        {
             //string prefix = "QTN/FE/";  // Default prefix
             //string ss = findmonth();  // Get financial year format (e.g., "24-25/")
             //int j = idreturn();  // Get last serial number
@@ -258,6 +276,45 @@ namespace Bill_Software.corporate.business.app
             string quotationNo = prefix + ss + j.ToString();  // Construct final number
             lblqno.Text = quotationNo;  // Assign to label
         }
+
+        private int idreturn_New(string prefix)
+        {
+            int lastNumber = 0;
+            string query = "SELECT TOP 1 Quotation_no FROM tbl_Quotation " +
+                           "WHERE Quotation_no LIKE @Prefix + '%' " +
+                           "ORDER BY Id DESC";  // Or based on date if preferred
+
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Prefix", prefix);
+                con.Open();
+                var result = cmd.ExecuteScalar();
+                if (result != null)
+                {
+                    //string quotationNo = result.ToString();
+                    string quotationNo = result.ToString().Trim();
+
+                    // Extract number part after prefix and financial year
+                    //string[] parts = quotationNo.Split('/');
+                    int parsedNumber = 0;
+
+                    //if (parts.Length == 4 && int.TryParse(parts[3], out parsedNumber))
+                    //{
+                    //    lastNumber = parsedNumber;
+                    //}
+
+                    string[] parts = quotationNo.Split('/');
+                    if (parts.Length >= 4 && int.TryParse(parts[parts.Length - 1], out parsedNumber))
+                    {
+                        lastNumber = parsedNumber;
+                    }
+                }
+            }
+
+            return lastNumber;
+        }
+
 
         private int idreturn()
         {
@@ -747,6 +804,27 @@ namespace Bill_Software.corporate.business.app
             using (SqlConnection conn = new SqlConnection(cnnString))
             {
                 conn.Open();
+
+                using (SqlCommand lockCmd = new SqlCommand("sp_getapplock", conn))
+                {
+                    lockCmd.CommandType = CommandType.StoredProcedure;
+                    lockCmd.Parameters.AddWithValue("@Resource", "Lock_Quotation_" + lblqno.Text);
+                    lockCmd.Parameters.AddWithValue("@LockMode", "Exclusive");
+                    lockCmd.Parameters.AddWithValue("@LockOwner", "Session");
+                    lockCmd.Parameters.AddWithValue("@DbPrincipal", "public");
+
+                    SqlParameter returnCode = new SqlParameter("@return_value", SqlDbType.Int) { Direction = ParameterDirection.ReturnValue };
+                    lockCmd.Parameters.Add(returnCode);
+
+                    lockCmd.ExecuteNonQuery();
+
+                    int result = (int)returnCode.Value;
+                    if (result < 0)
+                    {
+                        throw new Exception("Unable to acquire lock. Another user may be editing this quotation.");
+                    }
+                }
+
                 SqlTransaction trans = conn.BeginTransaction();
 
                 try
