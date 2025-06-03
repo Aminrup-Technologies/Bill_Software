@@ -208,7 +208,7 @@
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="lbl_refid" runat="server"></asp:Label></td>
                             </tr>
-                            <tr id="Tr3" runat="server" visible="false">
+                            <tr id="Tr3" runat="server" visible="true">
                                 <td class='' style='width: 38%; vertical-align: top; padding: 1px 5px;'>RFQ Date</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 60%; vertical-align: top; padding: 1px 5px;'>

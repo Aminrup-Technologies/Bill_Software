@@ -58,7 +58,7 @@ namespace Bill_Software.corporate.business.print
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "SELECT c.Chalan_No, c.Chalan_Date, c.Quotation_No, c.Quotation_Date, c.Client_ID, c.addressfor, q.PO_Number, q.PO_Date FROM tbl_Chalan c, tbl_Quotation q where c.Quotation_No=q.Quotation_no and c.Chalan_No='" + lblChano.Text + "'";
+            string cmdstring = "SELECT c.Chalan_No, c.Chalan_Date, c.Quotation_No, c.Quotation_Date, c.Client_ID, c.addressfor, q.DO_Number, q.PO_Number, q.PO_Date FROM tbl_Chalan c, tbl_Quotation q where c.Quotation_No=q.Quotation_no and c.Chalan_No='" + lblChano.Text + "'";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
@@ -67,6 +67,7 @@ namespace Bill_Software.corporate.business.print
                 //lblqnumber.Text = re["Quotation_No"].ToString();
                 string qno = re["Quotation_No"].ToString();
                 lblpnumber.Text = re["PO_Number"].ToString();
+                lbldonumber.Text = re["DO_Number"].ToString();
                 lblpdate.Text = re["PO_Date"].ToString();
 
                 //string qno = lblqnumber.Text;
@@ -119,7 +120,7 @@ namespace Bill_Software.corporate.business.print
         {
             //string query = "select Sl_no,Challan_no,Product_id,Product_code,Product_name,Quantity from tbl_Challan_details where Challan_no=@Challan_no order by Product_name";
 
-            string query = "SELECT d.Sl_no, d.Product_id, d.Product_name, d.Quantity, d.Product_code, q.specification, q.ItemNo, q.MaterialNo, q.PackSize, q.Unit FROM tbl_Chalan c INNER JOIN tbl_Challan_details d ON c.Chalan_No = d.Challan_no INNER JOIN tbl_Quotaion_details q ON c.Quotation_No = q.Quotation_no where Challan_no=@Challan_no order by Product_name";
+            string query = "SELECT q.Sl_no, q.Product_id as Product_code, q.Product_name, d.Quantity, q.Product_code as Product_id, q.specification, q.ItemNo, q.MaterialNo, q.PackSize, q.Unit FROM tbl_Chalan c INNER JOIN tbl_Challan_details d ON c.Chalan_No = d.Challan_no INNER JOIN tbl_Quotaion_details q ON c.Quotation_No = q.Quotation_no AND d.Product_id =q.Product_Code where Challan_no=@Challan_no order by Product_name";
             SqlParameter[] pram = {
                 new SqlParameter("@Challan_no",Chalan_No)
             };
