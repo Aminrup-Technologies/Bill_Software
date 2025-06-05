@@ -120,7 +120,7 @@ namespace Bill_Software.corporate.business.print
         {
             //string query = "select Sl_no,Challan_no,Product_id,Product_code,Product_name,Quantity from tbl_Challan_details where Challan_no=@Challan_no order by Product_name";
 
-            string query = "SELECT q.Sl_no, q.Product_id as Product_code, q.Product_name, d.Quantity, q.Product_code as Product_id, q.specification, q.ItemNo, q.MaterialNo, q.PackSize, q.Unit FROM tbl_Chalan c INNER JOIN tbl_Challan_details d ON c.Chalan_No = d.Challan_no INNER JOIN tbl_Quotaion_details q ON c.Quotation_No = q.Quotation_no AND d.Product_id =q.Product_Code where Challan_no=@Challan_no order by Product_name";
+            string query = "SELECT q.Sl_no, q.Product_id as Product_code, q.Product_name, d.Quantity, q.Product_code as Product_id, q.specification, q.ItemNo, q.MaterialNo, q.PackSize, q.Unit FROM tbl_Chalan c INNER JOIN tbl_Challan_details d ON c.Chalan_No = d.Challan_no INNER JOIN tbl_Quotaion_details q ON c.Quotation_No = q.Quotation_no AND d.Product_id =q.Product_Code where Challan_no=@Challan_no order by q.Sl_no";
             SqlParameter[] pram = {
                 new SqlParameter("@Challan_no",Chalan_No)
             };
