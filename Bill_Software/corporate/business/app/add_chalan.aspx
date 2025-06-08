@@ -418,11 +418,11 @@
                                 </tr>
                                 <tr>
                                     <td colspan="4">
-                                        <asp:GridView ID="gd_Quotation" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
-                                            <RowStyle BackColor="#94B8FF" />
+                                        <asp:GridView ID="gd_Quotation" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 12px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%" OnRowDataBound="gd_Quotation_RowDataBound" ShowFooter="true">
+                                            <%--<RowStyle BackColor="#94B8FF" />--%>
                                             <Columns>
 
-                                                <asp:TemplateField HeaderText="SL No">
+                                                <asp:TemplateField HeaderText="SL No" HeaderStyle-Width="5%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="lblSL" runat="server" Text='<%# Container.DataItemIndex + 1 %>'></asp:Label>
                                                     </ItemTemplate>
@@ -430,7 +430,7 @@
                                                     <ItemStyle Width="5%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Product ID / Service ID">
+                                                <asp:TemplateField HeaderText="Product ID" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
                                                     </ItemTemplate>
@@ -438,39 +438,39 @@
                                                     <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="HSN Code">
+                                                <asp:TemplateField HeaderText="HSN Code" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="product_id" runat="server" Text='<%# Bind("product_id") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="8%" />
-                                                    <ItemStyle Width="8%" />
+                                                    <HeaderStyle Width="10%" />
+                                                    <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Product Name / Service Name">
+                                                <asp:TemplateField HeaderText="Product Name" HeaderStyle-Width="25%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
                                                     </ItemTemplate>
                                                     <HeaderStyle Width="20%" />
-                                                    <ItemStyle Width="20%" />
+                                                    <ItemStyle Width="20%" HorizontalAlign="Left"/>
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Item No">
+                                                <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
-                                                        <asp:Label ID="ItemNo" runat="server" Text='<%# Bind("ItemNo") %>'></asp:Label>
+                                                        <asp:Label ID="ItemNo" runat="server" Text='<%# Bind("ItemNo") %>' Font-Bold="true" ForeColor="#0033cc"></asp:Label>
                                                     </ItemTemplate>
                                                     <HeaderStyle Width="7%" />
                                                     <ItemStyle Width="7%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Material No">
+                                                <asp:TemplateField HeaderText="Material No" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
-                                                        <asp:Label ID="MaterialNo" runat="server" Text='<%# Bind("MaterialNo") %>'></asp:Label>
+                                                        <asp:Label ID="MaterialNo" runat="server" Text='<%# Bind("MaterialNo") %>' Font-Bold="true" ForeColor="#800000"></asp:Label>
                                                     </ItemTemplate>
                                                     <HeaderStyle Width="7%" />
                                                     <ItemStyle Width="7%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Pack Size">
+                                                <asp:TemplateField HeaderText="Pack Size" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="PackSize" runat="server" Text='<%# Bind("PackSize") %>'></asp:Label>
                                                     </ItemTemplate>
@@ -478,31 +478,40 @@
                                                     <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Quoted Quantity">
+                                                <asp:TemplateField HeaderText="Quoted Quantity" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
-                                                        <asp:Label ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>'></asp:Label>
+                                                        <asp:Label ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>' Font-Bold="true" ForeColor="#990000"></asp:Label>
                                                     </ItemTemplate>
+                                                    <FooterTemplate>
+                                                        <asp:Label ID="lblTotalQuoted" runat="server" Font-Bold="true" ForeColor="Black" />
+                                                    </FooterTemplate>
                                                     <HeaderStyle Width="6%" />
                                                     <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Delivered Quantity">
+                                                <asp:TemplateField HeaderText="Delivered Quantity" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
-                                                        <asp:Label ID="DeliveredQnt" runat="server" Text='<%# Bind("DeliveredQnt") %>'></asp:Label>
+                                                        <asp:Label ID="DeliveredQnt" runat="server" Text='<%# Bind("DeliveredQnt") %>' Font-Bold="true" ForeColor="#006600"></asp:Label>
                                                     </ItemTemplate>
+                                                    <FooterTemplate>
+                                                        <asp:Label ID="lblTotalDelivered" runat="server" Font-Bold="true" ForeColor="Black" />
+                                                    </FooterTemplate>
                                                     <HeaderStyle Width="6%" />
                                                     <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Quantity Due for Delivery">
+                                                <asp:TemplateField HeaderText="Quantity Due for Delivery" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate(event)"></asp:TextBox>
+                                                        <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" Style="text-align:center;" CssClass="textbox_U_Datalist_style" Width="95%" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate(event)"></asp:TextBox>
                                                     </ItemTemplate>
+                                                    <FooterTemplate>
+                                                        <asp:Label ID="lblTotalDue" runat="server" Font-Bold="true" ForeColor="Black" />
+                                                    </FooterTemplate>
                                                     <HeaderStyle Width="5%" />
-                                                    <ItemStyle Width="5%" HorizontalAlign="Center" />
+                                                    <ItemStyle Width="5%"/>
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Create">
+                                                <asp:TemplateField HeaderText="Create" HeaderStyle-Width="10%">
                                                     <HeaderTemplate>
                                                         <asp:CheckBox ID="checkAll" runat="server" onclick="checkAll(this);" />
                                                     </HeaderTemplate>
@@ -518,7 +527,7 @@
                                             <PagerStyle BackColor="White" ForeColor="Black" HorizontalAlign="Right" />
                                             <SelectedRowStyle BackColor="HighlightText" Font-Bold="True" ForeColor="White" />
                                             <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
-                                            <AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />
+                                            <%--<AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />--%>
                                         </asp:GridView>
 
 
@@ -532,7 +541,8 @@
                                 </tr>
                                 <tr>
                                     <td colspan="4" style="text-align: center">
-                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Save" OnClick="Button1_Click" />
+                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Create Challan" OnClick="Button1_Click" />
+                                        &nbsp;<asp:Button ID="Button2" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="Cancel" />
                                     </td>
                                 </tr>
                                 <tr>

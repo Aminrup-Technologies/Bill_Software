@@ -29,7 +29,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             //string cmdstring = "select top(50) tbl_Chalan.Chalan_No,tbl_Chalan.Chalan_Date,tbl_Chalan.Quotation_No,tbl_Chalan.Quotation_Date,tbl_Client.Client_Name from tbl_Chalan inner join tbl_Client on tbl_Chalan.Client_ID=tbl_Client.Client_Id  order by tbl_Chalan.ID desc";
-            string cmdstring = "select top(50) a.ID,a.Chalan_No,a.Chalan_Date,a.Quotation_No, a.Quotation_Date,a.Client_ID,b.Client_Name,c.PServiceName, q.DO_Number, q.PO_Number from tbl_Chalan as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID LEFT OUTER JOIN tbl_Quotation AS q ON a.Quotation_No = q.Quotation_No order by CAST(a.Chalan_Date AS DATE) DESC";
+            string cmdstring = "select a.ID,a.Chalan_No,a.Chalan_Date,a.Quotation_No, a.Quotation_Date,a.Client_ID,b.Client_Name,c.PServiceName, q.DO_Number, q.PO_Number from tbl_Chalan as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID LEFT OUTER JOIN tbl_Quotation AS q ON a.Quotation_No = q.Quotation_No order by CAST(a.Chalan_Date AS DATE) DESC";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();

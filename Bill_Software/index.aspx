@@ -8,6 +8,21 @@
     <link rel="shortcut icon" href="corporate/business/WebImages/aagrouplogo.png" />
     <link href="corporate/WebProperty/css/style.css" rel="stylesheet" type="text/css" />
     <link href="corporate/WebProperty/css/menu.css" rel="stylesheet" type="text/css" />
+    <!-- Matomo -->
+    <script>
+      var _paq = window._paq = window._paq || [];
+      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+      _paq.push(['trackPageView']);
+      _paq.push(['enableLinkTracking']);
+      (function() {
+        var u="//visitors.aminruptechnologies.co.in/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '1']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+      })();
+    </script>
+    <!-- End Matomo Code -->
 </head>
 <body>
     <form id="form1" runat="server">

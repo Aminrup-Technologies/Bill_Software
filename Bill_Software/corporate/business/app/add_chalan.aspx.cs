@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
+using System.Configuration;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -15,6 +16,11 @@ namespace Bill_Software.corporate.business.app
         public static DataTable dt_first;
         DataTable MainDt = new DataTable();
         DataTable dtPCat = new DataTable();
+
+        private int totalQuoted = 0;
+        private int totalDelivered = 0;
+        private int totalDue = 0;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -28,7 +34,6 @@ namespace Bill_Software.corporate.business.app
                 txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
                 txtinvoiceDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
             }
-
         }
 
         protected void btnSertch_Click(object sender, EventArgs e)
@@ -38,26 +43,25 @@ namespace Bill_Software.corporate.business.app
             {
                 BuindCompanyId();
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "'  order by tbl_Quotation.ID desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id = tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id = '" + lblclientId.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id = tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no and tbl_QuoPriSerTogather.TimeStamp = tbl_Quotation.TimsStamp where tbl_Quotation.Client_Id = '" + lblclientId.Text + "' ORDER BY CAST(tbl_Quotation.Quotation_date AS datetime) DESC";
                 Buinddatagrid(cmdstring);
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where  cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no and tbl_QuoPriSerTogather.TimeStamp = tbl_Quotation.TimsStamp where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' ORDER BY CAST(tbl_Quotation.Quotation_date AS datetime) DESC";
                 Buinddatagrid(cmdstring);
             }
             else
             {
                 BuindCompanyId();
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where  tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no and tbl_QuoPriSerTogather.TimeStamp = tbl_Quotation.TimsStamp where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' ORDER BY CAST(tbl_Quotation.Quotation_date AS datetime) DESC";
                 Buinddatagrid(cmdstring);
             }
             btnSertch.Visible = false;
-
         }
+
         private void Buinddatagrid(string cmdstring)
         {
             DbCL.Sqlconnection();
@@ -72,7 +76,6 @@ namespace Bill_Software.corporate.business.app
             {
                 PanelError.Visible = true;
                 lblErrorMsg.Text = "No Data Found...";
-
             }
             DbCL.Conn.Close();
         }
@@ -203,7 +206,7 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
-                int j = idreturn() + 1;
+                int j = idreturn_OLD() + 1;
                 DbCL.executeRdr($"INSERT INTO tbl_Chalan(Chalan_No, Chalan_Date, Quotation_No, Quotation_Date, Client_ID, Sl_no) " +
                                 $"VALUES ('{invoice_no}', '{txtinvoiceDate.Text}', '{lblQuotation_no.Text}', '{lblQuotation_date.Text}', '{lblClient_Id.Text}', '{j}')");
 
@@ -268,7 +271,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate, Service_tax_rate,Total_sail_rate2, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "'";
+            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate, Service_tax_rate,Total_sail_rate2, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "' order by Sl_no";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
@@ -535,20 +538,85 @@ namespace Bill_Software.corporate.business.app
 
         private string BindInvoiceNo()
         {
-            
-           
+            string prefix = "CHL/FE/";
+            string finYear = findmonth();  // e.g., "24-25/"
+            string fullPrefix = prefix + finYear;
+
+            int nextNumber = idreturn(fullPrefix);
+            string invoiceNo;
+
+            do
+            {
+                nextNumber += 1;
+                invoiceNo = fullPrefix + nextNumber.ToString();
+            }
+            while (InvoiceNoExists(invoiceNo));  // Ensure no duplicate
+
+            return invoiceNo;
+        }
+
+
+        private string BindInvoiceNo_OLD()
+        {
             string f = "";
             
             f = "CHL/FE"  + "/";
             string ss = findmonth();
             f = f + ss;
-            int j = idreturn();
+            int j = idreturn_OLD();
             j = j + 1;
             f = f + j.ToString();
             return f;
         }
 
-        private int idreturn()
+        private int idreturn(string prefix)
+        {
+            int lastNumber = 0;
+            string query = "SELECT TOP 1 Chalan_No FROM tbl_Chalan " +
+                           "WHERE Chalan_No LIKE @Prefix + '%' " +
+                           "ORDER BY ID DESC";
+
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Prefix", prefix);
+                con.Open();
+                var result = cmd.ExecuteScalar();
+                if (result != null)
+                {
+                    string invoiceNo = result.ToString().Trim();
+                    string[] parts = invoiceNo.Split('/');
+                    int parsedNumber = 0;
+                    if (parts.Length >= 4 && int.TryParse(parts[parts.Length - 1], out parsedNumber))
+                    {
+                        lastNumber = parsedNumber;
+                    }
+                }
+            }
+
+            return lastNumber;
+        }
+
+        private bool InvoiceNoExists(string invoiceNo)
+        {
+            bool exists = false;
+            string query = "SELECT COUNT(*) FROM tbl_Chalan WHERE Chalan_No = @Chalan_No";
+
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Chalan_No", invoiceNo);
+                con.Open();
+
+                int count = (int)cmd.ExecuteScalar();
+                exists = count > 0;
+            }
+
+            return exists;
+        }
+
+
+        private int idreturn_OLD()
         {
             string a = null;
             int b = 0;
@@ -573,8 +641,6 @@ namespace Bill_Software.corporate.business.app
 
         private string findmonth()
         {
-
-
             string MonthName = "-";
             string a = txtinvoiceDate.Text.Substring(3, 3);
             string b = txtinvoiceDate.Text.Substring(9, 2);
@@ -604,5 +670,72 @@ namespace Bill_Software.corporate.business.app
             }
             DbCL.Conn.Close();
         }
+
+        protected void gd_Quotation_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                // Reset totals at first row
+                if (e.Row.RowIndex == 0)
+                {
+                    totalQuoted = 0;
+                    totalDelivered = 0;
+                    totalDue = 0;
+                }
+
+                Label lblQuoted = (Label)e.Row.FindControl("Quantity");
+                Label lblDelivered = (Label)e.Row.FindControl("DeliveredQnt");
+                TextBox txtDue = (TextBox)e.Row.FindControl("Qty");
+
+                TableCell quotedCell = lblQuoted?.Parent as TableCell;
+                TableCell deliveredCell = lblDelivered?.Parent as TableCell;
+
+                int quoted = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "Quantity"));
+                int delivered = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "DeliveredQnt"));
+                int due = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "RemainQny"));
+
+                totalQuoted += quoted;
+                totalDelivered += delivered;
+                totalDue += due;
+
+                // Apply color formatting
+                if (lblQuoted != null && lblDelivered != null && quotedCell != null && deliveredCell != null)
+                {
+                    if (quoted == delivered)
+                    {
+                        lblQuoted.ForeColor = System.Drawing.Color.DarkBlue;
+                        lblDelivered.ForeColor = System.Drawing.Color.DarkBlue;
+                        quotedCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#e6f2ff");
+                        deliveredCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#e6f2ff");
+                    }
+                    else if (quoted > delivered)
+                    {
+                        lblQuoted.ForeColor = System.Drawing.Color.Red;
+                        lblDelivered.ForeColor = System.Drawing.Color.OrangeRed;
+                        quotedCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#ffe6e6");
+                        deliveredCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#fff0e6");
+                    }
+                    else // delivered > quoted
+                    {
+                        lblQuoted.ForeColor = System.Drawing.Color.Orange;
+                        lblDelivered.ForeColor = System.Drawing.Color.Green;
+                        quotedCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#fff0cc");
+                        deliveredCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#e6ffe6");
+                    }
+                }
+            }
+
+            if (e.Row.RowType == DataControlRowType.Footer)
+            {
+                Label lblTotalQuoted = (Label)e.Row.FindControl("lblTotalQuoted");
+                Label lblTotalDelivered = (Label)e.Row.FindControl("lblTotalDelivered");
+                Label lblTotalDue = (Label)e.Row.FindControl("lblTotalDue");
+
+                if (lblTotalQuoted != null) lblTotalQuoted.Text = totalQuoted.ToString();
+                if (lblTotalDelivered != null) lblTotalDelivered.Text = totalDelivered.ToString();
+                if (lblTotalDue != null) lblTotalDue.Text = totalDue.ToString();
+            }
+        }
+
     }
 }

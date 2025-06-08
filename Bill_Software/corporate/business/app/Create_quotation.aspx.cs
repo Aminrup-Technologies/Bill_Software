@@ -238,7 +238,7 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private void Bindquotationno()
+        private void Bindquotationno_060625()
         {
             string prefix = "QTN/FE/";
             if (rbPo.Checked)
@@ -253,6 +253,47 @@ namespace Bill_Software.corporate.business.app
             string quotationNo = prefix + ss + j.ToString();  // e.g., "QTN/FE/24-25/5"
             lblqno.Text = quotationNo;
         }
+
+        private void Bindquotationno()
+        {
+            string prefix = "QTN/FE/";
+            if (rbPo.Checked)
+            {
+                prefix = "PO/FE/";
+            }
+
+            string ss = findmonth();  // e.g., "24-25/"
+            int j = idreturn_New(prefix + ss);  // Get last used number for that prefix
+
+            string quotationNo;
+            do
+            {
+                j += 1;
+                quotationNo = prefix + ss + j.ToString();
+            }
+            while (QuotationNoExists(quotationNo));  // Keep looping if already exists
+
+            lblqno.Text = quotationNo;
+        }
+
+        private bool QuotationNoExists(string quotationNo)
+        {
+            bool exists = false;
+            string query = "SELECT COUNT(*) FROM tbl_Quotation WHERE Quotation_no = @QuotationNo";
+
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@QuotationNo", quotationNo);
+                con.Open();
+
+                int count = (int)cmd.ExecuteScalar();
+                exists = count > 0;
+            }
+
+            return exists;
+        }
+
 
 
         private void Bindquotationno_OLD()
@@ -543,7 +584,6 @@ namespace Bill_Software.corporate.business.app
             bindOurPhaseAmount();
         }
 
-
         private void bindOurPhaseAmount()
         {
             string phasetypename = null;
@@ -584,8 +624,6 @@ namespace Bill_Software.corporate.business.app
                         //phasedesc = bindphasedesc(phasetypename);
                         phasedesc = "";
                         SearchPaymentPhaseFees(1, phasetypename, phasedesc);
-
-
                     }
                 }
             }
@@ -664,7 +702,6 @@ namespace Bill_Software.corporate.business.app
 
         protected void AmountPer_TextChanged(object sender, EventArgs e)
         {
-
             //Label2.Text = "Sumanta";
             amountCalculation();
         }
@@ -779,8 +816,6 @@ namespace Bill_Software.corporate.business.app
 
         protected void Button3_Click(object sender, EventArgs e)
         {
-            //Magician();
-
             MagicianNew();
         }
 
@@ -888,8 +923,7 @@ namespace Bill_Software.corporate.business.app
                                 using (SqlCommand cmd = new SqlCommand(@"
                             INSERT INTO tbl_Quotaion_details 
                             (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById) 
-                            VALUES 
-                            (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)", conn, trans))
+                            VALUES (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)", conn, trans))
                                 {
                                     cmd.Parameters.AddWithValue("@Sl_no", h);
                                     cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);

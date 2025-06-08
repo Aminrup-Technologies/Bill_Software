@@ -164,7 +164,7 @@ namespace Bill_Software.corporate.business.print
         {
             string chalanQuery = "SELECT Chalan_No, Chalan_Date FROM tbl_Chalan WHERE Quotation_No = @Quotation_No ORDER BY Chalan_Date";
                     SqlParameter[] chalanParam = {
-                new SqlParameter("@Quotation_No", quotationNo)
+                new SqlParameter("@Quotation_No", quotationNo),
             };
 
             DataTable dtChalanList = DbCL.SPreturn_dt(chalanQuery, chalanParam);
@@ -223,9 +223,9 @@ namespace Bill_Software.corporate.business.print
                         FROM tbl_Challan_details cd
                         INNER JOIN tbl_Chalan c ON cd.Challan_no = c.Chalan_No
                         INNER JOIN tbl_Quotaion_details qd 
-                            ON cd.Sl_no = qd.Sl_no AND c.Quotation_No = qd.Quotation_no
+                            ON cd.Product_id = qd.Product_Code AND c.Quotation_No = qd.Quotation_no
                         WHERE cd.Challan_no = @Challan_no
-                        ORDER BY qd.ItemNo";
+                        ORDER BY qd.Sl_no;";
 
                                             SqlParameter[] detailParam = {
                             new SqlParameter("@Challan_no", chalanNo)
