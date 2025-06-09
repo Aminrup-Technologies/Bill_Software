@@ -223,7 +223,7 @@ namespace Bill_Software.corporate.business.print
                         FROM tbl_Challan_details cd
                         INNER JOIN tbl_Chalan c ON cd.Challan_no = c.Chalan_No
                         INNER JOIN tbl_Quotaion_details qd 
-                            ON cd.Product_id = qd.Product_Code AND c.Quotation_No = qd.Quotation_no
+                            ON cd.Product_id = qd.Product_Code AND c.Quotation_No = qd.Quotation_no and cd.ItemNo = qd.ItemNo
                         WHERE cd.Challan_no = @Challan_no
                         ORDER BY qd.Sl_no;";
 

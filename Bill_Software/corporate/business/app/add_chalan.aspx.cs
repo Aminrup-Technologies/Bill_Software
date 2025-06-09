@@ -109,7 +109,6 @@ namespace Bill_Software.corporate.business.app
         protected void btnreset_Click(object sender, EventArgs e)
         {
             Response.Redirect("~/corporate/business/app/add_chalan.aspx");
-
         }
 
         //protected void Button1_Click(object sender, EventArgs e)
@@ -193,13 +192,16 @@ namespace Bill_Software.corporate.business.app
                             string Product_Code = ((Label)gd_Quotation.Rows[i].FindControl("product_id")).Text;
                             string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("ProductName")).Text;
 
+                            string itemno = ((Label)gd_Quotation.Rows[i].FindControl("ItemNo")).Text;
+                            string materialno = ((Label)gd_Quotation.Rows[i].FindControl("MaterialNo")).Text;
+                            string packsize = ((Label)gd_Quotation.Rows[i].FindControl("PackSize")).Text;
+
                             string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
                             int quantity = Convert.ToInt32(Qty);
 
                             if (quantity > 0)
                             {
-                                DbCL.executeRdr($"INSERT INTO tbl_Challan_details(Sl_no, Challan_no, Product_id, Product_code , Product_name, Quantity) " +
-                                                $"VALUES ('{k}', '{invoice_no}', '{Product_id}', '{Product_Code}', '{Product_name}', '{Qty}')");
+                                DbCL.executeRdr($@"INSERT INTO tbl_Challan_details(Sl_no, Challan_no, Product_id, Product_code, Product_name, Quantity, ItemNo, MaterialNo, PackSize) VALUES ('{k}', '{invoice_no}', '{Product_id}', '{Product_Code}', '{Product_name}', '{Qty}', '{itemno}', '{materialno}', '{packsize}')");
                                 k++;
                             }
                         }
@@ -333,7 +335,7 @@ namespace Bill_Software.corporate.business.app
             
 
             string DeliveredQnt = "";
-            DeliveredQnt = bindPreQnt(product_name, Quotation_no, Chalanno);
+            DeliveredQnt = bindPreQnt(product_name, Quotation_no, Chalanno, ItemNo);
 
 
             string RemainQnt = "";
@@ -417,10 +419,10 @@ namespace Bill_Software.corporate.business.app
             ViewState["ViewQProductData"] = dtPCat;
         }
 
-        private string bindPreQnt(string product_name, string quotation_no, string chalanno)
+        private string bindPreQnt(string product_name, string quotation_no, string chalanno, string itemno)
         {
             string deliQnt = "0";
-            string query = "select sum(CAST(Quantity as int)) as DeliveredQnt,Product_name from tbl_Challan_details where Challan_no in "+ chalanno + " and Product_name='"+ product_name + "' group by Product_name";
+            string query = "select sum(CAST(Quantity as int)) as DeliveredQnt,Product_name from tbl_Challan_details where Challan_no in "+ chalanno + " and Product_name='"+ product_name + "' and ItemNo= '"+ itemno + "' group by ItemNo,Product_name ";
             SqlDataReader rdr1 = DbCL.SPReturnRdr(query, null);
             if (rdr1.Read())
             {
