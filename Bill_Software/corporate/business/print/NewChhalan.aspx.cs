@@ -120,7 +120,7 @@ namespace Bill_Software.corporate.business.print
         {
             //string query = "select Sl_no,Challan_no,Product_id,Product_code,Product_name,Quantity from tbl_Challan_details where Challan_no=@Challan_no order by Product_name";
 
-            string query = "SELECT q.Sl_no, q.Product_id as Product_code, q.Product_name, d.Quantity, q.Product_code as Product_id, q.specification, q.ItemNo, q.MaterialNo, q.PackSize, q.Unit FROM tbl_Chalan c INNER JOIN tbl_Challan_details d ON c.Chalan_No = d.Challan_no INNER JOIN tbl_Quotaion_details q ON c.Quotation_No = q.Quotation_no AND d.Product_id =q.Product_Code and d.ItemNo = q.ItemNo where Challan_no=@Challan_no order by q.Sl_no";
+            string query = "SELECT d.Sl_no, q.Product_id as Product_code, q.Product_name, d.Quantity, q.Product_code as Product_id, q.specification, q.ItemNo, q.MaterialNo, q.PackSize, q.Unit, q.Department FROM tbl_Chalan c INNER JOIN tbl_Challan_details d ON c.Chalan_No = d.Challan_no INNER JOIN tbl_Quotaion_details q ON c.Quotation_No = q.Quotation_no AND d.Product_id =q.Product_Code and d.ItemNo = q.ItemNo where Challan_no=@Challan_no order by d.Sl_no";
             SqlParameter[] pram = {
                 new SqlParameter("@Challan_no",Chalan_No)
             };
@@ -193,13 +193,13 @@ namespace Bill_Software.corporate.business.print
                     string ItemNo = dtChPro.Rows[i]["ItemNo"].ToString();
                     string MaterialNo = dtChPro.Rows[i]["MaterialNo"].ToString();
                     string PackSize = dtChPro.Rows[i]["PackSize"].ToString();
+                    string Dept = dtChPro.Rows[i]["Department"].ToString();
 
                     TQ += Quantity;
-
-                    // Combine product name with line items
                     string particulars = $"<b>{Product_name}</b><br/>"
                                        + $"<span style='font-size: 11px;'>Spec: {Specification}</span><br/>"
-                                       + $"<span style='font-size: 11px;'>Item No: {ItemNo}, Material No: {MaterialNo}, Pack: {PackSize}</span>";
+                                       + $"<span style='font-size: 11px;'>Item No: {ItemNo}, Material No: {MaterialNo}, Pack: {PackSize}</span><br/>"
+                                       + $"<span style='font-size: 11px;'>Department: {Dept}</span>";
 
                     strProduct.Append("<tr>");
                     strProduct.Append("<td style='border: 1px solid #bfbfbf; text-align: center;'>" + Sl_no + "</td>");

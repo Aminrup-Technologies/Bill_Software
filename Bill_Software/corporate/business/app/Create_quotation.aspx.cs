@@ -126,27 +126,95 @@ namespace Bill_Software.corporate.business.app
 
             }
 
-            Panel1.Visible = true;
-            cmbClient.Enabled = false;
-            //if (RadioButtonList2.SelectedIndex == 0)
-            //{
-            BindListitemNew();
-            //}
-            //else
-            //{
-            //    //BindListitem();
-            //}
+            bool isDuplicate = IsPurchaseOrderDuplicate();
 
-            BindclientID();
-            //Bindquotationno();
+            if (isDuplicate)
+            {
+                // Duplicate found or error — halt process
+                PanelError.Visible = true;
+                PanelOK.Visible = false;
+                return;
+            }
 
-            string clientcode = lblclientID.Text;
-            //bindFactoryAddress(clientcode);
+            else
+            {
+                PanelError.Visible = false;
+                PanelOK.Visible = true;
 
-            txtquotationDate.Enabled = false;
-            //RadioButtonList1.Enabled = false;
-            Label1.Text = "1";
+                Panel1.Visible = true;
+                cmbClient.Enabled = false;
+                BindListitemNew();
+                BindclientID();
+
+                string clientcode = lblclientID.Text;
+                //bindFactoryAddress(clientcode);
+
+                txtquotationDate.Enabled = false;
+                Label1.Text = "1";
+            }
+
+            
+
+            
         }
+
+        private bool IsPurchaseOrderDuplicate()
+        {
+            if (!rbPo.Checked)
+                return false;
+
+            string doNumber = txb_donumber.Text.Trim();
+            string poNumber = txb_ponumber.Text.Trim();
+            DateTime poDate;
+
+            if (!DateTime.TryParse(txb_podate.Text.Trim(), out poDate))
+            {
+                PanelError.Visible = true;
+                lblErrorMsg.Text = "Invalid PO Date format.";
+                lblErrorMsg.ForeColor = System.Drawing.Color.Red;
+                return true;
+            }
+
+            string query = @"SELECT COUNT(*) FROM tbl_Quotation WHERE DO_Number = @DO_Number AND PO_Number = @PO_Number AND CONVERT(DATE, PO_Date, 106) = @PO_Date AND RecordType = 'Purchase Order'";
+
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@DO_Number", doNumber);
+                cmd.Parameters.AddWithValue("@PO_Number", poNumber);
+                cmd.Parameters.AddWithValue("@PO_Date", poDate.ToString("dd MMM yyyy"));
+
+                try
+                {
+                    conn.Open();
+                    int count = (int)cmd.ExecuteScalar();
+
+                    if (count > 0)
+                    {
+                        PanelError.Visible = true;
+                        lblErrorMsg.Text = "A Purchase Order with the same details already exists.";
+                        lblErrorMsg.ForeColor = System.Drawing.Color.Red;
+                        return true;
+                    }
+                    else
+                    {
+                        PanelOK.Visible = true;
+                        lblOk.Text = "No duplicate PO found. You may proceed.";
+                        lblOk.ForeColor = System.Drawing.Color.Green;
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    PanelError.Visible = true;
+                    lblErrorMsg.Text = "Error checking PO record: " + ex.Message;
+                    lblErrorMsg.ForeColor = System.Drawing.Color.Red;
+                    return true; // Treat error as potential duplication to prevent action
+                }
+            }
+        }
+
+
 
         private void BindListitemNew()
         {
