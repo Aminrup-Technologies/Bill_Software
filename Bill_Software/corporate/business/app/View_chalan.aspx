@@ -36,7 +36,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <table cellpadding="0" cellspacing="0" class="auto-style1">
         <tr>
-            <td colspan="4" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;View Challan</span></td>
+            <td colspan="4" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;View DPCC (Delivery planning cum Challan)</span></td>
         </tr>
         <tr>
             <td width="15%">&nbsp;</td>

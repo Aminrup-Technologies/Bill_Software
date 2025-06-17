@@ -176,35 +176,35 @@
 
             // Validate GridView checkboxes
             var gridView = document.getElementById('<%= Gridview_Product.ClientID %>');
-        if (!gridView) {
-            console.error("GridView not found.");
-            return false;
-        }
+            if (!gridView) {
+                console.error("GridView not found.");
+                return false;
+            }
 
-        var checkboxes = gridView.getElementsByTagName("input");
-        var isChecked = false;
+            var checkboxes = gridView.getElementsByTagName("input");
+            var isChecked = false;
 
-        console.log("Checking GridView checkboxes...");
-        for (var i = 0; i < checkboxes.length; i++) {
-            if (checkboxes[i].type === "checkbox" && checkboxes[i].id.indexOf("chk") !== -1) {
-                console.log("Found checkbox:", checkboxes[i].id, "Checked:", checkboxes[i].checked);
-                if (checkboxes[i].checked) {
-                    isChecked = true;
-                    break;
+            console.log("Checking GridView checkboxes...");
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].type === "checkbox" && checkboxes[i].id.indexOf("chk") !== -1) {
+                    console.log("Found checkbox:", checkboxes[i].id, "Checked:", checkboxes[i].checked);
+                    if (checkboxes[i].checked) {
+                        isChecked = true;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (!isChecked) {
-            console.warn("No checkbox selected in GridView.");
-            alert("Please select at least one item from the GridView.");
-            return false;
-        }
+            if (!isChecked) {
+                console.warn("No checkbox selected in GridView.");
+                alert("Please select at least one item from the GridView.");
+                return false;
+            }
 
-        console.log("GridView validation passed.");
+            console.log("GridView validation passed.");
 
             // Validate ListBox (FactoryAddress)
-        var listBox = document.getElementById('<%= FactoryAddress.ClientID %>');
+            var listBox = document.getElementById('<%= FactoryAddress.ClientID %>');
         if (!listBox) {
             console.error("ListBox not found.");
             return false;
@@ -567,7 +567,7 @@
                 </asp:DataList>--%>
 
 
-                        <asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemCommand="DataList1_ItemCommand">
+                        <%--<asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemCommand="DataList1_ItemCommand">
                             <FooterStyle BackColor="White" ForeColor="#000066" />
                             <AlternatingItemStyle BackColor="#94B8FF" />
                             <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
@@ -632,7 +632,88 @@
                                     </tr>
                                 </table>
                             </ItemTemplate>
+                        </asp:DataList>--%>
+
+                        <asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px"
+                            Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemCommand="DataList1_ItemCommand">
+                            <FooterStyle BackColor="White" ForeColor="#000066" />
+                            <AlternatingItemStyle BackColor="#94B8FF" />
+                            <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
+                            <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
+                            <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+
+                            <HeaderTemplate>
+                                <table border="0" cellpadding="2" cellspacing="0" class="table1" width="100%">
+                                    <tr>
+                                        <td style="text-align: center; width: 5%;">
+                                            <asp:Label Text="Sl No." runat="server" /></td>
+                                        <td style="text-align: center; width: 14%;">
+                                            <asp:Label Text="Client Name" runat="server" /></td>
+                                        <td style="text-align: center; width: 10%;">
+                                            <asp:Label Text="Quotation Date" runat="server" /></td>
+                                        <td style="text-align: center; width: 10%;">
+                                            <asp:Label Text="Quotation No" runat="server" /></td>
+                                        <td style="text-align: center; width: 10%;">
+                                            <asp:Label Text="DO Number" runat="server" /></td>
+                                        <td style="text-align: center; width: 10%;">
+                                            <asp:Label Text="PO Number" runat="server" /></td>
+                                        <td style="text-align: center; width: 14%;">
+                                            <asp:Label Text="Product Category" runat="server" /></td>
+                                        <td style="text-align: center; width: 9%;">
+                                            <asp:Label Text="Sub Total (INR)" runat="server" /></td>
+                                        <td style="text-align: center; width: 8%;">
+                                            <asp:Label Text="GST (INR)" runat="server" /></td>
+                                        <td style="text-align: center; width: 10%;">
+                                            <asp:Label Text="Net Amount (INR)" runat="server" /></td>
+                                        <td style="text-align: center; width: 10%;">
+                                            <asp:Label Text="Select" runat="server" /></td>
+                                    </tr>
+                                </table>
+                            </HeaderTemplate>
+
+                            <ItemTemplate>
+                                <table border="0" cellpadding="5" cellspacing="0" class="table2" width="100%">
+                                    <tr>
+                                        <td style="text-align: center; width: 5%; padding: 5px;">
+                                            <asp:Label ID="LabelSL" runat="server" Text='<%# Container.ItemIndex + 1 %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 14%; padding: 5px;">
+                                            <asp:Label ID="LabelClient" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 10%; padding: 5px;">
+                                            <asp:Label ID="LabelDate" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 10%; padding: 5px;">
+                                            <asp:Label ID="LabelQuoNo" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 10%; padding: 5px;">
+                                            <asp:Label ID="LabelDONo" runat="server" Text='<%# Eval("DO_Number") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 10%; padding: 5px;">
+                                            <asp:Label ID="LabelPONo" runat="server" Text='<%# Eval("PO_Number") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 14%; padding: 5px;">
+                                            <asp:Label ID="LabelService" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 9%; padding: 5px;">
+                                            <asp:Label ID="LabelSubtotal" runat="server" Text='<%# Eval("sub_total") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 8%; padding: 5px;">
+                                            <asp:Label ID="LabelTax" runat="server" Text='<%# Eval("service_tax1") %>'></asp:Label>
+                                        </td>
+                                        <td style="text-align: center; width: 10%; padding: 5px;">Rs.
+                                            <asp:Label ID="LabelNet" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label>
+                                            /-
+                                        </td>
+                                        <td style="text-align: center; width: 10%; padding: 5px;">
+                                            <asp:ImageButton ID="ImageButton1" runat="server" CommandArgument='<%# Eval("Quotation_no") %>' CommandName="Select"
+                                                ImageUrl="~/corporate/business/WebImages/tick-icon.png" ToolTip="Select" />
+                                        </td>
+                                    </tr>
+                                </table>
+                            </ItemTemplate>
                         </asp:DataList>
+
                     </td>
                 </tr>
                 <tr>
@@ -662,7 +743,7 @@
                                         <asp:Label ID="Product_id" runat="server" Text='<%# Bind("Product_id") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                               
+
                                 <asp:TemplateField HeaderText="Product Name">
                                     <EditItemTemplate>
                                         <asp:TextBox ID="Product_name" runat="server" Text='<%# Bind("Product_name") %>'></asp:TextBox>
@@ -833,7 +914,9 @@
                                 <tr>
                                     <td>Quotation No</td>
                                     <td>
-                                        <asp:Label ID="lblQuotation_no" runat="server" Font-Bold="true" ForeColor="Blue"></asp:Label> | <asp:Label ID="lbl_servicename" runat="server" Font-Bold="true" ForeColor="Blue"></asp:Label>
+                                        <asp:Label ID="lblQuotation_no" runat="server" Font-Bold="true" ForeColor="Blue"></asp:Label>
+                                        |
+                                        <asp:Label ID="lbl_servicename" runat="server" Font-Bold="true" ForeColor="Blue"></asp:Label>
                                     </td>
                                     <td>Quotation Date</td>
                                     <td>

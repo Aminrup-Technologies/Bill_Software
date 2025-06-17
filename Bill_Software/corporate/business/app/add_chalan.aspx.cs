@@ -273,7 +273,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate, Service_tax_rate,Total_sail_rate2, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "' order by Sl_no";
+            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate, Service_tax_rate,Total_sail_rate2, ItemNo, MaterialNo, PackSize, Department, DeliveryDate from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "' order by Sl_no";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
@@ -297,17 +297,20 @@ namespace Bill_Software.corporate.business.app
                     string MaterialNo = MainDt.Rows[i]["MaterialNo"].ToString();
                     string PackSize = MainDt.Rows[i]["PackSize"].ToString();
 
+                    string Department = MainDt.Rows[i]["Department"].ToString();
+                    string DelivertDt = MainDt.Rows[i]["DeliveryDate"].ToString();
+
                     if (ViewState["ViewQProductData"] != null)
                     {
                             dtPCat = (DataTable)ViewState["ViewQProductData"];
                             int count = dtPCat.Rows.Count + 1;
 
-                            SearchProductCatwise(count, Sl_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no, ItemNo, MaterialNo, PackSize);
+                            SearchProductCatwise(count, Sl_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no, ItemNo, MaterialNo, PackSize, Department, DelivertDt);
 
                     }
                     else
                     {
-                            SearchProductCatwise(1, Sl_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no, ItemNo, MaterialNo, PackSize);
+                            SearchProductCatwise(1, Sl_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no, ItemNo, MaterialNo, PackSize, Department, DelivertDt);
                     }
                     
                 }
@@ -321,7 +324,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-        private void SearchProductCatwise(int count, string sl_no, string product_id, string Product_Code, string product_name, string quantity, string sail_rate, string service_tax_rate, string total_sail_rate2,string Quotation_no, string ItemNo, string MaterialNo, string PackSize)
+        private void SearchProductCatwise(int count, string sl_no, string product_id, string Product_Code, string product_name, string quantity, string sail_rate, string service_tax_rate, string total_sail_rate2,string Quotation_no, string ItemNo, string MaterialNo, string PackSize, string Department, string DelivertDt)
         {
             string Chalanno = "";
             Chalanno = bindChalanno(Quotation_no);
@@ -335,7 +338,7 @@ namespace Bill_Software.corporate.business.app
             
 
             string DeliveredQnt = "";
-            DeliveredQnt = bindPreQnt(product_name, Quotation_no, Chalanno, ItemNo);
+            DeliveredQnt = bindPreQnt(product_name, Quotation_no, Chalanno, ItemNo, Department);
 
 
             string RemainQnt = "";
@@ -353,7 +356,8 @@ namespace Bill_Software.corporate.business.app
                 dtPCat.Columns.Add(new DataColumn("ItemNo", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("MaterialNo", typeof(string)));
                 dtPCat.Columns.Add(new DataColumn("PackSize", typeof(string)));
-
+                dtPCat.Columns.Add(new DataColumn("Department", typeof(string)));
+                dtPCat.Columns.Add(new DataColumn("DeliveryDate", typeof(string)));
             }
 
             if (ViewState["ViewQProductData"] != null)
@@ -373,6 +377,8 @@ namespace Bill_Software.corporate.business.app
                         dr[6] = dtPCat.Rows[0][6].ToString();
                         dr[7] = dtPCat.Rows[0][7].ToString();
                         dr[8] = dtPCat.Rows[0][8].ToString();
+                        dr[9] = dtPCat.Rows[0][9].ToString();
+                        dr[10] = dtPCat.Rows[0][10].ToString();
 
                     }
                 }
@@ -386,7 +392,8 @@ namespace Bill_Software.corporate.business.app
                 dr[6] = ItemNo;
                 dr[7] = MaterialNo;
                 dr[8] = PackSize;
-
+                dr[9] = Department;
+                dr[10] = DelivertDt;
 
                 dtPCat.Rows.Add(dr);
             }
@@ -402,6 +409,8 @@ namespace Bill_Software.corporate.business.app
                 dr[6] = ItemNo;
                 dr[7] = MaterialNo;
                 dr[8] = PackSize;
+                dr[9] = Department;
+                dr[10] = DelivertDt;
 
                 dtPCat.Rows.Add(dr);
 
@@ -419,10 +428,10 @@ namespace Bill_Software.corporate.business.app
             ViewState["ViewQProductData"] = dtPCat;
         }
 
-        private string bindPreQnt(string product_name, string quotation_no, string chalanno, string itemno)
+        private string bindPreQnt(string product_name, string quotation_no, string chalanno, string itemno, string Department)
         {
             string deliQnt = "0";
-            string query = "select sum(CAST(Quantity as int)) as DeliveredQnt,Product_name from tbl_Challan_details where Challan_no in "+ chalanno + " and Product_name='"+ product_name + "' and ItemNo= '"+ itemno + "' group by ItemNo,Product_name ";
+            string query = "select sum(CAST(Quantity as int)) as DeliveredQnt,Product_name from tbl_Challan_details where Challan_no in "+ chalanno + " and Product_name='"+ product_name + "' and ItemNo= '"+ itemno + "' group by ItemNo,Product_name";
             SqlDataReader rdr1 = DbCL.SPReturnRdr(query, null);
             if (rdr1.Read())
             {

@@ -143,7 +143,7 @@
 
             <table cellpadding="0" cellspacing="0" class="auto-style1">
                 <tr>
-                    <td colspan="6" bgcolor="#19658A"><span class="style2">&nbsp;Add Challan</span>>&nbsp;</td>
+                    <td colspan="6" bgcolor="#19658A"><span class="style2">&nbsp;Add DPCC (Delivery planning cum Challan)</span>>&nbsp;</td>
                 </tr>
                 <tr>
                     <td width="10%">&nbsp;</td>
@@ -430,7 +430,7 @@
                                                     <ItemStyle Width="5%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Product ID" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Product ID" HeaderStyle-Width="10%" Visible="false">
                                                     <ItemTemplate>
                                                         <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
                                                     </ItemTemplate>
@@ -438,7 +438,7 @@
                                                     <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="HSN Code" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="HSN Code" HeaderStyle-Width="10%" Visible="false">
                                                     <ItemTemplate>
                                                         <asp:Label ID="product_id" runat="server" Text='<%# Bind("product_id") %>'></asp:Label>
                                                     </ItemTemplate>
@@ -451,7 +451,7 @@
                                                         <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
                                                     </ItemTemplate>
                                                     <HeaderStyle Width="20%" />
-                                                    <ItemStyle Width="20%" HorizontalAlign="Left"/>
+                                                    <ItemStyle Width="20%" HorizontalAlign="Left" />
                                                 </asp:TemplateField>
 
                                                 <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="10%">
@@ -478,6 +478,22 @@
                                                     <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
 
+                                                <asp:TemplateField HeaderText="Department" HeaderStyle-Width="10%" Visible="true">
+                                                    <ItemTemplate>
+                                                        <asp:Label ID="Department" runat="server" Text='<%# Bind("Department") %>'></asp:Label>
+                                                    </ItemTemplate>
+                                                    <HeaderStyle Width="10%" />
+                                                    <ItemStyle Width="10%" />
+                                                </asp:TemplateField>
+
+                                                <asp:TemplateField HeaderText="DeliveryDate" HeaderStyle-Width="10%" Visible="true">
+                                                    <ItemTemplate>
+                                                        <asp:Label ID="DeliveryDate" runat="server" Text='<%# Bind("DeliveryDate") %>'></asp:Label>
+                                                    </ItemTemplate>
+                                                    <HeaderStyle Width="10%" />
+                                                    <ItemStyle Width="10%" />
+                                                </asp:TemplateField>
+
                                                 <asp:TemplateField HeaderText="Quoted Quantity" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>' Font-Bold="true" ForeColor="#990000"></asp:Label>
@@ -502,13 +518,13 @@
 
                                                 <asp:TemplateField HeaderText="Quantity Due for Delivery" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" Style="text-align:center;" CssClass="textbox_U_Datalist_style" Width="95%" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate(event)"></asp:TextBox>
+                                                        <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" Style="text-align: center;" CssClass="textbox_U_Datalist_style" Width="95%" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate(event)"></asp:TextBox>
                                                     </ItemTemplate>
                                                     <FooterTemplate>
                                                         <asp:Label ID="lblTotalDue" runat="server" Font-Bold="true" ForeColor="Black" />
                                                     </FooterTemplate>
                                                     <HeaderStyle Width="5%" />
-                                                    <ItemStyle Width="5%"/>
+                                                    <ItemStyle Width="5%" />
                                                 </asp:TemplateField>
 
                                                 <asp:TemplateField HeaderText="Create" HeaderStyle-Width="10%">
@@ -541,7 +557,16 @@
                                 </tr>
                                 <tr>
                                     <td colspan="4" style="text-align: center">
-                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Create Challan" OnClick="Button1_Click" />
+                                        <%--<asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Create Challan" OnClick="Button1_Click" />--%>
+                                        <asp:Button
+                                            ID="Button1"
+                                            runat="server"
+                                            CssClass="btn_style"
+                                            Text="Create Challan"
+                                            OnClick="Button1_Click"
+                                            UseSubmitBehavior="false"
+                                            OnClientClick="this.disabled=true; this.value='Processing...';" />
+
                                         &nbsp;<asp:Button ID="Button2" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="Cancel" />
                                     </td>
                                 </tr>

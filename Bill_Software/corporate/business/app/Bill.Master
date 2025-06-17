@@ -152,12 +152,12 @@
                                         <li id="SetQuatation" runat="server"><a href="Set_quatation.aspx">Set Quotation Permission</a></li>
                                     </ul>
                             </li>
-                            <li id="challan" runat="server">Challan
+                            <li id="challan" runat="server">DPCC
 									<ul class="nav first">
-                                        <li id="add_chalan" runat="server"><a href="add_chalan.aspx">Create Challan</a></li>
-                                        <li id="View_chalan" runat="server"><a href="View_chalan.aspx">View Challan</a></li>
-                                        <li id="seartch_chalan" runat="server"><a href="seartch_chalan.aspx">Search Challan</a></li>
-                                        <li id="Delete_chalan" runat="server"><a href="Delete_chalan.aspx">Delete Challan</a></li>
+                                        <li id="add_chalan" runat="server"><a href="add_chalan.aspx">Create DPCC</a></li>
+                                        <li id="View_chalan" runat="server"><a href="View_chalan.aspx">View DPCC</a></li>
+                                        <li id="seartch_chalan" runat="server"><a href="seartch_chalan.aspx">Search DPCC</a></li>
+                                        <li id="Delete_chalan" runat="server"><a href="Delete_chalan.aspx">Delete DPCC</a></li>
                                     </ul>
                             </li>
                             <li id="proforma" runat="server">Proforma Invoice
