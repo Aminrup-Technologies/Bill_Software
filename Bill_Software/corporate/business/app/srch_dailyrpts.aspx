@@ -71,6 +71,20 @@
                     <td width="35%" colspan="2">&nbsp;</td>
                     <td width="15%">&nbsp;</td>
                 </tr>
+
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan="4">
+                        <asp:Panel ID="PanelOK" runat="server" BackColor="#EEFFDD"
+                            BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                            &nbsp;<asp:Image ID="imageTick" runat="server"
+                                ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
+                            &nbsp;<asp:Label ID="lblOk" runat="server"></asp:Label>
+                        </asp:Panel>
+
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
                 <tr>
                     <td>&nbsp;</td>
                     <td colspan="4">
@@ -147,7 +161,8 @@
                 </tr>
                 <tr>
                     <td colspan="6">
-                        <asp:DataList ID="DataList2" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%">
+                        <asp:DataList ID="DataList2" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%"
+                            OnItemCommand="DataList2_ItemCommand" OnItemDataBound="DataList2_ItemDataBound">
                             <FooterStyle BackColor="White" ForeColor="#000066" />
                             <AlternatingItemStyle BackColor="#94B8FF" />
                             <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
@@ -163,7 +178,6 @@
                                         <td style="text-align: center; width: 8%;">Department</td>
                                         <td style="text-align: center; width: 10%;">Contact Person</td>
                                         <td style="text-align: center; width: 8%;">Visit Type</td>
-                                        <td style="text-align: center; width: 12%;">Discussion Points</td>
                                         <td style="text-align: center; width: 6%;">Follow-Up</td>
                                         <td style="text-align: center; width: 8%;">Next Follow-Up</td>
                                         <td style="text-align: center; width: 6%;">Status</td>
@@ -177,7 +191,7 @@
                                 <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
                                     <tr>
                                         <td style="text-align: center; width: 8%;">
-                                            <asp:Label ID="lblVisitDate" runat="server" Text='<%# Eval("VisitDate", "{0:yyyy-MM-dd}") %>'></asp:Label>
+                                            <asp:Label ID="lblVisitDate" runat="server" Text='<%# Eval("VisitDate", "{0:yyyy-MM-dd}") %>' Font-Bold="true" ForeColor="DarkBlue"></asp:Label>
                                         </td>
                                         <td style="text-align: center; width: 10%;">
                                             <asp:Label ID="lblSalesperson" runat="server" Text='<%# Eval("Salesperson") %>'></asp:Label>
@@ -193,9 +207,6 @@
                                         </td>
                                         <td style="text-align: center; width: 8%;">
                                             <asp:Label ID="lblVisitType" runat="server" Text='<%# Eval("VisitType") %>'></asp:Label>
-                                        </td>
-                                        <td style="text-align: center; width: 12%;">
-                                            <asp:Label ID="lblDiscussionPoints" runat="server" Text='<%# Eval("DiscussionPoints") %>'></asp:Label>
                                         </td>
                                         <td style="text-align: center; width: 6%;">
                                             <asp:Label ID="lblFollowUpRequired" runat="server" Text='<%# Eval("FollowUpRequired") %>'></asp:Label>
@@ -215,12 +226,43 @@
                                             <asp:Label ID="lblCreatedDate" runat="server" Text='<%# Eval("TimeStamp", "{0:yyyy-MM-dd HH:mm}") %>'></asp:Label>
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td colspan="12" style="padding: 5px;">
+                                            <b>Discussion Points:</b>
+                                            <asp:Label ID="Label1" runat="server" Text='<%# Eval("DiscussionPoints").ToString().Replace(Environment.NewLine, "<br/>") %>' EnableViewState="false"></asp:Label>
+                                        </td>
+                                    </tr>
+                                    <%--<tr>
+                                        <td colspan="12" style="padding: 5px;">
+                                            <b>Viewer Remarks:</b><asp:TextBox ID="txtManagerRemarks" runat="server" CssClass="textbox_style" Width="400px" placeholder="Enter remarks..."></asp:TextBox>
+                                            <asp:Button ID="btnApprove" runat="server" Text="Approve" CommandName="Approve" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" />
+                                            <asp:Button ID="btnReject" runat="server" Text="Reject" CommandName="Reject" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" />
+                                        </td>
+                                    </tr>--%>
+
+                                    <td colspan="12" style="padding: 5px; text-align: left;">
+                                        <asp:Panel ID="pnlApproval" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() == "Pending" %>'>
+                                            <b>Manager Remarks:</b>
+                                            <asp:TextBox ID="txtManagerRemarks" runat="server" CssClass="textbox_style" Width="60%" TextMode="MultiLine" Rows="2"></asp:TextBox>
+                                            <asp:Button ID="btnApprove" runat="server" Text="Approve" CommandName="Approve" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" />
+                                            &nbsp;<asp:Button ID="btnReject" runat="server" Text="Reject" CommandName="Reject" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" />
+                                        </asp:Panel>
+
+                                        <asp:Panel ID="pnlApprovedInfo" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() != "Pending" %>'>
+                                            <b>Status:</b>
+                                            <asp:Label ID="lblApprovalStatus" runat="server" Text='<%# Eval("ApprovalStatus") %>'></asp:Label>&nbsp;|&nbsp;
+                                            <b>Remarks:</b> 
+                                            <asp:Label ID="lblApprovalRemarks" runat="server" Text='<%# Eval("ManagerRemarks") %>'></asp:Label>&nbsp;|&nbsp;
+                                            <b>Approved By:</b>
+                                            <asp:Label ID="lblApprovedBy" runat="server" Text='<%# Eval("ApprovedBy") %>'></asp:Label>&nbsp;|&nbsp;
+                                            <b>Timestamp:</b>
+                                            <asp:Label ID="lblApprovedTime" runat="server" Text='<%# Eval("ApprovedDate", "{0:yyyy-MM-dd HH:mm}") %>'></asp:Label>
+                                        </asp:Panel>
+                                    </td>
                                 </table>
                             </ItemTemplate>
+
                         </asp:DataList>
-
-
-
                     </td>
                 </tr>
                 <tr>

@@ -729,6 +729,21 @@
                                     </td>
                                     <td>&nbsp;</td>
                                 </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td><asp:Button ID="Button4" runat="server" OnClick="Button4_Click" Text="Check Duplicates" CssClass="btn_style" /></td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                </tr>
+
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;<asp:Label ID="Label4" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;Purchase Date / Invoice Date</td>

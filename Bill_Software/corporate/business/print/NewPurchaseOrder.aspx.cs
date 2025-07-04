@@ -38,7 +38,7 @@ namespace Bill_Software.corporate.business.print
         DataTable dtpSer = new DataTable();
 
         public string netamount = "";
-        public int TQ = 0;
+        public double TQ = 0;
         public static string viewtype = string.Empty;
 
         CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
@@ -810,7 +810,7 @@ namespace Bill_Software.corporate.business.print
                             : "No Data";
 
 
-                        int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
+                        double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
                         TQ = TQ + Quantity;
 
                         double new_QuantityBaserateAmo = Math.Round((Quantity * discountrate), 2);
@@ -945,7 +945,7 @@ namespace Bill_Software.corporate.business.print
                         string delvdate = DateTime.TryParse(delvdateRaw, out delvDateParsed)
                             ? delvDateParsed.ToString("dd-MMM-yyyy")
                             : "No Data";
-                        int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
+                        double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
                         TQ += Quantity;
                         double baserate = Math.Round(Convert.ToDouble(dtp.Rows[i]["sail_rate"]), 2);
                         double discountrate = Math.Round(Convert.ToDouble(dtp.Rows[i]["new_sailrate"]), 2);

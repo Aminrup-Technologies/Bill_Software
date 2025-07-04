@@ -1053,8 +1053,8 @@ namespace Bill_Software.corporate.business.app
                     new_total_Service = Math.Round(new_total_Service, 2);
 
                     using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotation 
-                (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById)
-                VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById)", conn, trans))
+                (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView)
+                VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView)", conn, trans))
                     {
                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text?.Trim());
                         cmd.Parameters.AddWithValue("@Quotation_date", txtquotationDate.Text?.Trim());
@@ -1084,6 +1084,7 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Validity_StartDate", ValStart_Date);
                         cmd.Parameters.AddWithValue("@Validity_EndDate", ValEnd_Date);
                         cmd.Parameters.AddWithValue("@AddedById", userId);
+                        cmd.Parameters.AddWithValue("@DiscountView", DDL_DiscountView.SelectedItem.Text?.Trim());
                         cmd.ExecuteNonQuery();
                     }
 

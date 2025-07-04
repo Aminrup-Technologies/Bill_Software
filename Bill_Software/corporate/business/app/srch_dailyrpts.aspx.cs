@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
+using System.Configuration;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -30,6 +31,11 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSertch_Click(object sender, EventArgs e)
         {
+            Binder();
+        }
+
+        private void Binder()
+        {
             string cmdstring = "";
             if (RadioButtonList1.SelectedIndex == 0)
             {
@@ -52,7 +58,7 @@ namespace Bill_Software.corporate.business.app
             btnSertch.Visible = false;
         }
 
-        private void Buinddatagrid(string cmdstring)
+        private void Buinddatagrid_old(string cmdstring)
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
@@ -70,6 +76,39 @@ namespace Bill_Software.corporate.business.app
             }
             DbCL.Conn.Close();
         }
+
+        private void Buinddatagrid(string cmdstring)
+        {
+            try
+            {
+                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    SqlDataAdapter da = new SqlDataAdapter(cmdstring, conn);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        DataList2.DataSource = dt;
+                        DataList2.DataBind();
+                    }
+                    else
+                    {
+                        DataList2.DataSource = null;
+                        DataList2.DataBind();
+                        lblOk.Text = "No records found for the selected criteria.";
+                        PanelError.Visible = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                lblErrorMsg.Text = "Error loading data: " + ex.Message;
+                PanelError.Visible = true;
+            }
+        }
+
 
         private void Buinddatagrid1(string cmdstring)
         {
@@ -102,5 +141,97 @@ namespace Bill_Software.corporate.business.app
             Response.Redirect("~/corporate/business/app/srch_dailyrpts.aspx");
         }
 
+        //protected void DataList2_ItemCommand(object source, DataListCommandEventArgs e)
+        //{
+        //    string Id = e.CommandArgument.ToString();
+        //    string remarks = ((TextBox)e.Item.FindControl("txtManagerRemarks"))?.Text ?? "";
+        //    string status = e.CommandName == "Approve" ? "Approved" : "Rejected";
+
+        //    try
+        //    {
+        //        using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+        //        {
+        //            conn.Open();
+        //            string query = "UPDATE tbl_SalesVisitReport SET ApprovalStatus = @Status, ManagerRemarks = @Remarks, ApprovedDate = GETDATE(), ApprovedBy = @User WHERE Id = @Id";
+
+        //            SqlCommand cmd = new SqlCommand(query, conn);
+        //            cmd.Parameters.AddWithValue("@Status", status);
+        //            cmd.Parameters.AddWithValue("@Remarks", remarks);
+        //            cmd.Parameters.AddWithValue("@User", Session["UserName"] ?? "Manager");
+        //            cmd.Parameters.AddWithValue("@Id", Id);
+
+        //            cmd.ExecuteNonQuery();
+        //            lblOk.Text = $"Visit ID {Id} marked as {status}.";
+        //            PanelOK.Visible = true;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        lblErrorMsg.Text = "Error: " + ex.Message;
+        //        PanelError.Visible = true;
+        //    }
+
+        //}
+
+        protected void DataList2_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            string id = e.CommandArgument.ToString();
+            string remarks = ((TextBox)e.Item.FindControl("txtManagerRemarks"))?.Text.Trim() ?? "";
+            string status = e.CommandName == "Approve" ? "Approved" : "Rejected";
+            string user = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
+
+            PanelOK.Visible = false;
+            PanelError.Visible = false;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+                {
+                    conn.Open();
+
+                    string query = @"
+                UPDATE tbl_SalesVisitReport SET 
+                    ApprovalStatus = @Status,
+                    ManagerRemarks = @Remarks,
+                    ApprovedDate = GETDATE(),
+                    ApprovedBy = @User WHERE Id = @Id";
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Status", status);
+                        cmd.Parameters.AddWithValue("@Remarks", remarks);
+                        cmd.Parameters.AddWithValue("@User", user);
+                        cmd.Parameters.AddWithValue("@Id", id);
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    lblOk.Text = $"Visit ID {id} successfully marked as <b>{status}</b>.";
+                    PanelOK.Visible = true;
+                    Binder();
+                }
+            }
+            catch (Exception ex)
+            {
+                lblErrorMsg.Text = "Error occurred: " + ex.Message;
+                PanelError.Visible = true;
+            }
+        }
+
+        protected void DataList2_ItemDataBound(object sender, DataListItemEventArgs e)
+        {
+            if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+            {
+                var lblStatus = (Label)e.Item.FindControl("lblApprovalStatus");
+                var btnApprove = (Button)e.Item.FindControl("btnApprove");
+                var btnReject = (Button)e.Item.FindControl("btnReject");
+
+                if (lblStatus != null && lblStatus.Text != "Pending")
+                {
+                    if (btnApprove != null) btnApprove.Enabled = false;
+                    if (btnReject != null) btnReject.Enabled = false;
+                }
+            }
+        }
     }
 }

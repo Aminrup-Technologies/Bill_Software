@@ -1318,6 +1318,18 @@
 
                         <tr>
                             <td>&nbsp;</td>
+                            <td style="text-align: right;">&nbsp;Discount Visibility :</td>
+                            <td>
+                                <asp:DropDownList ID="DDL_DiscountView" runat="server" CssClass="dropdown_style">
+                                    <asp:ListItem Text="--SELECT--" Value="0" Selected="True"></asp:ListItem>
+                                    <asp:ListItem Text="Yes" Value="1"></asp:ListItem>
+                                    <asp:ListItem Text="No" Value="2"></asp:ListItem>
+                                </asp:DropDownList></td>
+                            <td>&nbsp;</td>
+                        </tr>
+
+                        <tr>
+                            <td>&nbsp;</td>
                             <td style="text-align: right;">&nbsp;Delivery Tenure Selection (Weeks) :</td>
                             <td>
                                 <asp:DropDownList ID="DDL_DeliveryTerms" runat="server" CssClass="dropdown_style" onchange="handleDeliveryTermChange(this)">
@@ -1365,7 +1377,7 @@
                         <tr>
                             <td>&nbsp;</td>
                             <td style="text-align: right;">&nbsp;Custom Remarks / Comments :</td>
-                            <td>&nbsp;<asp:TextBox ID="txt_remarks" runat="server" Text="" CssClass="textbox_style" TextMode="MultiLine" MaxLength="200" Rows="4" Columns="50" placeholder="Enter your remarks or comments..."></asp:TextBox>
+                            <td>&nbsp;<asp:TextBox ID="txt_remarks" runat="server" Text="" CssClass="textbox_style" TextMode="MultiLine" MaxLength="500" Rows="6" Height="80px" Columns="4" placeholder="Enter your remarks or comments..."></asp:TextBox>
                                 <asp:RequiredFieldValidator ID="RFV_txt_remarks" runat="server" ErrorMessage="Remarks are required." ControlToValidate="txt_remarks" Display="Dynamic"></asp:RequiredFieldValidator>
                             </td>
                             <td>&nbsp;</td>

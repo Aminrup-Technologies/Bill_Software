@@ -1561,5 +1561,61 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
             return paymentIDdetai;
         }
+
+        protected void Button4_Click(object sender, EventArgs e)
+        {
+            string invoiceNo = txt_invno.Text.Trim();
+
+            if (!string.IsNullOrEmpty(invoiceNo))
+            {
+                int recordCount = 0;
+                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string query = "SELECT COUNT(*) FROM tbl_Purches WHERE Invoice_No = @InvoiceNo";
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@InvoiceNo", invoiceNo);
+
+                    conn.Open();
+                    recordCount = (int)cmd.ExecuteScalar();
+                }
+
+                if (recordCount >= 1)
+                {
+                    PanelOK.Visible = false;
+                    PanelError.Visible = true;
+                    // More than 1 record found — block operation
+                    lblErrorMsg.Visible = true;
+                    lblErrorMsg.Text = "Duplicate Invoice No found. Cannot proceed.";
+                    lblErrorMsg.ForeColor = System.Drawing.Color.Red;
+
+                    Button3.Enabled = false;
+                }
+                else
+                {
+                    // Proceed with operation
+                    PanelOK.Visible = true;
+                    PanelError.Visible = false;
+                    lblOk.Visible = true;
+                    lblOk.Text = "Invoice No is valid. Proceeding...";
+                    lblOk.ForeColor = System.Drawing.Color.Green;
+
+                    // Add your processing logic here
+                    Button3.Enabled = true;
+                }
+            }
+            else
+            {
+                PanelOK.Visible = false;
+                PanelError.Visible = true;
+                lblErrorMsg.Visible = true;
+                lblErrorMsg.Text = "Please enter an Invoice No.";
+                lblErrorMsg.ForeColor = System.Drawing.Color.Orange;
+
+                Button3.Enabled = false;
+            }
+        }
+
     }
 }

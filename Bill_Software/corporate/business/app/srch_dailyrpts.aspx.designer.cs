@@ -40,6 +40,33 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Label lblclientId;
         
         /// <summary>
+        /// PanelOK control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel PanelOK;
+        
+        /// <summary>
+        /// imageTick control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Image imageTick;
+        
+        /// <summary>
+        /// lblOk control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblOk;
+        
+        /// <summary>
         /// PanelError control.
         /// </summary>
         /// <remarks>
