@@ -491,8 +491,8 @@ namespace Bill_Software.corporate.business.app
                 lblclientID.Text = re["Client_Id"].ToString();
             }
             DbCL.Conn.Close();
-
         }
+
         //private void BindListitem()
         //{
         //    DbCL.Sqlconnection();
@@ -525,8 +525,9 @@ namespace Bill_Software.corporate.business.app
             gridProdWithCat.Visible = true;
 
             DataTable dtproductWithCat = new DataTable();
-            string cmdstring = "select Id, Product_code, ProductID,ProductOrServiceCat,Brand, ProductName,Specification,Type,Sail_Rate,Tax_Rate,Unit  from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Id,ProductName";
-
+            string cmdstring = "select Id, Product_code, ProductID, ProductOrServiceCat, Brand, ProductName, Specification, Type,Sail_Rate,Tax_Rate,Unit from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Id,ProductName";
+            //Product_code == HSN
+            //ProductID == ID
             SqlParameter[] pram = {
                 new SqlParameter("@ProductOrServiceCat",cmbproduct_service.Text)
             };
@@ -1754,8 +1755,8 @@ namespace Bill_Software.corporate.business.app
                     CheckBox chkdtp = (CheckBox)(gridProdWithCat.Rows[i].FindControl("chkdtp"));
                     if (chkdtp.Checked == true)
                     {
-                        ProductId = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
-                        Product_code = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
+                        ProductId = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text; //HSN
+                        Product_code = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text; // ID
                         ProductName = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName")).Text;
                         Brandspecification = ((Label)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
                         Specification = ((Label)gridProdWithCat.Rows[i].FindControl("Specification")).Text;
@@ -1846,6 +1847,8 @@ namespace Bill_Software.corporate.business.app
                 dtPCat1.Rows.Add(dr);
 
             }
+
+
             if (ViewState["pService"] != null)
             {
                 gridps.DataSource = (DataTable)ViewState["pService"];

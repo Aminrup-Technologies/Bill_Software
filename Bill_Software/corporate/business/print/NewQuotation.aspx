@@ -652,6 +652,22 @@
             </tr>
         </table>
 
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="tbl_tx" runat="server" visible="true">
+            <tr>
+                <td class="" style="text-align: left; font-weight: bold; width: 30%;">GST APPLICABILITY</td>
+                <td class="" style="text-align: left; font-weight: 100; width: 70%;">GST will be charged item-wise as applicable under the prevailing GST laws based on HSN/SAC classification.<br />
+                </td>
+            </tr>
+            <%--<tr>
+                <td class="" style="text-align: justify; font-weight: 100">This Offer is valid for
+                    <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Days from the Date of Submission.<br />
+                </td>
+            </tr>--%>
+            <tr>
+                <td colspan="2" class="gap" style="">&nbsp</td>
+            </tr>
+        </table>
+
         <table border="0" width="100%" class="DELIVERY pagebrake" id="Table1" runat="server" visible="true">
             <tr>
                 <td class="" style="text-align: left; font-weight: bold; width: 30%;">DELIVERY TERMS</td>

@@ -39,6 +39,7 @@ namespace Bill_Software.corporate.business.print
         DataTable dtpSer = new DataTable();
 
         public string netamount = "";
+        public string amount = "";
         public double TotalQuantity = 0;
 
         public static string viewtype = string.Empty;
@@ -133,6 +134,7 @@ namespace Bill_Software.corporate.business.print
                 lbl_remarks.Text = rmrks;
 
                 string sub_total = dtmain.Rows[0]["sub_total"].ToString();
+                amount = sub_total;
                 //lblqnumber.Text = dtmain.Rows[0]["Service_tax"].ToString();
                 netamount = dtmain.Rows[0]["Net_amount"].ToString();
                 //lblqnumber.Text = dtmain.Rows[0]["cgstOrsgst"].ToString();
@@ -612,7 +614,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             //string cmdstring = "select Sl_no,Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
-            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Misc, Quantity,Unit, sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Sl_no, ItemNo";
+            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Misc, Quantity,Unit, sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no=@Quotation_no AND IsLatest = 1 AND IsDeleted = 0 order by Sl_no, ItemNo";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno)
                                       };
@@ -1389,11 +1391,14 @@ namespace Bill_Software.corporate.business.print
                     double netamo = 0.0;
 
                     // Try to parse netamount, default to 0.0 if parsing fails
-                    if (!double.TryParse(netamount?.ToString(), out netamo) || netamo < 0)
+                    //if (!double.TryParse(netamount?.ToString(), out netamo) || netamo < 0)
+                    //    netamo = 0.0;
+
+                    if (!double.TryParse(amount?.ToString(), out netamo) || netamo < 0)
                         netamo = 0.0;
 
-                    double amount = (netamo * amountper) / 100;
-                    double finalamo = Math.Round(amount, 2);
+                    double amountr = (netamo * amountper) / 100;
+                    double finalamo = Math.Round(amountr, 2);
                     string finalamo1 = DoFormat(finalamo); // assuming this returns string like "0.00"
 
                     strPayment.Append("<tr>");

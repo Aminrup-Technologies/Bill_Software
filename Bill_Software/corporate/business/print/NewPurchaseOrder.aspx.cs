@@ -38,6 +38,7 @@ namespace Bill_Software.corporate.business.print
         DataTable dtpSer = new DataTable();
 
         public string netamount = "";
+        public string subamount = "";
         public double TQ = 0;
         public static string viewtype = string.Empty;
 
@@ -135,6 +136,7 @@ namespace Bill_Software.corporate.business.print
                 //lbl_remarks.Text = dtmain.Rows[0]["Remarks"].ToString();
 
                 string sub_total = dtmain.Rows[0]["sub_total"].ToString();
+                subamount = sub_total;
                 netamount = dtmain.Rows[0]["Net_amount"].ToString();
 
                 Session["cgstOrsgst"] = dtmain.Rows[0]["cgstOrsgst"].ToString();
@@ -753,7 +755,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             //string cmdstring = "select Sl_no,Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
-            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by ItemNo";
+            string cmdstring = "SELECT Sl_no, Product_id AS HSN, Product_name, specification, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no AND IsLatest = 1 AND IsDeleted = 0 ORDER BY ItemNo";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno)
                                       };
@@ -1097,6 +1099,8 @@ namespace Bill_Software.corporate.business.print
                     string amoper = dtpayphase.Rows[i]["amountper"].ToString();
                     double amountper = Convert.ToDouble(amoper);
                     double netamo = Convert.ToDouble(netamount);
+
+                    //double netamo = Convert.ToDouble(subamount);
                     double amount = (netamo * amountper) / 100;
 
                     double finalamo = Math.Round(amount, 2);

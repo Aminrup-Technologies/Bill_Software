@@ -48,6 +48,32 @@ namespace Bill_Software
             }
         }
 
+        public void ExecuteNonQuery(string sql, SqlParameter[] parameters)
+        {
+            try
+            {
+                Sqlconnection();
+                ConnectDb();
+                using (SqlCommand cmd = new SqlCommand(sql, Conn))
+                {
+                    if (parameters != null)
+                        cmd.Parameters.AddRange(parameters);
+                    cmd.CommandTimeout = 0;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception exp)
+            {
+                throw new Exception("ExecuteNonQuery Error: " + exp.Message);
+            }
+            finally
+            {
+                if (Conn != null && Conn.State == ConnectionState.Open)
+                    Conn.Close();
+            }
+        }
+
+
 
         public void executeRdrNew(string sql, Dictionary<string, object> parameters)
         {
@@ -184,6 +210,29 @@ namespace Bill_Software
             }
             Conn.Close();
         }
+
+        public void FillComboNew(DropDownList cmbName, string cmdString)
+        {
+            cmbName.Items.Clear();
+            Sqlconnection();
+            ConnectDb();
+
+            SqlCommand cmd = new SqlCommand(cmdString, Conn);
+            SqlDataReader Rdr = cmd.ExecuteReader();
+
+            cmbName.Items.Add(new ListItem("--Select--", ""));
+
+            while (Rdr.Read())
+            {
+                string text = Rdr[1].ToString();  // Assuming Client_Name is at index 1
+                string value = Rdr[0].ToString(); // Assuming Client_ID is at index 0
+                cmbName.Items.Add(new ListItem(text, value));
+            }
+
+            Rdr.Close();
+            Conn.Close();
+        }
+
 
         public void FillCombo1(DropDownList cmbName, string cmdString)
         {
