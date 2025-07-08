@@ -655,7 +655,7 @@
         <table border="0" width="100%" class="DELIVERY pagebrake" id="tbl_tx" runat="server" visible="true">
             <tr>
                 <td class="" style="text-align: left; font-weight: bold; width: 30%;">GST APPLICABILITY</td>
-                <td class="" style="text-align: left; font-weight: 100; width: 70%;">GST will be charged item-wise as applicable under the prevailing GST laws based on HSN/SAC classification.<br />
+                <td class="" style="text-align: left; font-weight: 100; width: 70%;"><span>GST will be <asp:Label ID="Label1" runat="server" Font-Bold="true" Text="charged extra"></asp:Label>&nbsp;item-wise as applicable under the prevailing GST laws based on HSN/SAC classification.</span><br />
                 </td>
             </tr>
             <%--<tr>

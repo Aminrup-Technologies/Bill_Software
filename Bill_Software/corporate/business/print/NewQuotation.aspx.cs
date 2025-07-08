@@ -1355,9 +1355,10 @@ namespace Bill_Software.corporate.business.print
 
                 // Header Row
                 strPayment.Append("<tr>");
-                strPayment.Append("<th style='width: 10%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>S.NO</th>");
-                strPayment.Append("<th style='width: 70%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT TERMS / PAYMENT PHASE</th>");
-                strPayment.Append("<th style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT (INR)</th>");
+                strPayment.Append("<th style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>S.NO</th>");
+                strPayment.Append("<th style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT PHASE</th>");
+                strPayment.Append("<th style='width: 60%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PAYMENT TERMS</th>");
+                //strPayment.Append("<th style='width: 20%; border: 2px solid #6c6c6c; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>AMOUNT (INR)</th>");
                 strPayment.Append("</tr>");
 
                 // Data Rows
@@ -1402,12 +1403,15 @@ namespace Bill_Software.corporate.business.print
                     string finalamo1 = DoFormat(finalamo); // assuming this returns string like "0.00"
 
                     strPayment.Append("<tr>");
-                    strPayment.Append("<td style='width: 10%; border: 2px solid #6c6c6c; text-align: center;'>" + (i + 1) + "</td>");
-                    strPayment.Append("<td style='width: 70%; border: 2px solid #6c6c6c; text-align: left;'>" +
-                        (string.IsNullOrWhiteSpace(amoper) ? "0%" : amountper + "% ") +
-                        (dtpayphase.Rows[i]["phase_type"]?.ToString() ?? "") + " " +
-                        (dtpayphase.Rows[i]["PhaseDesc"]?.ToString() ?? "") + "</td>");
-                    strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" + finalamo1 + "</td>");
+                    strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" + (i + 1) + "</td>");
+                    //strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: left;'>" +
+                    //    (string.IsNullOrWhiteSpace(amoper) ? "0%" : amountper + "% ") +
+                    //    (dtpayphase.Rows[i]["phase_type"]?.ToString() ?? "") + " " +
+                    //    (dtpayphase.Rows[i]["PhaseDesc"]?.ToString() ?? "") + "</td>");
+                    strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" +
+                        (string.IsNullOrWhiteSpace(amoper) ? "0%" : amountper + "% ") +"</td>");
+                    strPayment.Append("<td style='width: 60%; border: 2px solid #6c6c6c; text-align: center;'>" + (dtpayphase.Rows[i]["PhaseDesc"]?.ToString() ?? "") + (dtpayphase.Rows[i]["phase_type"]?.ToString() ?? "") + "</td>");
+                    //strPayment.Append("<td style='width: 20%; border: 2px solid #6c6c6c; text-align: center;'>" + finalamo1 + "</td>");
                     strPayment.Append("</tr>");
                 }
 
