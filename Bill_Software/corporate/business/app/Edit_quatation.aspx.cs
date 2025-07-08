@@ -141,7 +141,7 @@ namespace Bill_Software.corporate.business.app
                 //string status = searchDate(Quotation_no);
 
                 Panel1.Visible = true;
-                string cmdstring = "select Product_id as ProductID, Product_Code as Product_code, Product_name as ProductName, Type, sail_rate as Sail_Rate, Service_tax_rate as Tax_Rate, Unit, Quantity, ProductOrServiceCat, specification as Brand, Misc as specification, ItemNo, MaterialNo, PackSize, ItemRemarks, discount_rate, Sl_no, DeliveryDate, Department from tbl_Quotaion_details where Quotation_no=@Quotation_no AND IsLatest = 1 AND IsDeleted = 0";
+                string cmdstring = "select Product_id as ProductID, Product_Code as Product_code, Product_name as ProductName, Type, sail_rate as Sail_Rate, Service_tax_rate as Tax_Rate, Unit, Quantity, ProductOrServiceCat, specification as Brand, Misc as specification, ItemNo, MaterialNo, PackSize, ItemRemarks, discount_rate, Sl_no, DeliveryDate, Department from tbl_Quotaion_details where Quotation_no=@Quotation_no AND IsLatest = 1 AND IsDeleted = 0 order by CAST(Sl_no as int)";
                 SqlParameter[] pram = { new SqlParameter("@Quotation_no", Quotation_no) };
                 dtpro = DbCL.SPreturn_dt(cmdstring, pram);
                 //Binddata1(cmdstring, status, Quotation_no);

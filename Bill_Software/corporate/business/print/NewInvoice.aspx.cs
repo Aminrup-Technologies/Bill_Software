@@ -57,6 +57,7 @@ namespace Bill_Software.corporate.business.print
             if (re.Read())
             {
                 lblinvno.Text = re["Invoice_No"].ToString();
+                lbl_extinvno.Text = re["ExtInvoiceNo"].ToString();
                 lblinvdate.Text = re["Invoice_Date"].ToString();
                 //lblqnumber.Text = re["Quotation_No"].ToString();
                 string quotationNo = re["Quotation_No"] != DBNull.Value ? re["Quotation_No"].ToString() : string.Empty;
@@ -250,7 +251,7 @@ namespace Bill_Software.corporate.business.print
                 BackData.Visible = true;
                 //AMODETAILS.Visible = true;
 
-                string query = "select Sl_no,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2 from tbl_Quotaion_details where Quotation_no='" + lblqnumber.Text + "' order by Product_name";
+                string query = "select Sl_no, (Product_name+' '+specification) as Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2 from tbl_Quotaion_details where Quotation_no='" + lblqnumber.Text + "' order by CAST(Sl_no as int)";
                 
                 SqlParameter[] pram = {
                     new SqlParameter("@Quotation_no",lblqnumber.Text)
@@ -337,7 +338,7 @@ namespace Bill_Software.corporate.business.print
                 lblserviceamo.Visible = true;
                 BackData.Visible = false;
 
-                string cmdstring = "select Product_Code as HSN,(Product_name+' '+specification) as Product_name, Quantity, sail_rate, discountRate, Service_tax_rate,Total_sail_rate1,Total_sail_rate2 from  tbl_Invoice_details where Quotation_no=@Quotation_no and  Invoice_No=@Invoice_No order by Product_name";
+                string cmdstring = "select Product_Code as HSN,(Product_name+' '+specification) as Product_name, Quantity, sail_rate, discountRate, Service_tax_rate,Total_sail_rate1,Total_sail_rate2 from  tbl_Invoice_details where Quotation_no=@Quotation_no and  Invoice_No=@Invoice_No order by CAST(Sl_no as int)";
                 SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",lblqnumber.Text),
                                           new SqlParameter("@Invoice_No",lblinvno.Text)

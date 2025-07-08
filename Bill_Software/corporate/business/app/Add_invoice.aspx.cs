@@ -69,29 +69,116 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSertch_Click(object sender, EventArgs e)
         {
+
+            string baseQuery = @"
+                SELECT 
+                    STRING_AGG(tbl_QuoPriSerTogather.PServiceName, ', ') AS PServiceName,
+                    tbl_Quotation.ID, 
+                    tbl_Quotation.service_tax1, 
+                    tbl_Quotation.sub_total, 
+                    tbl_Quotation.DO_Number, 
+                    tbl_Quotation.PO_Number, 
+                    tbl_Quotation.Quotation_no, 
+                    tbl_Quotation.Quotation_date, 
+                    tbl_Quotation.Gross, 
+                    tbl_Quotation.Service_tax, 
+                    tbl_Quotation.Net_amount, 
+                    tbl_Quotation.mailStatusDate, 
+                    tbl_Client.Client_Name 
+                FROM tbl_Quotation
+                LEFT OUTER JOIN tbl_Client ON tbl_Quotation.Client_Id = tbl_Client.Client_Id 
+                LEFT OUTER JOIN tbl_QuoPriSerTogather ON tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no
+            ";
+
             string cmdstring = "";
+
+            List<string> filters = new List<string>();
+
+
             if (RadioButtonList1.SelectedIndex == 0)
             {
                 BuindCompanyId();
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID, tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, tbl_Quotation.mailStatusDate, tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' order by tbl_Quotation.ID desc";
+                //cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID, tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, tbl_Quotation.mailStatusDate, tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' order by tbl_Quotation.ID desc";
+
+                filters.Add("tbl_Quotation.Client_Id = '" + lblclientId.Text + "'");
+
+                string whereClause = filters.Count > 0 ? "WHERE " + string.Join(" AND ", filters) : "";
+                string groupAndOrder = @"
+                    GROUP BY 
+                        tbl_Quotation.ID, tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.DO_Number, 
+                        tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, 
+                        tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, 
+                        tbl_Quotation.mailStatusDate, tbl_Client.Client_Name
+                    ORDER BY tbl_Quotation.ID DESC";
+
+                string finalQuery = baseQuery + " " + whereClause + " " + groupAndOrder;
+                Buinddatagrid(finalQuery);
 
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and tbl_Quotation.Status2='No' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
+
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Status2='No' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID, tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, tbl_Quotation.mailStatusDate, tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
 
-                Buinddatagrid(cmdstring);
+                //cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID, tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, tbl_Quotation.mailStatusDate, tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+
+                filters.Add("CAST(tbl_Quotation.Quotation_date AS datetime) BETWEEN '" + txttodate.Text + "' AND '" + txtfromDate.Text + "'");
+                string whereClause = filters.Count > 0 ? "WHERE " + string.Join(" AND ", filters) : "";
+                string groupAndOrder = @"
+                    GROUP BY 
+                        tbl_Quotation.ID, tbl_Quotation.service_tax1, 
+                        tbl_Quotation.sub_total, tbl_Quotation.DO_Number, 
+                        tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, 
+                        tbl_Quotation.Quotation_date, tbl_Quotation.Gross, 
+                        tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, 
+                        tbl_Quotation.mailStatusDate, tbl_Client.Client_Name
+                    ORDER BY tbl_Quotation.ID DESC";
+
+                string finalQuery = baseQuery + " " + whereClause + " " + groupAndOrder;
+                Buinddatagrid(finalQuery);
             }
             else
             {
                 BuindCompanyId();
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID, tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, tbl_Quotation.mailStatusDate, tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+
+                // Both conditions applied together
+                filters.Add("tbl_Quotation.Client_Id = '" + lblclientId.Text + "'");
+                filters.Add("CAST(tbl_Quotation.Quotation_date AS datetime) BETWEEN '" + txttodate.Text + "' AND '" + txtfromDate.Text + "'");
+
+                string whereClause = "WHERE " + string.Join(" AND ", filters);
+                string groupAndOrder = @"
+                    GROUP BY 
+                        tbl_Quotation.ID, 
+                        tbl_Quotation.service_tax1, 
+                        tbl_Quotation.sub_total, 
+                        tbl_Quotation.DO_Number, 
+                        tbl_Quotation.PO_Number, 
+                        tbl_Quotation.Quotation_no, 
+                        tbl_Quotation.Quotation_date, 
+                        tbl_Quotation.Gross, 
+                        tbl_Quotation.Service_tax, 
+                        tbl_Quotation.Net_amount, 
+                        tbl_Quotation.mailStatusDate, 
+                        tbl_Client.Client_Name
+                    ORDER BY tbl_Quotation.ID DESC";
+
+                string finalQuery = baseQuery + " " + whereClause + " " + groupAndOrder;
+
+                //SqlCommand cmd = new SqlCommand(finalQuery, con);
+
+                //// Always validate/convert dates before assigning
+                //cmd.Parameters.AddWithValue("@ClientId", lblclientId.Text);
+                //cmd.Parameters.AddWithValue("@FromDate", Convert.ToDateTime(txttodate.Text));
+                //cmd.Parameters.AddWithValue("@ToDate", Convert.ToDateTime(txtfromDate.Text));
+
+                // Bind to grid or data control
+                Buinddatagrid(finalQuery);
+
+                //cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID, tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, tbl_Quotation.mailStatusDate, tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
 
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Status2='No' and tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
+                //Buinddatagrid(cmdstring);
             }
             btnSertch.Visible = false;
 
@@ -165,7 +252,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Id,Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,purchess_rate,specification,InvStatus from tbl_Quotaion_details where Quotation_no=@quotation_no order by id";
+            string cmdstring = "select Id,Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,purchess_rate,specification,InvStatus from tbl_Quotaion_details where Quotation_no=@quotation_no order by CAST(Sl_no as int)";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlParameter[] pram = {
                 new SqlParameter("@Quotation_no",quotation_no),
@@ -223,7 +310,7 @@ namespace Bill_Software.corporate.business.app
                 invoiceNos = "(" + invoiceNos + ")";
             }
 
-            string cmdstring = @"select Id,Sl_no,Quotation_no,Product_id,Product_Code,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,purchess_rate,specification,InvStatus from tbl_Quotaion_details where Quotation_no=@quotation_no order by id";
+            string cmdstring = @"select Id,Sl_no,Quotation_no,Product_id,Product_Code,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,purchess_rate,specification,InvStatus from tbl_Quotaion_details where Quotation_no=@quotation_no order by CAST(Sl_no as int)";
 
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlParameter[] pram = { new SqlParameter("@quotation_no", quotation_no) };
@@ -630,8 +717,8 @@ namespace Bill_Software.corporate.business.app
 
                 if (invTotalWithGst > 0)
                 {
-                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById, PServiceName) " +
-                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById, @PServiceName)";
+                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById, PServiceName, ExtInvoiceNo) " +
+                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById, @PServiceName, @ExtInvoiceNo)";
 
                     SqlParameter[] parameters = {
                         new SqlParameter("@Invoice_No", invoiceNo),
@@ -654,6 +741,7 @@ namespace Bill_Software.corporate.business.app
                         new SqlParameter("@otherAmount1", otherAmount1),
                         new SqlParameter("@AddedById", userId),
                         new SqlParameter("@PServiceName", lbl_servicename.Text.ToString()),
+                        new SqlParameter("@ExtInvoiceNo", txtInvoiceNo.Text.ToString()) //Added on 08-July-2025
 
                     };
                     DbCL.SPExecDB(query, parameters);

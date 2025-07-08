@@ -211,6 +211,12 @@
                                             <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Invoice Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lbl_extinvno" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Record Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblinvno" runat="server"></asp:Label></td>
                                         </tr>
                                         <tr>

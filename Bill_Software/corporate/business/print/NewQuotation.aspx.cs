@@ -614,7 +614,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             //string cmdstring = "select Sl_no,Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
-            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Misc, Quantity,Unit, sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no=@Quotation_no AND IsLatest = 1 AND IsDeleted = 0 order by Sl_no, ItemNo";
+            string cmdstring = "select Sl_no,Product_id as HSN,Product_name, specification, Misc, Quantity,Unit, sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize from tbl_Quotaion_details where Quotation_no=@Quotation_no AND IsLatest = 1 AND IsDeleted = 0 order by CAST(Sl_no as int)";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno)
                                       };
@@ -719,6 +719,7 @@ namespace Bill_Software.corporate.business.print
 
                     for (int i = 0; i < dtp.Rows.Count; i++)
                     {
+                        string sl = dtp.Rows[i]["Sl_no"].ToString();
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
                         string specification = dtp.Rows[i]["specification"].ToString();
@@ -786,6 +787,7 @@ namespace Bill_Software.corporate.business.print
 
                         strp += "<tr>";
                         strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + (i + 1) + "</td>";
+                        //strp += "<td style='text-align:center; border:2px solid #6c6c6c; font-size: 10.5px;'>" + sl + "</td>";
                         //strp += "<td style='text-align:left; border:2px solid #6c6c6c; font-size: 10.5px;'>" + Productname + "<br>" + specification + "</td>";
                         if (viewtype == "Detailed")
                         {
@@ -1099,6 +1101,7 @@ namespace Bill_Software.corporate.business.print
                         //new_SUBTOTAL += new_QuantityBaserateAmo;
                         //new_TOTALGST += new_gstamount;
 
+                        string sl = dtp.Rows[i]["Sl_no"]?.ToString() ?? "";
                         string HSN_Code = dtp.Rows[i]["HSN"]?.ToString() ?? "";
                         string Productname = dtp.Rows[i]["Product_name"]?.ToString() ?? "";
                         string Product_specification = dtp.Rows[i]["specification"]?.ToString() ?? "";
@@ -1131,6 +1134,7 @@ namespace Bill_Software.corporate.business.print
 
                         strp += "<tr>";
                         strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{i + 1}</td>";
+                        //strp += $"<td style='border: 2px solid #6c6c6c; text-align: center;'>{sl}</td>";
                         //strp += $"<td style='border: 2px solid #6c6c6c; text-align: left;'>{Productname}<br>{specification}</td>";
                         if (viewtype == "Detailed")
                         {

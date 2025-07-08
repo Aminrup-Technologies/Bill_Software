@@ -273,7 +273,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate, Service_tax_rate,Total_sail_rate2, ItemNo, MaterialNo, PackSize, Department, DeliveryDate from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "' order by Sl_no";
+            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate, Service_tax_rate,Total_sail_rate2, ItemNo, MaterialNo, PackSize, Department, DeliveryDate from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "' order by CAST(Sl_no as int)";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())

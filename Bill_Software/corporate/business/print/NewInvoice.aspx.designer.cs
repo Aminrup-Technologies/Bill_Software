@@ -76,6 +76,15 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblAddress;
         
         /// <summary>
+        /// lbl_extinvno control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_extinvno;
+        
+        /// <summary>
         /// lblinvno control.
         /// </summary>
         /// <remarks>

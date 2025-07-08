@@ -164,17 +164,12 @@
                 input.style.borderColor = "#CCCCCC";
             }
         }
-    </script>
 
-
-
-    <script type="text/javascript">
         function ValidateField() {
             console.log("Validation started...");
+            var isValid = true;
 
-            var isValid = true; // Default form validity
-
-            // Validate GridView checkboxes
+            // GridView checkbox validation
             var gridView = document.getElementById('<%= Gridview_Product.ClientID %>');
             if (!gridView) {
                 console.error("GridView not found.");
@@ -184,10 +179,8 @@
             var checkboxes = gridView.getElementsByTagName("input");
             var isChecked = false;
 
-            console.log("Checking GridView checkboxes...");
             for (var i = 0; i < checkboxes.length; i++) {
                 if (checkboxes[i].type === "checkbox" && checkboxes[i].id.indexOf("chk") !== -1) {
-                    console.log("Found checkbox:", checkboxes[i].id, "Checked:", checkboxes[i].checked);
                     if (checkboxes[i].checked) {
                         isChecked = true;
                         break;
@@ -196,94 +189,93 @@
             }
 
             if (!isChecked) {
-                console.warn("No checkbox selected in GridView.");
                 alert("Please select at least one item from the GridView.");
                 return false;
             }
 
-            console.log("GridView validation passed.");
-
-            // Validate ListBox (FactoryAddress)
+            // Factory Address validation
             var listBox = document.getElementById('<%= FactoryAddress.ClientID %>');
-        if (!listBox) {
-            console.error("ListBox not found.");
-            return false;
-        }
-
-        var selectedCount = 0;
-        for (var i = 0; i < listBox.options.length; i++) {
-            if (listBox.options[i].selected) {
-                selectedCount++;
+            if (!listBox) {
+                console.error("Factory Address ListBox not found.");
+                return false;
             }
-        }
 
-        if (selectedCount === 0) {
-            console.warn("No Factory Address selected.");
-            alert("Please select at least one Factory Address.");
-            return false;
-        }
+            var selectedCount = 0;
+            for (var i = 0; i < listBox.options.length; i++) {
+                if (listBox.options[i].selected) {
+                    selectedCount++;
+                }
+            }
 
-        console.log("Factory Address validation passed.");
+            if (selectedCount === 0) {
+                alert("Please select at least one Factory Address.");
+                return false;
+            }
 
-            // Get elements for amount-based validation
-        var txtTcsAmnt = document.getElementById('<%= txt_tcs_amnt.ClientID %>');
-        var txtTcsPercent = document.getElementById('<%= txt_tcs_percent.ClientID %>');
+            // Linked fields
+            var txtInvNo = document.getElementById('<%= txtInvoiceNo.ClientID %>');
+            var txtTcsAmnt = document.getElementById('<%= txt_tcs_amnt.ClientID %>');
+            var txtTcsPercent = document.getElementById('<%= txt_tcs_percent.ClientID %>');
             var txtDeliveryAmnt = document.getElementById('<%= txt_delivery_amnt.ClientID %>');
             var ddlVatPercentage = document.getElementById('<%= DDL_vat_parsentage.ClientID %>');
             var txtOthrAmnt = document.getElementById('<%= txt_othr_amnt.ClientID %>');
             var txtOtherCharges = document.getElementById('<%= TextBox1.ClientID %>');
 
-            // Validate TCS Amount & TCS Percent
-            if (txtTcsAmnt.value.trim() !== "" && parseFloat(txtTcsAmnt.value) > 0) {
-                if (txtTcsPercent.value.trim() === "") {
-                    console.warn("TCS Percent is required when TCS Amount is greater than 0.");
-                    alert("TCS TAX Percent is required when TCS Amount is greater than 0.");
+            // 1. Invoice No is mandatory
+            if (txtInvNo && txtInvNo.value.trim() === "") {
+                alert("TAX Invoice No is required.");
+                txtInvNo.focus();
+                return false;
+            }
+
+            // 2. TCS Amount >= 1 requires TCS Percent
+            if (txtTcsAmnt && txtTcsPercent) {
+                var tcsAmt = parseFloat(txtTcsAmnt.value.trim()) || 0;
+                var tcsPer = txtTcsPercent.value.trim();
+
+                if (tcsAmt >= 1 && tcsPer === "") {
+                    alert("TCS Percent is required when TCS Amount is 1 or more.");
                     txtTcsPercent.focus();
                     return false;
                 }
             }
 
-            // Validate Freight Charges & VAT Percentage
-            if (txtDeliveryAmnt.value.trim() !== "" && parseFloat(txtDeliveryAmnt.value) > 0) {
-                if (!ddlVatPercentage.value || ddlVatPercentage.selectedIndex === 0) {
-                    console.warn("TAX Percentage is required when Freight Charges are greater than 0.");
-                    alert("TAX Percentage is required when Freight Charges are greater than 0.");
+            // 3. Freight Charges >= 1 require VAT %
+            if (txtDeliveryAmnt && ddlVatPercentage) {
+                var freightAmt = parseFloat(txtDeliveryAmnt.value.trim()) || 0;
+                var vatIndex = ddlVatPercentage.selectedIndex;
+
+                if (freightAmt >= 1 && (vatIndex === 0 || ddlVatPercentage.value === "")) {
+                    alert("TAX Percentage is required when Freight Charges are 1 or more.");
                     ddlVatPercentage.focus();
                     return false;
                 }
             }
 
-            // Validate Other Charges
-            if (txtOthrAmnt.value.trim() !== "" && parseFloat(txtOthrAmnt.value) > 0) {
-                if (txtOtherCharges.value.trim() === "") {
-                    console.warn("Other Charges description is required when Other Charges amount is greater than 0.");
-                    alert("Other Charges description is required when Other Charges amount is greater than 0.");
+            // 4. Other Charges >= 1 require description
+            if (txtOthrAmnt && txtOtherCharges) {
+                var otherAmt = parseFloat(txtOthrAmnt.value.trim()) || 0;
+                var otherDesc = txtOtherCharges.value.trim();
+
+                if (otherAmt >= 1 && otherDesc === "") {
+                    alert("Other Charges description is required when amount is 1 or more.");
                     txtOtherCharges.focus();
                     return false;
                 }
             }
 
-            console.log("Validation successful. Form can be submitted.");
-            return true; // Allow form submission
+            console.log("All validations passed.");
+            return true;
         }
 
-    </script>
-
-
-
-    <script type="text/javascript">
-
         function Check_Click(objRef) {
-
             //Get the Row based on checkbox
             var row = objRef.parentNode.parentNode;
             if (objRef.checked) {
                 //If checked change color to Aqua
                 row.style.backgroundColor = "#84e26e";
             }
-
             else {
-
                 //If not checked change back to original color
                 if (row.rowIndex % 2 == 0) {
                     //Alternating Row Color
@@ -314,69 +306,36 @@
             headerCheckBox.checked = checked;
         }
 
-    </script>
-    <script type="text/javascript">
-
         function checkAll(objRef) {
-
             var GridView = objRef.parentNode.parentNode.parentNode;
-
             var inputList = GridView.getElementsByTagName("input");
-
             for (var i = 0; i < inputList.length; i++) {
-
                 //Get the Cell To find out ColumnIndex
-
                 var row = inputList[i].parentNode.parentNode;
-
                 if (inputList[i].type == "checkbox" && objRef != inputList[i]) {
-
                     if (objRef.checked) {
-
                         //If the header checkbox is checked
-
                         //check all checkboxes
-
                         //and highlight all rows
-
                         row.style.backgroundColor = "#84e26e";
-
                         inputList[i].checked = true;
-
                     }
-
                     else {
-
                         //If the header checkbox is checked
-
                         //uncheck all checkboxes
-
                         //and change rowcolor back to original
-
                         if (row.rowIndex % 2 == 0) {
-
                             //Alternating Row Color
-
                             row.style.backgroundColor = "#C2D69B";
-
                         }
-
                         else {
-
                             row.style.backgroundColor = "white";
-
                         }
-
                         inputList[i].checked = false;
-
                     }
-
                 }
-
             }
-
         }
-
     </script>
 
     <asp:ScriptManager ID="ScriptManager1" runat="server">
@@ -566,7 +525,6 @@
                     </ItemTemplate>
                 </asp:DataList>--%>
 
-
                         <%--<asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemCommand="DataList1_ItemCommand">
                             <FooterStyle BackColor="White" ForeColor="#000066" />
                             <AlternatingItemStyle BackColor="#94B8FF" />
@@ -716,12 +674,14 @@
 
                     </td>
                 </tr>
+
                 <tr>
                     <td>&nbsp;</td>
                     <td colspan="2">&nbsp;</td>
                     <td colspan="2">&nbsp;</td>
                     <td>&nbsp;</td>
                 </tr>
+
                 <tr>
                     <td colspan="6">
                         <asp:GridView ID="Gridview_Product" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
@@ -962,8 +922,9 @@
                                     <td>
                                         <asp:ListBox ID="FactoryAddress" runat="server" AutoPostBack="True" BorderStyle="Solid" BorderWidth="1px" Font-Size="10px" multiple="true" Rows="3" SelectionMode="Multiple" Width="550px"></asp:ListBox>
                                     </td>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;</td>
+                                    <td style="font-weight: bold;">&nbsp;&nbsp;Invoice No</td>
+                                    <td>
+                                        <asp:TextBox ID="txtInvoiceNo" runat="server" Text="" CssClass="textbox_style"></asp:TextBox></td>
                                 </tr>
 
                                 <tr>
@@ -1022,7 +983,7 @@
                                 </tr>
                                 <tr>
                                     <td colspan="4" style="text-align: center">
-                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Save" OnClientClick="if (!ValidateField()) return false;" OnClick="Button1_Click" />
+                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Create Invoice" OnClientClick="if (!ValidateField()) return false;" OnClick="Button1_Click" />
 
                                     </td>
                                 </tr>
