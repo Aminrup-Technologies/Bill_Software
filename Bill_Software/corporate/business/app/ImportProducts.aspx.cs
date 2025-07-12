@@ -577,6 +577,13 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
+        // Helper to sanitize cell text (handles &nbsp;, nulls, and whitespace)
+        private string CleanCellText(TableCell cell)
+        {
+            string value = cell.Text.Trim();
+            return (value == "&nbsp;" || string.IsNullOrWhiteSpace(value)) ? string.Empty : value;
+        }
+
         public void InsertDataIntoDatabase()
         {
             try
@@ -597,22 +604,55 @@ namespace Bill_Software.corporate.business.app
                     {
                         try
                         {
-                            string productName = row.Cells[GetColumnIndex(selectedProductColumn)].Text.Trim();
-                            string quantity = row.Cells[GetColumnIndex(selectedQuantityColumn)].Text.Trim();
-                            string unit = row.Cells[GetColumnIndex(selectedUnitColumn)].Text.Trim();
-                            string rate = row.Cells[GetColumnIndex(selectedRateColumn)].Text.Trim();
+                            //string productName = row.Cells[GetColumnIndex(selectedProductColumn)].Text.Trim();
+                            //string quantity = row.Cells[GetColumnIndex(selectedQuantityColumn)].Text.Trim();
+                            //string unit = row.Cells[GetColumnIndex(selectedUnitColumn)].Text.Trim();
+                            //string rate = row.Cells[GetColumnIndex(selectedRateColumn)].Text.Trim();
 
-                            string productCode = string.Empty;
+                            //string productCode = string.Empty;
+                            //string productOrServiceCat = cmbproduct_service.SelectedItem?.Text ?? "DefaultCategory";
+                            //int parentId = (cmbproduct_service.SelectedItem != null && !string.IsNullOrEmpty(cmbproduct_service.SelectedValue) && cmbproduct_service.SelectedValue != "--Select--") ? Convert.ToInt32(cmbproduct_service.SelectedValue) : (Session["pid"] != null ? Convert.ToInt32(Session["pid"]) : 0);
+
+                            //string saleRate = string.IsNullOrEmpty(rate) ? "0" : rate;
+                            //string taxRate = "18";
+                            //string productCategory = "DefaultCategory";
+                            //string type = "Product";
+                            //string brand = "DefaultBrand";
+                            //string specification = string.Empty;
+                            //string qty = string.IsNullOrEmpty(quantity) ? "0" : quantity;
+                            //string moqValue = "1";
+                            //string saleNote = string.Empty;
+
+                            // Usage in row processing
+                            string productName = CleanCellText(row.Cells[GetColumnIndex(selectedProductColumn)]);
+                            string quantity = CleanCellText(row.Cells[GetColumnIndex(selectedQuantityColumn)]);
+                            string unit = CleanCellText(row.Cells[GetColumnIndex(selectedUnitColumn)]);
+                            string rate = CleanCellText(row.Cells[GetColumnIndex(selectedRateColumn)]);
+
+                            // Product/service dropdown selection
                             string productOrServiceCat = cmbproduct_service.SelectedItem?.Text ?? "DefaultCategory";
-                            int parentId = (cmbproduct_service.SelectedItem != null && !string.IsNullOrEmpty(cmbproduct_service.SelectedValue) && cmbproduct_service.SelectedValue != "--Select--") ? Convert.ToInt32(cmbproduct_service.SelectedValue) : (Session["pid"] != null ? Convert.ToInt32(Session["pid"]) : 0);
 
-                            string saleRate = string.IsNullOrEmpty(rate) ? "0" : rate;
-                            string taxRate = "18";
+                            int parentId = 0;
+                            if (cmbproduct_service.SelectedItem != null &&
+                                !string.IsNullOrWhiteSpace(cmbproduct_service.SelectedValue) &&
+                                cmbproduct_service.SelectedValue != "--Select--")
+                            {
+                                parentId = Convert.ToInt32(cmbproduct_service.SelectedValue);
+                            }
+                            else if (Session["pid"] != null)
+                            {
+                                parentId = Convert.ToInt32(Session["pid"]);
+                            }
+
+                            // Set default/fallback values
+                            string saleRate = string.IsNullOrWhiteSpace(rate) ? "0" : rate;
+                            string taxRate = "18";  // Optional: make dynamic if needed
+                            string productCode = string.Empty;
                             string productCategory = "DefaultCategory";
                             string type = "Product";
                             string brand = "DefaultBrand";
                             string specification = string.Empty;
-                            string qty = string.IsNullOrEmpty(quantity) ? "0" : quantity;
+                            string qty = string.IsNullOrWhiteSpace(quantity) ? "0" : quantity;
                             string moqValue = "1";
                             string saleNote = string.Empty;
 
@@ -1153,11 +1193,18 @@ namespace Bill_Software.corporate.business.app
 
                     foreach (GridViewRow row in GridView1.Rows)
                     {
-                        string productName = row.Cells[GetColumnIndex("Product Name")].Text;
-                        string quantity = row.Cells[GetColumnIndex("Quantity")].Text;
-                        string unit = row.Cells[GetColumnIndex("Unit")].Text;
-                        string rate = row.Cells[GetColumnIndex("Rate")].Text;
-                        string amount = row.Cells[GetColumnIndex("Amount")].Text;
+                        //string productName = row.Cells[GetColumnIndex("Product Name")].Text;
+                        //string quantity = row.Cells[GetColumnIndex("Quantity")].Text;
+                        //string unit = row.Cells[GetColumnIndex("Unit")].Text;
+                        //string rate = row.Cells[GetColumnIndex("Rate")].Text;
+                        //string amount = row.Cells[GetColumnIndex("Amount")].Text;
+
+                        // Cleaned extraction from GridView row
+                        string productName = CleanCellText(row.Cells[GetColumnIndex("Product Name")]);
+                        string quantity = CleanCellText(row.Cells[GetColumnIndex("Quantity")]);
+                        string unit = CleanCellText(row.Cells[GetColumnIndex("Unit")]);
+                        string rate = CleanCellText(row.Cells[GetColumnIndex("Rate")]);
+                        string amount = CleanCellText(row.Cells[GetColumnIndex("Amount")]);
 
                         logEntries.Add($"Row {rowCount}: Processing Product - {productName}, Quantity: {quantity}, Rate: {rate}");
 
@@ -1973,9 +2020,14 @@ namespace Bill_Software.corporate.business.app
 
                     foreach (GridViewRow row in GridView2.Rows)
                     {
-                        string productName = row.Cells[GetColumnIndex2(selectedProductColumn)].Text;
-                        string hsnCode = row.Cells[GetColumnIndex2(selectedHSNColumn)].Text;
-                        string gstRate = row.Cells[GetColumnIndex2(selectedGSTRateColumn)].Text;
+                        //string productName = row.Cells[GetColumnIndex2(selectedProductColumn)].Text;
+                        //string hsnCode = row.Cells[GetColumnIndex2(selectedHSNColumn)].Text;
+                        //string gstRate = row.Cells[GetColumnIndex2(selectedGSTRateColumn)].Text;
+
+                        // Cleaned cell extraction
+                        string productName = CleanCellText(row.Cells[GetColumnIndex2(selectedProductColumn)]);
+                        string hsnCode = CleanCellText(row.Cells[GetColumnIndex2(selectedHSNColumn)]);
+                        string gstRate = CleanCellText(row.Cells[GetColumnIndex2(selectedGSTRateColumn)]);
 
                         // Remove '%' from gstRate
                         gstRate = gstRate.Replace("%", "").Trim();

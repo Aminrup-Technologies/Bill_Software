@@ -29,7 +29,7 @@ namespace Bill_Software.corporate.business.app
             string UserName = Session["USERID"].ToString();
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select top(50) * from tbl_SalesVisitReport where CreatedByCode='"+ UserName + "' order by VisitDate, TimeStamp desc";
+            string cmdstring = "select top(100) * from tbl_SalesVisitReport where CreatedByCode='"+ UserName + "' order by VisitDate desc";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList2.DataSource = cmd.ExecuteReader();
             DataList2.DataBind();
