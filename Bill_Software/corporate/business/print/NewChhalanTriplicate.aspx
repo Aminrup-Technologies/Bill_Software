@@ -183,7 +183,7 @@
                                 </td>
                                 <td style="vertical-align: top;" width="2%"></td>
                                 <td class="qno" style="vertical-align: top; background-color: #d9d3d3;" width="40%">
-                                    <table border="0" width="100%" class="quotation">
+                                    <%--<table border="0" width="100%" class="quotation">
                                         <tr>
                                             <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;" >Challan Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
@@ -207,7 +207,7 @@
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblClientCode" runat="server"></asp:Label></td>
-                                        </tr>--%>
+                                        </tr>
                                          <tr>
                                             <td class='' style='width: 45%; vertical-align: top; padding: 1px 5px;'>
                                                 <asp:Label ID="lblplaceofsup1" runat="server"></asp:Label></td>
@@ -228,8 +228,66 @@
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">AAEF15315E</td>
                                         </tr>
-                                        
-                                       
+                                    </table>--%>
+
+                                    <table border="0" width="100%" class="quotation">
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Challan Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblChano" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="vertical-align: top; padding: 1px 5px; width: 45%">Challan Date</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="vertical-align: top; padding: 1px 5px; width: 53%">
+                                                <asp:Label ID="lblChadate" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">D.O. Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lbldonumber" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">P.O. /ARC Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblpnumber" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">P.O. Date</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblpdate" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <%-- <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Client Code</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblClientCode" runat="server"></asp:Label></td>
+                                        </tr>--%>
+                                        <tr>
+                                            <td class='' style='width: 45%; vertical-align: top; padding: 1px 5px;'>
+                                                <asp:Label ID="lblplaceofsup1" runat="server"></asp:Label></td>
+                                            <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>
+                                                <asp:Label ID="lblplaceofsup2" runat="server"></asp:Label></td>
+                                            <td class='' style='width: 53%; vertical-align: top; padding: 1px 5px;'>
+                                                <asp:Label ID="lblplaceofsup3" runat="server"></asp:Label></td>
+
+                                        </tr>
+                                        <tr id="gst_row" runat="server" visible="false">
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Flame-Ex GST Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">19AAEF15315E1ZL</td>
+                                        </tr>
+                                        <tr id="pan_row" runat="server" visible="false">
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Aminrup Technologies Pan Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">AAEF15315E</td>
+                                        </tr>
+
+
                                     </table>
                                 </td>
                             </tr>
