@@ -256,7 +256,7 @@
                                         <li id="Viewhydrent_invoice" runat="server"><a href="Viewhydrent_invoice.aspx">View New Invoice</a></li>
                                         <li id="Searchhydrent_invoice" runat="server"><a href="Searchhydrent_invoice.aspx">Search New Invoice</a></li>
                                         <li id="Deletehydrent_invoice" runat="server"><a href="Deletehydrent_invoice.aspx">Delete New Invoice</a></li>
-                                        <li id="Existing_Client" runat="server"><a href="">Existing Client</a></li>
+                                        <li id="Existing_Client" runat="server"><a href="#">Existing Client</a></li>
                                     </ul>
                             </li>
                         </ul>

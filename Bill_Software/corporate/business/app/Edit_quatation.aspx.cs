@@ -191,13 +191,15 @@ namespace Bill_Software.corporate.business.app
                     }
 
                 }
-
+                
                 Bindcombo();
                 BindClientDetails(Quotation_no);
                 //bindphaseType(Quotation_no);
                 BindPaymentPhases(Quotation_no);
                 LoadPrimaryServices(Quotation_no);
+                ToggleGridColumns();
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "checkAllRows", "checkAllOnLoad();", true);
+                
             }
         }
 
@@ -1572,7 +1574,7 @@ namespace Bill_Software.corporate.business.app
             ViewState["PhaseProductData"] = dtPCat;
 
             // **Set Column Visibility Based on Radio Button Selection**
-            ToggleGridColumns();
+            //ToggleGridColumns();
         }
 
         private void TakePservice(int count1, string pservice)

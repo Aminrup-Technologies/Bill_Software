@@ -1161,7 +1161,7 @@
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Brand Name" HeaderStyle-Width="10%" ItemStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Brand Name" HeaderStyle-Width="8%" ItemStyle-Width="8%">
                                                     <EditItemTemplate>
                                                         <asp:TextBox ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:TextBox>
                                                     </EditItemTemplate>
@@ -1266,7 +1266,7 @@
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Quantity" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                                <asp:TemplateField HeaderText="QTY" HeaderStyle-Width="3%" ItemStyle-Width="3%">
                                                     <EditItemTemplate>
                                                         <asp:TextBox ID="TextBox8" runat="server"></asp:TextBox>
                                                     </EditItemTemplate>
@@ -1284,13 +1284,13 @@
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="SL" HeaderStyle-Width="5%" ItemStyle-Width="5%">
+                                                <asp:TemplateField HeaderText="SL" HeaderStyle-Width="3%" ItemStyle-Width="3%">
                                                     <ItemTemplate>
                                                         <asp:TextBox ID="txtOrder" runat="server" Width="80%" Text='<%# Bind("Sl_no") %>' BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Height="22px" CssClass="center textbox_style" />
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
                                                 
-                                                <asp:TemplateField HeaderText="Delivery Date" HeaderStyle-Width="10%" ItemStyle-Width="10%" Visible="false">
+                                                <asp:TemplateField HeaderText="Delivery Date" HeaderStyle-Width="12%" ItemStyle-Width="12%" Visible="false">
                                                     <EditItemTemplate>
                                                         <asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker"></asp:TextBox>
                                                     </EditItemTemplate>
@@ -1300,7 +1300,7 @@
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
-                                                <asp:TemplateField HeaderText="Department" HeaderStyle-Width="10%" ItemStyle-Width="10%" Visible="false">
+                                                <asp:TemplateField HeaderText="Department" HeaderStyle-Width="12%" ItemStyle-Width="12%" Visible="false">
                                                     <EditItemTemplate>
                                                         <asp:TextBox ID="Department" runat="server"></asp:TextBox>
                                                     </EditItemTemplate>
