@@ -31,6 +31,51 @@
                 width: 100%;
                 border-top: none;
             }
+
+        .modalPopup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 15px;
+            margin: 10% auto;
+            width: 800px;
+            border-radius: 5px;
+        }
+
+        .comment {
+            width: 100%;
+            box-sizing: border-box; /* To include padding/border in width */
+        }
+
+        .comment-left {
+            text-align: left;
+        }
+
+        .comment-right {
+            text-align: right;
+        }
+
+            .comment-right b {
+                display: inline-block;
+                background: #f0f8ff; /* light background for right */
+                padding: 5px;
+                border-radius: 5px;
+            }
+
+        .comment-left b {
+            display: inline-block;
+            background: #f8f8f8; /* light background for left */
+            padding: 5px;
+            border-radius: 5px;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -51,6 +96,22 @@
                 changeYear: true
             });
         });
+
+        <%--function showReplyPopup(visitId) {
+            document.getElementById('<%= hfVisitId.ClientID %>').value = visitId;
+            document.getElementById('<%= pnlReply.ClientID %>').style.display = 'block';
+        }--%>
+
+        <%--function hideReplyPopup() {
+            document.getElementById('<%= pnlReply.ClientID %>').style.display = 'none';
+        }--%>
+
+        function showCommentsPopup() {
+            document.getElementById('<%= pnlComments.ClientID %>').style.display = 'block';
+        }
+        function hideCommentsPopup() {
+            document.getElementById('<%= pnlComments.ClientID %>').style.display = 'none';
+        }
     </script>
 
 
@@ -191,7 +252,7 @@
                                 <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
                                     <tr>
                                         <td style="text-align: center; width: 8%;">
-                                            <asp:Label ID="lblVisitDate" runat="server" Text='<%# Eval("VisitDate", "{0:yyyy-MM-dd}") %>' Font-Bold="true" ForeColor="DarkBlue"></asp:Label>
+                                            <asp:Label ID="lblVisitDate" runat="server" Text='<%# Eval("VisitDate", "{0:dd-MM-yyyy}") %>' Font-Bold="true" ForeColor="DarkBlue"></asp:Label>
                                         </td>
                                         <td style="text-align: center; width: 10%;">
                                             <asp:Label ID="lblSalesperson" runat="server" Text='<%# Eval("Salesperson") %>'></asp:Label>
@@ -212,7 +273,7 @@
                                             <asp:Label ID="lblFollowUpRequired" runat="server" Text='<%# Eval("FollowUpRequired") %>'></asp:Label>
                                         </td>
                                         <td style="text-align: center; width: 8%;">
-                                            <asp:Label ID="lblNextFollowUpDate" runat="server" Text='<%# Eval("NextFollowUpDate", "{0:yyyy-MM-dd}") %>'></asp:Label>
+                                            <asp:Label ID="lblNextFollowUpDate" runat="server" Text='<%# Eval("NextFollowUpDate", "{0:dd-MM-yyyy}") %>'></asp:Label>
                                         </td>
                                         <td style="text-align: center; width: 6%;">
                                             <asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label>
@@ -223,7 +284,7 @@
                                                 Text="View" Target="_blank" />
                                         </td>
                                         <td style="text-align: center; width: 6%;">
-                                            <asp:Label ID="lblCreatedDate" runat="server" Text='<%# Eval("TimeStamp", "{0:yyyy-MM-dd HH:mm}") %>'></asp:Label>
+                                            <asp:Label ID="lblCreatedDate" runat="server" Text='<%# Eval("TimeStamp", "{0:dd-MM-yyyy HH:mm tt}") %>'></asp:Label>
                                         </td>
                                     </tr>
                                     <tr>
@@ -240,29 +301,100 @@
                                         </td>
                                     </tr>--%>
 
-                                    <td colspan="12" style="padding: 5px; text-align: left;">
-                                        <asp:Panel ID="pnlApproval" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() == "Pending" %>'>
-                                            <b>Manager Remarks:</b>
-                                            <asp:TextBox ID="txtManagerRemarks" runat="server" CssClass="textbox_style" Width="60%" TextMode="MultiLine" Rows="2"></asp:TextBox>
-                                            <asp:Button ID="btnApprove" runat="server" Text="Approve" CommandName="Approve" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" />
-                                            &nbsp;<asp:Button ID="btnReject" runat="server" Text="Reject" CommandName="Reject" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" />
-                                        </asp:Panel>
+                                    <td colspan="12" style="padding: 5px;">
+                                        <table style="width: 100%;">
+                                            <tr>
+                                                <td style="vertical-align: top; text-align: left; width: 60%;">
+                                                    <asp:Panel ID="pnlApproval" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() == "Pending" %>'>
+                                                        <asp:TextBox ID="txtManagerRemarks" runat="server"
+                                                            Visible="false"
+                                                            CssClass="textbox_style" Width="60%"
+                                                            TextMode="MultiLine" Rows="2"></asp:TextBox>&nbsp;
 
-                                        <asp:Panel ID="pnlApprovedInfo" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() != "Pending" %>'>
-                                            <b>Status:</b>
-                                            <asp:Label ID="lblApprovalStatus" runat="server" Text='<%# Eval("ApprovalStatus") %>'></asp:Label>&nbsp;|&nbsp;
-                                            <b>Remarks:</b> 
-                                            <asp:Label ID="lblApprovalRemarks" runat="server" Text='<%# Eval("ManagerRemarks") %>'></asp:Label>&nbsp;|&nbsp;
-                                            <b>Approved By:</b>
-                                            <asp:Label ID="lblApprovedBy" runat="server" Text='<%# Eval("ApprovedBy") %>'></asp:Label>&nbsp;|&nbsp;
-                                            <b>Timestamp:</b>
-                                            <asp:Label ID="lblApprovedTime" runat="server" Text='<%# Eval("ApprovedDate", "{0:yyyy-MM-dd HH:mm}") %>'></asp:Label>
-                                        </asp:Panel>
+                                                        <asp:Button ID="btnApprove" runat="server"
+                                                            Text="Approve"
+                                                            CommandName="Approve"
+                                                            CommandArgument='<%# Eval("Id") %>'
+                                                            CssClass="btn_style" />&nbsp;
+
+                                                        <asp:Button ID="btnReject" runat="server"
+                                                            Text="Reject"
+                                                            CommandName="Reject"
+                                                            CommandArgument='<%# Eval("Id") %>'
+                                                            CssClass="btn_style" />
+                                                    </asp:Panel>
+
+                                                    <asp:Panel ID="pnlApprovedInfo" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() != "Pending" %>'>
+                                                        <b>Status:</b>
+                                                        <asp:Label ID="lblApprovalStatus" runat="server" Text='<%# Eval("ApprovalStatus") %>'></asp:Label>&nbsp;|&nbsp;
+                    
+                                                        <b>Remarks:</b>
+                                                        <asp:Label ID="lblApprovalRemarks" runat="server" Text='<%# Eval("ManagerRemarks") %>'></asp:Label>&nbsp;|&nbsp;
+                    
+                                                        <b>Approved By:</b>
+                                                        <asp:Label ID="lblApprovedBy" runat="server" Text='<%# Eval("ApprovedBy") %>'></asp:Label>&nbsp;|&nbsp;
+                    
+                                                        <b>Timestamp:</b>
+                                                        <asp:Label ID="lblApprovedTime" runat="server" Text='<%# Eval("ApprovedDate", "{0:yyyy-MM-dd HH:mm}") %>'></asp:Label>
+                                                    </asp:Panel>
+                                                </td>
+
+                                                <td style="vertical-align: top; text-align: right; width: 40%;">
+                                                    <asp:Button ID="btnViewComments" runat="server"
+                                                        Text="View Comments"
+                                                        CommandName="ViewComments"
+                                                        CommandArgument='<%# Eval("Id") %>'
+                                                        CssClass="btn btn_style" />&nbsp;
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
+
+
                                 </table>
                             </ItemTemplate>
 
                         </asp:DataList>
+
+                        <asp:Panel ID="pnlReply" runat="server" CssClass="modalPopup" Style="display: none;">
+                            <div class="modal-content">
+                                <h4>Respond to Manager Remarks</h4>
+                                <br />
+                                <asp:HiddenField ID="hfVisitId" runat="server" />
+                                <asp:TextBox ID="txtSalespersonReply" runat="server" Width="100%" TextMode="MultiLine" Rows="4" CssClass="form-control" Placeholder="Enter your response..."></asp:TextBox>
+                                <br />
+                                <asp:Button ID="btnSaveReply" runat="server" Text="Submit Response" CssClass="btn btn_style" />
+                                <asp:Button ID="btnCancelReply" runat="server" Text="Cancel" CssClass="btn btn_style" OnClientClick="hideReplyPopup();return false;" />
+                            </div>
+                        </asp:Panel>
+
+                        <asp:UpdatePanel ID="upComments" runat="server" UpdateMode="Conditional">
+                            <ContentTemplate>
+                                <asp:Panel ID="pnlComments" runat="server" Width="100%" CssClass="modalPopup" Style="display: none;">
+                                    <div class="modal-content">
+                                        <h3 style="font-weight: bold; font-size: medium; color: darkblue;">Conversations :</h3>
+                                        <hr />
+                                        <br />
+                                        <asp:HiddenField ID="HiddenField1" runat="server" />
+                                        <asp:Literal ID="litComments" runat="server"></asp:Literal>
+                                        <hr />
+                                        <br />
+                                        <h5 style="font-weight: bold; font-size: small; color: darkblue;">Type New Comments :</h5>
+                                        <div id="NewComment" runat="server" style="width: 100%">
+                                            <asp:TextBox ID="txtNewComment" runat="server" TextMode="MultiLine" Width="100%"
+                                                CssClass="form-control" Rows="3" BorderColor="Black" BorderStyle="Solid" BorderWidth="1px" />
+                                        </div>
+                                        <div id="Actions" runat="server" style="width: 100%">
+                                            <asp:Button ID="btnSendComment" runat="server" Text="Send" CssClass="btn btn_style" OnClick="btnSendComment_Click" />
+                                            <asp:Button ID="btnCloseComments" runat="server" Text="Close" CssClass="btn btn_style" OnClientClick="hideCommentsPopup(); return false;" />
+                                        </div>
+                                    </div>
+                                </asp:Panel>
+                            </ContentTemplate>
+                            <Triggers>
+                                <asp:AsyncPostBackTrigger ControlID="btnSendComment" EventName="Click" />
+                            </Triggers>
+                        </asp:UpdatePanel>
                     </td>
                 </tr>
                 <tr>
