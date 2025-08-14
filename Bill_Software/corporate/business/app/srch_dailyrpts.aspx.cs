@@ -42,19 +42,19 @@ namespace Bill_Software.corporate.business.app
             if (RadioButtonList1.SelectedIndex == 0)
             {
                 BuindCompanyId();
-                cmdstring = "select * from tbl_SalesVisitReport where Salesperson='" + cmbvendor.SelectedItem.Text.ToString() + "' order by VisitDate , TimeStamp desc";
+                cmdstring = "select * from tbl_SalesVisitReport where Salesperson='" + cmbvendor.SelectedItem.Text.ToString() + "' order by CAST(VisitDate as date) desc";
 
                 Buinddatagrid(cmdstring);
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
-                cmdstring = "select * from tbl_SalesVisitReport where VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by VisitDate , TimeStamp desc";
+                cmdstring = "select * from tbl_SalesVisitReport where VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by CAST(VisitDate as date) desc";
                 Buinddatagrid(cmdstring);
             }
             else
             {
                 BuindCompanyId();
-                cmdstring = "select * from tbl_SalesVisitReport where Salesperson='" + cmbvendor.SelectedItem.Text.ToString() + "' and VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by VisitDate , TimeStamp desc";
+                cmdstring = "select * from tbl_SalesVisitReport where Salesperson='" + cmbvendor.SelectedItem.Text.ToString() + "' and VisitDate between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by CAST(VisitDate as date) desc";
                 Buinddatagrid(cmdstring);
             }
             btnSertch.Visible = false;

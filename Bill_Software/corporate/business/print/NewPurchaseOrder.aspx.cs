@@ -755,7 +755,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             //string cmdstring = "select Sl_no,Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2, discount_rate, new_sailrate from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Id";
-            string cmdstring = "SELECT Sl_no, Product_id AS HSN, Product_name, specification, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no AND IsLatest = 1 AND IsDeleted = 0 ORDER BY ItemNo";
+            string cmdstring = "SELECT Sl_no, Product_id AS HSN, Product_name, specification, Misc, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no AND IsLatest = 1 AND IsDeleted = 0 ORDER BY ItemNo";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno)
                                       };
@@ -795,6 +795,7 @@ namespace Bill_Software.corporate.business.print
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
                         string specification = dtp.Rows[i]["specification"].ToString();
+                        string Misc = dtp.Rows[i]["Misc"].ToString();
                         string itemno = dtp.Rows[i]["ItemNo"].ToString();
                         string materialno = dtp.Rows[i]["MaterialNo"].ToString();
                         string packsize = dtp.Rows[i]["PackSize"].ToString();
@@ -834,12 +835,13 @@ namespace Bill_Software.corporate.business.print
                         if (viewtype == "Detailed")
                         {
                             strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
-                                   "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
+                                   "<div><span style='font-weight: bold; font-size: 11px; color: black;'>{0}</span></div>" +
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Make: {1}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {2}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {3}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
-                                   "</td>", Productname, specification, itemno, materialno, packsize);
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Specification : {2}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {3}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {4}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {5}</div>" +
+                                   "</td>", Productname, specification, Misc, itemno, materialno, packsize);
                         }
                         else if (viewtype == "Simple")
                         {
@@ -938,6 +940,7 @@ namespace Bill_Software.corporate.business.print
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
                         string specification = dtp.Rows[i]["specification"].ToString();
+                        string Misc = dtp.Rows[i]["Misc"].ToString();
                         string itemno = dtp.Rows[i]["ItemNo"].ToString();
                         string materialno = dtp.Rows[i]["MaterialNo"].ToString();
                         string packsize = dtp.Rows[i]["PackSize"].ToString();
@@ -967,12 +970,13 @@ namespace Bill_Software.corporate.business.print
                         if (viewtype == "Detailed")
                         {
                             strp += string.Format("<td style='border: 2px solid #6c6c6c; text-align: left; padding: 5px;'>" +
-                                   "<div><span style='font-weight: bold; color: black;'>{0}</span></div>" +
+                                   "<div><span style='font-weight: bold; font-size: 11px; color: black;'>{0}</span></div>" +
                                    "<div style='font-style: italic; font-size: 10px; color: gray;'>Make: {1}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {2}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {3}</div>" +
-                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {4}</div>" +
-                                   "</td>", Productname, specification, itemno, materialno, packsize);
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Specification : {2}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Item No: {3}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Material No: {4}</div>" +
+                                   "<div style='font-style: italic; font-size: 10px; color: gray;'>Pack Size: {5}</div>" +
+                                   "</td>", Productname, specification, Misc, itemno, materialno, packsize);
                         }
                         else if (viewtype == "Simple")
                         {
@@ -1040,6 +1044,7 @@ namespace Bill_Software.corporate.business.print
                 lblserviceamo.Text = strp.ToString();
             }
         }
+
         private void bindpayment(string qutno)
         {
             string cmdstring = "select phase_type,PhaseDesc,amountper from tbl_QutPaymentPhase where qut_no=@qut_no order by id";
