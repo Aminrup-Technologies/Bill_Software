@@ -118,6 +118,7 @@
                                         <%-- <li id="Vendor_quotation" runat="server"><a href="Vendor_quotation.aspx">Add Vendor Quotation</a></li>--%>
                                         <li id="Purches_exting_vendor" runat="server"><a href="Purches_exting_vendor.aspx">Add Purchase</a></li>
                                         <li id="View_purches" runat="server"><a href="View_purches.aspx">View Purchase</a></li>
+                                        <li id="Edit_Purches" runat="server"><a href="EditPurchase.aspx">Edit Purchase</a></li>
                                         <li id="seartch_purtch" runat="server"><a href="seartch_purtch.aspx">Search Purchase</a></li>
                                         <li id="Delete_purtches" runat="server"><a href="Delete_purtches.aspx">Delete Purchase</a></li>
 

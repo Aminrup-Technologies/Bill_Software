@@ -263,7 +263,6 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-
         private void Binddata1Org(string cmdstring)
         {
             DbCL.Sqlconnection();
@@ -359,9 +358,6 @@ namespace Bill_Software.corporate.business.app
                 Dt.Rows.Add(dr);
             }
         }
-
-
-
 
         private void newgrid1New()
         {

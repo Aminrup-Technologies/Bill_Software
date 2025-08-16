@@ -310,6 +310,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.RadioButtonList View_purches;
         
         /// <summary>
+        /// Edit_Purches control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButtonList Edit_Purches;
+        
+        /// <summary>
         /// seartch_purtch control.
         /// </summary>
         /// <remarks>

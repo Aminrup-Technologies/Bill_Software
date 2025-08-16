@@ -369,6 +369,17 @@
         </tr>
         <tr>
             <td>&nbsp;</td>
+            <td>Edit_Purches</td>
+            <td>
+                <asp:RadioButtonList ID="Edit_Purches" runat="server" RepeatDirection="Horizontal">
+                    <asp:ListItem>Yes</asp:ListItem>
+                    <asp:ListItem>No</asp:ListItem>
+                </asp:RadioButtonList>
+            </td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
             <td>seartch_purtch</td>
             <td>
                 <asp:RadioButtonList ID="seartch_purtch" runat="server" RepeatDirection="Horizontal">

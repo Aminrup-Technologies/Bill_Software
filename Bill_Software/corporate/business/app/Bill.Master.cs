@@ -283,6 +283,15 @@ namespace Bill_Software.corporate.business.app
                     View_purches.Visible = false;
                 }
 
+                if (dtm.Rows[0]["Edit_Purches"].ToString() == "Yes")
+                {
+                    Edit_Purches.Visible = true;
+                }
+                else if (dtm.Rows[0]["Edit_Purches"].ToString() == "No")
+                {
+                    Edit_Purches.Visible = false;
+                }
+
                 if (dtm.Rows[0]["seartch_purtch"].ToString() == "Yes")
                 {
                     seartch_purtch.Visible = true;
