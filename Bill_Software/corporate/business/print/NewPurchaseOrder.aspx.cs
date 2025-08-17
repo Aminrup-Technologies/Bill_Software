@@ -226,7 +226,7 @@ namespace Bill_Software.corporate.business.print
                         INNER JOIN tbl_Chalan c ON cd.Challan_no = c.Chalan_No
                         INNER JOIN tbl_Quotaion_details qd 
                             ON cd.Product_id = qd.Product_Code AND c.Quotation_No = qd.Quotation_no and cd.ItemNo = qd.ItemNo
-                        WHERE cd.Challan_no = @Challan_no
+                        WHERE cd.Challan_no = @Challan_no AND qd.IsDeleted!=1 AND qd.IsLatest=1
                         order by CAST(qd.Sl_no as int);";
 
                                             SqlParameter[] detailParam = {
