@@ -51,8 +51,9 @@ namespace Bill_Software.corporate.business.print
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select * from tbl_Invoice where ID='" + ID.ToString() + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            string query = "SELECT i.ID AS InvoiceID, i.Invoice_No, i.ExtInvoiceNo, i.Invoice_Date, i.Quotation_No, i.Quotation_Date, i.Client_ID, i.addressfor, i.discount, i.sub_total, i.Service_Tax, i.Net_Amount, i.cgstOrsgst, i.igst, q.DO_Number, q.PO_Number, q.PO_Date FROM tbl_Invoice i LEFT JOIN tbl_Quotation q ON i.Quotation_No = q.Quotation_no WHERE i.ID = '" + ID.ToString() + "'";
+            //string cmdstring = "select * from tbl_Invoice where ID='" + ID.ToString() + "'";
+            SqlCommand cmd = new SqlCommand(query, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
             {
@@ -65,6 +66,10 @@ namespace Bill_Software.corporate.business.print
 
                 Session["cgstOrsgsti"] = re["cgstOrsgst"].ToString();
                 Session["igsti"] = re["igst"].ToString();
+
+                string dopono = re["PO_Number"] != DBNull.Value ? re["PO_Number"].ToString() : string.Empty;
+                lbl_pono.Text= !string.IsNullOrEmpty(dopono) ? dopono : "N/A";
+                lbl_podate.Text = re["PO_Date"].ToString();
 
                 string qno = re["Quotation_No"].ToString();
                 bindcgstorigst(qno);

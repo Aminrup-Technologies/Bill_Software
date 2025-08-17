@@ -207,17 +207,19 @@
                                 <td style="vertical-align: top;" width="2%"></td>
                                 <td class="qno" style="vertical-align: top; background-color: #d9d3d3;" width="35%">
                                     <table border="0" width="100%" class="quotation">
+                                        
                                         <tr>
                                             <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Invoice Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
-                                                <asp:Label ID="lbl_extinvno" runat="server"></asp:Label></td>
+                                                <asp:Label ID="lblinvno" runat="server"></asp:Label>&nbsp;-&nbsp;<asp:Label ID="lbl_extinvno" runat="server"></asp:Label></td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Record Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Cust. PO No</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
-                                                <asp:Label ID="lblinvno" runat="server"></asp:Label></td>
+                                                <asp:Label ID="lbl_pono" runat="server"></asp:Label>&nbsp;[<asp:Label ID="lbl_podate" runat="server"></asp:Label>]
+                                                </td>
                                         </tr>
                                         <tr>
                                             <td class="" style="vertical-align: top; padding: 1px 5px; width: 45%">Invoice Date</td>
@@ -226,7 +228,7 @@
                                                 <asp:Label ID="lblinvdate" runat="server"></asp:Label></td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Quotation Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">ERP QTN/ PO No.</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblqnumber" runat="server"></asp:Label></td>

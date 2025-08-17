@@ -172,7 +172,7 @@
                                 <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Company Name</td>
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
-                                    <asp:Label ID="lblClient" runat="server"></asp:Label>&nbsp;[<asp:Label ID="lblClientCode" runat="server"></asp:Label>]</td>
+                                    <asp:Label ID="lblClient" runat="server"></asp:Label>&nbsp;<asp:Label ID="lblClientCode" runat="server" Visible="false"></asp:Label></td>
                             </tr>
                             <tr>
                                 <td class='' style='width: 30%; vertical-align: top; padding: 1px 5px;'>Address</td>

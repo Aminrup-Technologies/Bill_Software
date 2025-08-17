@@ -76,6 +76,15 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblAddress;
         
         /// <summary>
+        /// lblinvno control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblinvno;
+        
+        /// <summary>
         /// lbl_extinvno control.
         /// </summary>
         /// <remarks>
@@ -85,13 +94,22 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lbl_extinvno;
         
         /// <summary>
-        /// lblinvno control.
+        /// lbl_pono control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblinvno;
+        protected global::System.Web.UI.WebControls.Label lbl_pono;
+        
+        /// <summary>
+        /// lbl_podate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_podate;
         
         /// <summary>
         /// lblinvdate control.
