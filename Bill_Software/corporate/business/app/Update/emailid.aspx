@@ -78,7 +78,7 @@
                     Your Current Email ID : </td>
                 <td>
                     &nbsp;
-                    <asp:Label ID="lblCrntEmailId" runat="server"></asp:Label>
+                    <asp:Label ID="lblCrntEmailId" runat="server" ForeColor="Black"></asp:Label>
                 </td>
             </tr>
             <tr>

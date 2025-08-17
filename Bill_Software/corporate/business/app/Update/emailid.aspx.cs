@@ -13,6 +13,10 @@ namespace Bill_Software.corporate.business.app.Update
         DB_UTILITY DbCL = new DB_UTILITY();
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (HttpContext.Current.Session["USERID"] == null)
+            {
+                Response.Redirect("~/index.aspx");
+            }
             if (!IsPostBack)
             {
                 Binddata();
@@ -22,9 +26,6 @@ namespace Bill_Software.corporate.business.app.Update
         }
         private void Binddata()
         {
-
-            if (Session["USERID"].ToString() == "admin")
-            {
                 string cmdString = "select Email from tbl_login where User_Id='" + Session["USERID"].ToString() + "'";
                 DbCL.Sqlconnection();
                 DbCL.ConnectDb();
@@ -36,7 +37,6 @@ namespace Bill_Software.corporate.business.app.Update
                     lblCrntEmailId.Text = Rdr["Email"].ToString();
                 }
                 DbCL.Conn.Close();
-            }
         }
 
         protected void btnUpdate_Click(object sender, EventArgs e)

@@ -87,7 +87,7 @@
                                                 <td align="left" valign="middle">&nbsp;</td>
                                                 <td align="left" valign="middle">
                                                     <asp:DropDownList ID="cmbLoginAs" runat="server" class="dropdown_style">
-                                                        <asp:ListItem>ADMIN</asp:ListItem>
+                                                        <asp:ListItem Selected="True">ADMIN</asp:ListItem>
                                                         <asp:ListItem>Employee</asp:ListItem>
                                                     </asp:DropDownList>
                                                     &nbsp;</td>
