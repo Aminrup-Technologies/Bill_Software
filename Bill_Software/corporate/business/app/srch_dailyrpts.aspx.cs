@@ -175,7 +175,7 @@ namespace Bill_Software.corporate.business.app
 
         //}
 
-        protected void DataList2_ItemCommand(object source, DataListCommandEventArgs e)
+        protected void DataList2_ItemCommand_old(object source, DataListCommandEventArgs e)
         {
             string id = e.CommandArgument.ToString();
             string remarks = ((TextBox)e.Item.FindControl("txtManagerRemarks"))?.Text.Trim() ?? "";
@@ -195,6 +195,7 @@ namespace Bill_Software.corporate.business.app
                     // 🔹 Bind and show comments popup
                     BindComments(id);
                     ShowCommentsPopup(); // Your JS or server-side popup trigger
+                    //Binder();
                     return; // 🚪 Stop here so we don't run approve/reject logic
                 }
 
@@ -233,6 +234,91 @@ namespace Bill_Software.corporate.business.app
 
                 lblOk.Text = $"Visit ID {id} successfully marked as <b>{status}</b>.";
                 PanelOK.Visible = true;
+            }
+            catch (Exception ex)
+            {
+                lblErrorMsg.Text = "Error occurred: " + ex.Message;
+                PanelError.Visible = true;
+            }
+        }
+
+        protected void DataList2_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            string id = e.CommandArgument?.ToString();
+            if (string.IsNullOrEmpty(id))
+            {
+                lblErrorMsg.Text = "Invalid Visit ID.";
+                PanelError.Visible = true;
+                return;
+            }
+
+            string remarks = ((TextBox)e.Item.FindControl("txtManagerRemarks"))?.Text.Trim() ?? "";
+            string status = (e.CommandName == "Approve") ? "Approved" : (e.CommandName == "Reject") ? "Rejected" : "";
+            string user = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
+
+            PanelOK.Visible = false;
+            PanelError.Visible = false;
+
+            try
+            {
+                // 🟢 Case 1: View Comments only
+                if (e.CommandName == "ViewComments")
+                {
+                    hfVisitId.Value = id;              // Store Visit ID in hidden field for popup
+                    BindComments(id);                  // Load comments from DB
+                    ShowCommentsPopup();               // Trigger popup
+                    Binder();                          // <--- Rebind your grid so nothing is lost
+                    return;                            // stop further execution
+                }
+
+                // 🟢 Case 2: Approve/Reject Flow
+                if (status != "")
+                {
+                    string createdByCode = "";
+
+                    using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+                    {
+                        conn.Open();
+
+                        // 1. Update approval status
+                        string query = @"
+                    UPDATE tbl_SalesVisitReport 
+                    SET ApprovalStatus = @Status, 
+                        ManagerRemarks = @Remarks, 
+                        ApprovedDate = GETDATE(), 
+                        ApprovedBy = @User 
+                    WHERE Id = @Id";
+
+                        using (SqlCommand cmd = new SqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@Status", status);
+                            cmd.Parameters.AddWithValue("@Remarks", remarks);
+                            cmd.Parameters.AddWithValue("@User", user);
+                            cmd.Parameters.AddWithValue("@Id", id);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // 2. Fetch CreatedByCode for email lookup
+                        string fetchQuery = "SELECT CreatedByCode FROM tbl_SalesVisitReport WHERE Id = @Id";
+                        using (SqlCommand cmd2 = new SqlCommand(fetchQuery, conn))
+                        {
+                            cmd2.Parameters.AddWithValue("@Id", id);
+                            object result = cmd2.ExecuteScalar();
+                            if (result != null)
+                                createdByCode = result.ToString();
+                        }
+                    }
+
+                    // 3. Refresh UI
+                    Binder();
+
+                    // 4. Trigger Email Notification (body format unchanged ✅)
+                    SendApprovalNotification(id, status, remarks, user);
+
+                    // 5. Show Success Message
+                    lblOk.Text = $"Visit ID {id} successfully marked as <b>{status}</b>.";
+                    PanelOK.Visible = true;
+                }
             }
             catch (Exception ex)
             {

@@ -77,7 +77,7 @@ namespace Bill_Software.corporate.business.print
                 Session["Quotation_date"] = lbldate.Text;
 
                 string clientid = dtmain.Rows[0]["Client_Id"].ToString();
-                lblClientCode.Text = clientid;
+                lblClientCode.Text = Label2.Text =  clientid;
 
                 lbl_ponumber.Text = dtmain.Rows[0]["PO_Number"].ToString();
 
@@ -1161,7 +1161,7 @@ namespace Bill_Software.corporate.business.print
                 lblGstno.Text = Gstno;
 
                 TextInfo textInfo1 = cultureInfo.TextInfo;
-                lblClient.Text = textInfo1.ToTitleCase(Client_Name.ToLower());
+                lblClient.Text = Label1.Text = textInfo1.ToTitleCase(Client_Name.ToLower());
 
                 txtaddres.Text = textInfo1.ToTitleCase(add.ToLower());
                 lblcity.Text = textInfo1.ToTitleCase(City.ToLower());

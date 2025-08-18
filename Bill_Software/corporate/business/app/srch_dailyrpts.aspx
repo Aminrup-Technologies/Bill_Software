@@ -328,8 +328,8 @@
                                                         <b>Status:</b>
                                                         <asp:Label ID="lblApprovalStatus" runat="server" Text='<%# Eval("ApprovalStatus") %>'></asp:Label>&nbsp;|&nbsp;
                     
-                                                        <b>Remarks:</b>
-                                                        <asp:Label ID="lblApprovalRemarks" runat="server" Text='<%# Eval("ManagerRemarks") %>'></asp:Label>&nbsp;|&nbsp;
+                                                        <%--<b>Remarks:</b>--%>
+                                                        <asp:Label ID="lblApprovalRemarks" runat="server" Visible="false" Text='<%# Eval("ManagerRemarks") %>'></asp:Label>&nbsp;|&nbsp;
                     
                                                         <b>Approved By:</b>
                                                         <asp:Label ID="lblApprovedBy" runat="server" Text='<%# Eval("ApprovedBy") %>'></asp:Label>&nbsp;|&nbsp;

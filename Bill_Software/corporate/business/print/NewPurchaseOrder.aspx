@@ -91,10 +91,12 @@
             <thead id='header'>
                 <tr>
                     <th style='width: 100%'>
-                        <img src="../WebImages/flame-ex_hdrtop.png" width="100%" height="150px"></th>
+                        <%--<img src="../WebImages/flame-ex_hdrtop.png" width="100%" height="150px">--%>
+                        <h1><asp:Label ID="Label1" runat="server" Font-Bold="true" ForeColor="DarkBlue"></asp:Label>&nbsp;[<asp:Label ID="Label2" runat="server" Visible="true"></asp:Label>]</h1>
+                    </th>
                 </tr>
                 <tr>
-                    <th></th>
+                    <td></td>
                 </tr>
                 <tr>
                     <td colspan='4' style="text-align: right; font-weight: bold; font-size: 30px; color: #e31e24;">PURCHASE / DELIVERY ORDER</td>
