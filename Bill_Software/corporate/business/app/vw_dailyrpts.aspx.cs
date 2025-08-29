@@ -494,7 +494,7 @@ namespace Bill_Software.corporate.business.app
                             side,
                             dr["RespondentCode"],
                             dr["ResponseText"],
-                            Convert.ToDateTime(dr["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm")
+                            Convert.ToDateTime(dr["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm tt")
                         );
                     }
                     litComments.Text = sb.ToString();

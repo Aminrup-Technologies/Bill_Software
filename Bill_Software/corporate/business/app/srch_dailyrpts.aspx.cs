@@ -417,8 +417,10 @@ namespace Bill_Software.corporate.business.app
             }
 
             txtNewComment.Text = "";
+            Binder();
             BindComments(visitId);
             ShowCommentsPopup(); // Keep popup open
+            
         }
 
         private void BindComments(string visitId)
@@ -651,7 +653,7 @@ namespace Bill_Software.corporate.business.app
                                 string bgColor = isManager ? "#e1f5fe" : "#fce4ec";
                                 string name = rdrC["RespondentName"].ToString();
                                 string text = rdrC["ResponseText"].ToString();
-                                string date = Convert.ToDateTime(rdrC["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm");
+                                string date = Convert.ToDateTime(rdrC["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm tt");
 
                                 htmlDetails += $@"
                                     <div style='text-align:{align}; margin:5px 0;'>
@@ -779,7 +781,7 @@ namespace Bill_Software.corporate.business.app
                                 string bgColor = isManager ? "#e1f5fe" : "#fce4ec";
                                 string name = rdrC["RespondentName"].ToString();
                                 string text = rdrC["ResponseText"].ToString();
-                                string date = Convert.ToDateTime(rdrC["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm");
+                                string date = Convert.ToDateTime(rdrC["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm tt");
 
                                 htmlDetails += $@"
                             <div style='text-align:{align}; margin:5px 0;'>
