@@ -112,6 +112,13 @@
         function hideCommentsPopup() {
             document.getElementById('<%= pnlComments.ClientID %>').style.display = 'none';
         }
+
+        function scrollToBottom() {
+            var container = document.getElementById("commentsContainer");
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
     </script>
 
 
@@ -376,7 +383,10 @@
                                         <hr />
                                         <br />
                                         <asp:HiddenField ID="HiddenField1" runat="server" />
-                                        <asp:Literal ID="litComments" runat="server"></asp:Literal>
+                                        <%--<asp:Literal ID="litComments" runat="server"></asp:Literal>--%>
+                                        <div id="commentsContainer" style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:5px;">
+                                            <asp:Literal ID="litComments" runat="server"></asp:Literal>
+                                        </div>
                                         <hr />
                                         <br />
                                         <h5 style="font-weight: bold; font-size: small; color: darkblue;">Type New Comments :</h5>

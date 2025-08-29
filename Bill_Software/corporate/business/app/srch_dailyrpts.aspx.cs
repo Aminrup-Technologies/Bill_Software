@@ -225,7 +225,7 @@ namespace Bill_Software.corporate.business.app
                             createdByCode = result.ToString();
                     }
 
-                    
+
                     Binder();
                 }
 
@@ -371,7 +371,7 @@ namespace Bill_Software.corporate.business.app
                 {
                     using (MailMessage mail = new MailMessage())
                     {
-                        mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "ERP Mailer | Aminrup Technologies");
+                        mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer | Aminrup Technologies");
                         mail.CC.Add(approverEmail);
                         mail.To.Add(salespersonEmail);
                         mail.Subject = "Sales Visit Response Submitted";
@@ -472,6 +472,8 @@ namespace Bill_Software.corporate.business.app
                     }
 
                     litComments.Text = sb.ToString();
+
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "scrollComments", "scrollToBottom();", true);
                 }
             }
         }
@@ -551,7 +553,7 @@ namespace Bill_Software.corporate.business.app
         //    }
         //}
 
-        private void GetApproverEmailAndVisitDetails(int visitId, out string approverEmail, out string salespersonEmail, out string htmlDetails, out DateTime replyDate)
+        private void GetApproverEmailAndVisitDetails_OLD(int visitId, out string approverEmail, out string salespersonEmail, out string htmlDetails, out DateTime replyDate)
         {
             approverEmail = "";
             salespersonEmail = "";
@@ -667,6 +669,155 @@ namespace Bill_Software.corporate.business.app
                 }
             }
         }
+
+        private void GetApproverEmailAndVisitDetails(int visitId, out string approverEmail, out string salespersonEmail, out string htmlDetails, out DateTime replyDate)
+        {
+            approverEmail = "";
+            salespersonEmail = "";
+            htmlDetails = "";
+            replyDate = DateTime.Now;
+
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connStr))
+            {
+                // First: Visit details
+                string query = @"
+                SELECT 
+                    mgr.Email AS ApproverEmail,
+                    sp.Email AS SalespersonEmail,
+                    v.VisitDate,
+                    v.Salesperson,
+                    v.CustomerName,
+                    v.Department,
+                    v.ContactPerson,
+                    v.VisitType,
+                    v.DiscussionPoints,
+                    v.FollowUpRequired,
+                    v.NextFollowUpDate,
+                    v.Status,
+                    v.ManagerRemarks,
+                    v.ApprovedDate,
+                    mgr.Name AS ApprovedByName,
+                    v.AttachmentName,
+                    v.SalespersonReplyDate,
+                    v.ApprovedBy
+                FROM tbl_SalesVisitReport v
+                LEFT JOIN tbl_login mgr ON v.ApprovedBy = mgr.User_Id
+                INNER JOIN tbl_login sp ON v.Salesperson = sp.Name
+                WHERE v.Id = @Id";
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Id", visitId);
+                con.Open();
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read())
+                    {
+                        approverEmail = rdr["ApproverEmail"]?.ToString();
+                        salespersonEmail = rdr["SalespersonEmail"]?.ToString();
+                        replyDate = rdr["SalespersonReplyDate"] == DBNull.Value ? DateTime.Now : Convert.ToDateTime(rdr["SalespersonReplyDate"]);
+
+                        // 🔹 If approver email not found (record not yet approved), fallback to current logged-in user
+                        if (string.IsNullOrEmpty(approverEmail))
+                        {
+                            string currentUserId = HttpContext.Current.Session["USERID"]?.ToString();
+                            if (!string.IsNullOrEmpty(currentUserId))
+                            {
+                                approverEmail = GetUserEmail(currentUserId); // helper method below
+                            }
+                        }
+
+                        string attachmentLink = string.IsNullOrEmpty(rdr["AttachmentName"].ToString())
+                            ? "N/A"
+                            : $"<a href='https://www.exc.aagroupindia.com/Uploads/{rdr["AttachmentName"]}' target='_blank'>{rdr["AttachmentName"]}</a>";
+
+                        htmlDetails = $@"
+                                <table border='1' cellspacing='0' cellpadding='6' style='border-collapse:collapse; width:100%;'>
+                                    <tr><td><b>Visit Date</b></td><td>{Convert.ToDateTime(rdr["VisitDate"]):dd-MMM-yyyy}</td></tr>
+                                    <tr><td><b>Salesperson</b></td><td>{rdr["Salesperson"]}</td></tr>
+                                    <tr><td><b>Customer Name</b></td><td>{rdr["CustomerName"]}</td></tr>
+                                    <tr><td><b>Department</b></td><td>{rdr["Department"]}</td></tr>
+                                    <tr><td><b>Contact Person</b></td><td>{rdr["ContactPerson"]}</td></tr>
+                                    <tr><td><b>Visit Type</b></td><td>{rdr["VisitType"]}</td></tr>
+                                    <tr><td><b>Discussion Points</b></td><td>{rdr["DiscussionPoints"]}</td></tr>
+                                    <tr><td><b>Follow-Up Required</b></td><td>{rdr["FollowUpRequired"]}</td></tr>
+                                    <tr><td><b>Next Follow-Up Date</b></td><td>{(rdr["NextFollowUpDate"] == DBNull.Value ? "N/A" : Convert.ToDateTime(rdr["NextFollowUpDate"]).ToString("dd-MMM-yyyy"))}</td></tr>
+                                    <tr><td><b>Status</b></td><td>{rdr["Status"]}</td></tr>
+                                    <tr><td><b>Manager Remarks</b></td><td>{rdr["ManagerRemarks"]}</td></tr>
+                                    <tr><td><b>Approved Date</b></td><td>{(rdr["ApprovedDate"] == DBNull.Value ? "N/A" : Convert.ToDateTime(rdr["ApprovedDate"]).ToString("dd-MMM-yyyy HH:mm tt"))}</td></tr>
+                                    <tr><td><b>Approved By</b></td><td>{rdr["ApprovedByName"]}</td></tr>
+                                    <tr><td><b>Attachment</b></td><td>{attachmentLink}</td></tr>
+                                </table>
+                                ";
+                    }
+                }
+
+                // Second: Chat-style comments
+                string commentQuery = @"
+                        SELECT r.RespondentRole, u.Name AS RespondentName, r.ResponseText, r.ResponseDate
+                        FROM tbl_SalesVisitResponses r
+                        INNER JOIN tbl_login u ON r.RespondentCode = u.User_Id
+                        WHERE r.VisitId = @VisitId
+                        ORDER BY r.ResponseDate ASC";
+
+                using (SqlCommand cmdComments = new SqlCommand(commentQuery, con))
+                {
+                    cmdComments.Parameters.AddWithValue("@VisitId", visitId);
+
+                    using (SqlDataReader rdrC = cmdComments.ExecuteReader())
+                    {
+                        if (rdrC.HasRows)
+                        {
+                            htmlDetails += "<br/><b>Comments:</b><br/>";
+                            htmlDetails += "<div style='font-family:Arial; font-size:14px;'>";
+
+                            while (rdrC.Read())
+                            {
+                                bool isManager = rdrC["RespondentRole"].ToString().Equals("Manager", StringComparison.OrdinalIgnoreCase);
+                                string align = isManager ? "right" : "left";
+                                string bgColor = isManager ? "#e1f5fe" : "#fce4ec";
+                                string name = rdrC["RespondentName"].ToString();
+                                string text = rdrC["ResponseText"].ToString();
+                                string date = Convert.ToDateTime(rdrC["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm");
+
+                                htmlDetails += $@"
+                            <div style='text-align:{align}; margin:5px 0;'>
+                                <div style='display:inline-block; background-color:{bgColor}; padding:8px 12px; border-radius:10px; max-width:70%;'>
+                                    <b>{name}</b> <small>({date})</small><br/>
+                                    {text}
+                                </div>
+                            </div>
+                        ";
+                            }
+
+                            htmlDetails += "</div>";
+                        }
+                    }
+                }
+            }
+        }
+
+        // 🔹 Helper function to get user email by User_Id
+        private string GetUserEmail(string userId)
+        {
+            string email = "";
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connStr))
+            {
+                string query = "SELECT Email FROM tbl_login WHERE User_Id = @UserId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    con.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null)
+                        email = result.ToString();
+                }
+            }
+            return email;
+        }
+
 
         private void ShowCommentsPopup()
         {
@@ -799,7 +950,7 @@ namespace Bill_Software.corporate.business.app
                                 PanelError.Visible = true;
                                 return;
                             }
-                            else if (!System.Text.RegularExpressions.Regex.IsMatch(emailTo,@"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                            else if (!System.Text.RegularExpressions.Regex.IsMatch(emailTo, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                             {
                                 lblErrorMsg.Text = "Email sending failed: Invalid recipient email address format.";
                                 PanelError.Visible = true;
@@ -808,7 +959,7 @@ namespace Bill_Software.corporate.business.app
 
                             using (MailMessage mail = new MailMessage())
                             {
-                                mail.From = new MailAddress("it.support@aminruptechnologies.co.in","ERP Mailer | Aminrup Technologies"
+                                mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer | Aminrup Technologies"
                                 );
                                 mail.To.Add(emailTo);
                                 mail.Subject = $"Sales Visit Report - {status}";
@@ -817,7 +968,7 @@ namespace Bill_Software.corporate.business.app
 
                                 using (SmtpClient smtp = new SmtpClient("smtp.zoho.in", 587))
                                 {
-                                    smtp.Credentials = new NetworkCredential("it.support@aminruptechnologies.co.in","TPw800QrVMU2");
+                                    smtp.Credentials = new NetworkCredential("it.support@aminruptechnologies.co.in", "TPw800QrVMU2");
                                     smtp.EnableSsl = true; // SSL/TLS required
                                     smtp.Send(mail);
                                 }

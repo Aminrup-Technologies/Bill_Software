@@ -146,11 +146,16 @@
 									<ul class="nav first">
                                         <li id="Create_quotation" runat="server"><a href="Create_quotation.aspx">Create Quotation / PO</a></li>
                                         <li id="View_quotation" runat="server"><a href="View_quotation.aspx">View Quotation</a></li>
-                                        <li id="View_po" runat="server"><a href="View_PurchaseOrder.aspx">View Purchase Order</a></li>
                                         <li id="Seartch_quotation" runat="server"><a href="Seartch_quotation.aspx">Search Quotation</a></li>
                                         <li id="Delete_Quotation" runat="server"><a href="Delete_Quotation.aspx">Delete Quotation</a></li>
                                         <li id="Edit_quatation" runat="server"><a href="Edit_quatation.aspx">Edit Quotation</a></li>
                                         <li id="SetQuatation" runat="server"><a href="Set_quatation.aspx">Set Quotation Permission</a></li>
+                                    </ul>
+                            </li>
+                            <li id="Li1" runat="server">Client PO
+									<ul class="nav first">
+                                        <li id="Li2" runat="server"><a href="Create_quotation.aspx">Create Purchase Order</a></li>
+                                        <li id="View_po" runat="server"><a href="View_PurchaseOrder.aspx">View Purchase Order</a></li>
                                     </ul>
                             </li>
                             <li id="challan" runat="server">DPCC

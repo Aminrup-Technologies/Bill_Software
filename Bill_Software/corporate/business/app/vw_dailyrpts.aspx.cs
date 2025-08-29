@@ -216,17 +216,50 @@ namespace Bill_Software.corporate.business.app
         }
 
 
+        //protected void gvSalesVisits_RowCommand(object sender, GridViewCommandEventArgs e)
+        //{
+        //    if (e.CommandName == "EditVisit")
+        //    {
+        //        string visitId = e.CommandArgument.ToString();
+        //        hfEditId.Value = visitId;
+
+        //        GetVisitDetails(Convert.ToInt16(visitId)); // your DB fetch method
+
+        //        upModify.Update(); // refresh update panel for edit form
+        //        ShowEditPopup();   // call JavaScript
+        //    }
+        //    else if (e.CommandName == "ReplyVisit")
+        //    {
+        //        int id = Convert.ToInt32(e.CommandArgument);
+        //        Response.Redirect("ReplyToManager.aspx?id=" + id);
+        //    }
+        //    else if (e.CommandName == "ViewComments")
+        //    {
+        //        string visitId = e.CommandArgument.ToString();
+        //        //hfVisitId.Value = visitId;
+
+        //        BindComments(visitId);
+        //        hfVisitId.Value = visitId;
+        //        upComments.Update(); // Refresh the UpdatePanel content
+        //        ShowCommentsPopup(); // Trigger JavaScript after update
+        //        //hfVisitId.Value = visitId;
+        //    }
+        //}
+
         protected void gvSalesVisits_RowCommand(object sender, GridViewCommandEventArgs e)
         {
+            if (string.IsNullOrEmpty(e.CommandArgument?.ToString()))
+                return; // guard against nulls
+
             if (e.CommandName == "EditVisit")
             {
-                string visitId = e.CommandArgument.ToString();
-                hfEditId.Value = visitId;
+                int visitId = Convert.ToInt32(e.CommandArgument); // safer than Int16
+                hfEditId.Value = visitId.ToString();
 
-                GetVisitDetails(Convert.ToInt16(visitId)); // your DB fetch method
+                GetVisitDetails(visitId); // DB fetch
 
-                upModify.Update(); // refresh update panel for edit form
-                ShowEditPopup();   // call JavaScript
+                upModify.Update(); // refresh update panel
+                ShowEditPopup();   // call JS (ensure ScriptManager is used)
             }
             else if (e.CommandName == "ReplyVisit")
             {
@@ -235,15 +268,15 @@ namespace Bill_Software.corporate.business.app
             }
             else if (e.CommandName == "ViewComments")
             {
-                string visitId = e.CommandArgument.ToString();
-                hfVisitId.Value = visitId;
+                int visitId = Convert.ToInt32(e.CommandArgument);
+                hfVisitId.Value = visitId.ToString();
 
-                BindComments(visitId);
-
-                upComments.Update(); // Refresh the UpdatePanel content
-                ShowCommentsPopup(); // Trigger JavaScript after update
+                BindComments(visitId.ToString()); // or int if your method accepts int
+                upComments.Update();
+                ShowCommentsPopup();
             }
         }
+
 
         private void ShowEditPopup()
         {
@@ -322,6 +355,8 @@ namespace Bill_Software.corporate.business.app
 
         private void BindComments(string visitId)
         {
+            hfVisitId.Value = visitId;
+            HiddenField1.Value = visitId;
             string currentUserId = Session["USERID"].ToString();
 
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
@@ -371,6 +406,8 @@ namespace Bill_Software.corporate.business.app
                     }
 
                     litComments.Text = sb.ToString();
+
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "scrollComments", "scrollToBottom();", true);
                 }
             }
         }
@@ -490,7 +527,9 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSendComment_Click(object sender, EventArgs e)
         {
-            string visitId = hfVisitId.Value;
+            //string visitId = hfVisitId.Value;
+            string visitId = HiddenField1.Value;
+
             string comment = txtNewComment.Text.Trim();
 
             if (!string.IsNullOrEmpty(comment))
@@ -523,7 +562,7 @@ namespace Bill_Software.corporate.business.app
             DateTime replyDate;
             string role1 = "Salesperson";
 
-            GetApproverEmailAndVisitDetails(Convert.ToInt16(visitId), out approverEmail, out salespersonEmail,out htmlDetails, out replyDate);
+            GetApproverEmailAndVisitDetails(Convert.ToInt16(visitId), out approverEmail, out salespersonEmail, out htmlDetails, out replyDate);
 
             // 3. Send Email
             if (!string.IsNullOrEmpty(approverEmail))
@@ -532,7 +571,7 @@ namespace Bill_Software.corporate.business.app
                 {
                     using (MailMessage mail = new MailMessage())
                     {
-                        mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "ERP Mailer | Aminrup Technologies");
+                        mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer | Aminrup Technologies");
                         mail.To.Add(approverEmail);
                         mail.CC.Add(salespersonEmail);
                         mail.Subject = "Sales Visit Response Submitted";
@@ -588,7 +627,7 @@ namespace Bill_Software.corporate.business.app
             string comment = txtNewComment.Text.Trim();
             string user = Session["USERID"].ToString();
 
-            string role= GetUserRole(user, visitId);
+            string role = GetUserRole(user, visitId);
             AddResponse(visitId, role, user, comment);
             GetVisitMessages(visitId);
 
@@ -641,7 +680,7 @@ namespace Bill_Software.corporate.business.app
                     {
                         using (MailMessage mail = new MailMessage())
                         {
-                            mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "ERP Mailer | Aminrup Technologies");
+                            mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer | Aminrup Technologies");
                             mail.To.Add(approverEmail);
                             mail.CC.Add(salespersonEmail);
                             mail.Subject = "Sales Visit Response Submitted";
@@ -750,7 +789,7 @@ namespace Bill_Software.corporate.business.app
                     {
                         using (MailMessage mail = new MailMessage())
                         {
-                            mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "ERP Mailer | Aminrup Technologies");
+                            mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer | Aminrup Technologies");
                             mail.To.Add(approverEmail);
                             mail.CC.Add(salespersonEmail);
                             mail.Subject = "Sales Visit Response Submitted";
@@ -900,7 +939,7 @@ namespace Bill_Software.corporate.business.app
         //    }
         //}
 
-        private void GetApproverEmailAndVisitDetails(int visitId,out string approverEmail,out string salespersonEmail,out string htmlDetails,out DateTime replyDate)
+        private void GetApproverEmailAndVisitDetails_OLD(int visitId, out string approverEmail, out string salespersonEmail, out string htmlDetails, out DateTime replyDate)
         {
             approverEmail = "";
             salespersonEmail = "";
@@ -998,6 +1037,140 @@ namespace Bill_Software.corporate.business.app
                                 string bgColor = isManager ? "#e1f5fe" : "#fce4ec";
                                 string name = rdrC["RespondentName"].ToString();
                                 string text = rdrC["ResponseText"].ToString();
+                                string date = Convert.ToDateTime(rdrC["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm tt");
+
+                                htmlDetails += $@"
+                                <div style='text-align:{align}; margin:5px 0;'>
+                                    <div style='display:inline-block; background-color:{bgColor}; padding:8px 12px; border-radius:10px; max-width:70%;'>
+                                        <b>{name}</b> <small>({date})</small><br/>
+                                        {text}
+                                    </div>
+                                </div>
+                            ";
+                            }
+
+                            htmlDetails += "</div>";
+                        }
+                    }
+                }
+            }
+        }
+
+
+        private void GetApproverEmailAndVisitDetails(
+    int visitId,
+    out string approverEmail,
+    out string salespersonEmail,
+    out string htmlDetails,
+    out DateTime replyDate)
+        {
+            approverEmail = "";
+            salespersonEmail = "";
+            htmlDetails = "";
+            replyDate = DateTime.Now;
+
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connStr))
+            {
+                string query = @"
+                    SELECT 
+                        v.ApprovedBy,
+                        mgr.Email AS ApproverEmail,
+                        sp.Email AS SalespersonEmail,
+                        v.VisitDate,
+                        v.Salesperson,
+                        v.CustomerName,
+                        v.Department,
+                        v.ContactPerson,
+                        v.VisitType,
+                        v.DiscussionPoints,
+                        v.FollowUpRequired,
+                        v.NextFollowUpDate,
+                        v.Status,
+                        v.ManagerRemarks,
+                        v.ApprovedDate,
+                        mgr.Name AS ApprovedByName,
+                        v.AttachmentName,
+                        v.SalespersonReplyDate
+                    FROM tbl_SalesVisitReport v
+                    LEFT JOIN tbl_login mgr ON v.ApprovedBy = mgr.User_Id
+                    INNER JOIN tbl_login sp ON v.Salesperson = sp.Name -- ⚠ ideally should be User_Id
+                    WHERE v.Id = @Id";
+
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Id", visitId);
+                con.Open();
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read())
+                    {
+                        // Salesperson email
+                        salespersonEmail = rdr["SalespersonEmail"].ToString();
+
+                        // Approver email (fallback to current user)
+                        if (rdr["ApproverEmail"] != DBNull.Value && !string.IsNullOrEmpty(rdr["ApproverEmail"].ToString()))
+                        {
+                            approverEmail = rdr["ApproverEmail"].ToString();
+                        }
+                        else
+                        {
+                            string currentUserId = HttpContext.Current.Session["USERID"]?.ToString() ?? "";
+                            approverEmail = GetUserEmailById(currentUserId);
+                        }
+
+                        // Reply date
+                        replyDate = rdr["SalespersonReplyDate"] == DBNull.Value ? DateTime.Now : Convert.ToDateTime(rdr["SalespersonReplyDate"]);
+
+                        string attachmentLink = string.IsNullOrEmpty(rdr["AttachmentName"].ToString()) ? "N/A"
+                            : $"<a href='https://www.exc.aagroupindia.com/Uploads/{rdr["AttachmentName"]}' target='_blank'>{rdr["AttachmentName"]}</a>";
+
+                        htmlDetails = $@"
+                            <table border='1' cellspacing='0' cellpadding='6' style='border-collapse:collapse; width:100%;'>
+                                <tr><td><b>Visit Date</b></td><td>{Convert.ToDateTime(rdr["VisitDate"]):dd-MMM-yyyy}</td></tr>
+                                <tr><td><b>Salesperson</b></td><td>{rdr["Salesperson"]}</td></tr>
+                                <tr><td><b>Customer Name</b></td><td>{rdr["CustomerName"]}</td></tr>
+                                <tr><td><b>Department</b></td><td>{rdr["Department"]}</td></tr>
+                                <tr><td><b>Contact Person</b></td><td>{rdr["ContactPerson"]}</td></tr>
+                                <tr><td><b>Visit Type</b></td><td>{rdr["VisitType"]}</td></tr>
+                                <tr><td><b>Discussion Points</b></td><td>{rdr["DiscussionPoints"]}</td></tr>
+                                <tr><td><b>Follow-Up Required</b></td><td>{rdr["FollowUpRequired"]}</td></tr>
+                                <tr><td><b>Next Follow-Up Date</b></td><td>{(rdr["NextFollowUpDate"] == DBNull.Value ? "N/A" : Convert.ToDateTime(rdr["NextFollowUpDate"]).ToString("dd-MMM-yyyy"))}</td></tr>
+                                <tr><td><b>Status</b></td><td>{rdr["Status"]}</td></tr>
+                                <tr><td><b>Manager Remarks</b></td><td>{rdr["ManagerRemarks"]}</td></tr>
+                                <tr><td><b>Approved Date</b></td><td>{(rdr["ApprovedDate"] == DBNull.Value ? "N/A" : Convert.ToDateTime(rdr["ApprovedDate"]).ToString("dd-MMM-yyyy HH:mm tt"))}</td></tr>
+                                <tr><td><b>Approved By</b></td><td>{rdr["ApprovedByName"]}</td></tr>
+                                <tr><td><b>Attachment</b></td><td>{attachmentLink}</td></tr>
+                            </table>";
+                    }
+                }
+
+                // Second: Chat-style comments
+                string commentQuery = @"
+                SELECT r.RespondentRole, u.Name AS RespondentName, r.ResponseText, r.ResponseDate
+                FROM tbl_SalesVisitResponses r
+                INNER JOIN tbl_login u ON r.RespondentCode = u.User_Id
+                WHERE r.VisitId = @VisitId
+                ORDER BY r.ResponseDate ASC";
+
+                using (SqlCommand cmdComments = new SqlCommand(commentQuery, con))
+                {
+                    cmdComments.Parameters.AddWithValue("@VisitId", visitId);
+
+                    using (SqlDataReader rdrC = cmdComments.ExecuteReader())
+                    {
+                        if (rdrC.HasRows)
+                        {
+                            htmlDetails += "<br/><b>Comments:</b><br/>";
+                            htmlDetails += "<div style='font-family:Arial; font-size:14px;'>";
+
+                            while (rdrC.Read())
+                            {
+                                bool isManager = rdrC["RespondentRole"].ToString().Equals("Manager", StringComparison.OrdinalIgnoreCase);
+                                string align = isManager ? "right" : "left";
+                                string bgColor = isManager ? "#e1f5fe" : "#fce4ec";
+                                string name = rdrC["RespondentName"].ToString();
+                                string text = rdrC["ResponseText"].ToString();
                                 string date = Convert.ToDateTime(rdrC["ResponseDate"]).ToString("dd-MMM-yyyy HH:mm");
 
                                 htmlDetails += $@"
@@ -1016,6 +1189,26 @@ namespace Bill_Software.corporate.business.app
                 }
             }
         }
+
+
+        private string GetUserEmailById(string userId)
+        {
+            string email = "";
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+
+            using (SqlConnection con = new SqlConnection(connStr))
+            {
+                con.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT Email FROM tbl_login WHERE User_Id = @UserId", con))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    object result = cmd.ExecuteScalar();
+                    if (result != null) email = result.ToString();
+                }
+            }
+            return email;
+        }
+
 
 
 
@@ -1291,7 +1484,7 @@ namespace Bill_Software.corporate.business.app
             // Update UpdatePanel
             upModify.Update();
             ScriptManager.RegisterStartupScript(this, GetType(), "HidePopup", "$('#editModal').modal('hide');", true);
-            
+
         }
 
         protected void btnEdit_Click(object sender, EventArgs e)

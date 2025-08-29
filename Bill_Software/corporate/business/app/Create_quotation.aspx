@@ -507,7 +507,7 @@
 
     <table cellpadding="1" cellspacing="1" class="auto-style1">
         <tr>
-            <td colspan="4" bgcolor="#19658A"><span class="style2">&nbsp;Create Quotation</span></td>
+            <td colspan="4" bgcolor="#19658A"><span class="style2">&nbsp;Create Quotation/ Client Purchase Order</span></td>
         </tr>
         <tr>
             <td width="15%">&nbsp;</td>
