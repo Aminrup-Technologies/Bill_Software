@@ -24,6 +24,10 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
+                string query = "SELECT * FROM tbl_SalesVisitReport " +
+                                "WHERE CAST(VisitDate AS DATE) = CAST(GETDATE() AS DATE) " +
+                                "ORDER BY VisitDate DESC";
+                Buinddatagrid(query);
                 DbCL.FillCombo(cmbvendor, "select Name from tbl_login order by Name");
                 txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
                 txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
@@ -99,8 +103,10 @@ namespace Bill_Software.corporate.business.app
                     {
                         DataList2.DataSource = null;
                         DataList2.DataBind();
-                        lblOk.Text = "No records found for the selected criteria.";
+                        lblErrorMsg.Text = "No records found for Current Date";
                         PanelError.Visible = true;
+                        lblOk.Text = "";
+                        PanelOK.Visible = false;
                     }
                 }
             }
@@ -108,6 +114,8 @@ namespace Bill_Software.corporate.business.app
             {
                 lblErrorMsg.Text = "Error loading data: " + ex.Message;
                 PanelError.Visible = true;
+                lblOk.Text = "";
+                PanelOK.Visible = false;
             }
         }
 

@@ -128,7 +128,7 @@
                 '<%=ddlProOrSer.ClientID%>',
                 '<%=cmbtax.ClientID%>'
             ];
-    
+
             for (var j = 0; j < dropdowns.length; j++) {
                 var dropdown = document.getElementById(dropdowns[j]);
                 if (dropdown) {
@@ -190,8 +190,42 @@
                 changeYear: true
             });
         });
+
+        function checkDuplicates() {
+            var productName = $("#<%= txtSubProductsName.ClientID %>").val().trim();
+            var category = $("#<%= cmdProduct.ClientID %>").val();
+
+            $("#<%= lblDupMessage.ClientID %>").text("");
+            $("#<%= lblSimilar.ClientID %>").text("");
+
+            if (!productName) {
+                $("#<%= lblDupMessage.ClientID %>").text("Please enter a product name to check.");
+                return;
+            }
+
+            // Call the server-side WebMethod
+            PageMethods.GetDuplicateInfo(productName, category,
+                function(result) {
+                    // result is the object returned by your WebMethod
+                    if (result.foundExact) {
+                        var msg = "Exact product exists: Id=" + result.existingId;
+                        if (result.productID) msg += " (ProductID: " + result.productID + ")";
+                        $("#<%= lblDupMessage.ClientID %>").text(msg);
+                    } else {
+                        $("#<%= lblDupMessage.ClientID %>").text("No exact match found. You may proceed.");
+                    }
+
+                    if (result.similar && result.similar.length > 0) {
+                        $("#<%= lblSimilar.ClientID %>").text("Similar products: " + result.similar.join(" | "));
+                    }
+                },
+                function(err) {
+                    $("#<%= lblDupMessage.ClientID %>").text("Error: " + err.get_message());
+                }
+            );
+        }
     </script>
-    <asp:ScriptManager ID="ScriptManager1" runat="server">
+    <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true">
     </asp:ScriptManager>
     <table cellpadding="0" cellspacing="1" class="style1">
         <tr>
@@ -251,11 +285,30 @@
             </td>
             <td>&nbsp;</td>
         </tr>
+        <%--<tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;<asp:Label ID="Label18" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;PRODUCT / SERVICE NAME&nbsp;</td>
+            <td>
+                <asp:TextBox ID="txtSubProductsName" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
+                &nbsp;<asp:Label ID="lblSimilar" runat="server" ForeColor="Gray"></asp:Label>
+            </td>
+            <td>&nbsp;</td>
+        </tr>--%>
         <tr>
             <td>&nbsp;</td>
             <td>&nbsp;<asp:Label ID="Label18" runat="server" Text="*" ForeColor="Red"></asp:Label>&nbsp;PRODUCT / SERVICE NAME&nbsp;</td>
             <td>
                 <asp:TextBox ID="txtSubProductsName" runat="server" CssClass="textbox_U_style" Width="300px"></asp:TextBox>
+                &nbsp;
+                <!-- Check duplicates button -->
+                <asp:Button ID="btnCheckDup" runat="server" Text="Check Duplicates" OnClientClick="checkDuplicates(); return false;" CssClass="btn btn_style" />
+
+                <!-- show results -->
+                <div id="dupResultPanel" style="margin-top: 6px;">
+                    <asp:Label ID="lblDupMessage" runat="server" ForeColor="Crimson" />
+                    <br />
+                    <asp:Label ID="lblSimilar" runat="server" ForeColor="Gray" />
+                </div>
             </td>
             <td>&nbsp;</td>
         </tr>
