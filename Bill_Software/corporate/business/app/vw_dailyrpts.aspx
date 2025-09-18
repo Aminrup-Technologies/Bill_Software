@@ -111,6 +111,47 @@
         .ui-datepicker {
             z-index: 99999 !important;
         }
+
+        .approved {
+            color: #158000; /* green */
+            font-weight: 600;
+        }
+
+        /* Approval chips */
+        .approval-chip {
+          display: inline-block;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-weight: 600;
+          font-size: 0.95em;
+          line-height:1;
+        }
+
+        /* Specific states */
+        .approval-approved {
+          color: #0b6623;             /* dark green text */
+          background: #e9f7ee;       /* light green bg */
+          border: 1px solid #c6efcf;
+        }
+
+        .approval-pending {
+          color: #8a5600;             /* amber/brown text */
+          background: #fff6e6;       /* light amber bg */
+          border: 1px solid #f0d7a8;
+        }
+
+        .approval-rejected {
+          color: #a10000;
+          background: #fdecec;
+          border: 1px solid #f5bcbc;
+        }
+
+        .approval-default {
+          color: #333;
+          background: #f3f3f3;
+          border: 1px solid #ddd;
+        }
+
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -163,6 +204,15 @@
                 showEditModal();
             }
         });
+
+        function showEditModal() {
+            // bootstrap modal show
+            $('#editModal').modal('show');
+        }
+
+        function hideEditModal() {
+            $('#editModal').modal('hide');
+        }
 
         function showEditModal() {
             document.getElementById('<%= pnlModify.ClientID %>').style.display = 'block';
@@ -249,7 +299,14 @@
                                                 <td style="width: 12%"><%# Eval("VisitDate", "{0:dd-MMM-yyyy}") %></td>
                                                 <td style="width: 18%"><%# Eval("Salesperson") %></td>
                                                 <td style="width: 20%">Customer: <%# Eval("CustomerName") %></td>
-                                                <td style="width: 15%">Approval: <%# Eval("ApprovalStatus") %></td>
+                                                <%--<td style="width: 15%">Approval: <%# Eval("ApprovalStatus") %></td>--%>
+                                                <%--<td style="width: 15%" class='<%# (Convert.ToString(Eval("ApprovalStatus")).ToLower() == "approved") ? "approved" : "" %>'>Approval: <%# Eval("ApprovalStatus") %>
+                                                </td>--%>
+                                                <td style="width:15%">
+                                                    <span class='<%# GetApprovalClass(Eval("ApprovalStatus")) %>'>
+                                                        Approval: <%# Eval("ApprovalStatus") %>
+                                                    </span>
+                                                </td>
                                                 <td style="width: 10%">
                                                     <asp:Button ID="btnEdit" runat="server" Text="Edit" CssClass="btn btn_style" OnClick="btnEdit_Click" CommandArgument='<%# Eval("Id") %>' />
                                                 </td>
@@ -278,7 +335,8 @@
                                             <tr class="details-row">
                                                 <td colspan="3">
                                                     <div>
-                                                        <b>Manager Remarks:</b> <span><%# Eval("ManagerRemarks") %></span>
+                                                        &nbsp;
+                                                        <%--<b>Manager Remarks:</b> <span><%# Eval("ManagerRemarks") %></span>--%>
                                                     </div>
                                                 </td>
                                                 <%--<td colspan="2" style="width: 10%">
@@ -323,7 +381,7 @@
                                 <br />
                                 <asp:HiddenField ID="HiddenField1" runat="server" />
                                 <%--<asp:Literal ID="litComments" runat="server"></asp:Literal>--%>
-                                <div id="commentsContainer" style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:5px;">
+                                <div id="commentsContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;">
                                     <asp:Literal ID="litComments" runat="server"></asp:Literal>
                                 </div>
                                 <hr />
@@ -455,6 +513,7 @@
                                             </table>
                                             <!-- Include all the fields you posted in your first form -->
                                         </div>
+                                        <br />
                                         <div class="modal-footer">
                                             <asp:Button ID="btnUpdate" runat="server" CssClass="btn btn_style" Text="Save Changes" OnClick="btnUpdate_Click" />
                                             <asp:Button ID="Button1" runat="server" Text="Close" CssClass="btn btn_style" OnClientClick="hideEditModal(); return false;" />

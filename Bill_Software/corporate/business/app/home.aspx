@@ -48,7 +48,16 @@
             <td>&nbsp;</td>
         </tr>
         <tr>
-            <td>&nbsp;</td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <iframe
+                    width="200"
+                    height="200"
+                    seamless
+                    frameborder="0"
+                    scrolling="no"
+                    src="https://reports.aminruptechnologies.co.in/superset/explore/p/Qw1qzZKqJgn/?standalone=1&height=200"></iframe>
+
+            </td>
             <td colspan="2">
                 <asp:Panel ID="Panel1" runat="server" BorderColor="#336699" BorderStyle="Solid"
                     BorderWidth="2px">
@@ -82,7 +91,15 @@
                     </table>
                 </asp:Panel>
             </td>
-            <td>&nbsp;</td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <iframe
+                    width="200"
+                    height="200"
+                    seamless
+                    frameborder="0"
+                    scrolling="no"
+                    src="https://reports.aminruptechnologies.co.in/superset/explore/p/EKPqeVXWO9k/?standalone=1&height=200"></iframe>
+            </td>
         </tr>
         <tr>
             <td>&nbsp;</td>

@@ -203,6 +203,8 @@ namespace Bill_Software.corporate.business.app
                         !string.IsNullOrEmpty(approvalStatus) &&
                         approvalStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase) &&
                         !managerCommentExists;
+                    // Make sure the edit button participates in async postbacks
+                    ScriptManager.GetCurrent(this.Page).RegisterAsyncPostBackControl(btnEdit);
                 }
 
                 if (btnReply != null)
@@ -1487,7 +1489,7 @@ namespace Bill_Software.corporate.business.app
 
         }
 
-        protected void btnEdit_Click(object sender, EventArgs e)
+        protected void btnEdit_Click_OLD(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
             int visitId = Convert.ToInt32(btn.CommandArgument);
@@ -1509,7 +1511,78 @@ namespace Bill_Software.corporate.business.app
                 ddlStatus.SelectedValue = visit.Status;
             }
 
-            ScriptManager.RegisterStartupScript(this, GetType(), "Pop", "showEditModal();", true);
+            // Make sure UpdatePanel is updated
+            upModify.Update();
+
+            // Register script for partial postback context (register against UpdatePanel)
+            ScriptManager.RegisterStartupScript(upModify, upModify.GetType(), "Pop", "showEditModal();", true);
+        }
+
+        protected void btnEdit_Click(object sender, EventArgs e)
+        {
+            Button btn = (Button)sender;
+            int visitId = 0;
+            if (!int.TryParse(btn.CommandArgument, out visitId)) return;
+
+            // set hidden id
+            hfEditId.Value = visitId.ToString();
+
+            // retrieve visit - handle null/exception inside GetVisitDetails
+            SalesVisit visit = GetVisitDetails(visitId);
+            if (visit != null)
+            {
+                // populate safely (check ddl values before assigning)
+                txtVisitDate.Text = visit.VisitDate.ToString("yyyy-MM-dd");
+                txtSalesperson.Text = visit.Salesperson ?? "";
+                txtCustomerName.Text = visit.CustomerName ?? "";
+                txtDepartment.Text = visit.Department ?? "";
+                txtContactPerson.Text = visit.ContactPerson ?? "";
+                txtDiscussion.Text = visit.DiscussionPoints ?? "";
+                txtNextFollowUp.Text = visit.NextFollowUpDate?.ToString("yyyy-MM-dd") ?? "";
+
+                // safe dropdown assignment pattern
+                if (!string.IsNullOrEmpty(visit.VisitType) && ddlVisitType.Items.FindByValue(visit.VisitType) != null)
+                    ddlVisitType.SelectedValue = visit.VisitType;
+                else
+                    ddlVisitType.SelectedIndex = 0;
+
+                if (!string.IsNullOrEmpty(visit.FollowUpRequired) && ddlFollowUp.Items.FindByValue(visit.FollowUpRequired) != null)
+                    ddlFollowUp.SelectedValue = visit.FollowUpRequired;
+                else
+                    ddlFollowUp.SelectedIndex = 0;
+
+                if (!string.IsNullOrEmpty(visit.Status) && ddlStatus.Items.FindByValue(visit.Status) != null)
+                    ddlStatus.SelectedValue = visit.Status;
+                else
+                    ddlStatus.SelectedIndex = 0;
+            }
+            else
+            {
+                // optionally show message or clear fields
+                txtVisitDate.Text = txtSalesperson.Text = txtCustomerName.Text = "";
+                ddlVisitType.SelectedIndex = 0;
+                ddlFollowUp.SelectedIndex = 0;
+                ddlStatus.SelectedIndex = 0;
+            }
+
+            // IMPORTANT: update the UpdatePanel that contains the modal so its HTML gets sent
+            upModify.Update();
+
+            // Register the script so it runs after the async update for upModify
+            ScriptManager.RegisterStartupScript(upModify, upModify.GetType(), "ShowEditModal", "showEditModal();", true);
+        }
+
+        protected string GetApprovalClass(object statusObj)
+        {
+            string status = Convert.ToString(statusObj ?? "").Trim();
+            if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase))
+                return "approval-chip approval-approved";
+            if (string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase))
+                return "approval-chip approval-pending";
+            if (string.Equals(status, "Rejected", StringComparison.OrdinalIgnoreCase))
+                return "approval-chip approval-rejected";
+
+            return "approval-chip approval-default";
         }
 
     }
