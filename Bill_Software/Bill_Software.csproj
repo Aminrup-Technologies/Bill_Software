@@ -255,6 +255,7 @@
     <Content Include="corporate\business\app\ProformaMail.aspx" />
     <Content Include="corporate\business\app\RequisitionManual.aspx" />
     <Content Include="corporate\business\app\RequisitionView.aspx" />
+    <Content Include="corporate\business\app\rpts_vw_qtn_po_counts.aspx" />
     <Content Include="corporate\business\app\SearchHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Searchhydrent_invoice.aspx" />
     <Content Include="corporate\business\app\settings.aspx" />
@@ -758,6 +759,13 @@
     </Compile>
     <Compile Include="corporate\business\app\RequisitionView.aspx.designer.cs">
       <DependentUpon>RequisitionView.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\rpts_vw_qtn_po_counts.aspx.cs">
+      <DependentUpon>rpts_vw_qtn_po_counts.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\rpts_vw_qtn_po_counts.aspx.designer.cs">
+      <DependentUpon>rpts_vw_qtn_po_counts.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\SearchHydrentQuatation.aspx.cs">
       <DependentUpon>SearchHydrentQuatation.aspx</DependentUpon>

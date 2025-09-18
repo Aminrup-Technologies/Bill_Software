@@ -859,6 +859,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl Purchess_due;
         
         /// <summary>
+        /// rpts_vw_qtn_po_counts control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl rpts_vw_qtn_po_counts;
+        
+        /// <summary>
         /// SalesTeam control.
         /// </summary>
         /// <remarks>

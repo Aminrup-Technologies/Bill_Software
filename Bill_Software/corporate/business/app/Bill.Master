@@ -216,6 +216,7 @@
                                         <li id="Service_stock" runat="server"><a href="Service_stock.aspx">Service Stock</a></li>
                                         <li id="Payment_due" runat="server"><a href="Payment_due.aspx">Payments Due</a></li>
                                         <li id="Purchess_due" runat="server"><a href="Purchess_due.aspx">Purchesse Due</a></li>
+                                        <li id="rpts_vw_qtn_po_counts" runat="server"><a href="rpts_vw_qtn_po_counts.aspx">QTN/ PO Added</a></li>
                                     </ul>
                             </li>
 
