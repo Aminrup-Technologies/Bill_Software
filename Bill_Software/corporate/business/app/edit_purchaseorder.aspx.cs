@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm65 : System.Web.UI.Page
+    public partial class edit_purchaseorder : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
         public DataTable first_datatable;
@@ -62,20 +62,20 @@ namespace Bill_Software.corporate.business.app
             {
                 BuindCompanyId();
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and tbl_Quotation.Status2='No' order by cast(tbl_Quotation.Quotation_date as datetime) desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and tbl_Quotation.RecordType='Purchase Order' order by tbl_Quotation.ID desc";
                 Buinddatagrid(cmdstring);
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.Status2='No' order by cast(tbl_Quotation.Quotation_date as datetime) desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.RecordType='Purchase Order' order by tbl_Quotation.ID desc";
                 Buinddatagrid(cmdstring);
             }
             else
             {
                 BuindCompanyId();
                 //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.Status2='No' order by cast(tbl_Quotation.Quotation_date as datetime) desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.RecordType='Purchase Order' order by tbl_Quotation.ID desc";
                 Buinddatagrid(cmdstring);
             }
             btnSertch.Visible = false;
@@ -127,7 +127,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnreset_Click(object sender, EventArgs e)
         {
-            Response.Redirect("~/corporate/business/app/Edit_quatation.aspx");
+            Response.Redirect("~/corporate/business/app/edit_purchaseorder.aspx");
         }
 
         protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
@@ -180,18 +180,18 @@ namespace Bill_Software.corporate.business.app
 
                             int count = dtPCat.Rows.Count + 1;
 
-                            SearchProductCatwise_NEW(count, Product_code, ProductId, ProductName, Brandspecification,Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat,ItemNo, MaterialNo, PackSize, ItemRemarks, Slno, DiscountRate, DeliveryDate, Department);
+                            SearchProductCatwise_NEW(count, Product_code, ProductId, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat, ItemNo, MaterialNo, PackSize, ItemRemarks, Slno, DiscountRate, DeliveryDate, Department);
                             //SearchProductCatwise(count, ProductId, Product_code, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
                         }
                         else
                         {
-                            SearchProductCatwise_NEW(1, Product_code, ProductId, ProductName, Brandspecification,Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat,ItemNo, MaterialNo, PackSize, ItemRemarks, Slno, DiscountRate, DeliveryDate, Department);
+                            SearchProductCatwise_NEW(1, Product_code, ProductId, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat, ItemNo, MaterialNo, PackSize, ItemRemarks, Slno, DiscountRate, DeliveryDate, Department);
                             //SearchProductCatwise(1, ProductId, Product_code, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
                         }
                     }
 
                 }
-                
+
                 Bindcombo();
                 BindClientDetails(Quotation_no);
                 //bindphaseType(Quotation_no);
@@ -199,7 +199,7 @@ namespace Bill_Software.corporate.business.app
                 LoadPrimaryServices(Quotation_no);
                 ToggleGridColumns();
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "checkAllRows", "checkAllOnLoad();", true);
-                
+
             }
         }
 
@@ -332,7 +332,7 @@ namespace Bill_Software.corporate.business.app
         private void BindClientDetails(string Quotation_no)
         {
             BindQuotationDetails(Quotation_no);
-            
+
         }
 
         public Quotation GetQuotationByNo(string quotationNo)
@@ -467,7 +467,7 @@ namespace Bill_Software.corporate.business.app
                     rbQt.Checked = false;
                     rbPo.Checked = true;
                     PO_DataInputs.Visible = true;
-                    
+
                 }
 
                 ListItem item4 = ddlPlaceOfSupply.Items.FindByText(q.PlaceOfSupply);
@@ -957,7 +957,7 @@ namespace Bill_Software.corporate.business.app
                 decimal new_sub_total = 0, new_total_Service = 0, new_Gross_amount = 0;
 
                 string versionQuery = "SELECT ISNULL(MAX(Version), 0) + 1 FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no";
-                        SqlParameter[] versionParam = {
+                SqlParameter[] versionParam = {
                     new SqlParameter("@Quotation_no", qno)
                 };
                 int newVersion = Convert.ToInt32(DbCL.ExecuteScalar(versionQuery, versionParam));
@@ -1476,7 +1476,7 @@ namespace Bill_Software.corporate.business.app
                             dtPCat = (DataTable)ViewState["PhaseProductData"];
                             int count = dtPCat.Rows.Count + 1;
 
-                            SearchProductCatwise_NEW(count, ProductId, Product_code, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat,"","","","","","","","");
+                            SearchProductCatwise_NEW(count, ProductId, Product_code, ProductName, Brandspecification, Specification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat, "", "", "", "", "", "", "", "");
 
                         }
                         else
@@ -1659,7 +1659,7 @@ namespace Bill_Software.corporate.business.app
         //    }
         //}
 
-        private void SearchProductCatwise_NEW(int count, string Product_code, string ProductId, string ProductName,string Brand, string Specification, string Quantity, string Sail_Rate,string Tax_Rate, string Type, string Unit, string ProductOrServiceCat, string ItemNo, string MaterialNo, string PackSize, string ItemRemarks, string Slno, string DiscountRate, string DeliveryDate, string Department)
+        private void SearchProductCatwise_NEW(int count, string Product_code, string ProductId, string ProductName, string Brand, string Specification, string Quantity, string Sail_Rate, string Tax_Rate, string Type, string Unit, string ProductOrServiceCat, string ItemNo, string MaterialNo, string PackSize, string ItemRemarks, string Slno, string DiscountRate, string DeliveryDate, string Department)
         {
             if (dtPCat.Columns.Count == 0)
             {
@@ -2375,6 +2375,5 @@ namespace Bill_Software.corporate.business.app
                 cmd.ExecuteNonQuery();
             }
         }
-
     }
 }
