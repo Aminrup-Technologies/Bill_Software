@@ -258,6 +258,7 @@
     <Content Include="corporate\business\app\rpts_vw_qtn_po_counts.aspx" />
     <Content Include="corporate\business\app\SearchHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Searchhydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\Search_purchaseorder.aspx" />
     <Content Include="corporate\business\app\settings.aspx" />
     <Content Include="corporate\business\app\srch_dailyrpts.aspx" />
     <Content Include="corporate\business\app\Update\contactno.aspx" />
@@ -780,6 +781,13 @@
     </Compile>
     <Compile Include="corporate\business\app\Searchhydrent_invoice.aspx.designer.cs">
       <DependentUpon>Searchhydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Search_purchaseorder.aspx.cs">
+      <DependentUpon>Search_purchaseorder.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Search_purchaseorder.aspx.designer.cs">
+      <DependentUpon>Search_purchaseorder.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\settings.aspx.cs">
       <DependentUpon>settings.aspx</DependentUpon>

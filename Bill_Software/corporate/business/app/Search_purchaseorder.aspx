@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Seartch_quotation.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm24" %>
+﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Search_purchaseorder.aspx.cs" Inherits="Bill_Software.corporate.business.app.Search_purchaseorder" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
