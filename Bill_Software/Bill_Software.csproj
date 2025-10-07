@@ -244,6 +244,7 @@
     <Content Include="corporate\business\app\daily_rpt.aspx" />
     <Content Include="corporate\business\app\DeleteHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Deletehydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\delete_purchaseorder.aspx" />
     <Content Include="corporate\business\app\EditPurchase.aspx" />
     <Content Include="corporate\business\app\edit_purchaseorder.aspx" />
     <Content Include="corporate\business\app\home.aspx" />
@@ -684,6 +685,13 @@
     </Compile>
     <Compile Include="corporate\business\app\Deletehydrent_invoice.aspx.designer.cs">
       <DependentUpon>Deletehydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\delete_purchaseorder.aspx.cs">
+      <DependentUpon>delete_purchaseorder.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\delete_purchaseorder.aspx.designer.cs">
+      <DependentUpon>delete_purchaseorder.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\EditPurchase.aspx.cs">
       <DependentUpon>EditPurchase.aspx</DependentUpon>

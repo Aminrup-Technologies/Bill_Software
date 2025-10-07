@@ -158,7 +158,7 @@
                                         <li id="View_po" runat="server"><a href="View_PurchaseOrder.aspx">View Purchase Order</a></li>
                                         <li id="Li3" runat="server"><a href="Search_purchaseorder.aspx">Search Purchase Order</a></li>
                                         <li id="Li5" runat="server"><a href="edit_purchaseorder.aspx">Edit Purchase Order</a></li>
-                                        <li id="Li4" runat="server"><a href="#">Delete Purchase Order</a></li>
+                                        <li id="Li4" runat="server"><a href="delete_purchaseorder.aspx">Delete Purchase Order</a></li>
                                         
                                     </ul>
                             </li>
