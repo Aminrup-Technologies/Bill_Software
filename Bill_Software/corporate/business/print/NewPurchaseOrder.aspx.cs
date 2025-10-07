@@ -130,10 +130,10 @@ namespace Bill_Software.corporate.business.print
                         Tr3.Visible = false;
                 }
 
-                //lbl_valdays.Text = dtmain.Rows[0]["ValidityDays"].ToString();
-                //lbl_deliverytrms.Text = dtmain.Rows[0]["DeliveryTenure"].ToString();
-                //lbl_pkging.Text = dtmain.Rows[0]["PackingCharges"].ToString();
-                //lbl_remarks.Text = dtmain.Rows[0]["Remarks"].ToString();
+                lbl_valdays.Text = dtmain.Rows[0]["ValidityDays"].ToString();
+                lbl_deliverytrms.Text = dtmain.Rows[0]["DeliveryTenure"].ToString();
+                lbl_pkging.Text = dtmain.Rows[0]["PackingCharges"].ToString();
+                lbl_remarks.Text = dtmain.Rows[0]["Remarks"].ToString();
 
                 string sub_total = dtmain.Rows[0]["sub_total"].ToString();
                 subamount = sub_total;
