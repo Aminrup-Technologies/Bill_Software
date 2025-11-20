@@ -200,7 +200,7 @@
             }
         }
 
-        function validateButtonClick() {
+        <%--function validateButtonClick() {
             if (!validateListBox('<%= listPhaseType.ClientID %>')) {
                 return false;
             }
@@ -273,6 +273,203 @@
 
                 if (amountPerInput) {
                     var amount = parseFloat(amountPerInput.value);
+                    if (isNaN(amount) || amount < 0 || amount > 100) {
+                        alert("Please enter a valid Payment Percentage (0-100) for each row.");
+                        amountPerInput.focus();
+                        isValid = false;
+                        break;
+                    }
+
+                    // If only one row, set AmountPer to 100
+                    if (rows.length === 1 && amount !== 100) {
+                        alert("If only one row is present, AmountPer must be 100.");
+                        amountPerInput.focus();
+                        isValid = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!isValid) {
+                return false;
+            }
+
+            return true;
+        }--%>
+
+        // Ensure new numeric fields start with "0" on load (if empty)
+        window.onload = function () {
+            try {
+                var ids = [
+                    '<%= txt_tcs_amnt.ClientID %>',
+                    '<%= txt_tcs_percent.ClientID %>',
+                    '<%= txt_delivery_amnt.ClientID %>',
+                    '<%= txt_freight_percent.ClientID %>',
+                    '<%= TextBox1.ClientID %>',
+                    '<%= txt_othr_amnt.ClientID %>'
+                ];
+                ids.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) {
+                        // For amounts/percents, set default "0" if empty
+                        if (el.tagName.toLowerCase() === 'input' && (el.type === 'text' || el.type === 'number')) {
+                            if (el.value == null || el.value.trim() === '') el.value = '0';
+                        }
+                    }
+                });
+            } catch (e) {
+                // Fail silently - don't block page
+                console && console.log(e);
+            }
+        };
+
+        function parseNum(val) {
+            if (val == null) return NaN;
+            // Trim and normalize comma to dot
+            var s = val.toString().trim().replace(',', '.');
+            if (s === '') return NaN;
+            var n = parseFloat(s);
+            return isNaN(n) ? NaN : n;
+        }
+
+        function validateButtonClick() {
+            if (!validateListBox('<%= listPhaseType.ClientID %>')) {
+                return false;
+            }
+
+            var ddlPkgFrwd = document.getElementById('<%= DDL_ItemViewType.ClientID %>');
+            if (ddlPkgFrwd && ddlPkgFrwd.value === "0") {
+                alert("Please select Particular View type");
+                ddlPkgFrwd.focus();
+                return false;
+            }
+
+            var validDays = document.getElementById('<%= txt_valdays.ClientID %>');
+            if (validDays && (isNaN(validDays.value) || validDays.value <= 0)) {
+                alert("Please enter a valid number of days greater than 0.");
+                validDays.focus();
+                return false;
+            }
+
+            var ddlDeliveryTerms = document.getElementById('<%= DDL_DeliveryTerms.ClientID %>');
+            if (ddlDeliveryTerms && ddlDeliveryTerms.value === "0") {
+                alert("Please select a valid delivery tenure.");
+                ddlDeliveryTerms.focus();
+                return false;
+            }
+
+            if (ddlDeliveryTerms && ddlDeliveryTerms.value === "4") {
+                var manualInput = document.getElementById('<%= txt_deltrms.ClientID %>');
+                var regex = /^[0-9]+-[0-9]+$/;
+                if (manualInput && !regex.test(manualInput.value)) {
+                    alert("Please enter a valid delivery tenure in the format 'value1-value2'.");
+                    manualInput.focus();
+                    return false;
+                }
+            }
+
+            var ddlPkgFrwd = document.getElementById('<%= DDL_pkgfrwd.ClientID %>');
+            if (ddlPkgFrwd && ddlPkgFrwd.value === "0") {
+                alert("Please select a valid package forwarding option.");
+                ddlPkgFrwd.focus();
+                return false;
+            }
+
+            if (ddlPkgFrwd && ddlPkgFrwd.value === "3") {
+                var pkgInput = document.getElementById('<%= txt_pkgfrwd.ClientID %>');
+                if (pkgInput && pkgInput.value.trim() === "") {
+                    alert("Please enter a valid package forwarding input.");
+                    pkgInput.focus();
+                    return false;
+                }
+            }
+
+            var remarks = document.getElementById('<%= txt_remarks.ClientID %>');
+            if (remarks && remarks.value.trim() === "") {
+                alert("Please enter your remarks or comments.");
+                remarks.focus();
+                return false;
+            }
+            if (remarks && remarks.value.length > 200) {
+                alert("Remarks or comments cannot exceed 200 characters.");
+                remarks.focus();
+                return false;
+            }
+
+            // ---------- NEW FIELDS VALIDATION ----------
+            // TCS Amount (>=0)
+            var elTcsAmt = document.getElementById('<%= txt_tcs_amnt.ClientID %>');
+            if (elTcsAmt) {
+                var tcsAmt = parseNum(elTcsAmt.value);
+                if (isNaN(tcsAmt) || tcsAmt < 0) {
+                    alert("Please enter a valid TCS Amount (numeric, >= 0).");
+                    elTcsAmt.focus();
+                    return false;
+                }
+            }
+
+            // TCS Percent (0-100)
+            var elTcsPct = document.getElementById('<%= txt_tcs_percent.ClientID %>');
+            if (elTcsPct) {
+                var tcsPct = parseNum(elTcsPct.value);
+                if (isNaN(tcsPct) || tcsPct < 0 || tcsPct > 100) {
+                    alert("Please enter a valid TCS Percent (0 - 100).");
+                    elTcsPct.focus();
+                    return false;
+                }
+            }
+
+            // Freight Amount (>=0)
+            var elFreightAmt = document.getElementById('<%= txt_delivery_amnt.ClientID %>');
+            if (elFreightAmt) {
+                var freightAmt = parseNum(elFreightAmt.value);
+                if (isNaN(freightAmt) || freightAmt < 0) {
+                    alert("Please enter a valid Freight Amount (numeric, >= 0).");
+                    elFreightAmt.focus();
+                    return false;
+                }
+            }
+
+            // Freight Percent (0-100) -- now a textbox
+            var elFreightPct = document.getElementById('<%= txt_freight_percent.ClientID %>');
+            if (elFreightPct) {
+                var freightPct = parseNum(elFreightPct.value);
+                if (isNaN(freightPct) || freightPct < 0 || freightPct > 100) {
+                    alert("Please enter a valid Freight Percent (0 - 100).");
+                    elFreightPct.focus();
+                    return false;
+                }
+            }
+
+            // Other Charges Amount (>=0) and Name requirement if amount > 0
+            var elOtherAmt = document.getElementById('<%= txt_othr_amnt.ClientID %>');
+            var elOtherName = document.getElementById('<%= TextBox1.ClientID %>');
+            if (elOtherAmt) {
+                var otherAmt = parseNum(elOtherAmt.value);
+                if (isNaN(otherAmt) || otherAmt < 0) {
+                    alert("Please enter a valid Other Charges Amount (numeric, >= 0).");
+                    elOtherAmt.focus();
+                    return false;
+                }
+                if (otherAmt > 0 && elOtherName && elOtherName.value.trim() === "") {
+                    alert("Please enter a description/name for Other Charges when amount is greater than 0.");
+                    elOtherName.focus();
+                    return false;
+                }
+            }
+            // ---------- END NEW FIELDS VALIDATION ----------
+
+            // Grid validation (existing)
+            var grid = document.getElementById('<%= GridView3.ClientID %>');
+            var rows = grid ? grid.getElementsByTagName('tr') : [];
+            var isValid = true;
+
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var amountPerInput = row.querySelector('[id$="AmountPer"]');
+
+                if (amountPerInput) {
+                    var amount = parseNum(amountPerInput.value);
                     if (isNaN(amount) || amount < 0 || amount > 100) {
                         alert("Please enter a valid Payment Percentage (0-100) for each row.");
                         amountPerInput.focus();
@@ -499,6 +696,21 @@
             togglePanel();
         };
 
+        function onlyNumberDecimal(evt) {
+            var charCode = (evt.which) ? evt.which : evt.keyCode;
+            // Allow: backspace(8), tab(9), left/right(37/39), delete(46)
+            if (charCode === 8 || charCode === 9 || charCode === 37 || charCode === 39 || charCode === 46) {
+                return true;
+            }
+            var input = evt.target || evt.srcElement;
+            var value = input.value;
+            var ch = String.fromCharCode(charCode);
+            // Allow digits
+            if (/[0-9]/.test(ch)) return true;
+            // Allow single dot
+            if (ch === '.' && value.indexOf('.') === -1) return true;
+            return false;
+        }
     </script>
 
     <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
@@ -1377,7 +1589,7 @@
                         <tr>
                             <td>&nbsp;</td>
                             <td style="text-align: right;">&nbsp;Custom Remarks / Comments :</td>
-                            <td>&nbsp;<asp:TextBox ID="txt_remarks" runat="server" Text="" CssClass="textbox_style" TextMode="MultiLine" MaxLength="500" Rows="6" Height="80px" Columns="4" placeholder="Enter your remarks or comments..."></asp:TextBox>
+                            <td>&nbsp;<asp:TextBox ID="txt_remarks" runat="server" Text="" CssClass="textbox_U_style" TextMode="MultiLine" MaxLength="500" Rows="6" Height="80px" Columns="4" placeholder="Enter your remarks or comments..."></asp:TextBox>
                                 <asp:RequiredFieldValidator ID="RFV_txt_remarks" runat="server" ErrorMessage="Remarks are required." ControlToValidate="txt_remarks" Display="Dynamic"></asp:RequiredFieldValidator>
                             </td>
                             <td>&nbsp;</td>
@@ -1390,6 +1602,70 @@
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                         </tr>
+
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td style="text-align: right;">&nbsp;TCS Amount</td>
+                            <td>&nbsp;
+                                <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"
+                                    onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                <asp:RegularExpressionValidator ID="rev_tcs_amnt" runat="server"
+                                    ControlToValidate="txt_tcs_amnt"
+                                    ValidationExpression="^\d+(\.\d{1,2})?$"
+                                    ErrorMessage="Enter valid amount"
+                                    Display="Dynamic"
+                                    ForeColor="Red" />
+                            </td>
+                            <td>&nbsp;@&nbsp;
+                                <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""
+                                    onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                %
+                                <asp:RegularExpressionValidator ID="rev_tcs_percent" runat="server"
+                                    ControlToValidate="txt_tcs_percent"
+                                    ValidationExpression="^\d+(\.\d{1,2})?$"
+                                    ErrorMessage="Enter valid percent"
+                                    Display="Dynamic"
+                                    ForeColor="Red" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td style="text-align: right;">&nbsp;Freight Charges</td>
+                            <td>&nbsp;
+                                <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"
+                                    onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                <asp:RegularExpressionValidator ID="rev_delivery_amnt" runat="server"
+                                    ControlToValidate="txt_delivery_amnt"
+                                    ValidationExpression="^\d+(\.\d{1,2})?$"
+                                    ErrorMessage="Enter valid amount"
+                                    Display="Dynamic"
+                                    ForeColor="Red" />
+                            </td>
+                            <td>&nbsp;@&nbsp;
+                                <asp:TextBox ID="txt_freight_percent" runat="server" CssClass="textbox_U_style" Width="50px"></asp:TextBox>
+                                %
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td style="text-align: right;">&nbsp;Other Charges &nbsp;
+                                <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                            </td>
+                            <td>&nbsp;
+                    <asp:TextBox ID="txt_othr_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"
+                        onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                <asp:RegularExpressionValidator ID="rev_othr_amnt" runat="server"
+                                    ControlToValidate="txt_othr_amnt"
+                                    ValidationExpression="^\d+(\.\d{1,2})?$"
+                                    ErrorMessage="Enter valid amount"
+                                    Display="Dynamic"
+                                    ForeColor="Red" />
+                            </td>
+                            <td>&nbsp;</td>
+                        </tr>
+
 
                         <tr>
                             <td>&nbsp;</td>

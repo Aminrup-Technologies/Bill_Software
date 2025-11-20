@@ -1050,12 +1050,19 @@ namespace Bill_Software.corporate.business.app
                     string ValStart_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_strtdt.Text?.Trim();
                     string ValEnd_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_enddt.Text?.Trim();
 
+                    decimal tcsAmount = ParseDecimal(txt_tcs_amnt.Text);
+                    decimal tcsPercent = ParseDecimal(txt_tcs_percent.Text);
+                    decimal deliveryAmount = ParseDecimal(txt_delivery_amnt.Text);
+                    decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
+                    decimal freightPercent = 0;
+                    decimal.TryParse(txt_freight_percent.Text, out freightPercent);
+
                     total_sail_rate_details = Math.Round(new_Gross_amount, 2);
                     new_total_Service = Math.Round(new_total_Service, 2);
 
                     using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotation 
-                (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView)
-                VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView)", conn, trans))
+                (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView,TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount)
+                VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView, @TCS_Amount, @TCS_Percent, @Freight_Amount, @Freight_VAT_Percent, @OtherCharge_Name, @OtherCharge_Amount)", conn, trans))
                     {
                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text?.Trim());
                         cmd.Parameters.AddWithValue("@Quotation_date", txtquotationDate.Text?.Trim());
@@ -1086,6 +1093,13 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Validity_EndDate", ValEnd_Date);
                         cmd.Parameters.AddWithValue("@AddedById", userId);
                         cmd.Parameters.AddWithValue("@DiscountView", DDL_DiscountView.SelectedItem.Text?.Trim());
+
+                        cmd.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
+                        cmd.Parameters.AddWithValue("@TCS_Percent", tcsPercent);
+                        cmd.Parameters.AddWithValue("@Freight_Amount", deliveryAmount);
+                        cmd.Parameters.AddWithValue("@Freight_VAT_Percent", freightPercent);
+                        cmd.Parameters.AddWithValue("@OtherCharge_Name", otherAmount);
+                        cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
                         cmd.ExecuteNonQuery();
                     }
 
@@ -1128,6 +1142,15 @@ namespace Bill_Software.corporate.business.app
                     PanelError.Visible = true;
                 }
             }
+        }
+
+        private decimal ParseDecimal(string text)
+        {
+            decimal value;
+            if (decimal.TryParse(text, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out value))
+                return value;
+            // fallback to 0
+            return 0m;
         }
 
         private void MagicianOLD()
