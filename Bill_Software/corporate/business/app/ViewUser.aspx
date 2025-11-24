@@ -1,224 +1,304 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="ViewUser.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm80" %>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
-        .style1
-        {
+        .style1 {
             width: 100%;
         }
-        .style2
-        {
+
+        .style2 {
             color: #FFFFFF;
             font-weight: bold;
         }
-        .table1{ border-collapse:collapse;}
-        .table1 td{ text-align:left; border:1px solid #666666; width:100%; }
-        .table2{ border-collapse:collapse;}
-        .table2 td{ text-align:left; border:1px solid #666666; width:100%; border-top:none; }
+
+        .grid-active {
+            background: #E9FFF0;
+        }
+
+        .grid-inactive {
+            background: #FFF0F0;
+            color: #666;
+        }
+
+        .action-link {
+            cursor: pointer;
+            text-decoration: underline;
+            color: #006699;
+        }
+
+        .small {
+            font-size: 11px;
+        }
+
+        .btn {
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: #f5f5f5;
+        }
+
+        /* Generic button */
+        .action-btn {
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+            text-decoration: none;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Status-based colors */
+        .btn-activate {
+            background-color: #28a745;
+        }
+        /* green */
+        .btn-deactivate {
+            background-color: #dc3545;
+        }
+        /* red   */
+        .btn-lock {
+            background-color: #ffc107;
+            color: #000;
+        }
+        /* yellow */
+        .btn-unlock {
+            background-color: #007bff;
+        }
+        /* blue */
+        .btn-reset {
+            background-color: #17a2b8;
+        }
+        /* cyan */
+        .btn-menu-edit {
+            background-color: #6f42c1;
+        }
+        /* purple */
+        .btn-delete {
+            background-color: #343a40;
+        }
+        /* dark */
+
+        /* Hover effect */
+        .action-btn:hover {
+            opacity: 0.85;
+            text-decoration: none;
+        }
+
+        /* Disabled look (optional) */
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Clean Grid Layout */
+        .user-grid {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 13px;
+        }
+
+        /* Header */
+        .user-grid th {
+            background: #f1f1f1;
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-weight: 600;
+        }
+
+        /* Rows */
+        .user-grid td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            vertical-align: middle;
+        }
+
+        /* Status Tags */
+        .status-active {
+            background: #e8ffe8;
+            color: #008000;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .status-inactive {
+            background: #ffe8e8;
+            color: #b30000;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        /* Buttons */
+        .action-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            font-size: 12px;
+            text-decoration: none !important;
+            border: 1px solid #ccc;
+        }
+
+        /* Color-coded buttons */
+        .btn-toggle  { background:#d9edf7; color:#31708f; }
+        .btn-reset   { background:#fcf8e3; color:#8a6d3b; }
+        .btn-lock    { background:#f5e8ff; color:#6000b3; }
+        .btn-menu    { background:#e7f3ff; color:#005b96; }
+        .btn-delete  { background:#f2dede; color:#a94442; }
+
+        /* Hover */
+        .action-btn:hover {
+            opacity: 0.85;
+            cursor: pointer;
+        }
+
     </style>
-  <%--  <script type="text/javascript">
-        function ValidateField() {
-            if (document.getElementById('<%=txtEmployee.ClientID%>').value == "") {
-                alert("Provide Employee Name.");
-                document.getElementById('<%=txtEmployee.ClientID%>').focus();
-                return false;
-                if (document.getElementById('<%=txtPass.ClientID%>').value == "") {
-                    alert("Provide Password.");
-                    document.getElementById('<%=txtPass.ClientID%>').focus();
-                    return false;
-                }
-                if (document.getElementById('<%=txtEmail.ClientID%>').value == "") {
-                    alert("Provide Email Address.");
-                    document.getElementById('<%=txtEmail.ClientID%>').focus();
-                    return false;
-                }
-                if (document.getElementById('<%=txtPhno.ClientID%>').value == "") {
-                    alert("Provide Phone Number.");
-                    document.getElementById('<%=txtPhno.ClientID%>').focus();
-                    return false;
-                }
-            }
-        }
-</script>--%>
+
     <script type="text/javascript">
-    function ValidateDelete1() {
-        var answer = confirm("Want to Delete this User?");
-        if (!answer) {
-            return false;
+        function confirmDelete() {
+            return confirm("Do you really want to delete this user?");
         }
-    }
-</script>
+        function confirmReset() {
+            return confirm("Reset user's password and force change on next login?");
+        }
+        function confirmToggle(active) {
+            if (active) return confirm("Deactivate this user?");
+            return confirm("Activate this user?");
+        }
+    </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <table cellpadding="0" cellspacing="1" class="style1">
         <tr>
-            <td bgcolor="#19658A" colspan="6">
-                &nbsp;<span class="style2">View User</span></td>
+            <td bgcolor="#19658A" colspan="6">&nbsp;<span class="style2">View User</span></td>
         </tr>
+
         <tr>
-            <td width="20%">
-                &nbsp;</td>
-            <td colspan="2" width="30%">
-                &nbsp;</td>
-            <td colspan="2" width="30%">
-                &nbsp;</td>
-            <td width="20%">
-                &nbsp;</td>
-        </tr>
-        <tr>
-            <td>
-                &nbsp;</td>
-            <td colspan="4">
-                <asp:Panel ID="PanelOK" runat="server" BackColor="#EEFFDD" 
-                    BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False">
-                    &nbsp;<asp:Image ID="imageTick" runat="server" 
-                        ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
+            <td colspan="6">
+                <asp:Panel ID="PanelOK" runat="server" BackColor="#EEFFDD" BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                    &nbsp;<asp:Image ID="imageTick" runat="server" ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
                     &nbsp;<asp:Label ID="lblOk" runat="server"></asp:Label>
                 </asp:Panel>
-        
-            <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" 
-                BorderStyle="Solid" BorderWidth="1px" Visible="False">
-                &nbsp;<asp:Image ID="Image1" runat="server" Height="16px" 
-                    ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png" 
-                    Width="16px" />
-                &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
-            </asp:Panel>
-        
-                                </td>
-            <td>
-                &nbsp;</td>
-        </tr>
-       
-       
-        <tr>
-            <td>
-                &nbsp;</td>
-            <td colspan="2">
-                Employee Id</td>
-            <td colspan="2">
-                <asp:DropDownList ID="ddlEmpId" runat="server" Width="220px" Font-Size="12px" CssClass="textbox_U_style" AutoPostBack="True" OnTextChanged="ddlEmpId_TextChanged"></asp:DropDownList>
+
+                <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                    &nbsp;<asp:Image ID="Image1" runat="server" Height="16px" ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png" Width="16px" />
+                    &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
+                </asp:Panel>
             </td>
-            <td>
-                &nbsp;</td>
         </tr>
 
         <tr>
-            <td>
-                &nbsp;</td>
-            <td colspan="2"></td>
-            <td colspan="2"></td>
-            <td>
-                &nbsp;</td>
-        </tr>
-        <tr>
-            <td>
-                &nbsp;</td>
-            <td colspan="2"></td>
-            <td colspan="2"></td>
-            <td>
-                &nbsp;</td>
+            <td colspan="6">
+                <!-- Employee Id filter (kept similar to your original) -->
+                <table width="100%">
+                    <tr>
+                        <td style="width: 20%">&nbsp;</td>
+                        <td>Employee Id:
+                        <asp:DropDownList ID="ddlEmpId" runat="server" Width="220px" Font-Size="12px" CssClass="textbox_U_style" AutoPostBack="True" OnSelectedIndexChanged="ddlEmpId_SelectedIndexChanged"></asp:DropDownList>
+                            &nbsp;<asp:Button ID="btnRefresh" runat="server" Text="Refresh" OnClick="btnRefresh_Click" CssClass="btn" />
+                        </td>
+                        <td style="width: 20%">&nbsp;</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
 
-         
         <tr>
-            <td>
-                &nbsp;</td>
-            <td colspan="4">
-                <asp:DataList ID="DataList1" runat="server" BorderColor="#666666" 
-                    BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" 
-                    ForeColor="#2D2D2D" GridLines="Both" Width="100%" 
-                    onitemcommand="DataList1_ItemCommand">
-                    <FooterStyle BackColor="White" ForeColor="#000066" />
-                    <AlternatingItemStyle BackColor="#94B8FF" />
-                    <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
-                    <SelectedItemStyle BackColor="#669999" ForeColor="White" Font-Bold="True" />
-                    <HeaderStyle BackColor="#006699" ForeColor="White" Font-Bold="True" />
-                    <HeaderTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
-                            <tr>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="showid" runat="server" Text="ID"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label4" runat="server" Text="User Id"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="showrm" runat="server" Text="Employee Name"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="Label1" runat="server" Text="Email"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="Label2" runat="server" Text="Phno"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="Label3" runat="server" Text="Password"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label5" runat="server" Text="Menu Edit"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="edit" runat="server" Text="Delete"></asp:Label>
-                                </td>
-                            </tr>
-                        </table>
-                    </HeaderTemplate>
-                    <ItemTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
-                            <tr>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="ID" runat="server" Text='<%# Eval("id") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="User_Id" runat="server" Text='<%# Eval("User_Id") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="Name" runat="server" Text='<%# Eval("Name") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="Email" runat="server" Text='<%# Eval("Email") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="Phone_no" runat="server" Text='<%# Eval("Phone_no") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="Password" runat="server" Text='<%# Eval("Password") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:ImageButton ID="ImageButton2" runat="server" CommandArgument='<%# Eval("User_Id") %>' CommandName="Menu Edit" ImageUrl="../WebImages/edit_icon.png" Height="20px" Width="60px" ToolTip="Menu Edit" />
-                                </td>
-                                
-                                <td style="text-align:center; width:10%;">
-                                    <asp:ImageButton ID="ImageButton1" runat="server" CommandName="Delete" CommandArgument='<%# Eval("User_Id") %>' 
-                                        ImageUrl="~/corporate/business/WebImages/delete.png" ToolTip="Delete" onclientclick="return ValidateDelete1();"/>
-                                </td>
-                            </tr>
-                        </table>
-                    </ItemTemplate>
-                    
-                </asp:DataList>
+            <td colspan="6">
+                <asp:GridView ID="gvUsers" runat="server"
+                    AutoGenerateColumns="False"
+                    CssClass="user-grid"
+                    GridLines="Both"
+                    CellPadding="3"
+                    CellSpacing="0"
+                    Width="100%"
+                    OnRowCommand="gvUsers_RowCommand"
+                    OnRowDataBound="gvUsers_RowDataBound">
+
+                    <Columns>
+
+                        <asp:BoundField DataField="Id" HeaderText="ID"
+                            ItemStyle-Width="20px" HeaderStyle-Width="20px" />
+
+                        <asp:BoundField DataField="User_Id" HeaderText="User Id"
+                            ItemStyle-Width="100px" HeaderStyle-Width="100px" />
+
+                        <asp:BoundField DataField="Name" HeaderText="Employee Name"
+                            ItemStyle-Width="150px" HeaderStyle-Width="150px" />
+
+                        <asp:BoundField DataField="Email" HeaderText="Email"
+                            ItemStyle-Width="180px" HeaderStyle-Width="180px" />
+
+                        <asp:BoundField DataField="Phone_no" HeaderText="Phone"
+                            ItemStyle-Width="90px" HeaderStyle-Width="90px" />
+
+                        <asp:BoundField DataField="LastLogin"
+                            HeaderText="Last Login"
+                            DataFormatString="{0:yyyy-MM-dd HH:mm}"
+                            ItemStyle-Width="140px" HeaderStyle-Width="140px" />
+
+                        <asp:TemplateField HeaderText="Status" ItemStyle-Width="80px" HeaderStyle-Width="80px">
+                            <ItemTemplate>
+                                <asp:Label ID="lblStatus" runat="server"
+                                    Text='<%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>'
+                                    CssClass='<%# Convert.ToBoolean(Eval("IsActive")) ? "status-active" : "status-inactive" %>' />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+
+                        <asp:TemplateField HeaderText="Actions" ItemStyle-Width="420px" HeaderStyle-Width="420px">
+                            <ItemTemplate>
+                                <asp:HiddenField ID="hfUserId" runat="server" Value='<%# Eval("User_Id") %>' />
+
+                                <asp:LinkButton ID="lnkToggleActive"
+                                    runat="server"
+                                    CommandName="ToggleActive"
+                                    CommandArgument='<%# Eval("Id") %>'
+                                    CssClass="action-btn btn-toggle">
+                                </asp:LinkButton>
+
+                                <asp:LinkButton ID="lnkReset"
+                                    runat="server"
+                                    CommandName="ResetPassword"
+                                    CommandArgument='<%# Eval("Id") %>'
+                                    CssClass="action-btn btn-reset">
+                    Reset
+                                </asp:LinkButton>
+
+                                <asp:LinkButton ID="lnkLock"
+                                    runat="server"
+                                    CommandName="ToggleLock"
+                                    CommandArgument='<%# Eval("Id") %>'
+                                    CssClass="action-btn btn-lock">
+                                </asp:LinkButton>
+
+                                <asp:LinkButton ID="lnkMenuEdit"
+                                    runat="server"
+                                    CommandName="MenuEdit"
+                                    CommandArgument='<%# Eval("Id") %>'
+                                    CssClass="action-btn btn-menu">
+                    Menu
+                                </asp:LinkButton>
+
+                                <asp:LinkButton ID="lnkDelete" Enabled="false"
+                                    runat="server" Visible="false"
+                                    CommandName="DeleteUser"
+                                    CommandArgument='<%# Eval("Id") %>'
+                                    OnClientClick="return confirm('Delete this user?');"
+                                    CssClass="action-btn btn-delete">
+                    Delete
+                                </asp:LinkButton>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+
+                    </Columns>
+                </asp:GridView>
+
             </td>
-            <td>
-                &nbsp;</td>
-        </tr>
-        <tr>
-            <td>
-                &nbsp;</td>
-            <td colspan="2">
-                &nbsp;</td>
-            <td colspan="2">
-                &nbsp;</td>
-            <td>
-                &nbsp;</td>
-        </tr>
-        <tr>
-            <td>
-                &nbsp;</td>
-            <td colspan="2">
-                &nbsp;</td>
-            <td colspan="2">
-                &nbsp;</td>
-            <td>
-                &nbsp;</td>
         </tr>
     </table>
 </asp:Content>

@@ -435,7 +435,7 @@ namespace Bill_Software.corporate.business.app.Update
             }
 
             // Read from web.config/appSettings (fall back to hard-coded defaults)
-            string fromApp = ConfigurationManager.AppSettings["SmtpFrom"] ?? "it.support@aminruptechnologies.co.in";
+            string fromApp = ConfigurationManager.AppSettings["SmtpFrom"] ?? "Flame-Ex ERP Mailer | Aminrup Technologies";
             string smtpUserApp = ConfigurationManager.AppSettings["SmtpUser"] ?? "it.support@aminruptechnologies.co.in";
             string smtpPassApp = ConfigurationManager.AppSettings["SmtpPass"] ?? "TPw800QrVMU2";
             string smtpHostApp = ConfigurationManager.AppSettings["SmtpHost"] ?? "smtp.zoho.in";
