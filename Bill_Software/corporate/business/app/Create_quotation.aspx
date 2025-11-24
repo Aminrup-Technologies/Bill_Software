@@ -308,7 +308,7 @@
                     '<%= TextBox1.ClientID %>',
                     '<%= txt_othr_amnt.ClientID %>'
                 ];
-                ids.forEach(function(id) {
+                ids.forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) {
                         // For amounts/percents, set default "0" if empty
@@ -1617,7 +1617,7 @@
                                     ForeColor="Red" />
                             </td>
                             <td>&nbsp;@&nbsp;
-                                <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text=""
+                                <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text="0"
                                     onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
                                 %
                                 <asp:RegularExpressionValidator ID="rev_tcs_percent" runat="server"
@@ -1643,7 +1643,7 @@
                                     ForeColor="Red" />
                             </td>
                             <td>&nbsp;@&nbsp;
-                                <asp:TextBox ID="txt_freight_percent" runat="server" CssClass="textbox_U_style" Width="50px"></asp:TextBox>
+                                <asp:TextBox ID="txt_freight_percent" runat="server" CssClass="textbox_U_style" Text="0" Width="50px"></asp:TextBox>
                                 %
                             </td>
                         </tr>
