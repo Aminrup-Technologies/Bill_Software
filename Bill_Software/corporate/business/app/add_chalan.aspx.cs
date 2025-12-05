@@ -196,8 +196,22 @@ namespace Bill_Software.corporate.business.app
                             string materialno = ((Label)gd_Quotation.Rows[i].FindControl("MaterialNo")).Text;
                             string packsize = ((Label)gd_Quotation.Rows[i].FindControl("PackSize")).Text;
 
-                            string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
-                            int quantity = Convert.ToInt32(Qty);
+                            //string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
+                            //int quantity = Convert.ToInt32(Qty);
+
+                            //if (quantity > 0)
+                            //{
+                            //    DbCL.executeRdr($@"INSERT INTO tbl_Challan_details(Sl_no, Challan_no, Product_id, Product_code, Product_name, Quantity, ItemNo, MaterialNo, PackSize) VALUES ('{k}', '{invoice_no}', '{Product_id}', '{Product_Code}', '{Product_name}', '{Qty}', '{itemno}', '{materialno}', '{packsize}')");
+                            //    k++;
+                            //}
+
+                            string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text?.Trim() ?? "";
+                            int quantity = 0;
+                            if (!int.TryParse(Qty, out quantity))
+                            {
+                                // optionally: show error next to row or skip
+                                quantity = 0;
+                            }
 
                             if (quantity > 0)
                             {
@@ -256,7 +270,7 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        protected void DataList1_ItemCommand_OLD(object source, DataListCommandEventArgs e)
         {
             string Quotation_no = Convert.ToString(e.CommandArgument);
             if (e.CommandName == "Select")
@@ -268,6 +282,28 @@ namespace Bill_Software.corporate.business.app
             }
 
         }
+
+        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            try
+            {
+                string Quotation_no = Convert.ToString(e.CommandArgument);
+                if (e.CommandName == "Select")
+                {
+                    Panel1.Visible = true;
+                    Panel2.Visible = false;
+                    Binddetails(Quotation_no);
+                    Bindquotationdetails(Quotation_no);
+                }
+            }
+            catch (Exception ex)
+            {
+                // log ex (your existing logging mechanism) and show friendly message
+                PanelError.Visible = true;
+                lblErrorMsg.Text = "An error occurred while loading details. Please contact admin.";
+            }
+        }
+
 
         private void Bindquotationdetails(string Quotation_no)
         {
@@ -288,7 +324,9 @@ namespace Bill_Software.corporate.business.app
                     string Product_id = MainDt.Rows[i]["Product_id"].ToString();
                     string Product_Code = MainDt.Rows[i]["Product_Code"].ToString();
                     string Product_name = MainDt.Rows[i]["Product_name"].ToString();
-                    string Quantity = MainDt.Rows[i]["Quantity"].ToString();
+                    //string Quantity = MainDt.Rows[i]["Quantity"].ToString();
+                    string Quantity = MainDt.Rows[i]["Quantity"] == DBNull.Value ? "0" : MainDt.Rows[i]["Quantity"].ToString().Trim();
+                    if (string.IsNullOrEmpty(Quantity)) Quantity = "0";
                     string sail_rate = MainDt.Rows[i]["sail_rate"].ToString();
                     string Service_tax_rate = MainDt.Rows[i]["Service_tax_rate"].ToString();
                     string Total_sail_rate2 = MainDt.Rows[i]["Total_sail_rate2"].ToString();
@@ -341,8 +379,25 @@ namespace Bill_Software.corporate.business.app
             DeliveredQnt = bindPreQnt(product_name, Quotation_no, Chalanno, ItemNo, Department);
 
 
-            string RemainQnt = "";
-            RemainQnt = (Convert.ToInt32(quantity) - Convert.ToInt32(DeliveredQnt)).ToString();
+            //string RemainQnt = "";
+            //RemainQnt = (Convert.ToInt32(quantity) - Convert.ToInt32(DeliveredQnt)).ToString();
+
+            // --- safe numeric parsing for quantities (replace original lines that do Convert.ToInt32)
+            decimal qtyInt = 0;
+            decimal deliveredInt = 0;
+
+            if (!decimal.TryParse(quantity, out qtyInt))
+            {
+                // If quantity might be decimal, you can try decimal.TryParse and round/convert, or set 0
+                qtyInt = 0;
+            }
+
+            if (!decimal.TryParse(DeliveredQnt, out deliveredInt))
+            {
+                deliveredInt = 0;
+            }
+
+            string RemainQnt = (qtyInt - deliveredInt).ToString();
 
             DataRow dr;
             if (count == 1)
@@ -430,7 +485,7 @@ namespace Bill_Software.corporate.business.app
 
         private string bindPreQnt(string product_name, string quotation_no, string chalanno, string itemno, string Department)
         {
-            string deliQnt = "0";
+            string deliQnt = "0.00";
             string query = "select sum(CAST(Quantity as int)) as DeliveredQnt,Product_name from tbl_Challan_details where Challan_no in "+ chalanno + " and Product_name='"+ product_name + "' and ItemNo= '"+ itemno + "' group by ItemNo,Product_name";
             SqlDataReader rdr1 = DbCL.SPReturnRdr(query, null);
             if (rdr1.Read())
@@ -701,9 +756,21 @@ namespace Bill_Software.corporate.business.app
                 TableCell quotedCell = lblQuoted?.Parent as TableCell;
                 TableCell deliveredCell = lblDelivered?.Parent as TableCell;
 
-                int quoted = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "Quantity"));
-                int delivered = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "DeliveredQnt"));
-                int due = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "RemainQny"));
+                //int quoted = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "Quantity"));
+                //int delivered = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "DeliveredQnt"));
+                //int due = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "RemainQny"));
+
+                int quoted = 0;
+                int delivered = 0;
+                int due = 0;
+
+                object qObj = DataBinder.Eval(e.Row.DataItem, "Quantity");
+                object dObj = DataBinder.Eval(e.Row.DataItem, "DeliveredQnt");
+                object dueObj = DataBinder.Eval(e.Row.DataItem, "RemainQny");
+
+                int.TryParse(Convert.ToString(qObj).Trim(), out quoted);
+                int.TryParse(Convert.ToString(dObj).Trim(), out delivered);
+                int.TryParse(Convert.ToString(dueObj).Trim(), out due);
 
                 totalQuoted += quoted;
                 totalDelivered += delivered;

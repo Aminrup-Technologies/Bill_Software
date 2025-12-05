@@ -37,7 +37,7 @@ namespace Bill_Software.corporate.business.print
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select sl_no, Product_id, (Product_name+':'+specification) as Product_name, Quantity, vendor_rate, purches_rate, DiscountPercent, DiscountAmount,TaxableAmount, tax_rate, vat_amount, total_purches_rate from tbl_purches_details where Purches_id='" + lblpurches_id.Text + "' order by sl_no";
+            string cmdstring = "select sl_no, Product_id, (Product_name+':'+specification) as Product_name, Quantity, vendor_rate, purches_rate, DiscountPercent, DiscountAmount,TaxableAmount, tax_rate, vat_amount, total_purches_rate from tbl_purches_details where Purches_id='" + lblpurches_id.Text + "' order by CAST(Sl_no as int)";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();

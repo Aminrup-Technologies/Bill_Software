@@ -194,7 +194,6 @@
 
         <tr>
             <td colspan="6">
-                <!-- Employee Id filter (kept similar to your original) -->
                 <table width="100%">
                     <tr>
                         <td style="width: 20%">&nbsp;</td>

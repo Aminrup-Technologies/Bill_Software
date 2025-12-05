@@ -124,14 +124,11 @@
 
     <script type="text/javascript">
         function ValidateDataField10() {
-
-
             if (document.getElementById('<%=FactoryAddress.ClientID%>').SelectedIndex == -1) {
                 alert("Provide Delivery Address ");
                 document.getElementById('<%=FactoryAddress.ClientID%>').focus();
                 return false;
             }
-
         }
 
     </script>
