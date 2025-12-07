@@ -30,7 +30,7 @@ namespace Bill_Software.corporate.business.app
         {
             // fill ddlEmpId if you need filtering by employee/user
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT User_Id FROM dbo.tbl_login ORDER BY Id", cn))
+            using (var cmd = new SqlCommand("SELECT User_Id FROM tbl_login where IsActive = 1 ORDER BY Id", cn))
             {
                 var dt = new DataTable();
                 var da = new SqlDataAdapter(cmd);
@@ -56,6 +56,7 @@ namespace Bill_Software.corporate.business.app
             var sql = @"SELECT Id, User_Id, Name, Email, Phone_no, IsActive, LockoutEnd, LastLogin, CreatedAt
                     FROM dbo.tbl_login
                     WHERE (@UserId = '' OR User_Id = @UserId)
+                    AND (User_Id NOT IN ('admin', 'AT01') AND IsActive = 1)
                     ORDER BY Id";
 
             using (var cn = new SqlConnection(ConnString))

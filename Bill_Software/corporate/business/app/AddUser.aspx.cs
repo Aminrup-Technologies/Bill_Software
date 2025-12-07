@@ -28,7 +28,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select id,User_Id,Password,Name,Phone_no,Email from tbl_login where User_Id not in ('superadmin', 'uat')";
+            string cmdstring = "select id,User_Id,Password,Name,Phone_no,Email from tbl_login where User_Id not in ('admin', 'AT01') AND IsActive = 1;";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
@@ -172,7 +172,7 @@ namespace Bill_Software.corporate.business.app
             return idvalue;
         }
 
-        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        protected void DataList1_ItemCommand_OLD(object source, DataListCommandEventArgs e)
         {
             string ID = Convert.ToString(e.CommandArgument);
 
@@ -185,6 +185,22 @@ namespace Bill_Software.corporate.business.app
                 PanelOK.Visible = true;
                 lblOk.Text = "Data Deleted Successfully...";
             }
+            Binddata();
+        }
+
+        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            string ID = Convert.ToString(e.CommandArgument);
+
+            if (e.CommandName == "Inactivate")   // NEW COMMAND NAME
+            {
+                // Mark user inactive instead of deleting
+                DbCL.executeRdr("UPDATE tbl_login SET IsActive = 0 WHERE Id = '" + Convert.ToInt32(ID) + "'");
+
+                PanelOK.Visible = true;
+                lblOk.Text = "User marked as inactive successfully...";
+            }
+
             Binddata();
         }
 
