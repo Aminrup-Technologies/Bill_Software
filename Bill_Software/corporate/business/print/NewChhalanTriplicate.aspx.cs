@@ -255,7 +255,7 @@ namespace Bill_Software.corporate.business.print
                     string Product_id = dtChPro.Rows[i]["Product_id"].ToString();
                     string HSN = dtChPro.Rows[i]["Product_code"].ToString();
                     string Product_name = dtChPro.Rows[i]["Product_name"].ToString();
-                    decimal Quantity = Convert.ToInt32(dtChPro.Rows[i]["Quantity"]);
+                    decimal Quantity = Convert.ToDecimal(dtChPro.Rows[i]["Quantity"]);
                     string Unit = dtChPro.Rows[i]["Unit"].ToString();
                     string Specification = dtChPro.Rows[i]["specification"].ToString();
                     string ItemNo = dtChPro.Rows[i]["ItemNo"].ToString();
