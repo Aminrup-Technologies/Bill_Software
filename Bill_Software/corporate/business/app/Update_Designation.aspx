@@ -50,8 +50,8 @@
         <tr>
             <td width="20%">&nbsp;</td>
             <td width="30%">&nbsp;</td>
-            <td width="30%">&nbsp;</td>
-            <td width="20%">&nbsp;</td>
+            <td width="10%">&nbsp;</td>
+            <td width="40%">&nbsp;</td>
         </tr>
         <tr>
             <td>&nbsp;</td>

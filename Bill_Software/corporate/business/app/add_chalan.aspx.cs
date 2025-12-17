@@ -206,8 +206,8 @@ namespace Bill_Software.corporate.business.app
                             //}
 
                             string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text?.Trim() ?? "";
-                            int quantity = 0;
-                            if (!int.TryParse(Qty, out quantity))
+                            decimal quantity = 0;
+                            if (!decimal.TryParse(Qty, out quantity))
                             {
                                 // optionally: show error next to row or skip
                                 quantity = 0;
