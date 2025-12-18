@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Create Quotations" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Create_quotation.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm19" %>
+﻿<%@ Page Title="Flame-Ex | Create Quotations" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Create_quotation.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm19" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
@@ -714,44 +714,51 @@
     </script>
 
     <script type="text/javascript">
+        var gridSearchTimer = null;
+        function debouncedSearchGrid() {
+            clearTimeout(gridSearchTimer);
+            gridSearchTimer = setTimeout(function () {
+                searchGridProdWithCat();
+            }, 300); // 300ms delay
+        }
 
         function searchGridProdWithCat() {
             var input = document.getElementById('<%= txtGridSearch.ClientID %>');
             var filter = input.value.trim().toLowerCase();
             var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
-        var rows = grid.getElementsByTagName("tr");
-        var matchCount = 0;
+            var rows = grid.getElementsByTagName("tr");
+            var matchCount = 0;
 
-        for (var i = 1; i < rows.length; i++) { // skip header
-            var row = rows[i];
-            var rowText = row.innerText.toLowerCase();
+            for (var i = 1; i < rows.length; i++) {
+                var row = rows[i];
+                var rowText = row.innerText.toLowerCase();
 
-            if (filter === "" || rowText.indexOf(filter) > -1) {
-                row.style.display = "";
-                if (filter !== "") matchCount++;
-            } else {
-                row.style.display = "none";
+                if (filter === "" || rowText.indexOf(filter) > -1) {
+                    row.style.display = "";
+                        if (filter !== "") matchCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+
+            document.getElementById("lblNoRecords").style.display =
+                (filter !== "" && matchCount === 0) ? "block" : "none";
+        }
+
+        function clearGridSearch() {
+            var input = document.getElementById('<%= txtGridSearch.ClientID %>');
+            var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
+            var rows = grid.getElementsByTagName("tr");
+
+            input.value = "";
+
+            for (var i = 1; i < rows.length; i++) {
+                rows[i].style.display = "";
             }
+
+            document.getElementById("lblNoRecords").style.display = "none";
+            input.focus();
         }
-
-        document.getElementById("lblNoRecords").style.display =
-            (filter !== "" && matchCount === 0) ? "block" : "none";
-    }
-
-    function clearGridSearch() {
-        var input = document.getElementById('<%= txtGridSearch.ClientID %>');
-        var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
-        var rows = grid.getElementsByTagName("tr");
-
-        input.value = "";
-
-        for (var i = 1; i < rows.length; i++) {
-            rows[i].style.display = "";
-        }
-
-        document.getElementById("lblNoRecords").style.display = "none";
-        input.focus();
-    }
 
     </script>
 
@@ -1095,7 +1102,7 @@
                                             CssClass="textbox_U_style"
                                             Width="250px"
                                             placeholder="Search product / category..."
-                                            onkeyup="searchGridProdWithCat()" />
+                                            onkeyup="debouncedSearchGrid()" />
 
                                         <asp:Button ID="btnClearSearch" runat="server"
                                             Text="Clear"
