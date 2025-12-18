@@ -334,6 +334,73 @@
     </script>
 
 
+    <script type="text/javascript">
+        var serviceSearchTimer = null;
+
+        function debouncedSearchServiceGrid() {
+            clearTimeout(serviceSearchTimer);
+            serviceSearchTimer = setTimeout(function () {
+                searchServiceGrid();
+            }, 300);
+        }
+    </script>
+
+    <script type="text/javascript">
+
+        function getRowSearchText(row) {
+            var text = row.innerText || "";
+
+            // Also include input values (TextBox, hidden inputs if needed)
+            var inputs = row.querySelectorAll("input[type='text']");
+            inputs.forEach(function (inp) {
+                text += " " + inp.value;
+            });
+
+            return text.toLowerCase();
+        }
+
+        function searchServiceGrid() {
+            var input = document.getElementById('<%= txtServiceSearch.ClientID %>');
+        var filter = input.value.trim().toLowerCase();
+        var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+        var rows = grid.getElementsByTagName("tr");
+        var matchCount = 0;
+
+        for (var i = 1; i < rows.length; i++) { // skip header
+            var row = rows[i];
+            var rowText = getRowSearchText(row);
+
+            if (filter === "" || rowText.indexOf(filter) > -1) {
+                row.style.display = "";
+                if (filter !== "") matchCount++;
+            } else {
+                row.style.display = "none";
+            }
+        }
+
+        document.getElementById("lblNoServiceRecords").style.display =
+            (filter !== "" && matchCount === 0) ? "block" : "none";
+    }
+
+    function clearServiceGridSearch() {
+        var input = document.getElementById('<%= txtServiceSearch.ClientID %>');
+        var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+        var rows = grid.getElementsByTagName("tr");
+
+        input.value = "";
+
+        for (var i = 1; i < rows.length; i++) {
+            rows[i].style.display = "";
+        }
+
+        document.getElementById("lblNoServiceRecords").style.display = "none";
+        input.focus();
+    }
+
+    </script>
+
+
+
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
     </asp:ScriptManager>
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -603,6 +670,23 @@
                                 </tr>
                                 <tr>
                                     <td colspan="4">
+
+                                        <asp:TextBox ID="txtServiceSearch" runat="server"
+                                            CssClass="textbox_U_style"
+                                            Width="250px"
+                                            placeholder="Search service / product..."
+                                            onkeyup="debouncedSearchServiceGrid()" />
+
+                                        <asp:Button ID="btnClearServiceSearch" runat="server"
+                                            Text="Clear"
+                                            CssClass="btn btn-primary btn_style"
+                                            OnClientClick="clearServiceGridSearch(); return false;" />
+
+                                        <br />
+                                        <span id="lblNoServiceRecords" style="color: red; display: none; font-weight: bold;">No records found
+                                        </span>
+
+
                                         <asp:GridView ID="gd_Service_Product" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%" OnRowDataBound="gd_Service_Product_RowDataBound">
                                             <RowStyle BackColor="#94B8FF" />
                                             <Columns>
@@ -704,6 +788,7 @@
                                             <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
                                             <AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />
                                         </asp:GridView>
+                                        <br />
                                     </td>
                                 </tr>
                                 <%--<tr>
@@ -733,7 +818,8 @@
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>
-                                    <td><asp:Button ID="Button4" runat="server" OnClick="Button4_Click" Text="Check Duplicates" CssClass="btn_style" /></td>
+                                    <td>
+                                        <asp:Button ID="Button4" runat="server" OnClick="Button4_Click" Text="Check Duplicates" CssClass="btn_style" /></td>
                                     <td>&nbsp;</td>
                                 </tr>
 

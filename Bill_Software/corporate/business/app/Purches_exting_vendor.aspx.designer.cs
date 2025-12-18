@@ -337,6 +337,24 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Panel Panel2;
         
         /// <summary>
+        /// txtServiceSearch control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtServiceSearch;
+        
+        /// <summary>
+        /// btnClearServiceSearch control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnClearServiceSearch;
+        
+        /// <summary>
         /// gd_Service_Product control.
         /// </summary>
         /// <remarks>

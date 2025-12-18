@@ -375,6 +375,71 @@
         }
     </script>
 
+
+    <script type="text/javascript">
+
+    var purchaseSearchTimer = null;
+
+    function debouncedPurchaseSearch() {
+        clearTimeout(purchaseSearchTimer);
+        purchaseSearchTimer = setTimeout(function () {
+            searchPurchaseGrid();
+        }, 300);
+    }
+
+    function getPurchaseRowText(row) {
+        var text = row.innerText || "";
+
+        // include textbox values inside grid
+        var inputs = row.querySelectorAll("input[type='text']");
+        inputs.forEach(function (inp) {
+            text += " " + inp.value;
+        });
+
+        return text.toLowerCase();
+    }
+
+    function searchPurchaseGrid() {
+        var input = document.getElementById('<%= txtServiceSearch.ClientID %>');
+        var filter = input.value.trim().toLowerCase();
+        var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
+        var rows = grid.getElementsByTagName("tr");
+        var matchCount = 0;
+
+        for (var i = 1; i < rows.length; i++) {
+            var row = rows[i];
+            var rowText = getPurchaseRowText(row);
+
+            if (filter === "" || rowText.indexOf(filter) > -1) {
+                row.style.display = "";
+                if (filter !== "") matchCount++;
+            } else {
+                row.style.display = "none";
+            }
+        }
+
+        document.getElementById("lblNoRecords").style.display =
+            (filter !== "" && matchCount === 0) ? "block" : "none";
+    }
+
+    function clearPurchaseSearch() {
+        var input = document.getElementById('<%= txtServiceSearch.ClientID %>');
+        var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
+        var rows = grid.getElementsByTagName("tr");
+
+        input.value = "";
+
+        for (var i = 1; i < rows.length; i++) {
+            rows[i].style.display = "";
+        }
+
+        document.getElementById("lblNoRecords").style.display = "none";
+        input.focus();
+    }
+
+</script>
+
+
     <asp:ScriptManager ID="ScriptManager1" runat="server">
     </asp:ScriptManager>
 
@@ -905,6 +970,22 @@
                                 </tr>
                                 <tr id="ProductSelector_row" runat="server" visible="false">
                                     <td width="15%" colspan="4">
+                                        <span style="font-weight:bold;">Search Box (Search the below data by any keywords) : &nbsp;</span>
+                                        <asp:TextBox ID="txtServiceSearch" runat="server"
+                                            CssClass="textbox_U_style"
+                                            Width="250px"
+                                            placeholder="Search service / product..."
+                                            onkeyup="debouncedPurchaseSearch()" />
+
+                                        <asp:Button ID="btnClearServiceSearch" runat="server"
+                                            Text="Clear"
+                                            CssClass="btn btn-primary btn_style"
+                                            OnClientClick="clearPurchaseSearch(); return false;" />
+
+                                        <br />
+                                        <span id="lblNoServiceRecords" style="color: red; display: none; font-weight: bold;">No records found
+                                        </span>
+
                                         <asp:GridView ID="gridProdWithCat" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%" EnableViewState="true">
                                             <RowStyle BackColor="#94B8FF" />
                                             <Columns>
@@ -1034,7 +1115,7 @@
                                 <tr id="ProductSelector_btnrow" runat="server" visible="false">
                                     <td width="15%">&nbsp;</td>
                                     <td width="35%">&nbsp;</td>
-                                    <td width="35%">&nbsp;<asp:Button ID="btn_selector" runat="server" Text="Add Selected Products" CssClass="btn_style" Width="150px" OnClick="btn_selector_Click"/></td>
+                                    <td width="35%">&nbsp;<asp:Button ID="btn_selector" runat="server" Text="Add Selected Products" CssClass="btn_style" Width="150px" OnClick="btn_selector_Click" /></td>
                                     <td width="15%">&nbsp;</td>
                                 </tr>
                                 <tr>
