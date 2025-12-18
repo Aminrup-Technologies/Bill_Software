@@ -1556,7 +1556,7 @@
                         <tr id="manualInputRow" style="display: none;">
                             <td>&nbsp;</td>
                             <td style="text-align: right;">&nbsp;Delivery Tenure Input (Weeks) :</td>
-                            <td>&nbsp;<asp:TextBox ID="txt_deltrms" runat="server" Text="0" CssClass="textbox_style" TextMode="SingleLine" MaxLength="5" placeholder="e.g., 1-2"></asp:TextBox>
+                            <td>&nbsp;<asp:TextBox ID="txt_deltrms" runat="server" Text="0" CssClass="textbox_style" TextMode="SingleLine" MaxLength="7" placeholder="e.g., 30 Days"></asp:TextBox>
                                 <asp:RequiredFieldValidator ID="RFV_txt_deltrms" runat="server" ErrorMessage="Required" ControlToValidate="txt_deltrms" Display="Dynamic" InitialValue="0"></asp:RequiredFieldValidator>
                             </td>
                             <td>&nbsp;</td>

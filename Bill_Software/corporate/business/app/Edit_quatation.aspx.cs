@@ -327,6 +327,12 @@ namespace Bill_Software.corporate.business.app
             public DateTime? DeletedOn { get; set; }
             public DateTime? TimsStamp { get; set; }
             public string DiscountView { get; set; }
+            public decimal? TCSAmount { get; set; }
+            public decimal? TCSPercent { get; set; }
+            public decimal? FreightAmount { get; set; }
+            public decimal? FreightVATPercent { get; set; }
+            public string OtherChargeName { get; set; }
+            public decimal? OtherChargeAmount { get; set; }
         }
 
         private void BindClientDetails(string Quotation_no)
@@ -432,13 +438,79 @@ namespace Bill_Software.corporate.business.app
                 ListItem item1 = DDL_DiscountView.Items.FindByText(q.DiscountView);
                 if (item1 != null) { DDL_DiscountView.ClearSelection(); item1.Selected = true; }
 
-                ListItem item2 = DDL_DeliveryTerms.Items.FindByText(q.DeliveryTenure);
-                if (item2 != null) { DDL_DeliveryTerms.ClearSelection(); item2.Selected = true; }
+                //ListItem item2 = DDL_DeliveryTerms.Items.FindByText(q.DeliveryTenure);
+                //if (item2 != null) { DDL_DeliveryTerms.ClearSelection(); item2.Selected = true; }
 
-                ListItem item3 = DDL_pkgfrwd.Items.FindByText(q.PackingCharges);
-                if (item3 != null) { DDL_pkgfrwd.ClearSelection(); item3.Selected = true; }
+                // DELIVERY TENURE
+                ListItem deliveryItem = DDL_DeliveryTerms.Items.FindByText(q.DeliveryTenure);
+
+                DDL_DeliveryTerms.ClearSelection();
+
+                if (deliveryItem != null)
+                {
+                    // Matches predefined options (10-12, 3-4, 1-2)
+                    deliveryItem.Selected = true;
+                    manualInputRow.Style["display"] = "none";
+                }
+                else
+                {
+                    // Manual input case
+                    DDL_DeliveryTerms.SelectedValue = "4"; // Manual Input
+                    txt_deltrms.Text = q.DeliveryTenure;
+                    manualInputRow.Style["display"] = "";
+                }
+
+
+                //ListItem item3 = DDL_pkgfrwd.Items.FindByText(q.PackingCharges);
+                //if (item3 != null) { DDL_pkgfrwd.ClearSelection(); item3.Selected = true; }
+
+                // PACKAGE FORWARDING
+                ListItem pkgItem = DDL_pkgfrwd.Items.FindByText(q.PackingCharges);
+
+                DDL_pkgfrwd.ClearSelection();
+
+                if (pkgItem != null)
+                {
+                    // Matches NILL / At Actuals
+                    pkgItem.Selected = true;
+                    manualInputPkgRow.Style["display"] = "none";
+                }
+                else
+                {
+                    // Manual input case
+                    DDL_pkgfrwd.SelectedValue = "3"; // Manual Input
+                    txt_pkgfrwd.Text = q.PackingCharges;
+                    manualInputPkgRow.Style["display"] = "";
+                }
+
 
                 txt_remarks.Text = q.Remarks;
+
+                // TCS
+                txt_tcs_amnt.Text = q.TCSAmount.HasValue
+                    ? q.TCSAmount.Value.ToString("0.00")
+                    : "0";
+
+                txt_tcs_percent.Text = q.TCSPercent.HasValue
+                    ? q.TCSPercent.Value.ToString("0.00")
+                    : "0";
+
+                // Freight
+                txt_delivery_amnt.Text = q.FreightAmount.HasValue
+                    ? q.FreightAmount.Value.ToString("0.00")
+                    : "0";
+
+                txt_freight_percent.Text = q.FreightVATPercent.HasValue
+                    ? q.FreightVATPercent.Value.ToString("0.00")
+                    : "0";
+
+                // Other Charges
+                TextBox1.Text = q.OtherChargeName ?? string.Empty;
+
+                txt_othr_amnt.Text = q.OtherChargeAmount.HasValue
+                    ? q.OtherChargeAmount.Value.ToString("0.00")
+                    : "0";
+
 
                 if (q.RecordType.ToString() == "Quotation")
                 {
@@ -1053,9 +1125,137 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
-                DbCL.executeRdr("UPDATE tbl_Quotation SET Gross = '" + new_Gross_amount + "', Service_tax = '" + (new_Gross_amount % 1) +
-                                 "', Net_amount = '" + new_Gross_amount + "', service_tax1 = '" + new_total_Service +
-                                 "', sub_total = '" + new_sub_total + "' WHERE Quotation_no = '" + qno + "'");
+                //DbCL.executeRdr("UPDATE tbl_Quotation SET Gross = '" + new_Gross_amount + "', Service_tax = '" + (new_Gross_amount % 1) +
+                //                 "', Net_amount = '" + new_Gross_amount + "', service_tax1 = '" + new_total_Service +
+                //                 "', sub_total = '" + new_sub_total + "' WHERE Quotation_no = '" + qno + "'");
+
+
+                string CGSTSGSTSTATUS = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
+                string IGSTSTATUS = RadioButtonGst.SelectedIndex != 0 ? "YES" : "";
+
+                string placeOfSupply = ddlPlaceOfSupply.Text?.Trim();
+
+                int validDays = 0;
+                int.TryParse(txt_valdays.Text?.Trim(), out validDays);
+
+                string deliveryTenure = "";
+                if (DDL_DeliveryTerms.SelectedValue == "4")      // Manual
+                    deliveryTenure = txt_deltrms.Text.Trim();
+                else if (DDL_DeliveryTerms.SelectedValue != "0")
+                    deliveryTenure = DDL_DeliveryTerms.SelectedItem.Text;
+
+                string packageForwarding = "";
+                if (DDL_pkgfrwd.SelectedValue == "3")             // Manual
+                    packageForwarding = txt_pkgfrwd.Text.Trim();
+                else if (DDL_pkgfrwd.SelectedValue != "0")
+                    packageForwarding = DDL_pkgfrwd.SelectedItem.Text;
+
+                string referenceOption = rbYes.Checked ? "Yes" : "No";
+
+                string referenceName = referenceOption == "Yes"
+                    ? txt_clientrefname.Text.Trim()
+                    : "N/A";
+
+                string referenceId = referenceOption == "Yes"
+                    ? txt_clientrefid.Text.Trim()
+                    : "N/A";
+
+                string referenceDate = referenceOption == "Yes"
+                    ? txt_clientrefdate.Text.Trim()
+                    : "1900-01-01";
+
+                string remarks = txt_remarks.Text?.Trim();
+                string itemview = DDL_ItemViewType.SelectedItem.Text?.Trim();
+                string discountView = DDL_DiscountView.SelectedItem.Text?.Trim();
+
+
+                string recordtyp = rbPo.Checked ? "Purchase Order" : "Quotation";
+
+                string DO_number = recordtyp == "Quotation"
+                    ? "N/A"
+                    : txb_donumber.Text.Trim();
+
+                string PO_number = recordtyp == "Quotation"
+                    ? "N/A"
+                    : txb_ponumber.Text.Trim();
+
+                string PO_Date = recordtyp == "Quotation"
+                    ? "1900-01-01"
+                    : txb_podate.Text.Trim();
+
+                string ValStart_Date = recordtyp == "Quotation"
+                    ? "1900-01-01"
+                    : txb_strtdt.Text.Trim();
+
+                string ValEnd_Date = recordtyp == "Quotation"
+                    ? "1900-01-01"
+                    : txb_enddt.Text.Trim();
+
+
+                decimal tcsAmount = 0;
+                decimal.TryParse(txt_tcs_amnt.Text, out tcsAmount);
+
+                decimal tcsPercent = 0;
+                decimal.TryParse(txt_tcs_percent.Text, out tcsPercent);
+
+                decimal deliveryAmount = 0;
+                decimal.TryParse(txt_delivery_amnt.Text, out deliveryAmount);
+
+                decimal freightPercent = 0;
+                decimal.TryParse(txt_freight_percent.Text, out freightPercent);
+
+                decimal otherAmount = 0;
+                decimal.TryParse(txt_othr_amnt.Text, out otherAmount);
+
+
+                //decimal grossAmount = new_Gross_amount;
+                //decimal serviceTax = new_total_Service;
+                //decimal subTotal = new_sub_total;
+                //decimal netAmount = total_sail_rate_details;
+
+
+                DbCL.executeRdr(
+                    "UPDATE tbl_Quotation SET " +
+
+                    "Gross = '" + new_Gross_amount + "', " +
+                    "Service_tax = '" + new_total_Service + "', " +
+                    "Net_amount = '" + new_Gross_amount + "', " +
+                    "service_tax1 = '" + new_total_Service + "', " +
+                    "sub_total = '" + new_sub_total + "', " +
+
+                    "ValidityDays = '" + validDays + "', " +
+                    "DeliveryTenure = '" + deliveryTenure + "', " +
+                    "PackingCharges = '" + packageForwarding + "', " +
+
+                    "cgstOrsgst = '" + CGSTSGSTSTATUS + "', " +
+                    "igst = '" + IGSTSTATUS + "', " +
+                    "PlaceofSupply = '" + ddlPlaceOfSupply.Text.Trim() + "', " +
+
+                    "ReferenceData = '" + referenceOption + "', " +
+                    "ReferenceName = '" + referenceName + "', " +
+                    "ReferenceId = '" + referenceId + "', " +
+                    "ReferenceDate = '" + referenceDate + "', " +
+
+                    "Remarks = '" + remarks + "', " +
+                    "DetailedView = '" + itemview + "', " +
+                    "DiscountView = '" + DDL_DiscountView.SelectedItem.Text.Trim() + "', " +
+
+                    "RecordType = '" + recordtyp + "', " +
+                    "DO_Number = '" + DO_number + "', " +
+                    "PO_Number = '" + PO_number + "', " +
+                    "PO_Date = '" + PO_Date + "', " +
+                    "Validity_StartDate = '" + ValStart_Date + "', " +
+                    "Validity_EndDate = '" + ValEnd_Date + "', " +
+
+                    "TCS_Amount = '" + tcsAmount + "', " +
+                    "TCS_Percent = '" + tcsPercent + "', " +
+                    "Freight_Amount = '" + deliveryAmount + "', " +
+                    "Freight_VAT_Percent = '" + freightPercent + "', " +
+                    "OtherCharge_Amount = '" + otherAmount + "', " +
+                    "ModifiedById = '" + userId + "', " +
+                    "ModifiedOn = GETDATE() WHERE Quotation_no = '" + qno + "'"
+                    );
+
 
                 double NewGross = Convert.ToDouble(new_Gross_amount);
                 updatedueamountdetails(NewGross);
@@ -2171,8 +2371,29 @@ namespace Bill_Software.corporate.business.app
                     }
                     int validDays = vDays;
 
-                    string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text?.Trim() : DDL_DeliveryTerms.SelectedItem.Text;
-                    string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text?.Trim() : DDL_pkgfrwd.SelectedItem.Text;
+                    //string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text?.Trim() : DDL_DeliveryTerms.SelectedItem.Text;
+                    //string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text?.Trim() : DDL_pkgfrwd.SelectedItem.Text;
+
+                    string deliveryTenure = "";
+                    string packageForwarding = "";
+
+                    if (DDL_DeliveryTerms.SelectedValue == "4") // Manual Input
+                    {
+                        deliveryTenure = txt_deltrms.Text.Trim();
+                    }
+                    else if (DDL_DeliveryTerms.SelectedValue != "0") // Not --SELECT--
+                    {
+                        deliveryTenure = DDL_DeliveryTerms.SelectedItem.Text;
+                    }
+                    if (DDL_pkgfrwd.SelectedValue == "3") // Manual Input
+                    {
+                        packageForwarding = txt_pkgfrwd.Text.Trim();
+                    }
+                    else if (DDL_pkgfrwd.SelectedValue != "0") // Not --SELECT--
+                    {
+                        packageForwarding = DDL_pkgfrwd.SelectedItem.Text;
+                    }
+
                     string remarks = txt_remarks.Text?.Trim();
                     string itemview = DDL_ItemViewType.SelectedItem.Text?.Trim();
                     string referenceOption = rbYes.Checked ? "Yes" : "No";
@@ -2186,6 +2407,13 @@ namespace Bill_Software.corporate.business.app
                     string PO_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_podate.Text?.Trim();
                     string ValStart_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_strtdt.Text?.Trim();
                     string ValEnd_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_enddt.Text?.Trim();
+
+                    decimal tcsAmount = ParseDecimal(txt_tcs_amnt.Text);
+                    decimal tcsPercent = ParseDecimal(txt_tcs_percent.Text);
+                    decimal deliveryAmount = ParseDecimal(txt_delivery_amnt.Text);
+                    decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
+                    decimal freightPercent = 0;
+                    decimal.TryParse(txt_freight_percent.Text, out freightPercent);
 
                     total_sail_rate_details = Math.Round(new_Gross_amount, 2);
                     new_total_Service = Math.Round(new_total_Service, 2);
@@ -2223,6 +2451,13 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Validity_EndDate", ValEnd_Date);
                         cmd.Parameters.AddWithValue("@AddedById", userId);
                         cmd.Parameters.AddWithValue("@DiscountView", DDL_DiscountView.SelectedItem.Text?.Trim());
+
+                        cmd.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
+                        cmd.Parameters.AddWithValue("@TCS_Percent", tcsPercent);
+                        cmd.Parameters.AddWithValue("@Freight_Amount", deliveryAmount);
+                        cmd.Parameters.AddWithValue("@Freight_VAT_Percent", freightPercent);
+                        cmd.Parameters.AddWithValue("@OtherCharge_Name", otherAmount);
+                        cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
                         cmd.ExecuteNonQuery();
                     }
 
@@ -2265,6 +2500,15 @@ namespace Bill_Software.corporate.business.app
                     PanelError.Visible = true;
                 }
             }
+        }
+
+        private decimal ParseDecimal(string text)
+        {
+            decimal value;
+            if (decimal.TryParse(text, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out value))
+                return value;
+            // fallback to 0
+            return 0m;
         }
 
         private void insertPaymentPhaseNew(string qutno, SqlConnection conn, SqlTransaction trans)

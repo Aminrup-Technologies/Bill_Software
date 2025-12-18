@@ -672,7 +672,7 @@
             <tr>
                 <td class="" style="text-align: left; font-weight: bold; width: 30%;">DELIVERY TERMS</td>
                 <td class="" style="text-align: left; font-weight: 100; width: 70%;">Within 
-                    <asp:Label ID="lbl_deliverytrms" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Weeks from the Date of Receipt of all Technical Clearance.<br />
+                    <asp:Label ID="lbl_deliverytrms" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;from the Date of Receipt of all Technical Clearance.<br />
                 </td>
             </tr>
             <%--<tr>

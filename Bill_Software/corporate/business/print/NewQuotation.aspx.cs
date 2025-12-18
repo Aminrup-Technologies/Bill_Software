@@ -126,8 +126,23 @@ namespace Bill_Software.corporate.business.print
 
                 string valdays = dtmain.Rows[0]["ValidityDays"].ToString();
                 lbl_valdays.Text = valdays;
-                string deliverytrms = dtmain.Rows[0]["DeliveryTenure"].ToString();
-                lbl_deliverytrms.Text = deliverytrms;
+                //string deliverytrms = dtmain.Rows[0]["DeliveryTenure"].ToString();
+                //lbl_deliverytrms.Text = deliverytrms;
+
+                string deliverytrms = dtmain.Rows[0]["DeliveryTenure"]?.ToString().Trim();
+                string displayText = deliverytrms;
+
+                // Known dropdown values
+                string[] ddlValues = { "10-12", "3-4", "1-2" };
+
+                if (ddlValues.Contains(deliverytrms))
+                {
+                    displayText = deliverytrms + " Weeks";
+                }
+
+                lbl_deliverytrms.Text = displayText;
+
+
                 string packingchrges = dtmain.Rows[0]["PackingCharges"].ToString();
                 lbl_pkging.Text = packingchrges;
                 string rmrks = dtmain.Rows[0]["Remarks"].ToString();

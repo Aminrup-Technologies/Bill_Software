@@ -1289,7 +1289,7 @@
                                                         <asp:TextBox ID="txtOrder" runat="server" Width="80%" Text='<%# Bind("Sl_no") %>' BorderColor="#333333" BorderStyle="Solid" BorderWidth="1px" Height="22px" CssClass="center textbox_style" />
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
-                                                
+
                                                 <asp:TemplateField HeaderText="Delivery Date" HeaderStyle-Width="12%" ItemStyle-Width="12%" Visible="false">
                                                     <EditItemTemplate>
                                                         <asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker"></asp:TextBox>
@@ -1471,10 +1471,10 @@
                                         </asp:DropDownList></td>
                                     <td>&nbsp;</td>
                                 </tr>
-                                <tr id="manualInputRow" style="display: none;">
+                                <tr id="manualInputRow" runat="server" style="display: none;">
                                     <td>&nbsp;</td>
                                     <td style="text-align: right;">&nbsp;Delivery Tenure Input (Weeks) :</td>
-                                    <td>&nbsp;<asp:TextBox ID="txt_deltrms" runat="server" Text="0" CssClass="textbox_style" TextMode="SingleLine" MaxLength="5" placeholder="e.g., 1-2"></asp:TextBox>
+                                    <td>&nbsp;<asp:TextBox ID="txt_deltrms" runat="server" Text="0" CssClass="textbox_style" TextMode="SingleLine" MaxLength="7" placeholder="e.g., 30 Days"></asp:TextBox>
                                         <asp:RequiredFieldValidator ID="RFV_txt_deltrms" runat="server" ErrorMessage="Required" ControlToValidate="txt_deltrms" Display="Dynamic" InitialValue="0"></asp:RequiredFieldValidator>
                                     </td>
                                     <td>&nbsp;</td>
@@ -1494,7 +1494,7 @@
                                     <td>&nbsp;</td>
                                 </tr>
 
-                                <tr id="manualInputPkgRow" style="display: none;">
+                                <tr id="manualInputPkgRow" runat="server" style="display: none;">
                                     <td>&nbsp;</td>
                                     <td style="text-align: right;">&nbsp;Package Forwarding Input :</td>
                                     <td>
@@ -1521,7 +1521,68 @@
                                     <td>&nbsp;</td>
                                 </tr>
 
-                                
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td style="text-align: right;">&nbsp;TCS Amount</td>
+                                    <td>&nbsp;
+                                <asp:TextBox ID="txt_tcs_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"
+                                    onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                        <asp:RegularExpressionValidator ID="rev_tcs_amnt" runat="server"
+                                            ControlToValidate="txt_tcs_amnt"
+                                            ValidationExpression="^\d+(\.\d{1,2})?$"
+                                            ErrorMessage="Enter valid amount"
+                                            Display="Dynamic"
+                                            ForeColor="Red" />
+                                    </td>
+                                    <td>&nbsp;@&nbsp;
+                                <asp:TextBox ID="txt_tcs_percent" runat="server" CssClass="textbox_U_style" Width="50px" Text="0"
+                                    onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                        %
+                                <asp:RegularExpressionValidator ID="rev_tcs_percent" runat="server"
+                                    ControlToValidate="txt_tcs_percent"
+                                    ValidationExpression="^\d+(\.\d{1,2})?$"
+                                    ErrorMessage="Enter valid percent"
+                                    Display="Dynamic"
+                                    ForeColor="Red" />
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td style="text-align: right;">&nbsp;Freight Charges</td>
+                                    <td>&nbsp;
+                                <asp:TextBox ID="txt_delivery_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"
+                                    onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                        <asp:RegularExpressionValidator ID="rev_delivery_amnt" runat="server"
+                                            ControlToValidate="txt_delivery_amnt"
+                                            ValidationExpression="^\d+(\.\d{1,2})?$"
+                                            ErrorMessage="Enter valid amount"
+                                            Display="Dynamic"
+                                            ForeColor="Red" />
+                                    </td>
+                                    <td>&nbsp;@&nbsp;
+                                <asp:TextBox ID="txt_freight_percent" runat="server" CssClass="textbox_U_style" Text="0" Width="50px"></asp:TextBox>
+                                        %
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td style="text-align: right;">&nbsp;Other Charges &nbsp;
+                                <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style" Width="110px" Text=""></asp:TextBox>
+                                    </td>
+                                    <td>&nbsp;
+                    <asp:TextBox ID="txt_othr_amnt" runat="server" CssClass="textbox_U_style" Width="110px" Text="0"
+                        onkeypress="return onlyNumberDecimal(event)"></asp:TextBox>
+                                        <asp:RegularExpressionValidator ID="rev_othr_amnt" runat="server"
+                                            ControlToValidate="txt_othr_amnt"
+                                            ValidationExpression="^\d+(\.\d{1,2})?$"
+                                            ErrorMessage="Enter valid amount"
+                                            Display="Dynamic"
+                                            ForeColor="Red" />
+                                    </td>
+                                    <td>&nbsp;</td>
+                                </tr>
 
                                 <tr>
                                     <td>&nbsp;</td>

@@ -1034,8 +1034,30 @@ namespace Bill_Software.corporate.business.app
                     }
                     int validDays = vDays;
 
-                    string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text?.Trim() : DDL_DeliveryTerms.SelectedItem.Text;
-                    string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text?.Trim() : DDL_pkgfrwd.SelectedItem.Text;
+                    //string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text?.Trim() : DDL_DeliveryTerms.SelectedItem.Text;
+                    //string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text?.Trim() : DDL_pkgfrwd.SelectedItem.Text;
+
+                    string deliveryTenure = "";
+                    string packageForwarding = "";
+
+                    if (DDL_DeliveryTerms.SelectedValue == "4") // Manual Input
+                    {
+                        deliveryTenure = txt_deltrms.Text.Trim();
+                    }
+                    else if (DDL_DeliveryTerms.SelectedValue != "0") // Not --SELECT--
+                    {
+                        deliveryTenure = DDL_DeliveryTerms.SelectedItem.Text;
+                    }
+                    if (DDL_pkgfrwd.SelectedValue == "3") // Manual Input
+                    {
+                        packageForwarding = txt_pkgfrwd.Text.Trim();
+                    }
+                    else if (DDL_pkgfrwd.SelectedValue != "0") // Not --SELECT--
+                    {
+                        packageForwarding = DDL_pkgfrwd.SelectedItem.Text;
+                    }
+
+
                     string remarks = txt_remarks.Text?.Trim();
                     string itemview = DDL_ItemViewType.SelectedItem.Text?.Trim();
                     string referenceOption = rbYes.Checked ? "Yes" : "No";
