@@ -47,6 +47,11 @@
         .center {
             text-align: center;
         }
+
+        .highlight {
+            background-color: #ffe58f;
+            font-weight: bold;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -114,6 +119,7 @@
         }
 
     </script>
+
     <script type="text/javascript">
 
         function checkAll(objRef) {
@@ -231,6 +237,50 @@
         };
 
     </script>
+
+    <script type="text/javascript">
+
+        function searchGridProdWithCat() {
+            var input = document.getElementById('<%= txtGridSearch.ClientID %>');
+            var filter = input.value.trim().toLowerCase();
+            var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
+        var rows = grid.getElementsByTagName("tr");
+        var matchCount = 0;
+
+        for (var i = 1; i < rows.length; i++) { // skip header
+            var row = rows[i];
+            var rowText = row.innerText.toLowerCase();
+
+            if (filter === "" || rowText.indexOf(filter) > -1) {
+                row.style.display = "";
+                if (filter !== "") matchCount++;
+            } else {
+                row.style.display = "none";
+            }
+        }
+
+        document.getElementById("lblNoRecords").style.display =
+            (filter !== "" && matchCount === 0) ? "block" : "none";
+    }
+
+    function clearGridSearch() {
+        var input = document.getElementById('<%= txtGridSearch.ClientID %>');
+        var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
+        var rows = grid.getElementsByTagName("tr");
+
+        input.value = "";
+
+        for (var i = 1; i < rows.length; i++) {
+            rows[i].style.display = "";
+        }
+
+        document.getElementById("lblNoRecords").style.display = "none";
+        input.focus();
+    }
+
+    </script>
+
+
 
     <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
 
@@ -782,6 +832,21 @@
 
                                 <tr>
                                     <td colspan="4">
+                                        <asp:TextBox ID="txtGridSearch" runat="server"
+                                            CssClass="textbox_U_style"
+                                            Width="250px"
+                                            placeholder="Search product / category..."
+                                            onkeyup="searchGridProdWithCat()" />
+
+                                        <asp:Button ID="btnClearSearch" runat="server"
+                                            Text="Clear"
+                                            CssClass="btn btn-secondary"
+                                            OnClientClick="clearGridSearch(); return false;" />
+
+                                        <br />
+                                        <span id="lblNoRecords" style="color: red; display: none; font-weight: bold;">No records found
+                                        </span>
+
                                         <asp:GridView ID="gridProdWithCat" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%">
                                             <RowStyle BackColor="#94B8FF" />
                                             <Columns>

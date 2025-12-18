@@ -159,10 +159,8 @@
                                     <asp:Label ID="Label3" runat="server" Text='<%# Eval("cgstOrsgst") %>'></asp:Label>
                                 </td>
 
-
-
                                 <td style="text-align: center; width: 5%;">
-                                    <asp:ImageButton ID="ImageButton1" runat="server" CommandName="View" CommandArgument='<%# Eval("ID") %>'
+                                    <asp:ImageButton ID="ImageButton1" runat="server" CommandName="View" Height="20px" Width="20px" CommandArgument='<%# Eval("ID") %>'
                                         ImageUrl="~/corporate/business/WebImages/viewicon.png" ToolTip="View" />
                                 </td>
                             </tr>
