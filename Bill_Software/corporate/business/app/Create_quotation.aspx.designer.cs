@@ -400,6 +400,24 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Panel Panel2;
         
         /// <summary>
+        /// txtGridSearch control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtGridSearch;
+        
+        /// <summary>
+        /// btnClearSearch control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnClearSearch;
+        
+        /// <summary>
         /// gridProdWithCat control.
         /// </summary>
         /// <remarks>
