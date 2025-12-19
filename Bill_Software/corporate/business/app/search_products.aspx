@@ -66,6 +66,34 @@
             margin-bottom: 6px;
         }
 
+        .product-category {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .category-header {
+            grid-column: 1 / -1;
+            font-size: 15px;
+            font-weight: 700;
+            color: #1f3c88;
+            margin: 20px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e0e0e0;
+            text-transform: uppercase;
+        }
+
+        /* grid inside each category */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+
         .product-name {
             font-size: 14px;
             font-weight: 600;
@@ -250,7 +278,7 @@
         /* ===============================
            CARD SEARCH (PRIMARY LOGIC)
         =============================== */
-        function searchCards() {
+        <%--function searchCards() {
             var input = document.getElementById('<%= txtSearch.ClientID %>');
             if (!input) return;
 
@@ -277,7 +305,160 @@
             if (lbl) {
                 lbl.style.display = (filter !== "" && matchCount === 0) ? "block" : "none";
             }
+        }--%>
+
+        var lastDbKeyword = "";
+
+        function searchCards() {
+            var input = document.getElementById('<%= txtSearch.ClientID %>');
+            if (!input) return;
+
+            var filter = input.value.trim().toLowerCase();
+            var cards = document.querySelectorAll('.product-card');
+            var matchCount = 0;
+
+            cards.forEach(function (card) {
+                var text =
+                    (card.dataset.name || "") + " " +
+                    (card.dataset.brand || "") + " " +
+                    (card.dataset.category || "") + " " +
+                    (card.dataset.type || "");
+
+                if (filter === "" || text.indexOf(filter) > -1) {
+                    card.style.display = "";
+                    matchCount++;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            var lbl = document.getElementById("lblNoRecords");
+
+            /* ===============================
+               DB FALLBACK LOGIC
+            =============================== */
+            if (filter.length >= 3 && matchCount === 0) {
+
+                // prevent repeated DB hits for same keyword
+                if (filter !== lastDbKeyword) {
+                    lastDbKeyword = filter;
+                    fetchProductsFromDB(filter);
+                }
+
+                if (lbl) lbl.style.display = "none";
+                return;
+            }
+
+            /* ===============================
+               NORMAL NO-RECORDS DISPLAY
+            =============================== */
+            if (lbl) {
+                lbl.style.display = (filter !== "" && matchCount === 0) ? "block" : "none";
+            }
+
+            document.querySelectorAll('.category-grid').forEach(function (grid) {
+                var visibleCards = grid.querySelectorAll('.product-card:not([style*="display: none"])');
+                grid.previousElementSibling.style.display =
+                    visibleCards.length === 0 ? "none" : "";
+            });
         }
+
+
+        function fetchProductsFromDB(keyword) {
+
+            fetch("search_products.aspx/SearchProducts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ keyword: keyword })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (!res.d || res.d.length === 0) {
+                    document.getElementById("lblNoRecords").style.display = "block";
+                    return;
+                }
+
+                renderCardsFromDB(res.d);
+                document.getElementById("lblNoRecords").style.display = "none";
+            });
+        }
+
+        function renderCardsFromDB(products) {
+
+            var container = document.querySelector(".product-card-container");
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            // ===============================
+            // GROUP PRODUCTS BY CATEGORY
+            // ===============================
+            var grouped = {};
+            products.forEach(function (p) {
+                var cat = (p.Category || "Others").toUpperCase();
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(p);
+            });
+
+            // ===============================
+            // RENDER GROUPS
+            // ===============================
+            Object.keys(grouped).forEach(function (category) {
+
+                // Category Header
+                var header = document.createElement("div");
+                header.className = "category-header";
+                header.innerText = category;
+                container.appendChild(header);
+
+                // Category Grid Wrapper
+                var grid = document.createElement("div");
+                grid.className = "category-grid";
+                container.appendChild(grid);
+
+                grouped[category].forEach(function (p) {
+
+                    var card = document.createElement("div");
+                    card.className = "product-card";
+
+                    card.dataset.id = p.Id;
+                    card.dataset.name = (p.ProductName || "").toLowerCase();
+                    card.dataset.brand = (p.Brand || "").toLowerCase();
+                    card.dataset.category = category.toLowerCase();
+                    card.dataset.type = (p.Type || "").toLowerCase();
+
+                    card.innerHTML = `
+                <div class="image-wrapper">
+                    <img class ="product-img lazy-img"
+                         src="../../../Images/no_image.jpg"
+                         data-src="../../../Images/no_image.jpg"
+                         alt="Product Image" />
+                    <span class="badge gst">GST ${p.GST}%</span>
+                </div>
+
+                <div class="brand-name">${p.Brand || ""}</div>
+                <div class="product-name">${p.ProductName || ""}</div>
+
+                <div class="card-footer">
+                    <span class="price">₹ ${p.Rate || "0.00"}</span>
+                    <button class="btn-view"
+                            onclick="loadProductDetails(${p.Id})">
+                        Details
+                    </button>
+                </div>
+            `;
+
+                    grid.appendChild(card);
+                });
+            });
+
+            lazyLoadImages();
+        }
+
+
+
+
+
 
         /* ===============================
            CLEAR SEARCH
@@ -359,7 +540,7 @@
                 document.getElementById("mdlSpec").innerText = d.Spec || "-";
 
                 var img = document.getElementById("mdlProductImg");
-                img.src = d.Image || "/assets/img/product-default.png";
+                img.src = d.Image || "../../../Images/no_image.jpg";
 
                 var oem = document.getElementById("mdlOEMUrl");
                 if (d.OEMUrl) {
@@ -464,7 +645,7 @@
             <td>&nbsp;<asp:Button ID="btnClearServiceSearch" runat="server"
                 Text="Clear"
                 CssClass="btn btn-primary btn_style"
-                OnClientClick="clearServiceGridSearch(); return false;" /></td>
+                OnClientClick="clearCardSearch(); return false;" /></td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -496,11 +677,8 @@
 
                                 <!-- Badges -->
                                 <span class="badge gst">GST <%# Eval("Tax_Rate") %>%</span>
-
-                                <%-- Future flags --%>
-                                <%-- 
-                                    <span class="badge new">NEW</span>
-                                    <span class="badge fast">FAST</span>
+                                <span class="badge new">NEW <%# Eval("IsNew") %></span>
+                                <%-- <span class="badge fast">FAST<%# Eval("Tax_Rate") %></span>
                                 --%>
                             </div>
 
@@ -514,14 +692,15 @@
                                 <%# Eval("ProductName") %>
                             </div>
 
+                            <div class="product-category">
+                                <%# Eval("ProductOrServiceCat") %>
+                            </div>
+
                             <!-- Footer -->
                             <div class="card-footer">
                                 <span class="price">₹ <%# Eval("Sail_Rate") %></span>
 
-                                <asp:Button runat="server"
-                                    Text="Details"
-                                    CssClass="btn-view"
-                                    OnClientClick='<%# "loadProductDetails(" + Eval("Id") + "); return false;" %>' />
+                                <asp:Button runat="server" Text="Details" CssClass="btn-view" OnClientClick='<%# "loadProductDetails(" + Eval("Id") + "); return false;" %>' />
                             </div>
 
                         </div>
@@ -557,9 +736,7 @@
             <div class="modal-body">
 
                 <div class="modal-left">
-                    <img id="mdlProductImg"
-                        src="../../../Images/no_image.jpg"
-                        alt="Product Image" />
+                    <img id="mdlProductImg" src="../../../Images/no_image.jpg" alt="Product Image" />
                 </div>
 
                 <div class="modal-right">

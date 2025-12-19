@@ -114,5 +114,51 @@ namespace Bill_Software.corporate.business.app
             return null;
         }
 
+        [System.Web.Services.WebMethod]
+        [System.Web.Script.Services.ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public static List<object> SearchProducts(string keyword)
+        {
+            List<object> list = new List<object>();
+            string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                string sql = @"
+            SELECT TOP 50
+                Id, ProductName, Brand, Sail_Rate, Tax_Rate,
+                NormalizedProductName, ProductOrServiceCat, Type
+            FROM tbl_NewProduct
+            WHERE ViewMode = 1
+              AND DeleteMode = 0
+              AND (
+                    NormalizedProductName LIKE '%' + @kw + '%'
+                 OR Brand LIKE '%' + @kw + '%'
+                 OR Product_code LIKE '%' + @kw + '%'
+                 OR NormalizedCategory LIKE '%' + @kw + '%'
+              )
+            ORDER BY ProductName";
+
+                SqlCommand cmd = new SqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@kw", keyword.ToLower());
+
+                con.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(new
+                    {
+                        Id = dr["Id"],
+                        ProductName = dr["ProductName"].ToString(),
+                        Brand = dr["Brand"].ToString(),
+                        Rate = dr["Sail_Rate"].ToString(),
+                        GST = dr["Tax_Rate"].ToString(),
+                        Category = dr["ProductOrServiceCat"].ToString(),
+                        Type = dr["Type"].ToString()
+                    });
+                }
+            }
+            return list;
+        }
+
     }
 }
