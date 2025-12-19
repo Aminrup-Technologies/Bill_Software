@@ -21,17 +21,17 @@
     </style>
     <!-- Matomo -->
     <script>
-      var _paq = window._paq = window._paq || [];
-      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-      _paq.push(['trackPageView']);
-      _paq.push(['enableLinkTracking']);
-      (function() {
-        var u="//visitors.aminruptechnologies.co.in/";
-        _paq.push(['setTrackerUrl', u+'matomo.php']);
-        _paq.push(['setSiteId', '1']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-      })();
+        var _paq = window._paq = window._paq || [];
+        /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function () {
+            var u = "//visitors.aminruptechnologies.co.in/";
+            _paq.push(['setTrackerUrl', u + 'matomo.php']);
+            _paq.push(['setSiteId', '1']);
+            var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+            g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+        })();
     </script>
     <!-- End Matomo Code -->
 
@@ -118,6 +118,7 @@
                                         <%-- <li id="Vendor_quotation" runat="server"><a href="Vendor_quotation.aspx">Add Vendor Quotation</a></li>--%>
                                         <li id="Purches_exting_vendor" runat="server"><a href="Purches_exting_vendor.aspx">Add Purchase</a></li>
                                         <li id="View_purches" runat="server"><a href="View_purches.aspx">View Purchase</a></li>
+                                        <li id="Search_Products" runat="server"><a href="search_products.aspx">Search Products</a></li>
                                         <li id="Edit_Purches" runat="server"><a href="EditPurchase.aspx">Edit Purchase</a></li>
                                         <li id="seartch_purtch" runat="server"><a href="seartch_purtch.aspx">Search Purchase</a></li>
                                         <li id="Delete_purtches" runat="server"><a href="Delete_purtches.aspx">Delete Purchase</a></li>
@@ -159,7 +160,7 @@
                                         <li id="Li3" runat="server"><a href="Search_purchaseorder.aspx">Search Purchase Order</a></li>
                                         <li id="Li5" runat="server"><a href="edit_purchaseorder.aspx">Edit Purchase Order</a></li>
                                         <li id="Li4" runat="server"><a href="delete_purchaseorder.aspx">Delete Purchase Order</a></li>
-                                        
+
                                     </ul>
                             </li>
                             <li id="challan" runat="server">DPCC

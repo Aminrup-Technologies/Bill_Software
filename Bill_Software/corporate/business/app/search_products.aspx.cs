@@ -124,8 +124,7 @@ namespace Bill_Software.corporate.business.app
             using (SqlConnection con = new SqlConnection(cs))
             {
                 string sql = @"
-            SELECT TOP 50
-                Id, ProductName, Brand, Sail_Rate, Tax_Rate,
+            SELECT Id, ProductName, Brand, Sail_Rate, Tax_Rate,
                 NormalizedProductName, ProductOrServiceCat, Type
             FROM tbl_NewProduct
             WHERE ViewMode = 1
