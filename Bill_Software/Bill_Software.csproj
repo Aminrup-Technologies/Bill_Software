@@ -260,6 +260,7 @@
     <Content Include="corporate\business\app\rpts_vw_qtn_po_counts.aspx" />
     <Content Include="corporate\business\app\SearchHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Searchhydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\search_products.aspx" />
     <Content Include="corporate\business\app\Search_purchaseorder.aspx" />
     <Content Include="corporate\business\app\settings.aspx" />
     <Content Include="corporate\business\app\srch_dailyrpts.aspx" />
@@ -468,6 +469,7 @@
     <Content Include="Images\idcardslogo.jpg" />
     <Content Include="Images\Invoice.jpg" />
     <Content Include="Images\login-page-bg.jpg" />
+    <Content Include="Images\no_image.jpg" />
     <Content Include="Images\orderedList0.png" />
     <Content Include="Images\orderedList1.png" />
     <Content Include="Images\orderedList2.png" />
@@ -797,6 +799,13 @@
     </Compile>
     <Compile Include="corporate\business\app\Searchhydrent_invoice.aspx.designer.cs">
       <DependentUpon>Searchhydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\search_products.aspx.cs">
+      <DependentUpon>search_products.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\search_products.aspx.designer.cs">
+      <DependentUpon>search_products.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\Search_purchaseorder.aspx.cs">
       <DependentUpon>Search_purchaseorder.aspx</DependentUpon>

@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Purches_exting_vendor.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm11" %>
+﻿<%@ Page Title="Flame-Ex | Add New Purchase" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="Purches_exting_vendor.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm11" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
@@ -343,9 +343,6 @@
                 searchServiceGrid();
             }, 300);
         }
-    </script>
-
-    <script type="text/javascript">
 
         function getRowSearchText(row) {
             var text = row.innerText || "";

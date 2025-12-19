@@ -44,7 +44,6 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-
         private string findProductId()
         {
             string PurID = "";
@@ -572,7 +571,6 @@ namespace Bill_Software.corporate.business.app
             // Refresh UI list / grid
             Binddata();
         }
-
 
         public class DuplicateInfoResult
         {
