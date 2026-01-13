@@ -93,7 +93,6 @@
                                         </ul>
                                     </li>
 
-
                                     <li id="productparent" runat="server"><a href="productparent.aspx">Product Catagory Old</a></li>
                                     <li id="product_master" runat="server"><a href="product_master.aspx">Product Name Old</a></li>
                                     <li id="newproductparent" runat="server"><a href="newproductparent.aspx">Product Catagory</a></li>
@@ -125,6 +124,46 @@
 
                                     </ul>
                             </li>
+
+                            <li id="PR_PO_Management" runat="server"><a href="#">PR / PO</a>
+                                <ul class="nav first">
+                                    <li id="PR_Master" runat="server"><a href="#">Purchase Requisition</a>
+                                        <ul class="nav first1">
+                                            <li id="pr_create" runat="server"><a href="RequisitionNew.aspx">Create Purchase Requisition</a></li>
+                                            <li id="pr_view" runat="server"><a href="RequisitionManualView.aspx">View Purchase Requisition</a></li>
+                                            <li id="pr_search" runat="server"><a href="Search_PR.aspx">Search Purchase Requisition</a></li>
+                                            <li id="pr_approve" runat="server"><a href="Approve_PR.aspx">Approve / Reject PR</a></li>
+                                            <li id="pr_cancel" runat="server"><a href="Cancel_PR.aspx">Cancel Purchase Requisition</a></li>
+                                        </ul>
+                                    </li>
+
+                                    <li id="PO_Master" runat="server"><a href="#">Purchase Order</a>
+                                        <ul class="nav first1">
+                                            <li id="po_generate" runat="server"><a href="Generate_PO_From_PR.aspx">Generate Purchase Order</a></li>
+                                            <li id="po_view" runat="server"><a href="View_PO.aspx">View Purchase Order</a></li>
+                                            <li id="po_search" runat="server"><a href="Search_PO.aspx">Search Purchase Order</a></li>
+                                            <li id="po_release" runat="server"><a href="Release_PO.aspx">Review & Release PO</a></li>
+                                            <li id="po_cancel" runat="server"><a href="Cancel_PO.aspx">Cancel Purchase Order</a></li>
+                                        </ul>
+                                    </li>
+
+                                    <li id="PO_Amendment_Master" runat="server"><a href="#">PO Amendment</a>
+                                        <ul class="nav first1">
+                                            <li id="po_amend_create" runat="server"><a href="Create_PO_Amendment.aspx">Create PO Amendment</a></li>
+                                            <li id="po_amend_view" runat="server"><a href="View_PO_Amendment.aspx">View PO Amendments</a></li>
+                                            <li id="po_amend_approve" runat="server"><a href="Approve_PO_Amendment.aspx">Approve PO Amendment</a></li>
+                                        </ul>
+                                    </li>
+
+                                    <li id="PO_Item_Cancel_Master" runat="server"><a href="#">PO Item Cancellation</a>
+                                        <ul class="nav first1">
+                                            <li id="po_item_cancel_request" runat="server"><a href="Request_PO_Item_Cancellation.aspx">Request Item Cancellation</a></li>
+                                            <li id="po_item_cancel_approve" runat="server"><a href="Approve_PO_Item_Cancellation.aspx">Approve Item Cancellation</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+
                             <li id="Purchess_payment" runat="server">Purchase Payment
 									<ul class="nav first">
                                         <li id="add_payment_purchess" runat="server"><a href="add_payment_purchess.aspx">Add Payment against Purchase</a></li>

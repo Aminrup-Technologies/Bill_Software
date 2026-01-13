@@ -256,6 +256,7 @@
     <Content Include="corporate\business\app\productparent.aspx" />
     <Content Include="corporate\business\app\ProformaMail.aspx" />
     <Content Include="corporate\business\app\RequisitionManual.aspx" />
+    <Content Include="corporate\business\app\RequisitionNew.aspx" />
     <Content Include="corporate\business\app\RequisitionView.aspx" />
     <Content Include="corporate\business\app\rpts_vw_qtn_po_counts.aspx" />
     <Content Include="corporate\business\app\SearchHydrentQuatation.aspx" />
@@ -771,6 +772,13 @@
     </Compile>
     <Compile Include="corporate\business\app\RequisitionManual.aspx.designer.cs">
       <DependentUpon>RequisitionManual.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionNew.aspx.cs">
+      <DependentUpon>RequisitionNew.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\RequisitionNew.aspx.designer.cs">
+      <DependentUpon>RequisitionNew.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\RequisitionView.aspx.cs">
       <DependentUpon>RequisitionView.aspx</DependentUpon>
