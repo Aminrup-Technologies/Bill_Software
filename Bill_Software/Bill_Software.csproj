@@ -281,6 +281,8 @@
     <Content Include="corporate\business\app\Update_vendor.aspx" />
     <Content Include="corporate\business\app\ViewHydrentQuatation.aspx" />
     <Content Include="corporate\business\app\Viewhydrent_invoice.aspx" />
+    <Content Include="corporate\business\app\View_PR.aspx" />
+    <Content Include="corporate\business\app\View_PR_Details.aspx" />
     <Content Include="corporate\business\app\View_PurchaseOrder.aspx" />
     <Content Include="corporate\business\app\View_vendor.aspx" />
     <Content Include="corporate\business\app\Delete_vendor.aspx" />
@@ -947,6 +949,20 @@
     </Compile>
     <Compile Include="corporate\business\app\Viewhydrent_invoice.aspx.designer.cs">
       <DependentUpon>Viewhydrent_invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_PR.aspx.cs">
+      <DependentUpon>View_PR.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_PR.aspx.designer.cs">
+      <DependentUpon>View_PR.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\View_PR_Details.aspx.cs">
+      <DependentUpon>View_PR_Details.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\View_PR_Details.aspx.designer.cs">
+      <DependentUpon>View_PR_Details.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\View_PurchaseOrder.aspx.cs">
       <DependentUpon>View_PurchaseOrder.aspx</DependentUpon>

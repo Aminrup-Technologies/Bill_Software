@@ -130,7 +130,7 @@
                                     <li id="PR_Master" runat="server"><a href="#">Purchase Requisition</a>
                                         <ul class="nav first1">
                                             <li id="pr_create" runat="server"><a href="RequisitionNew.aspx">Create Purchase Requisition</a></li>
-                                            <li id="pr_view" runat="server"><a href="RequisitionManualView.aspx">View Purchase Requisition</a></li>
+                                            <li id="pr_view" runat="server"><a href="View_PR.aspx">View Purchase Requisition</a></li>
                                             <li id="pr_search" runat="server"><a href="Search_PR.aspx">Search Purchase Requisition</a></li>
                                             <li id="pr_approve" runat="server"><a href="Approve_PR.aspx">Approve / Reject PR</a></li>
                                             <li id="pr_cancel" runat="server"><a href="Cancel_PR.aspx">Cancel Purchase Requisition</a></li>

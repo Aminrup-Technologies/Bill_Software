@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="RequisitionNew.aspx.cs" Inherits="Bill_Software.corporate.business.app.RequisitionNew" %>
+﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="View_PR_Details.aspx.cs" Inherits="Bill_Software.corporate.business.app.View_PR_Details" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
@@ -125,24 +125,21 @@
         let modifiedCount = 0;
 
         function markRowModified(ctrl) {
-            const row = ctrl.closest("tr");
+            var row = ctrl.closest("tr");
             if (!row) return;
 
-            const hidden = row.querySelector("input[type='hidden']");
-            if (!hidden) return;
+            // HiddenField
+            var hdn = row.querySelector("input[type='hidden'][id*='hdnIsModified']");
+            if (hdn) hdn.value = "1";
 
-            // Already marked → do nothing
-            if (hidden.value === "1") return;
+            // Find the badge safely
+            var badge = row.querySelector("span[data-modified='1']");
+            if (badge) badge.style.display = "inline";
 
-            // Mark as modified
-            hidden.value = "1";
-            modifiedCount++;
-
-            // Optional visual indicator
-            row.style.backgroundColor = "#FFF3CD"; // light yellow
-
-            updateModifiedCounter();
+            // Optional: highlight row
+            row.style.backgroundColor = "#fff7cc";
         }
+
 
         function updateModifiedCounter() {
             const lbl = document.getElementById("lblModifiedCount");
@@ -532,20 +529,20 @@
                     <td>&nbsp;</td>
                     <td colspan="4">
                         <table width="100%" cellpadding="4" cellspacing="0"
-                               style="border:1px solid #006699; background-color:#F4FAFF;">
+                            style="border: 1px solid #006699; background-color: #F4FAFF;">
                             <tr>
-                                <td style="width:20%; font-weight:bold;">PR No</td>
-                                <td style="width:30%;">
+                                <td style="width: 20%; font-weight: bold;">PR No</td>
+                                <td style="width: 30%;">
                                     <asp:Label ID="lblReqNo" runat="server"
                                         Text="(Not Generated)"
-                                        Style="font-weight:bold; color:#003366;" />
+                                        Style="font-weight: bold; color: #003366;" />
                                 </td>
 
-                                <td style="width:20%; font-weight:bold;">Status</td>
-                                <td style="width:30%;">
+                                <td style="width: 20%; font-weight: bold;">Status</td>
+                                <td style="width: 30%;">
                                     <asp:Label ID="lblStatus" runat="server"
                                         Text="Draft"
-                                        Style="font-weight:bold; color:#CC6600;" />
+                                        Style="font-weight: bold; color: #CC6600;" />
                                 </td>
                             </tr>
                         </table>
@@ -735,7 +732,7 @@
                     </td>
                     <td>&nbsp;</td>
                 </tr>
-                <tr>
+                <tr id="PurchaseType_Row" runat="server" visible="False">
                     <td>&nbsp;</td>
                     <td>
                         <asp:Label ID="Label1" runat="server" Text="Purchasse Type" Visible="False"></asp:Label>
@@ -747,7 +744,7 @@
                         </asp:RadioButtonList>
                     </td>
                     <td colspan="2">
-                        <asp:Button ID="Button1" runat="server" Text="Create PR" CssClass="btn_style" Visible="False" OnClick="Button1_Click" />
+                        <asp:Button ID="Button1" runat="server" Text="Modify PR" CssClass="btn_style" Visible="False" OnClick="Button1_Click" />
                     </td>
                     <td>&nbsp;</td>
                 </tr>
@@ -806,7 +803,7 @@
                                     <td width="15%">&nbsp;</td>
                                 </tr>
 
-                                <tr>
+                                <tr id="SearchBox_Row" runat="server" visible="false">
                                     <td colspan="4" style="text-align: center; padding: 10px 0;">
                                         <asp:TextBox ID="txtServiceSearch" runat="server"
                                             CssClass="textbox_U_style"
@@ -823,7 +820,7 @@
                                     </td>
                                 </tr>
 
-                                <tr>
+                                <tr id="SearchBox_Msg" runat="server" visible="false">
                                     <td colspan="4" style="text-align: center; padding-bottom: 5px;">
                                         <span id="lblNoServiceRecords"
                                             style="color: red; display: none; font-weight: bold;">No records found
@@ -831,7 +828,7 @@
                                     </td>
                                 </tr>
 
-                                <tr>
+                                <tr id="Modifier_Msg_Row" runat="server" visible="false">
                                     <td colspan="4" style="text-align: right; padding: 5px 10px;">
                                         <span style="font-weight: bold; color: #d9534f;">Modified Items :
                                             <span id="lblModifiedCount">0</span>
@@ -852,36 +849,32 @@
                                     </td>
                                 </tr>
 
-                                <tr>
+                                <tr id="Old_Logic" runat="server" visible="false">
                                     <td colspan="4" style="padding-top: 5px;">
-
                                         <%--<asp:TextBox ID="txtServiceSearch" runat="server"
                                             CssClass="textbox_U_style"
                                             Width="250px"
                                             placeholder="Search service / product..."
                                             onkeyup="debouncedSearchServiceGrid()" />
-
                                         <asp:Button ID="btnClearServiceSearch" runat="server"
                                             Text="Clear"
                                             CssClass="btn btn-primary btn_style"
                                             OnClientClick="clearServiceGridSearch(); return false;" />
-
                                         <br />
                                         <span id="lblNoServiceRecords" style="color: red; display: none; font-weight: bold;">No records found
                                         </span>--%>
-
                                         <%--<br />
 
                                         <span style="font-weight: bold; color: #d9534f;">Modified Items: <span id="lblModifiedCount">0</span>
                                         </span>
                                         <br />--%>
 
-                                        <asp:GridView ID="gd_Service_Product" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%" OnRowDataBound="gd_Service_Product_RowDataBound">
+                                        <asp:GridView ID="gd_Service_Product" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 11px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%" OnRowDataBound="gd_Service_Product_RowDataBound" OnRowCommand="gd_Service_Product_RowCommand">
                                             <RowStyle BackColor="#94B8FF" />
                                             <Columns>
                                                 <asp:TemplateField HeaderText="Status">
                                                     <ItemTemplate>
-                                                        <span class="modified-badge" style="display: none;">✱</span>
+                                                        <span data-modified="1" style="display:none;font-weight:bold;color:red;">✱</span>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
@@ -901,6 +894,7 @@
                                                     </EditItemTemplate>
                                                     <ItemTemplate>
                                                         <asp:Label ID="Ser_pro_Name" runat="server" Text='<%# Bind("Ser_pro_Name") %>'></asp:Label>
+                                                        <asp:HiddenField ID="hdnParentCategoryId" runat="server" Value='<%# Eval("ParentCategoryId") %>' />
                                                     </ItemTemplate>
 
                                                 </asp:TemplateField>
@@ -970,6 +964,21 @@
                                                         <asp:TextBox ID="txtOrder" runat="server" onfocus="autoAssignOrder(this)" onkeyup="markRowModified(this)" CssClass="textbox_style21" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Width="50px" />
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
+
+                                                <asp:TemplateField HeaderText="Action">
+                                                    <ItemTemplate>
+                                                        <asp:HiddenField ID="hdnRowId" runat="server"
+                                                            Value='<%# Eval("id") %>' />
+
+                                                        <asp:LinkButton ID="lnkDelete"
+                                                            runat="server"
+                                                            Text="Delete"
+                                                            CommandName="DeleteItem"
+                                                            CommandArgument='<%# Eval("id") %>'
+                                                            OnClientClick="return confirm('Delete this item?');"
+                                                            CssClass="delete-link" />
+                                                    </ItemTemplate>
+                                                </asp:TemplateField>
                                             </Columns>
                                             <FooterStyle BackColor="#CCCC99" />
                                             <PagerStyle BackColor="White" ForeColor="Black" HorizontalAlign="Right" />
@@ -980,13 +989,6 @@
                                         <br />
                                     </td>
                                 </tr>
-                                <%--<tr>
-                                    <td>&nbsp;</td>
-                                    <td colspan="2" style="text-align: center">
-                                        <asp:Button ID="btnApplyOrder" runat="server" Text="Apply Order" CssClass="btn_style" OnClick="btnApplyOrder_Click" />
-                                    </td>
-                                    <td>&nbsp;</td>
-                                </tr>--%>
                                 <tr>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>
@@ -1000,19 +1002,9 @@
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>
                                 </tr>
-                                <%--<tr>
-                                    <td>&nbsp;</td>
-                                    <td colspan="2" style="text-align: center">
-                                        <asp:Button ID="btnReorder" runat="server" Text="Auto Reorder" CssClass="btn btn-info btn-sm btn_style" OnClientClick="autoReorderModifiedOnly(); return false;" />
-                                        &nbsp; &nbsp;
-                                        <asp:Button ID="Button3" runat="server" OnClientClick="return validateModifiedRows();" OnClick="Button3_Click" Text="Save PR" CssClass="btn_style" />
-                                    </td>
-                                    <td>&nbsp;</td>
-                                </tr>--%>
-
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td colspan="4" style="text-align:center; padding:10px;">
+                                    <td colspan="4" style="text-align: center; padding: 10px;">
 
                                         <asp:Button ID="btnReorder" runat="server"
                                             Text="Auto Reorder"
@@ -1024,7 +1016,7 @@
                                             Text="Save Draft"
                                             CssClass="btn btn-warning btn_style"
                                             OnClientClick="return validateModifiedRows();"
-                                            OnClick="btnSaveDraft_Click" />
+                                            OnClick="btnSaveEdit_Click" />
 
                                         &nbsp;&nbsp;
 

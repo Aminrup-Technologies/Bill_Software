@@ -10,7 +10,7 @@ using System.Configuration;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class RequisitionNew : System.Web.UI.Page
+    public partial class View_PR_Details : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
         public DataTable first_datatable;
@@ -29,16 +29,14 @@ namespace Bill_Software.corporate.business.app
                 string reqNo = Request.QueryString["reqNo"];
                 if (!string.IsNullOrEmpty(reqNo))
                 {
+                    DbCL.FillCombo(cmbvendor, "select Vendor_Name from tbl_Vendor order by Vendor_Name");
                     LoadPR(reqNo);
                 }
                 else
                 {
-                    Dt = new DataTable("Table");
-                    DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
-                    DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
-                    DbCL.FillCombo(cmbvendor, "select Vendor_Name from tbl_Vendor order by Vendor_Name");
+                    //Hide full page
                 }
-                
+
             }
         }
 
@@ -61,16 +59,20 @@ namespace Bill_Software.corporate.business.app
                     lblReqNo.Text = reqNo;
                     lblStatus.Text = dr["Status"].ToString();
                     cmbvendor.Text = dr["clientName"].ToString();
+                    String VendorId = dr["VendorId"].ToString();
+                    BindVendor(VendorId);
                 }
                 dr.Close();
 
-                SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM tbl_RequisitionNew WHERE ReqNo=@ReqNo ORDER BY ItemOrder", con);
+                SqlDataAdapter da = new SqlDataAdapter("SELECT id, ProductId AS Ser_pro_code, ProductName as Ser_pro_Name, ParentCategoryId, Description, Qnty, Rate, DiscountPercent, DiscountAmount, TaxableAmount, IsTaxApplicable, gstrate, ItemOrder FROM tbl_RequisitionNew WHERE ReqNo = @ReqNo ORDER BY ItemOrder", con);
                 da.SelectCommand.Parameters.AddWithValue("@ReqNo", reqNo);
 
                 DataTable dt = new DataTable();
                 da.Fill(dt);
                 gd_Service_Product.DataSource = dt;
                 gd_Service_Product.DataBind();
+
+                Panel2.Visible = true;
             }
 
             ApplyStatusUI(lblStatus.Text);
@@ -106,6 +108,8 @@ namespace Bill_Software.corporate.business.app
             Label1.Visible = true;
             RadioButtonList1.Visible = true;
             Button1.Visible = true;
+            PurchaseType_Row.Visible = true;
+
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             string cmdstring = "select * from tbl_Vendor where Vendor_Name='" + cmbvendor.Text + "'";
@@ -135,6 +139,48 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
+        protected void BindVendor(String VendorId)
+        {
+            Label1.Visible = true;
+            RadioButtonList1.Visible = true;
+            Button1.Visible = true;
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select * from tbl_Vendor where Id='" + VendorId + "'";
+            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            SqlDataReader re = cmd.ExecuteReader();
+            if (re.Read())
+            {
+                lbl_vendordbid.Text = re["Id"].ToString();
+                cmbvendor.ClearSelection();
+
+                ListItem item = cmbvendor.Items.FindByText(re["Vendor_Name"].ToString());
+                if (item != null)
+                {
+                    item.Selected = true;
+                }
+
+                lblvendor_id.Text = re["Vendor_Id"].ToString();
+                txtAddress1.Text = re["Address1"].ToString();
+                txtAddress2.Text = re["Address2"].ToString();
+                cmbcity.Text = re["City"].ToString();
+                txtPin.Text = re["pin"].ToString();
+                cmbState.Text = re["State"].ToString();
+                txtWebsite.Text = re["Com_web_site"].ToString();
+                txtEmail.Text = re["Com_email"].ToString();
+                txtPhone.Text = re["Com_phone"].ToString();
+                txtFax.Text = re["Com_Fax"].ToString();
+                txtRepresentativeName.Text = re["Rep_Name"].ToString();
+                txtRepresantativeDesig.Text = re["Rep_Desig"].ToString();
+                txtRepresentativePhone.Text = re["Rep_phone"].ToString();
+                txtRepresentativeEmail.Text = re["Rep_email"].ToString();
+                txtservicetaxNo.Text = re["Service_tax_No"].ToString();
+                txtpanNo.Text = re["Pan_No"].ToString();
+                txtvat.Text = re["Vat_No"].ToString();
+            }
+            DbCL.Conn.Close();
+        }
+
         protected void Button1_Click(object sender, EventArgs e)
         {
             Label1.Visible = false;
@@ -142,32 +188,6 @@ namespace Bill_Software.corporate.business.app
             Button1.Visible = false;
             Panel1.Visible = true;
             BindListitem();
-        }
-
-        private void BindListitem_OLD()
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "";
-            if (RadioButtonList1.SelectedIndex == 0)
-            {
-                //cmdstring = "select Product_Name from tbl_Product order by Product_Name";
-                cmdstring = "select ProductOrServiceCat from tbl_NewparentProduct order by Id";
-            }
-            else
-            {
-                cmdstring = "select Service_name  from tbl_Service order by Service_name";
-            }
-            cmbproduct_service.Items.Clear();
-            cmbproduct_service.Items.Add("--Select--");
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            while (re.Read())
-            {
-                cmbproduct_service.Items.Add(re.GetValue(0).ToString());
-            }
-            DbCL.Conn.Close();
-
         }
 
         private void BindListitem()
@@ -200,7 +220,11 @@ namespace Bill_Software.corporate.business.app
             int selectedId = Convert.ToInt32(prevValue);
             string selectedText = cmbproduct_service.SelectedItem.Text;
 
+            gridtable.Visible = true;
             Panel2.Visible = true;
+            SearchBox_Row.Visible = true;
+            SearchBox_Msg.Visible = true;
+            Modifier_Msg_Row.Visible = true;
 
             if (RadioButtonList1.SelectedIndex == 0)
             {
@@ -216,6 +240,8 @@ namespace Bill_Software.corporate.business.app
             ViewState["dt"] = Dt;
 
             cmbproduct_service.SelectedValue = prevValue; // restore
+
+
         }
 
         private void LoadTaxRates()
@@ -354,25 +380,184 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        protected void gd_Service_Product_RowDataBound(object sender, GridViewRowEventArgs e)
+        private void AppendJs(WebControl ctrl, string eventName, string js)
         {
-            if (e.Row.RowType == DataControlRowType.DataRow)
+            if (ctrl == null) return;
+
+            string existing = ctrl.Attributes[eventName];
+
+            if (string.IsNullOrEmpty(existing))
             {
-                DropDownList dp1 = (DropDownList)e.Row.Cells[4].FindControl("vat_parsentage");
+                ctrl.Attributes.Add(eventName, js);
+            }
+            else if (!existing.Contains(js))
+            {
+                ctrl.Attributes[eventName] = existing + ";" + js;
+            }
+        }
 
-                // Clear existing items
-                dp1.Items.Clear();
 
-                if (RadioButtonList1.SelectedIndex == 0) // VAT Rates
+        private void WireModificationTracking(Control parent)
+        {
+            foreach (Control ctrl in parent.Controls)
+            {
+                TextBox tb = ctrl as TextBox;
+                if (tb != null && !tb.ReadOnly)
                 {
-                    dp1.Items.AddRange(vatRates.Select(rate => new ListItem(rate)).ToArray());
+                    AppendJs(tb, "onkeyup", "markRowModified(this)");
+                    AppendJs(tb, "onchange", "markRowModified(this)");
                 }
-                else // Service Tax Rates
+
+                DropDownList ddl = ctrl as DropDownList;
+                if (ddl != null)
                 {
-                    dp1.Items.AddRange(serviceTaxRates.Select(rate => new ListItem(rate)).ToArray());
+                    AppendJs(ddl, "onchange", "markRowModified(this)");
+                }
+
+                RadioButtonList rbl = ctrl as RadioButtonList;
+                if (rbl != null)
+                {
+                    AppendJs(rbl, "onchange", "markRowModified(this)");
+                }
+
+                if (ctrl.HasControls())
+                    WireModificationTracking(ctrl);
+            }
+        }
+
+
+        private void WireModificationTracking_OLD(Control parent)
+        {
+            foreach (Control ctrl in parent.Controls)
+            {
+                // TextBox
+                TextBox tb = ctrl as TextBox;
+                if (tb != null && !tb.ReadOnly && tb.ID != "TaxableAmount")
+                {
+                    tb.Attributes["onchange"] = "markRowModified(this)";
+                    tb.Attributes["onkeyup"] = "markRowModified(this)";
+                }
+
+                // DropDownList
+                DropDownList ddl = ctrl as DropDownList;
+                if (ddl != null)
+                {
+                    ddl.Attributes["onchange"] = "markRowModified(this)";
+                }
+
+                // RadioButtonList
+                RadioButtonList rbl = ctrl as RadioButtonList;
+                if (rbl != null)
+                {
+                    rbl.Attributes["onchange"] = "markRowModified(this)";
+                }
+
+                // Recursive call
+                if (ctrl.HasControls())
+                {
+                    WireModificationTracking(ctrl);
                 }
             }
         }
+
+
+
+        protected void gd_Service_Product_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType != DataControlRowType.DataRow)
+                return;
+
+            foreach (Control c in e.Row.Controls)
+            {
+                WireModificationTracking(e.Row);
+            }
+
+            DataRowView drv = (DataRowView)e.Row.DataItem;
+
+            // --- Textboxes ---
+            ((TextBox)e.Row.FindControl("sepecification")).Text =
+                drv["Description"]?.ToString();
+
+            ((TextBox)e.Row.FindControl("Quantity")).Text =
+                drv["Qnty"]?.ToString();
+
+            ((TextBox)e.Row.FindControl("Vendor_rate")).Text =
+                drv["Rate"]?.ToString();
+
+            ((TextBox)e.Row.FindControl("DiscountPercent")).Text =
+                drv["DiscountPercent"]?.ToString();
+
+            ((TextBox)e.Row.FindControl("DiscountAmount")).Text =
+                drv["DiscountAmount"]?.ToString();
+
+            ((TextBox)e.Row.FindControl("TaxableAmount")).Text =
+                drv["TaxableAmount"]?.ToString();
+
+            ((TextBox)e.Row.FindControl("txtOrder")).Text =
+                drv["ItemOrder"]?.ToString();
+
+            // --- Tax Applicable ---
+            RadioButtonList rbl =
+                (RadioButtonList)e.Row.FindControl("RadioButtonList1");
+
+            bool isTaxApplicable =
+                drv["IsTaxApplicable"] != DBNull.Value &&
+                Convert.ToBoolean(drv["IsTaxApplicable"]);
+
+            rbl.SelectedValue = isTaxApplicable ? "Yes" : "No";
+
+            // --- GST DropDown ---
+            DropDownList ddl =
+                (DropDownList)e.Row.FindControl("vat_parsentage");
+
+            BindGSTDropdown(ddl); // MUST bind first
+
+            if (drv["gstrate"] != DBNull.Value)
+            {
+                ddl.SelectedValue = drv["gstrate"].ToString();
+            }
+
+            // --- Reset Modified Flag ---
+            HiddenField hdn =
+                (HiddenField)e.Row.FindControl("hdnIsModified");
+
+            hdn.Value = "0"; // reloaded from DB, not modified
+        }
+
+        private void BindGSTDropdown(DropDownList ddl)
+        {
+            if (ddl.Items.Count > 0) return;
+
+            ddl.Items.Add(new ListItem("--Select--", ""));
+            ddl.Items.Add(new ListItem("0", "0"));
+            ddl.Items.Add(new ListItem("5", "5"));
+            ddl.Items.Add(new ListItem("12", "12"));
+            ddl.Items.Add(new ListItem("18", "18"));
+            ddl.Items.Add(new ListItem("28", "28"));
+        }
+
+
+        protected void gd_Service_Product_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName != "DeleteItem") return;
+            if (lblStatus.Text != "Draft") return;
+
+            int rowId = Convert.ToInt32(e.CommandArgument);
+
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(
+                    "DELETE FROM tbl_RequisitionNew WHERE id=@id", con);
+                cmd.Parameters.AddWithValue("@id", rowId);
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            LoadPR(CurrentReqNo); // refresh grid
+        }
+
+
 
         private string CurrentReqNo
         {
@@ -380,254 +565,58 @@ namespace Bill_Software.corporate.business.app
             set { ViewState["ReqNo"] = value; }
         }
 
-        protected void btnSaveDraft_Click_OLD(object sender, EventArgs e)
+
+        private string SaveOrUpdatePRHeader(SqlConnection con, SqlTransaction tran)
         {
-            ClearMessages();
+            string reqNo = CurrentReqNo;
 
-            try
+            if (string.IsNullOrEmpty(reqNo))
             {
-                if (!validateModifiedRows_Server())
-                {
-                    ShowError("Please correct the highlighted fields before saving.");
-                    return;
-                }
+                // NEW PR
+                reqNo = GenerateReqNo(con, tran);
 
-                using (SqlConnection con = new SqlConnection(
-                    ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-                {
-                    con.Open();
-                    SqlTransaction tran = con.BeginTransaction();
+                SqlCommand cmd = new SqlCommand(@"
+                INSERT INTO tbl_RequisitionMain
+                (ReqNo, VendorId, Vendor, Status, CreatedBy, CreatedOn)
+                VALUES
+                (@ReqNo, @VendorId, @Vendor, 'Draft', @User, GETDATE())", con, tran);
+                cmd.Parameters.AddWithValue("@ReqNo", reqNo);
+                cmd.Parameters.AddWithValue("@VendorId", lblvendor_id.Text);
+                cmd.Parameters.AddWithValue("@Vendor", cmbvendor.SelectedItem.Text);
+                cmd.Parameters.AddWithValue("@User", Session["USERID"].ToString());
 
-                    try
-                    {
-                        string reqNo = SaveOrUpdatePRHeader(con, tran);
-                        //SaveModifiedPRItems(reqNo, con, tran);
-
-                        tran.Commit();
-
-                        lblReqNo.Text = reqNo;
-                        lblStatus.Text = "Draft";
-
-                        ShowSuccess("Purchase Requisition saved as Draft successfully.");
-                        //ShowSuccess("PR saved successfully.");
-                        ScriptManager.RegisterStartupScript(this, GetType(), "scrollMsg", "scrollToMessage();", true);
-                    }
-                    catch (Exception ex)
-                    {
-                        tran.Rollback();
-                        ShowError("Failed to save PR. " + ex.Message);
-                        ScriptManager.RegisterStartupScript(this, GetType(), "scrollMsg", "scrollToMessage();", true);
-                    }
-                }
+                cmd.ExecuteNonQuery();
             }
-            catch (Exception ex)
+            else
             {
-                ShowError("Unexpected error occurred. " + ex.Message);
-                ScriptManager.RegisterStartupScript(this, GetType(), "scrollMsg", "scrollToMessage();", true);
+                // UPDATE EXISTING DRAFT
+                SqlCommand cmd = new SqlCommand(@"
+                UPDATE tbl_RequisitionMain SET VendorId=@VendorId, Vendor=@Vendor WHERE ReqNo=@ReqNo AND Status='Draft'", con, tran);
+                cmd.Parameters.AddWithValue("@ReqNo", reqNo);
+                cmd.Parameters.AddWithValue("@VendorId", lblvendor_id.Text);
+                cmd.Parameters.AddWithValue("@Vendor", cmbvendor.SelectedItem.Text);
+                cmd.ExecuteNonQuery();
             }
+
+            return reqNo;
         }
 
-        protected void btnSaveDraft_Click_OLD2(object sender, EventArgs e)
+        private DataTable BuildRequisitionItemTable()
         {
-            ClearMessages();
-
-            string userId = Session["USERID"]?.ToString();
-            if (string.IsNullOrEmpty(userId))
-            {
-                ShowError("Session expired.");
-                return;
-            }
-
-            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-            {
-                con.Open();
-                SqlTransaction tran = con.BeginTransaction();
-
-                try
-                {
-                    // 1️⃣ Create PR Header (only once)
-                    if (string.IsNullOrEmpty(CurrentReqNo))
-                    {
-                        SqlCommand cmdHdr = new SqlCommand("sp_Requisition_CreateDraft", con, tran);
-                        cmdHdr.CommandType = CommandType.StoredProcedure;
-
-                        cmdHdr.Parameters.Add("@ClientName", SqlDbType.NVarChar, 250).Value = cmbvendor.SelectedItem.Text;
-                        int vendorId;
-                        if (!int.TryParse(lbl_vendordbid.Text, out vendorId))
-                        {
-                            ShowError("Invalid Vendor selected.");
-                            return;
-                        }
-
-                        cmdHdr.Parameters.Add("@VendorId", SqlDbType.Int).Value = vendorId;
-                        cmdHdr.Parameters.AddWithValue("@CreatedBy", userId);
-
-                        SqlParameter outReqNo =
-                        new SqlParameter("@ReqNo", SqlDbType.VarChar, 250)
-                        {
-                            Direction = ParameterDirection.Output
-                        };
-
-                        cmdHdr.Parameters.Add(outReqNo);
-                        cmdHdr.ExecuteNonQuery();
-
-                        CurrentReqNo = outReqNo.Value.ToString();
-                        lblReqNo.Text = CurrentReqNo;
-                    }
-
-                    // 2️⃣ Save ONLY MODIFIED ITEMS
-                    foreach (GridViewRow row in gd_Service_Product.Rows)
-                    {
-                        HiddenField hdn = (HiddenField)row.FindControl("hdnIsModified");
-                        if (hdn?.Value != "1") continue;
-                        int selectedId = Convert.ToInt32(cmbproduct_service.SelectedValue);
-                        SqlCommand cmdItem = new SqlCommand("sp_RequisitionItem_Upsert", con, tran);
-                        cmdItem.CommandType = CommandType.StoredProcedure;
-                        cmdItem.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text.ToString());
-                        cmdItem.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
-                        cmdItem.Parameters.AddWithValue("@ProductId",((Label)row.FindControl("Ser_pro_code")).Text);
-                        cmdItem.Parameters.AddWithValue("@ProductName", ((Label)row.FindControl("Ser_pro_Name")).Text);
-                        cmdItem.Parameters.AddWithValue("@ParentCategoryId", selectedId); // map if available
-                        cmdItem.Parameters.AddWithValue("@Description",((TextBox)row.FindControl("sepecification")).Text);
-                        cmdItem.Parameters.AddWithValue("@Qnty",((TextBox)row.FindControl("Quantity")).Text);
-                        cmdItem.Parameters.AddWithValue("@Rate",((TextBox)row.FindControl("Vendor_rate")).Text);
-                        cmdItem.Parameters.AddWithValue("@GST",GetGSTRate(row, GetTaxApplicable(row)));
-                        cmdItem.Parameters.AddWithValue("@ItemOrder",((TextBox)row.FindControl("txtOrder")).Text);
-                        cmdItem.Parameters.AddWithValue("@UserId", userId);
-                        cmdItem.ExecuteNonQuery();
-                    }
-
-                    tran.Commit();
-
-                    lblStatus.Text = "Draft";
-                    ShowSuccess("PR saved as Draft successfully.");
-                }
-                catch (Exception ex)
-                {
-                    tran.Rollback();
-                    ShowError("Save failed: " + ex.Message);
-                }
-            }
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ProductId", typeof(string));
+            dt.Columns.Add("ProductName", typeof(string));
+            dt.Columns.Add("ParentCategoryId", typeof(int));
+            dt.Columns.Add("Description", typeof(string));
+            dt.Columns.Add("Qnty", typeof(decimal));
+            dt.Columns.Add("Rate", typeof(decimal));
+            dt.Columns.Add("DiscountPercent", typeof(decimal));
+            dt.Columns.Add("DiscountAmount", typeof(decimal));
+            dt.Columns.Add("IsTaxApplicable", typeof(bool));
+            dt.Columns.Add("GST", typeof(decimal));
+            dt.Columns.Add("ItemOrder", typeof(int));
+            return dt;
         }
-
-        protected void btnSaveDraft_Click(object sender, EventArgs e)
-        {
-            ClearMessages();
-
-            string userId = Session["USERID"]?.ToString();
-            if (string.IsNullOrEmpty(userId))
-            {
-                ShowError("Session expired.");
-                return;
-            }
-
-            using (SqlConnection con = new SqlConnection(
-                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-            {
-                con.Open();
-                SqlTransaction tran = con.BeginTransaction();
-
-                try
-                {
-                    // 1️⃣ Create Header once
-                    if (string.IsNullOrEmpty(CurrentReqNo))
-                    {
-                        SqlCommand cmdHdr = new SqlCommand("sp_Requisition_CreateDraft", con, tran);
-                        cmdHdr.CommandType = CommandType.StoredProcedure;
-                        cmdHdr.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
-                        cmdHdr.Parameters.AddWithValue("@VendorId", Convert.ToInt32(lbl_vendordbid.Text));
-                        cmdHdr.Parameters.AddWithValue("@CreatedBy", userId);
-
-                        SqlParameter outReq =
-                            new SqlParameter("@ReqNo", SqlDbType.VarChar, 250)
-                            { Direction = ParameterDirection.Output };
-
-                        cmdHdr.Parameters.Add(outReq);
-                        cmdHdr.ExecuteNonQuery();
-
-                        CurrentReqNo = outReq.Value.ToString();
-                        lblReqNo.Text = CurrentReqNo;
-                    }
-
-                    // 2️⃣ Build TVP
-                    //DataTable dt = BuildRequisitionItemTable();
-
-                    //foreach (GridViewRow row in gd_Service_Product.Rows)
-                    //{
-                    //    HiddenField hdn = (HiddenField)row.FindControl("hdnIsModified");
-                    //    if (hdn?.Value != "1") continue;
-
-                    //    dt.Rows.Add(
-                    //        ((Label)row.FindControl("Ser_pro_code")).Text,
-                    //        ((Label)row.FindControl("Ser_pro_Name")).Text,
-                    //        Convert.ToInt32(cmbproduct_service.SelectedValue),
-                    //        ((TextBox)row.FindControl("sepecification")).Text,
-                    //        Convert.ToDecimal(((TextBox)row.FindControl("Quantity")).Text),
-                    //        Convert.ToDecimal(((TextBox)row.FindControl("Vendor_rate")).Text),
-                    //        ToDecimal(row, "DiscountPercent"),
-                    //        ToDecimal(row, "DiscountAmount"),
-                    //        GetTaxApplicable(row),
-                    //        GetGSTRate(row, GetTaxApplicable(row)),
-                    //        ToInt(row, "txtOrder")
-                    //    );
-                    //}
-
-                    DataTable dt = BuildRequisitionItemTable();
-
-                    foreach (GridViewRow row in gd_Service_Product.Rows)
-                    {
-                        HiddenField hdn = (HiddenField)row.FindControl("hdnIsModified");
-                        if (hdn?.Value != "1") continue;
-
-                        string error;
-                        if (!ValidateGridRow(row, out error))
-                        {
-                            tran.Rollback();
-                            ShowError(error);
-                            return;
-                        }
-
-                        dt.Rows.Add(
-                            ((Label)row.FindControl("Ser_pro_code")).Text,
-                            ((Label)row.FindControl("Ser_pro_Name")).Text,
-                            Convert.ToInt32(cmbproduct_service.SelectedValue),
-                            ((TextBox)row.FindControl("sepecification")).Text,
-                            ToDecimal(row, "Quantity") ?? 0,
-                            ToDecimal(row, "Vendor_rate") ?? 0,
-                            ToDecimal(row, "DiscountPercent"),
-                            ToDecimal(row, "DiscountAmount"),
-                            GetTaxApplicable(row),
-                            GetGSTRate(row, GetTaxApplicable(row)),
-                            ToInt(row, "txtOrder")
-                        );
-                    }
-
-
-                    // 3️⃣ Bulk Save
-                    SqlCommand cmd = new SqlCommand("sp_RequisitionItem_BulkUpsert", con, tran);
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
-                    cmd.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
-                    cmd.Parameters.AddWithValue("@UserId", userId);
-
-                    SqlParameter tvp = cmd.Parameters.AddWithValue("@Items", dt);
-                    tvp.SqlDbType = SqlDbType.Structured;
-                    tvp.TypeName = "dbo.RequisitionItem_TVP";
-
-                    cmd.ExecuteNonQuery();
-
-                    tran.Commit();
-                    lblStatus.Text = "Draft";
-                    ShowSuccess("Draft saved successfully.");
-                }
-                catch (Exception ex)
-                {
-                    tran.Rollback();
-                    ShowError("Save failed: " + ex.Message);
-                }
-            }
-        }
-
 
         private bool ValidateGridRow(GridViewRow row, out string errorMessage)
         {
@@ -678,23 +667,31 @@ namespace Bill_Software.corporate.business.app
             return true;
         }
 
-
-
-        private DataTable BuildRequisitionItemTable()
+        private bool GetTaxApplicable(GridViewRow row)
         {
-            DataTable dt = new DataTable();
-            dt.Columns.Add("ProductId", typeof(string));
-            dt.Columns.Add("ProductName", typeof(string));
-            dt.Columns.Add("ParentCategoryId", typeof(int));
-            dt.Columns.Add("Description", typeof(string));
-            dt.Columns.Add("Qnty", typeof(decimal));
-            dt.Columns.Add("Rate", typeof(decimal));
-            dt.Columns.Add("DiscountPercent", typeof(decimal));
-            dt.Columns.Add("DiscountAmount", typeof(decimal));
-            dt.Columns.Add("IsTaxApplicable", typeof(bool));
-            dt.Columns.Add("GST", typeof(decimal));
-            dt.Columns.Add("ItemOrder", typeof(int));
-            return dt;
+            RadioButtonList rbl =
+                row.FindControl("RadioButtonList1") as RadioButtonList;
+
+            if (rbl == null || rbl.SelectedItem == null)
+                return false;
+
+            return rbl.SelectedItem.Text.Equals("Yes",
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private decimal GetGSTRate(GridViewRow row, bool isTaxApplicable)
+        {
+            if (!isTaxApplicable)
+                return 0;
+
+            DropDownList ddl =
+                row.FindControl("vat_parsentage") as DropDownList;
+
+            if (ddl == null || string.IsNullOrEmpty(ddl.SelectedValue))
+                return 0;
+
+            decimal gst;
+            return decimal.TryParse(ddl.SelectedValue, out gst) ? gst : 0;
         }
 
         private decimal? ToDecimal(GridViewRow row, string controlId)
@@ -717,93 +714,32 @@ namespace Bill_Software.corporate.business.app
             return int.TryParse(txt.Text.Trim(), out val) ? val : 0;
         }
 
-        private string SaveOrUpdatePRHeader(SqlConnection con, SqlTransaction tran)
+        private void RebindGrid()
         {
-            string reqNo = CurrentReqNo;
-
-            if (string.IsNullOrEmpty(reqNo))
+            using (SqlConnection con =
+                new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                // NEW PR
-                reqNo = GenerateReqNo(con, tran);
-
                 SqlCommand cmd = new SqlCommand(@"
-                INSERT INTO tbl_RequisitionMain
-                (ReqNo, VendorId, Vendor, Status, CreatedBy, CreatedOn)
-                VALUES
-                (@ReqNo, @VendorId, @Vendor, 'Draft', @User, GETDATE())", con, tran);
-                cmd.Parameters.AddWithValue("@ReqNo", reqNo);
-                cmd.Parameters.AddWithValue("@VendorId", lblvendor_id.Text);
-                cmd.Parameters.AddWithValue("@Vendor", cmbvendor.SelectedItem.Text);
-                cmd.Parameters.AddWithValue("@User", Session["USERID"].ToString());
+                SELECT id, ProductId AS Ser_pro_code,
+                       ProductName AS Ser_pro_Name,
+                       Description, Qnty, Rate,
+                       DiscountPercent, DiscountAmount,
+                       TaxableAmount, IsTaxApplicable,
+                       gstrate, ItemOrder
+                FROM tbl_RequisitionNew
+                WHERE ReqNo = @ReqNo
+                ORDER BY ItemOrder", con);
 
-                cmd.ExecuteNonQuery();
-            }
-            else
-            {
-                // UPDATE EXISTING DRAFT
-                SqlCommand cmd = new SqlCommand(@"
-                UPDATE tbl_RequisitionMain SET VendorId=@VendorId, Vendor=@Vendor WHERE ReqNo=@ReqNo AND Status='Draft'", con, tran);
-                cmd.Parameters.AddWithValue("@ReqNo", reqNo);
-                cmd.Parameters.AddWithValue("@VendorId", lblvendor_id.Text);
-                cmd.Parameters.AddWithValue("@Vendor", cmbvendor.SelectedItem.Text);
-                cmd.ExecuteNonQuery();
-            }
+                cmd.Parameters.AddWithValue("@ReqNo", lblReqNo.Text);
 
-            return reqNo;
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                gd_Service_Product.DataSource = dt;
+                gd_Service_Product.DataBind();
+            }
         }
-
-        //private void SaveModifiedPRItems(string reqNo,SqlConnection con, SqlTransaction tran)
-        //{
-        //    foreach (GridViewRow row in gd_Service_Product.Rows)
-        //    {
-        //        HiddenField hdn = (HiddenField)row.FindControl("hdnIsModified");
-        //        if (hdn == null || hdn.Value != "1")
-        //            continue; // 🚫 skip untouched rows
-
-        //        string productId = ((Label)row.FindControl("Ser_pro_code")).Text;
-        //        string productName =((Label)row.FindControl("Ser_pro_Name")).Text;
-        //        string spec =((TextBox)row.FindControl("sepecification")).Text;
-        //        int qty =int.Parse(((TextBox)row.FindControl("Quantity")).Text);
-        //        decimal rate = decimal.Parse(((TextBox)row.FindControl("Vendor_rate")).Text);
-        //        int order = int.Parse(((TextBox)row.FindControl("txtOrder")).Text);
-        //        string taxApplicable = GetTaxApplicable(row);
-        //        decimal gstRate = GetGSTRate(row, taxApplicable);
-
-        //        // Upsert logic (Item may already exist)
-        //        SqlCommand cmd = new SqlCommand(@"
-        //        IF EXISTS (
-        //            SELECT 1 FROM tbl_RequisitionNew
-        //            WHERE ReqNo=@ReqNo AND ProductId=@ProductId
-        //        )
-        //        BEGIN
-        //            UPDATE tbl_RequisitionNew
-        //            SET Description=@Desc,
-        //                Qnty=@Qty,
-        //                Rate=@Rate,
-        //                gstrate=@GST,
-        //                ItemOrder=@Order
-        //            WHERE ReqNo=@ReqNo AND ProductId=@ProductId
-        //        END
-        //        ELSE
-        //        BEGIN
-        //            INSERT INTO tbl_RequisitionNew
-        //            (ReqNo, ProductId, Description, Qnty, Rate, gstrate, ItemOrder)
-        //            VALUES
-        //            (@ReqNo, @ProductId, @Desc, @Qty, @Rate, @GST, @Order)
-        //        END",
-        //        con, tran);
-
-        //        cmd.Parameters.AddWithValue("@ReqNo", reqNo);
-        //        cmd.Parameters.AddWithValue("@ProductId", productId);
-        //        cmd.Parameters.AddWithValue("@Desc", spec);
-        //        cmd.Parameters.AddWithValue("@Qty", qty);
-        //        cmd.Parameters.AddWithValue("@Rate", rate);
-        //        cmd.Parameters.AddWithValue("@GST", gstRate);
-        //        cmd.Parameters.AddWithValue("@Order", order);
-
-        //        cmd.ExecuteNonQuery();
-        //    }
-        //}
 
         private string GetTaxApplicable_OLD(GridViewRow row)
         {
@@ -811,20 +747,7 @@ namespace Bill_Software.corporate.business.app
             return rbl?.SelectedValue ?? "No";
         }
 
-        private bool GetTaxApplicable(GridViewRow row)
-        {
-            RadioButtonList rbl =
-                row.FindControl("RadioButtonList1") as RadioButtonList;
-
-            if (rbl == null || rbl.SelectedItem == null)
-                return false;
-
-            return rbl.SelectedItem.Text.Equals("Yes",
-                StringComparison.OrdinalIgnoreCase);
-        }
-
-
-        private decimal GetGSTRate_OLD(GridViewRow row, string taxApplicable)
+        private decimal GetGSTRate(GridViewRow row, string taxApplicable)
         {
             if (taxApplicable != "Yes")
                 return 0;
@@ -832,22 +755,6 @@ namespace Bill_Software.corporate.business.app
             DropDownList ddl = (DropDownList)row.FindControl("vat_parsentage");
             return ddl == null ? 0 : decimal.Parse(ddl.SelectedValue);
         }
-
-        private decimal GetGSTRate(GridViewRow row, bool isTaxApplicable)
-        {
-            if (!isTaxApplicable)
-                return 0;
-
-            DropDownList ddl =
-                row.FindControl("vat_parsentage") as DropDownList;
-
-            if (ddl == null || string.IsNullOrEmpty(ddl.SelectedValue))
-                return 0;
-
-            decimal gst;
-            return decimal.TryParse(ddl.SelectedValue, out gst) ? gst : 0;
-        }
-
 
         private string GenerateReqNo(SqlConnection con, SqlTransaction tran)
         {
@@ -999,9 +906,110 @@ namespace Bill_Software.corporate.business.app
             btnReorder.Enabled = isDraft;
             btnCancelPR.Visible = isDraft;
 
+            Label1.Visible = isDraft;
+            RadioButtonList1.Visible = isDraft;
+            Button1.Visible = isDraft;
+            Button1.Enabled = isDraft;
+            PurchaseType_Row.Visible = isDraft;
+
+            SearchBox_Row.Visible = isDraft;
+            SearchBox_Msg.Visible = isDraft;
+
+            Modifier_Msg_Row.Visible = isDraft;
+
             gd_Service_Product.Enabled = isDraft;
             cmbvendor.Enabled = isDraft;
         }
+
+        protected void btnSaveEdit_Click(object sender, EventArgs e)
+        {
+            ClearMessages();
+
+            string userId = Session["USERID"]?.ToString();
+            if (string.IsNullOrEmpty(userId))
+            {
+                ShowError("Session expired.");
+                return;
+            }
+
+            DataTable dt = BuildRequisitionItemTable();
+
+            foreach (GridViewRow row in gd_Service_Product.Rows)
+            {
+                HiddenField hdn = row.FindControl("hdnIsModified") as HiddenField;
+                if (hdn == null || hdn.Value != "1") continue;
+
+                HiddenField hdnCat = row.FindControl("hdnParentCategoryId") as HiddenField;
+                if (hdnCat == null || string.IsNullOrWhiteSpace(hdnCat.Value))
+                {
+                    ShowError("Invalid product category mapping.");
+                    return;
+                }
+
+
+                string error;
+                if (!ValidateGridRow(row, out error))
+                {
+                    ShowError(error);
+                    return;
+                }
+
+                dt.Rows.Add(
+                    ((Label)row.FindControl("Ser_pro_code")).Text,
+                    ((Label)row.FindControl("Ser_pro_Name")).Text,
+                    Convert.ToInt32(((HiddenField)row.FindControl("hdnParentCategoryId")).Value),
+                    ((TextBox)row.FindControl("sepecification")).Text,
+                    ToDecimal(row, "Quantity") ?? 0,
+                    ToDecimal(row, "Vendor_rate") ?? 0,
+                    ToDecimal(row, "DiscountPercent"),
+                    ToDecimal(row, "DiscountAmount"),
+                    GetTaxApplicable(row),
+                    GetGSTRate(row, GetTaxApplicable(row)),
+                    ToInt(row, "txtOrder")
+                );
+            }
+
+            if (dt.Rows.Count == 0)
+            {
+                ShowError("No modified rows to save.");
+                return;
+            }
+
+            using (SqlConnection con =
+                new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                con.Open();
+                SqlTransaction tran = con.BeginTransaction();
+
+                try
+                {
+                    SqlCommand cmd = new SqlCommand(
+                        "sp_RequisitionItem_BulkUpsert", con, tran);
+
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
+                    cmd.Parameters.AddWithValue("@ReqNo", lblReqNo.Text);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+
+                    SqlParameter tvp =
+                        cmd.Parameters.AddWithValue("@Items", dt);
+                    tvp.SqlDbType = SqlDbType.Structured;
+                    tvp.TypeName = "dbo.RequisitionItem_TVP";
+
+                    cmd.ExecuteNonQuery();
+                    tran.Commit();
+
+                    ShowSuccess("Modified items saved successfully.");
+                    RebindGrid(); // reload from DB
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    ShowError("Save failed: " + ex.Message);
+                }
+            }
+        }
+
 
 
         protected void btnCancelPR_Click(object sender, EventArgs e)
@@ -1022,6 +1030,5 @@ namespace Bill_Software.corporate.business.app
             ApplyStatusUI("Cancelled");
             ShowSuccess("PR cancelled successfully.");
         }
-
     }
 }

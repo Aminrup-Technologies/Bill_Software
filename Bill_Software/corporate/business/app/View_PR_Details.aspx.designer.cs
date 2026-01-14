@@ -10,7 +10,7 @@
 namespace Bill_Software.corporate.business.app {
     
     
-    public partial class RequisitionNew {
+    public partial class View_PR_Details {
         
         /// <summary>
         /// ScriptManager1 control.
@@ -292,6 +292,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.TextBox txtvat;
         
         /// <summary>
+        /// PurchaseType_Row control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow PurchaseType_Row;
+        
+        /// <summary>
         /// Label1 control.
         /// </summary>
         /// <remarks>
@@ -364,6 +373,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Panel Panel2;
         
         /// <summary>
+        /// SearchBox_Row control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow SearchBox_Row;
+        
+        /// <summary>
         /// txtServiceSearch control.
         /// </summary>
         /// <remarks>
@@ -382,6 +400,24 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Button btnClearServiceSearch;
         
         /// <summary>
+        /// SearchBox_Msg control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow SearchBox_Msg;
+        
+        /// <summary>
+        /// Modifier_Msg_Row control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow Modifier_Msg_Row;
+        
+        /// <summary>
         /// btnShowModified control.
         /// </summary>
         /// <remarks>
@@ -398,6 +434,15 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnShowAll;
+        
+        /// <summary>
+        /// Old_Logic control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow Old_Logic;
         
         /// <summary>
         /// gd_Service_Product control.
