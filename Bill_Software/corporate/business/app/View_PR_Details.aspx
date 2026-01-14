@@ -58,6 +58,15 @@
             border: 2px solid #d9534f !important;
             background-color: #fff0f0;
         }
+
+        .pr-summary {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f4f9ff;
+            border: 1px solid #cfe3ff;
+            font-size: 12px;
+        }
+
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -138,6 +147,8 @@
 
             // Optional: highlight row
             row.style.backgroundColor = "#fff7cc";
+
+            recalcPRSummary();
         }
 
 
@@ -509,6 +520,43 @@
         }
     </script>
 
+    <script>
+        function recalcPRSummary() {
+            let gross = 0, discount = 0, taxable = 0, gst = 0;
+
+            document.querySelectorAll("#<%= gd_Service_Product.ClientID %> tr").forEach(row => {
+
+                let qty = parseFloat(row.querySelector("[id$='Quantity']")?.value) || 0;
+                let rate = parseFloat(row.querySelector("[id$='Vendor_rate']")?.value) || 0;
+                let discAmt = parseFloat(row.querySelector("[id$='DiscountAmount']")?.value) || 0;
+                let taxAmt = parseFloat(row.querySelector("[id$='TaxableAmount']")?.value) || 0;
+
+                let gstPct = parseFloat(row.querySelector("[id$='vat_parsentage']")?.value) || 0;
+                let isTax = row.querySelector("[id$='RadioButtonList1_0']")?.checked;
+
+                let rowGross = qty * rate;
+                gross += rowGross;
+                discount += discAmt;
+                taxable += taxAmt;
+
+                if (isTax) {
+                    gst += (taxAmt * gstPct / 100);
+                }
+            });
+
+            setText("lblGross", gross);
+            setText("lblDiscount", discount);
+            setText("lblTaxable", taxable);
+            setText("lblGST", gst);
+            setText("lblNet", taxable + gst);
+        }
+
+        function setText(id, val) {
+            document.getElementById("<%= lblGross.ClientID %>".replace("lblGross", id))
+                .innerText = val.toFixed(2);
+        }
+        </script>
+
 
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
@@ -849,7 +897,7 @@
                                     </td>
                                 </tr>
 
-                                <tr id="Old_Logic" runat="server" visible="false">
+                                <tr id="Old_Logic" runat="server" visible="true">
                                     <td colspan="4" style="padding-top: 5px;">
                                         <%--<asp:TextBox ID="txtServiceSearch" runat="server"
                                             CssClass="textbox_U_style"
@@ -987,6 +1035,32 @@
                                             <AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />
                                         </asp:GridView>
                                         <br />
+                                        <asp:Panel ID="pnlSummary" runat="server" CssClass="pr-summary">
+
+                                        <table width="100%">
+                                            <tr>
+                                                <td align="right">Gross Amount :</td>
+                                                <td><asp:Label ID="lblGross" runat="server" /></td>
+
+                                                <td align="right">Discount :</td>
+                                                <td><asp:Label ID="lblDiscount" runat="server" /></td>
+                                            </tr>
+                                            <tr>
+                                                <td align="right">Taxable Amount :</td>
+                                                <td><asp:Label ID="lblTaxable" runat="server" /></td>
+
+                                                <td align="right">GST Amount :</td>
+                                                <td><asp:Label ID="lblGST" runat="server" /></td>
+                                            </tr>
+                                            <tr style="font-weight:bold">
+                                                <td align="right">Net Amount :</td>
+                                                <td><asp:Label ID="lblNet" runat="server" /></td>
+                                                <td></td><td></td>
+                                            </tr>
+                                        </table>
+
+                                    </asp:Panel>
+
                                     </td>
                                 </tr>
                                 <tr>

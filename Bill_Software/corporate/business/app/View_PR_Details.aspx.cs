@@ -61,6 +61,11 @@ namespace Bill_Software.corporate.business.app
                     cmbvendor.Text = dr["clientName"].ToString();
                     String VendorId = dr["VendorId"].ToString();
                     BindVendor(VendorId);
+                    //if (dr["Status"].ToString() != "Draft")
+                    //{
+                    //    ApplyStatusUI(dr["Status"].ToString());
+                    //}
+                    ApplyStatusUI(dr["Status"].ToString());
                 }
                 dr.Close();
 
@@ -74,8 +79,10 @@ namespace Bill_Software.corporate.business.app
 
                 Panel2.Visible = true;
             }
+            CalculatePRSummary_DB(CurrentReqNo);
+            //ApplyStatusUI(lblStatus.Text);
 
-            ApplyStatusUI(lblStatus.Text);
+
         }
 
         private void ShowSuccess(string message)
@@ -540,21 +547,26 @@ namespace Bill_Software.corporate.business.app
         protected void gd_Service_Product_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             if (e.CommandName != "DeleteItem") return;
-            if (lblStatus.Text != "Draft") return;
+            //if (lblStatus.Text != "Draft") return;
+            if (lblStatus.Text != "Draft")
+            {
+                ShowError("This PR can no longer be modified.");
+                return;
+            }
 
             int rowId = Convert.ToInt32(e.CommandArgument);
 
             using (SqlConnection con = new SqlConnection(
                 ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                SqlCommand cmd = new SqlCommand(
-                    "DELETE FROM tbl_RequisitionNew WHERE id=@id", con);
+                SqlCommand cmd = new SqlCommand("DELETE FROM tbl_RequisitionNew WHERE id=@id", con);
                 cmd.Parameters.AddWithValue("@id", rowId);
                 con.Open();
                 cmd.ExecuteNonQuery();
             }
 
             LoadPR(CurrentReqNo); // refresh grid
+            CalculatePRSummary_DB(CurrentReqNo);
         }
 
 
@@ -787,71 +799,35 @@ namespace Bill_Software.corporate.business.app
             btnSubmit_Click(sender, e);
         }
 
-        protected void btnSubmit_Click_OLD(object sender, EventArgs e)
-        {
-            ClearMessages();
+        //protected void btnSubmit_Click(object sender, EventArgs e)
+        //{
+        //    if (string.IsNullOrEmpty(CurrentReqNo))
+        //    {
+        //        ShowError("Please save the PR before submitting.");
+        //        return;
+        //    }
 
-            try
-            {
-                if (string.IsNullOrEmpty(CurrentReqNo))
-                {
-                    ShowError("Please save the PR before submitting.");
-                    return;
-                }
+        //    CalculatePRSummary_DB(CurrentReqNo);
+        //    if (decimal.Parse(lblNet.Text) <= 0)
+        //    {
+        //        ShowError("PR total amount must be greater than zero.");
+        //        return;
+        //    }
 
-                using (SqlConnection con = new SqlConnection(
-                    ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-                {
-                    con.Open();
+        //    using (SqlConnection con = new SqlConnection(
+        //        ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+        //    {
+        //        SqlCommand cmd = new SqlCommand("sp_SubmitRequisition", con);
+        //        cmd.CommandType = CommandType.StoredProcedure;
+        //        cmd.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
+        //        cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
+        //        con.Open();
+        //        cmd.ExecuteNonQuery();
+        //    }
 
-                    SqlCommand cmd = new SqlCommand(
-                        "EXEC sp_SubmitRequisition @ReqNo, @UserId",
-                        con);
-
-                    cmd.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
-                    cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
-
-                    cmd.ExecuteNonQuery();
-                }
-
-                lblStatus.Text = "Submitted";
-                //LockUIAfterSubmit();
-
-                ShowSuccess("Purchase Requisition submitted successfully for approval.");
-            }
-            catch (Exception ex)
-            {
-                ShowError("Submission failed. " + ex.Message);
-            }
-        }
-
-        protected void btnSubmit_Click_OLD2(object sender, EventArgs e)
-        {
-            ClearMessages();
-
-            string userId = Session["USERID"]?.ToString();
-            if (string.IsNullOrEmpty(CurrentReqNo))
-            {
-                ShowError("Please save the PR before submitting.");
-                return;
-            }
-
-            using (SqlConnection con = new SqlConnection(
-                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-            {
-                SqlCommand cmd = new SqlCommand("sp_SubmitRequisition", con);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
-                cmd.Parameters.AddWithValue("@UserId", userId);
-                con.Open();
-                cmd.ExecuteNonQuery();
-            }
-
-            lblStatus.Text = "Submitted";
-            ApplyStatusUI("Submitted");
-
-            ShowSuccess("PR submitted successfully for approval.");
-        }
+        //    ApplyStatusUI("Submitted");
+        //    ShowSuccess("PR submitted successfully for approval.");
+        //}
 
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
@@ -864,17 +840,92 @@ namespace Bill_Software.corporate.business.app
             using (SqlConnection con = new SqlConnection(
                 ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                SqlCommand cmd = new SqlCommand("sp_SubmitRequisition", con);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
-                cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
                 con.Open();
-                cmd.ExecuteNonQuery();
+                SqlTransaction tran = con.BeginTransaction();
+
+                try
+                {
+                    // 1️⃣ Lock totals (authoritative)
+                    UpdatePRTotals_OnSubmit(con, tran, CurrentReqNo);
+
+                    // 2️⃣ Submit PR
+                    SqlCommand cmd = new SqlCommand("sp_SubmitRequisition", con, tran);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
+                    cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
+                    cmd.ExecuteNonQuery();
+
+                    tran.Commit();
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    ShowError("Submit failed: " + ex.Message);
+                    return;
+                }
             }
 
             ApplyStatusUI("Submitted");
-            ShowSuccess("PR submitted successfully for approval.");
+            ShowSuccess("PR submitted successfully with locked totals.");
         }
+
+
+        private void UpdatePRTotals_OnSubmit(
+    SqlConnection con,
+    SqlTransaction tran,
+    string reqNo)
+        {
+            SqlCommand cmdCalc = new SqlCommand(@"
+        SELECT
+            SUM(Qnty * Rate),
+            SUM(ISNULL(DiscountAmount,0)),
+            SUM(TaxableAmount),
+            SUM(
+                CASE WHEN IsTaxApplicable = 1
+                     THEN TaxableAmount * gstrate / 100
+                     ELSE 0
+            END)
+        FROM tbl_RequisitionNew
+        WHERE ReqNo = @ReqNo", con, tran);
+
+            cmdCalc.Parameters.AddWithValue("@ReqNo", reqNo);
+
+            decimal gross = 0, discount = 0, taxable = 0, gst = 0;
+
+            using (SqlDataReader dr = cmdCalc.ExecuteReader())
+            {
+                if (dr.Read())
+                {
+                    gross = dr.IsDBNull(0) ? 0 : dr.GetDecimal(0);
+                    discount = dr.IsDBNull(1) ? 0 : dr.GetDecimal(1);
+                    taxable = dr.IsDBNull(2) ? 0 : dr.GetDecimal(2);
+                    gst = dr.IsDBNull(3) ? 0 : dr.GetDecimal(3);
+                }
+            }
+
+            if (taxable <= 0)
+                throw new Exception("PR total amount must be greater than zero.");
+
+            SqlCommand cmdUpdate = new SqlCommand(@"
+        UPDATE tbl_RequisitionMain
+        SET
+            GrossAmount    = @Gross,
+            DiscountAmount = @Discount,
+            TaxableAmount  = @Taxable,
+            GSTAmount      = @GST,
+            NetAmount      = @Net
+        WHERE ReqNo = @ReqNo", con, tran);
+
+            cmdUpdate.Parameters.AddWithValue("@Gross", gross);
+            cmdUpdate.Parameters.AddWithValue("@Discount", discount);
+            cmdUpdate.Parameters.AddWithValue("@Taxable", taxable);
+            cmdUpdate.Parameters.AddWithValue("@GST", gst);
+            cmdUpdate.Parameters.AddWithValue("@Net", taxable + gst);
+            cmdUpdate.Parameters.AddWithValue("@ReqNo", reqNo);
+
+            cmdUpdate.ExecuteNonQuery();
+        }
+
 
 
 
@@ -917,12 +968,18 @@ namespace Bill_Software.corporate.business.app
 
             Modifier_Msg_Row.Visible = isDraft;
 
-            gd_Service_Product.Enabled = isDraft;
+            //gd_Service_Product.Visible = isDraft;
             cmbvendor.Enabled = isDraft;
         }
 
         protected void btnSaveEdit_Click(object sender, EventArgs e)
         {
+            if (lblStatus.Text != "Draft")
+            {
+                ShowError("This PR can no longer be modified.");
+                return;
+            }
+
             ClearMessages();
 
             string userId = Session["USERID"]?.ToString();
@@ -1001,6 +1058,7 @@ namespace Bill_Software.corporate.business.app
 
                     ShowSuccess("Modified items saved successfully.");
                     RebindGrid(); // reload from DB
+                    CalculatePRSummary_DB(lblReqNo.Text.ToString());
                 }
                 catch (Exception ex)
                 {
@@ -1030,5 +1088,44 @@ namespace Bill_Software.corporate.business.app
             ApplyStatusUI("Cancelled");
             ShowSuccess("PR cancelled successfully.");
         }
+
+        private void CalculatePRSummary_DB(string reqNo)
+        {
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(@"
+                SELECT
+                    CAST(SUM(Qnty * Rate) AS DECIMAL(18,2)) AS GrossAmount,
+                    CAST(SUM(ISNULL(DiscountAmount,0)) AS DECIMAL(18,2)) AS DiscountAmount,
+                    CAST(SUM(TaxableAmount) AS DECIMAL(18,2)) AS TaxableAmount,
+                    CAST(SUM(
+                        CASE WHEN IsTaxApplicable = 1
+                        THEN TaxableAmount * gstrate / 100
+                        ELSE 0 END
+                    ) AS DECIMAL(18,2)) AS GSTAmount
+                FROM tbl_RequisitionNew
+                WHERE ReqNo = @ReqNo;", con);
+
+                cmd.Parameters.AddWithValue("@ReqNo", reqNo);
+                con.Open();
+
+                SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
+                {
+                    decimal gross = dr.IsDBNull(0) ? 0 : dr.GetDecimal(0);
+                    decimal discount = dr.IsDBNull(1) ? 0 : dr.GetDecimal(1);
+                    decimal taxable = dr.IsDBNull(2) ? 0 : dr.GetDecimal(2);
+                    decimal gst = dr.IsDBNull(3) ? 0 : dr.GetDecimal(3);
+
+                    lblGross.Text = gross.ToString("N2");
+                    lblDiscount.Text = discount.ToString("N2");
+                    lblTaxable.Text = taxable.ToString("N2");
+                    lblGST.Text = gst.ToString("N2");
+                    lblNet.Text = (taxable + gst).ToString("N2");
+                }
+            }
+        }
+
     }
 }
