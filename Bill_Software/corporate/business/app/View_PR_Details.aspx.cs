@@ -993,19 +993,22 @@ namespace Bill_Software.corporate.business.app
     string reqNo)
         {
             SqlCommand cmdCalc = new SqlCommand(@"
-        SELECT
-            SUM(Qnty * Rate),
-            SUM(ISNULL(DiscountAmount,0)),
-            SUM(TaxableAmount),
-            SUM(
-                CASE WHEN IsTaxApplicable = 1
-                     THEN TaxableAmount * gstrate / 100
-                     ELSE 0
-            END)
-        FROM tbl_RequisitionNew
-        WHERE ReqNo = @ReqNo", con, tran);
+                SELECT
+                    CAST(SUM(CAST(Qnty AS DECIMAL(18,3)) * CAST(Rate AS DECIMAL(18,2))) AS DECIMAL(18,2)),
+                    CAST(SUM(ISNULL(CAST(DiscountAmount AS DECIMAL(18,2)), 0)) AS DECIMAL(18,2)),
+                    CAST(SUM(CAST(TaxableAmount AS DECIMAL(18,2))) AS DECIMAL(18,2)),
+                    CAST(SUM(
+                        CASE 
+                            WHEN IsTaxApplicable = 1 
+                            THEN CAST(TaxableAmount AS DECIMAL(18,2)) * ISNULL(CAST(gstrate AS DECIMAL(5,2)),0) / 100
+                            ELSE 0
+                        END
+                    ) AS DECIMAL(18,2))
+                FROM tbl_RequisitionNew
+                WHERE ReqNo = @ReqNo
+            ", con, tran);
 
-            cmdCalc.Parameters.AddWithValue("@ReqNo", reqNo);
+            cmdCalc.Parameters.Add("@ReqNo", SqlDbType.VarChar, 50).Value = reqNo;
 
             decimal gross = 0, discount = 0, taxable = 0, gst = 0;
 
@@ -1020,28 +1023,30 @@ namespace Bill_Software.corporate.business.app
                 }
             }
 
-            if (taxable <= 0)
+            if (taxable <= 0 && gross <= 0)
                 throw new Exception("PR total amount must be greater than zero.");
 
             SqlCommand cmdUpdate = new SqlCommand(@"
-        UPDATE tbl_RequisitionMain
-        SET
-            GrossAmount    = @Gross,
-            DiscountAmount = @Discount,
-            TaxableAmount  = @Taxable,
-            GSTAmount      = @GST,
-            NetAmount      = @Net
-        WHERE ReqNo = @ReqNo", con, tran);
+                UPDATE tbl_RequisitionMain
+                SET
+                    GrossAmount    = @Gross,
+                    DiscountAmount = @Discount,
+                    TaxableAmount  = @Taxable,
+                    GSTAmount      = @GST,
+                    NetAmount      = @Net
+                WHERE ReqNo = @ReqNo
+            ", con, tran);
 
-            cmdUpdate.Parameters.AddWithValue("@Gross", gross);
-            cmdUpdate.Parameters.AddWithValue("@Discount", discount);
-            cmdUpdate.Parameters.AddWithValue("@Taxable", taxable);
-            cmdUpdate.Parameters.AddWithValue("@GST", gst);
-            cmdUpdate.Parameters.AddWithValue("@Net", taxable + gst);
-            cmdUpdate.Parameters.AddWithValue("@ReqNo", reqNo);
+            cmdUpdate.Parameters.Add("@Gross", SqlDbType.Decimal).Value = gross;
+            cmdUpdate.Parameters.Add("@Discount", SqlDbType.Decimal).Value = discount;
+            cmdUpdate.Parameters.Add("@Taxable", SqlDbType.Decimal).Value = taxable;
+            cmdUpdate.Parameters.Add("@GST", SqlDbType.Decimal).Value = gst;
+            cmdUpdate.Parameters.Add("@Net", SqlDbType.Decimal).Value = taxable + gst;
+            cmdUpdate.Parameters.Add("@ReqNo", SqlDbType.VarChar, 50).Value = reqNo;
 
             cmdUpdate.ExecuteNonQuery();
         }
+
 
 
 

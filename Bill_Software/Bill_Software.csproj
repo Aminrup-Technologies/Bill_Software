@@ -248,6 +248,7 @@
     <Content Include="corporate\business\app\delete_purchaseorder.aspx" />
     <Content Include="corporate\business\app\EditPurchase.aspx" />
     <Content Include="corporate\business\app\edit_purchaseorder.aspx" />
+    <Content Include="corporate\business\app\Generate_PO_From_PR.aspx" />
     <Content Include="corporate\business\app\home.aspx" />
     <Content Include="corporate\business\app\HydrantProduct.aspx" />
     <Content Include="corporate\business\app\hydrent_invoice.aspx" />
@@ -719,6 +720,13 @@
     </Compile>
     <Compile Include="corporate\business\app\edit_purchaseorder.aspx.designer.cs">
       <DependentUpon>edit_purchaseorder.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Generate_PO_From_PR.aspx.cs">
+      <DependentUpon>Generate_PO_From_PR.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Generate_PO_From_PR.aspx.designer.cs">
+      <DependentUpon>Generate_PO_From_PR.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\home.aspx.cs">
       <DependentUpon>home.aspx</DependentUpon>

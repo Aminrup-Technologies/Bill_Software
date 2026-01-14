@@ -130,33 +130,101 @@
     </script>
 
     <script type="text/javascript">
-        let modifiedCount = 0;
+        var modifiedCount = 0;
 
         function markRowModified(ctrl) {
-            var row = ctrl.closest("tr");
+
+            // 🚫 IGNORE description / specification edits
+            if (ctrl && ctrl.id && ctrl.id.indexOf("sepecification") !== -1) {
+                return;
+            }
+
+            var row = ctrl;
+            while (row && row.tagName !== "TR") {
+                row = row.parentNode;
+            }
             if (!row) return;
 
-            // HiddenField
             var hdn = row.querySelector("input[type='hidden'][id*='hdnIsModified']");
-            if (hdn) hdn.value = "1";
+            if (hdn && hdn.value !== "1") {
+                hdn.value = "1";
+                modifiedCount++;
+            }
 
-            // Find the badge safely
             var badge = row.querySelector("span[data-modified='1']");
             if (badge) badge.style.display = "inline";
 
-            // Optional: highlight row
             row.style.backgroundColor = "#fff7cc";
 
-            recalcPRSummary();
+            if (typeof updateModifiedCounter === "function") {
+                updateModifiedCounter();
+            }
+            if (typeof recalcSummary === "function") {
+                recalcSummary();
+            }
         }
 
 
         function updateModifiedCounter() {
-            const lbl = document.getElementById("lblModifiedCount");
+            var lbl = document.getElementById("lblModifiedCount");
             if (lbl) {
-                lbl.innerText = modifiedCount;
+                lbl.innerHTML = modifiedCount;
             }
         }
+
+
+        function recalcSummary() {
+
+            var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            if (!grid) return;
+
+            var gross = 0, discount = 0, taxable = 0, gst = 0;
+            var rows = grid.getElementsByTagName("tr");
+
+            for (var i = 1; i < rows.length; i++) {
+
+                var row = rows[i];
+
+                var qty = row.querySelector("[id*='Quantity']");
+                var rate = row.querySelector("[id*='Vendor_rate']");
+                var disc = row.querySelector("[id*='DiscountAmount']");
+                var tax = row.querySelector("[id*='TaxableAmount']");
+                var gstDDL = row.querySelector("[id*='vat_parsentage']");
+
+                var radios = row.querySelectorAll("input[type='radio']");
+                var taxYes = false;
+                for (var r = 0; r < radios.length; r++) {
+                    if (radios[r].checked && radios[r].value === "Yes") {
+                        taxYes = true;
+                        break;
+                    }
+                }
+
+                if (!qty || !rate) continue;
+
+                var q = parseFloat(qty.value) || 0;
+                var r1 = parseFloat(rate.value) || 0;
+                var d = parseFloat(disc ? disc.value : 0) || 0;
+                var t = parseFloat(tax ? tax.value : 0) || 0;
+                var g = parseFloat(gstDDL ? gstDDL.value : 0) || 0;
+
+                gross += q * r1;
+                discount += d;
+                taxable += t;
+
+                if (taxYes) {
+                    gst += (t * g / 100);
+                }
+            }
+
+            document.getElementById('<%= lblGross.ClientID %>').innerHTML = gross.toFixed(2);
+            document.getElementById('<%= lblDiscount.ClientID %>').innerHTML = discount.toFixed(2);
+            document.getElementById('<%= lblTaxable.ClientID %>').innerHTML = taxable.toFixed(2);
+            document.getElementById('<%= lblGST.ClientID %>').innerHTML = gst.toFixed(2);
+            document.getElementById('<%= lblNet.ClientID %>').innerHTML = (taxable + gst).toFixed(2);
+        }
+
+
     </script>
 
     <script type="text/javascript">
@@ -276,6 +344,9 @@
                         taxableAmountInput.value = taxable.toFixed(2);
                         console.log("Taxable Amount:", taxable.toFixed(2));
                     }
+
+                    markRowModified(changedInput);
+                    recalcSummary();
 
                     break;
                 }
@@ -505,6 +576,7 @@
             alert("Order updated for modified rows only.");
         }
     </script>
+
     <script type="text/javascript">
         function scrollToMessage() {
             const ok = document.getElementById('<%= PanelOK.ClientID %>');
@@ -517,60 +589,6 @@
                 err.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         }
-    </script>
-
-    <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", function () {
-            window.recalcPRSummary = function () {
-                let gross = 0, discount = 0, taxable = 0, gst = 0;
-
-                const grid = document.getElementById("<%= gd_Service_Product.ClientID %>");
-                if (!grid) return; // 💣 grid not rendered yet
-
-                const rows = grid.querySelectorAll("tr");
-                rows.forEach(row => {
-
-                    const qtyEl  = row.querySelector("[id$='Quantity']");
-                    const rateEl = row.querySelector("[id$='Vendor_rate']");
-                    const discEl = row.querySelector("[id$='DiscountAmount']");
-                    const taxEl  = row.querySelector("[id$='TaxableAmount']");
-                    const gstEl  = row.querySelector("[id$='vat_parsentage']");
-                    const taxRb  = row.querySelector("input[type='radio'][id$='_0']");
-
-                    if (!qtyEl || !rateEl) return; // skip header/footer rows
-
-                    const qty     = parseFloat(qtyEl.value)  || 0;
-                    const rate    = parseFloat(rateEl.value) || 0;
-                    const discAmt = parseFloat(discEl?.value) || 0;
-                    const taxAmt  = parseFloat(taxEl?.value)  || 0;
-                    const gstPct  = parseFloat(gstEl?.value)  || 0;
-                    const isTax   = taxRb ? taxRb.checked : false;
-
-                    const rowGross = qty * rate;
-
-                    gross += rowGross;
-                    discount += discAmt;
-                    taxable += taxAmt;
-
-                    if (isTax) {
-                        gst += (taxAmt * gstPct / 100);
-                    }
-                });
-
-                safeSet("<%= lblGross.ClientID %>", gross);
-                safeSet("<%= lblDiscount.ClientID %>", discount);
-                safeSet("<%= lblTaxable.ClientID %>", taxable);
-                safeSet("<%= lblGST.ClientID %>", gst);
-                safeSet("<%= lblNet.ClientID %>", taxable + gst);
-            };
-        });
-
-        function safeSet(id, val) {
-            const el = document.getElementById(id);
-            if (!el) return; // 💣 label not found
-            el.innerText = val.toFixed(2);
-        }
-
     </script>
 
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
@@ -903,10 +921,7 @@
                                                 OnClientClick="showModifiedOnly(); return false;" />
                                             &nbsp; &nbsp;
 
-                                            <asp:Button ID="btnShowAll" runat="server"
-                                                Text="Show All"
-                                                CssClass="btn btn-secondary btn-sm btn_style"
-                                                OnClientClick="showAllRows(); return false;" />
+                                            <asp:Button ID="btnShowAll" runat="server" Text="Show All" CssClass="btn btn-secondary btn-sm btn_style" OnClientClick="showAllRows(); return false;" />
                                         </span>
 
                                     </td>
@@ -974,7 +989,7 @@
                                                         <asp:TextBox ID="TextBox9" runat="server"></asp:TextBox>
                                                     </EditItemTemplate>
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="Quantity" runat="server" CssClass="textbox_style21" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
+                                                        <asp:TextBox ID="Quantity" runat="server" CssClass="textbox_style21" onkeyup="calculateDiscount(this)" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Vendor Rate">
@@ -982,7 +997,7 @@
                                                         <asp:TextBox ID="TextBox4" runat="server"></asp:TextBox>
                                                     </EditItemTemplate>
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="Vendor_rate" runat="server" CssClass="textbox_style21" onkeyup="markRowModified(this)" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
+                                                        <asp:TextBox ID="Vendor_rate" runat="server" CssClass="textbox_style21" onkeyup="calculateDiscount(this)" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Dis. %">
