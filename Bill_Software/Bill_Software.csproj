@@ -235,6 +235,7 @@
     <Content Include="Content\themes\base\tabs.css" />
     <Content Include="Content\themes\base\theme.css" />
     <Content Include="Content\themes\base\tooltip.css" />
+    <Content Include="corporate\business\app\Approve_PR.aspx" />
     <Content Include="corporate\business\app\calender\jquery-1.7.1.js" />
     <Content Include="corporate\business\app\calender\jquery.ui.all.css" />
     <Content Include="corporate\business\app\calender\jquery.ui.core.js" />
@@ -653,6 +654,13 @@
     </Compile>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\AuthConfig.cs" />
+    <Compile Include="corporate\business\app\Approve_PR.aspx.cs">
+      <DependentUpon>Approve_PR.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Approve_PR.aspx.designer.cs">
+      <DependentUpon>Approve_PR.aspx</DependentUpon>
+    </Compile>
     <Compile Include="corporate\business\app\Bill.Master.cs">
       <DependentUpon>Bill.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

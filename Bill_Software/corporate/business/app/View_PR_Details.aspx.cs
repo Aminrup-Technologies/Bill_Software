@@ -18,6 +18,13 @@ namespace Bill_Software.corporate.business.app
         private List<string> vatRates;
         private List<string> serviceTaxRates;
 
+        private enum PageMode
+        {
+            Draft,
+            View,
+            Approve
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -26,19 +33,129 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
+                //string reqNo = Request.QueryString["reqNo"];
+                //if (!string.IsNullOrEmpty(reqNo))
+                //{
+                //    DbCL.FillCombo(cmbvendor, "select Vendor_Name from tbl_Vendor order by Vendor_Name");
+                //    LoadPR(reqNo);
+                //}
+
                 string reqNo = Request.QueryString["reqNo"];
                 if (!string.IsNullOrEmpty(reqNo))
                 {
                     DbCL.FillCombo(cmbvendor, "select Vendor_Name from tbl_Vendor order by Vendor_Name");
                     LoadPR(reqNo);
-                }
-                else
-                {
-                    //Hide full page
+                    ApplyModeUI();
                 }
 
             }
         }
+
+        private PageMode CurrentMode
+        {
+            get
+            {
+                string mode = Request.QueryString["mode"];
+
+                if (string.IsNullOrEmpty(mode))
+                    return PageMode.Draft;
+
+                mode = mode.ToLower();
+
+                if (mode == "approve")
+                    return PageMode.Approve;
+
+                if (mode == "view")
+                    return PageMode.View;
+
+                return PageMode.Draft;
+            }
+        }
+        private void ApplyModeUI()
+        {
+            switch (CurrentMode)
+            {
+                case PageMode.Draft:
+                    // Existing behavior (already implemented)
+                    break;
+
+                case PageMode.View:
+                    MakeReadOnly();
+                    //HideWorkflowButtons();
+                    break;
+
+                case PageMode.Approve:
+                    MakeReadOnly();
+                    ShowApprovalPanel();
+                    break;
+            }
+        }
+
+        private void MakeReadOnly()
+        {
+            cmbvendor.Enabled = false;
+            btnSaveDraft.Visible = false;
+            Button3.Visible = false;
+            btnReorder.Visible = false;
+            btnCancelPR.Visible = false;
+
+            Label1.Visible = false;
+            RadioButtonList1.Visible = false;
+            Button1.Visible = false;
+            PurchaseType_Row.Visible = false;
+
+            SearchBox_Row.Visible = false;
+            SearchBox_Msg.Visible = false;
+            Modifier_Msg_Row.Visible = false;
+
+            // Grid readonly
+            MakeGridReadOnly(gd_Service_Product);
+        }
+
+        private void MakeGridReadOnly(GridView grid)
+        {
+            foreach (GridViewRow row in grid.Rows)
+            {
+                LockControlsRecursive(row);
+            }
+        }
+
+        private void LockControlsRecursive(Control parent)
+        {
+            foreach (Control ctrl in parent.Controls)
+            {
+                TextBox tb = ctrl as TextBox;
+                if (tb != null)
+                    tb.ReadOnly = true;
+
+                DropDownList ddl = ctrl as DropDownList;
+                if (ddl != null)
+                    ddl.Enabled = false;
+
+                RadioButtonList rbl = ctrl as RadioButtonList;
+                if (rbl != null)
+                    rbl.Enabled = false;
+
+                // recurse
+                if (ctrl.HasControls())
+                    LockControlsRecursive(ctrl);
+            }
+        }
+
+
+        private void ShowApprovalPanel()
+        {
+            // Only allow if PR is Submitted
+            if (lblStatus.Text != "Submitted")
+            {
+                ShowError("This PR is not pending approval.");
+                pnlApproval.Visible = false;
+                return;
+            }
+
+            pnlApproval.Visible = true;
+        }
+
 
         private void LoadPR(string reqNo)
         {
@@ -1126,6 +1243,37 @@ namespace Bill_Software.corporate.business.app
                 }
             }
         }
+
+        protected void btnApprove_Click(object sender, EventArgs e)
+        {
+            ProcessApproval("Approved");
+        }
+
+        protected void btnReject_Click(object sender, EventArgs e)
+        {
+            ProcessApproval("Rejected");
+        }
+
+        private void ProcessApproval(string action)
+        {
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand("sp_Requisition_Approve", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@ReqNo", lblReqNo.Text);
+                cmd.Parameters.AddWithValue("@ApproverUserId", Session["USERID"].ToString());
+                cmd.Parameters.AddWithValue("@Action", action);
+                cmd.Parameters.AddWithValue("@Remarks", txtApprovalRemarks.Text);
+
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            Response.Redirect("Approve_PR.aspx");
+        }
+
 
     }
 }

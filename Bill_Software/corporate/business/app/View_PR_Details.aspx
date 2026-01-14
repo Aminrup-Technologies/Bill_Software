@@ -66,7 +66,6 @@
             border: 1px solid #cfe3ff;
             font-size: 12px;
         }
-
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -520,43 +519,59 @@
         }
     </script>
 
-    <script>
-        function recalcPRSummary() {
-            let gross = 0, discount = 0, taxable = 0, gst = 0;
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            window.recalcPRSummary = function () {
+                let gross = 0, discount = 0, taxable = 0, gst = 0;
 
-            document.querySelectorAll("#<%= gd_Service_Product.ClientID %> tr").forEach(row => {
+                const grid = document.getElementById("<%= gd_Service_Product.ClientID %>");
+                if (!grid) return; // 💣 grid not rendered yet
 
-                let qty = parseFloat(row.querySelector("[id$='Quantity']")?.value) || 0;
-                let rate = parseFloat(row.querySelector("[id$='Vendor_rate']")?.value) || 0;
-                let discAmt = parseFloat(row.querySelector("[id$='DiscountAmount']")?.value) || 0;
-                let taxAmt = parseFloat(row.querySelector("[id$='TaxableAmount']")?.value) || 0;
+                const rows = grid.querySelectorAll("tr");
+                rows.forEach(row => {
 
-                let gstPct = parseFloat(row.querySelector("[id$='vat_parsentage']")?.value) || 0;
-                let isTax = row.querySelector("[id$='RadioButtonList1_0']")?.checked;
+                    const qtyEl  = row.querySelector("[id$='Quantity']");
+                    const rateEl = row.querySelector("[id$='Vendor_rate']");
+                    const discEl = row.querySelector("[id$='DiscountAmount']");
+                    const taxEl  = row.querySelector("[id$='TaxableAmount']");
+                    const gstEl  = row.querySelector("[id$='vat_parsentage']");
+                    const taxRb  = row.querySelector("input[type='radio'][id$='_0']");
 
-                let rowGross = qty * rate;
-                gross += rowGross;
-                discount += discAmt;
-                taxable += taxAmt;
+                    if (!qtyEl || !rateEl) return; // skip header/footer rows
 
-                if (isTax) {
-                    gst += (taxAmt * gstPct / 100);
-                }
-            });
+                    const qty     = parseFloat(qtyEl.value)  || 0;
+                    const rate    = parseFloat(rateEl.value) || 0;
+                    const discAmt = parseFloat(discEl?.value) || 0;
+                    const taxAmt  = parseFloat(taxEl?.value)  || 0;
+                    const gstPct  = parseFloat(gstEl?.value)  || 0;
+                    const isTax   = taxRb ? taxRb.checked : false;
 
-            setText("lblGross", gross);
-            setText("lblDiscount", discount);
-            setText("lblTaxable", taxable);
-            setText("lblGST", gst);
-            setText("lblNet", taxable + gst);
+                    const rowGross = qty * rate;
+
+                    gross += rowGross;
+                    discount += discAmt;
+                    taxable += taxAmt;
+
+                    if (isTax) {
+                        gst += (taxAmt * gstPct / 100);
+                    }
+                });
+
+                safeSet("<%= lblGross.ClientID %>", gross);
+                safeSet("<%= lblDiscount.ClientID %>", discount);
+                safeSet("<%= lblTaxable.ClientID %>", taxable);
+                safeSet("<%= lblGST.ClientID %>", gst);
+                safeSet("<%= lblNet.ClientID %>", taxable + gst);
+            };
+        });
+
+        function safeSet(id, val) {
+            const el = document.getElementById(id);
+            if (!el) return; // 💣 label not found
+            el.innerText = val.toFixed(2);
         }
 
-        function setText(id, val) {
-            document.getElementById("<%= lblGross.ClientID %>".replace("lblGross", id))
-                .innerText = val.toFixed(2);
-        }
-        </script>
-
+    </script>
 
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
@@ -922,7 +937,7 @@
                                             <Columns>
                                                 <asp:TemplateField HeaderText="Status">
                                                     <ItemTemplate>
-                                                        <span data-modified="1" style="display:none;font-weight:bold;color:red;">✱</span>
+                                                        <span data-modified="1" style="display: none; font-weight: bold; color: red;">✱</span>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
@@ -1037,29 +1052,35 @@
                                         <br />
                                         <asp:Panel ID="pnlSummary" runat="server" CssClass="pr-summary">
 
-                                        <table width="100%">
-                                            <tr>
-                                                <td align="right">Gross Amount :</td>
-                                                <td><asp:Label ID="lblGross" runat="server" /></td>
+                                            <table width="100%">
+                                                <tr>
+                                                    <td align="right">Gross Amount :</td>
+                                                    <td>
+                                                        <asp:Label ID="lblGross" runat="server" /></td>
 
-                                                <td align="right">Discount :</td>
-                                                <td><asp:Label ID="lblDiscount" runat="server" /></td>
-                                            </tr>
-                                            <tr>
-                                                <td align="right">Taxable Amount :</td>
-                                                <td><asp:Label ID="lblTaxable" runat="server" /></td>
+                                                    <td align="right">Discount :</td>
+                                                    <td>
+                                                        <asp:Label ID="lblDiscount" runat="server" /></td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="right">Taxable Amount :</td>
+                                                    <td>
+                                                        <asp:Label ID="lblTaxable" runat="server" /></td>
 
-                                                <td align="right">GST Amount :</td>
-                                                <td><asp:Label ID="lblGST" runat="server" /></td>
-                                            </tr>
-                                            <tr style="font-weight:bold">
-                                                <td align="right">Net Amount :</td>
-                                                <td><asp:Label ID="lblNet" runat="server" /></td>
-                                                <td></td><td></td>
-                                            </tr>
-                                        </table>
+                                                    <td align="right">GST Amount :</td>
+                                                    <td>
+                                                        <asp:Label ID="lblGST" runat="server" /></td>
+                                                </tr>
+                                                <tr style="font-weight: bold">
+                                                    <td align="right">Net Amount :</td>
+                                                    <td>
+                                                        <asp:Label ID="lblNet" runat="server" /></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                </tr>
+                                            </table>
 
-                                    </asp:Panel>
+                                        </asp:Panel>
 
                                     </td>
                                 </tr>
@@ -1119,6 +1140,32 @@
                             </table>
 
                         </asp:Panel>
+
+                        <asp:Panel ID="pnlApproval" runat="server" Visible="false" CssClass="approval-box">
+
+                            <h4>Approval Action</h4>
+
+                            <asp:TextBox ID="txtApprovalRemarks" runat="server"
+                                TextMode="MultiLine"
+                                Width="400px"
+                                Height="80px"
+                                placeholder="Remarks (optional)" />
+
+                            <br />
+                            <br />
+
+                            <asp:Button ID="btnApprove" runat="server"
+                                Text="Approve"
+                                CssClass="btn btn-success btn_style"
+                                OnClick="btnApprove_Click" />
+
+                            <asp:Button ID="btnReject" runat="server"
+                                Text="Reject"
+                                CssClass="btn btn-danger btn_style"
+                                OnClick="btnReject_Click" />
+
+                        </asp:Panel>
+
                     </td>
                 </tr>
                 <tr>
