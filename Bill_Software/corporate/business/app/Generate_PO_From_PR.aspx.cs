@@ -120,6 +120,27 @@ namespace Bill_Software.corporate.business.app
             pnlPreview.Visible = true;              // ✅ SHOW preview panel
             ViewState["PreviewReqNo"] = reqNo;       // ✅ REQUIRED for Create PO
 
+            // ✅ HEADER
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmdHdr = new SqlCommand(@"
+            SELECT ReqNo, clientName
+            FROM tbl_RequisitionMain
+            WHERE ReqNo = @ReqNo", con);
+
+                cmdHdr.Parameters.AddWithValue("@ReqNo", reqNo);
+
+                con.Open();
+                SqlDataReader dr = cmdHdr.ExecuteReader();
+                if (dr.Read())
+                {
+                    lblPrevReqNo.Text = dr["ReqNo"].ToString();
+                    lblPrevVendor.Text = dr["clientName"] == DBNull.Value ? "" : dr["clientName"].ToString();
+                }
+                dr.Close();
+            }
+
             using (SqlConnection con = new SqlConnection(
                 ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {

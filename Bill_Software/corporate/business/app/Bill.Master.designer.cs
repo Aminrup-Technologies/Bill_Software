@@ -391,15 +391,6 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl po_generate;
         
         /// <summary>
-        /// po_view control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl po_view;
-        
-        /// <summary>
         /// po_release control.
         /// </summary>
         /// <remarks>
@@ -407,15 +398,6 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl po_release;
-        
-        /// <summary>
-        /// po_cancel control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl po_cancel;
         
         /// <summary>
         /// Purchess_payment control.
