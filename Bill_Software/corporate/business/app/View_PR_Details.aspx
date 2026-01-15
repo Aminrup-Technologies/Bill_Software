@@ -1066,7 +1066,6 @@
                                         </asp:GridView>
                                         <br />
                                         <asp:Panel ID="pnlSummary" runat="server" CssClass="pr-summary">
-
                                             <table width="100%">
                                                 <tr>
                                                     <td align="right">Gross Amount :</td>
