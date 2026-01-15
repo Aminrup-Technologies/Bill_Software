@@ -140,9 +140,9 @@
                                     <li id="PO_Master" runat="server"><a href="#">Purchase Order</a>
                                         <ul class="nav first1">
                                             <li id="po_generate" runat="server"><a href="Generate_PO_From_PR.aspx">Generate Purchase Order</a></li>
-                                            <%--<li id="po_view" runat="server"><a href="View_PO.aspx">View Purchase Order</a></li>--%>
+                                            <li id="po_view" runat="server"><a href="View_PO.aspx">View Purchase Order</a></li>
                                             <%--<li id="po_search" runat="server"><a href="Search_PO.aspx">Search Purchase Order</a></li>--%>
-                                            <li id="po_release" runat="server"><a href="Release_PO.aspx">Review & Release PO</a></li>
+                                            <%--<li id="po_release" runat="server"><a href="Release_PO.aspx">Review & Release PO</a></li>--%>
                                             <%--<li id="po_cancel" runat="server"><a href="Cancel_PO.aspx">Cancel Purchase Order</a></li>--%>
                                         </ul>
                                     </li>

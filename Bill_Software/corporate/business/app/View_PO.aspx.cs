@@ -6,32 +6,42 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class View_PR : System.Web.UI.Page
+    public partial class View_PO : System.Web.UI.Page
     {
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                BindPRList();
+                BindPOList();
             }
-
         }
 
-        private void BindPRList()
+        private void BindPOList()
         {
-            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                SqlDataAdapter da = new SqlDataAdapter(@"SELECT * FROM tbl_RequisitionMain ORDER BY CreatedOn DESC", con);
+                SqlDataAdapter da = new SqlDataAdapter(
+                    "SELECT * FROM tbl_PO_Header ORDER BY CreatedOn DESC", con);
 
                 DataTable dt = new DataTable();
                 da.Fill(dt);
 
-                DataList1.DataSource = dt;
-                DataList1.DataBind();
+                DataListPO.DataSource = dt;
+                DataListPO.DataBind();
             }
         }
 
-        protected void DataList1_ItemDataBound(object sender, DataListItemEventArgs e)
+
+        protected void DataListPO_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            if (e.CommandName == "View")
+            {
+                Response.Redirect("View_PO_Details.aspx?poId=" + e.CommandArgument);
+            }
+        }
+
+        protected void DataListPO_ItemDataBound(object sender, DataListItemEventArgs e)
         {
             if (e.Item.ItemType == ListItemType.Item ||
                 e.Item.ItemType == ListItemType.AlternatingItem)
@@ -46,30 +56,16 @@ namespace Bill_Software.corporate.business.app
                     case "Draft":
                         lblStatus.ForeColor = System.Drawing.Color.DarkOrange;
                         break;
-                    case "Submitted":
-                        lblStatus.ForeColor = System.Drawing.Color.Blue;
-                        break;
-                    case "Approved":
+
+                    case "Released":
                         lblStatus.ForeColor = System.Drawing.Color.Green;
                         break;
+
                     case "Cancelled":
                         lblStatus.ForeColor = System.Drawing.Color.Red;
                         break;
                 }
             }
         }
-
-
-        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
-        {
-            if (e.CommandName == "View")
-            {
-                string reqNo = e.CommandArgument.ToString();
-                Response.Redirect("View_PR_Details.aspx?reqNo=" + reqNo);
-            }
-        }
-
-
-
     }
 }
