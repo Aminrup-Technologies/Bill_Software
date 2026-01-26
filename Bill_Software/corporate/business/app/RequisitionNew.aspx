@@ -128,7 +128,7 @@
             const row = ctrl.closest("tr");
             if (!row) return;
 
-            const hidden = row.querySelector("input[type='hidden']");
+            const hidden = row.querySelector("input[id*='hdnIsModified']");
             if (!hidden) return;
 
             // Already marked → do nothing
@@ -137,6 +137,9 @@
             // Mark as modified
             hidden.value = "1";
             modifiedCount++;
+
+            const badge = row.querySelector(".modified-badge");
+            if (badge) badge.style.display = "inline";
 
             // Optional visual indicator
             row.style.backgroundColor = "#FFF3CD"; // light yellow
@@ -153,14 +156,19 @@
     </script>
 
     <script type="text/javascript">
-        function showModifiedOnly() {
-            const grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
-            const rows = grid.getElementsByTagName("tr");
 
+        function showModifiedOnly() {
+
+            const grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            if (!grid) return;
+
+            const rows = grid.getElementsByTagName("tr");
             let found = false;
 
             for (let i = 1; i < rows.length; i++) {
-                const hdn = rows[i].querySelector("input[type='hidden']");
+
+                const hdn = rows[i].querySelector("input[id*='hdnIsModified']");
+
                 if (hdn && hdn.value === "1") {
                     rows[i].style.display = "";
                     found = true;
@@ -169,19 +177,30 @@
                 }
             }
 
-            document.getElementById("lblNoServiceRecords").style.display =
-                found ? "none" : "inline";
+            const lbl = document.getElementById("lblNoServiceRecords");
+            if (lbl) {
+                lbl.style.display = found ? "none" : "inline";
+            }
         }
 
+
         function showAllRows() {
+
             const grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            if (!grid) return;
+
             const rows = grid.getElementsByTagName("tr");
+
             for (let i = 1; i < rows.length; i++) {
                 rows[i].style.display = "";
             }
 
-            document.getElementById("lblNoServiceRecords").style.display = "none";
+            const lbl = document.getElementById("lblNoServiceRecords");
+            if (lbl) {
+                lbl.style.display = "none";
+            }
         }
+
     </script>
 
     <script type="text/javascript">
@@ -270,10 +289,65 @@
                         console.log("Taxable Amount:", taxable.toFixed(2));
                     }
 
+                    markRowModified(changedInput);
+                    recalcSummary();
+
                     break;
                 }
             }
         }
+
+        function recalcSummary() {
+
+            const grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            if (!grid) return;
+
+            const rows = grid.getElementsByTagName("tr");
+
+            let totalTaxable = 0;
+            let totalGST = 0;
+            let netTotal = 0;
+
+            for (let i = 1; i < rows.length; i++) {
+
+                const row = rows[i];
+
+                // Only count visible rows
+                if (row.style.display === "none") continue;
+
+                const taxableBox = row.querySelector("[id*='TaxableAmount']");
+                const chkTax = row.querySelector("input[id*='chkTaxApplicable']");
+                const gstDDL = row.querySelector("[id*='vat_parsentage']");
+
+                let taxable = taxableBox && taxableBox.value
+                    ? parseFloat(taxableBox.value)
+                    : 0;
+
+                let gstPercent = 0;
+
+                if (chkTax && chkTax.checked && gstDDL && gstDDL.value !== "NA") {
+                    gstPercent = parseFloat(gstDDL.value) || 0;
+                }
+
+                let gstAmount = taxable * gstPercent / 100;
+                let netAmount = taxable + gstAmount;
+
+                totalTaxable += taxable;
+                totalGST += gstAmount;
+                netTotal += netAmount;
+            }
+
+            document.getElementById("lblTotalTaxable").innerText =
+                totalTaxable.toFixed(2);
+
+            document.getElementById("lblTotalGST").innerText =
+                totalGST.toFixed(2);
+
+            document.getElementById("lblNetTotal").innerText =
+                netTotal.toFixed(2);
+        }
+
+
 
         function beforeSubmitPR() {
             if (modifiedCount > 0) {
@@ -287,6 +361,25 @@
             return true;
         }
 
+        function toggleGST(ctrl) {
+
+            const row = ctrl.closest("tr");
+            if (!row) return;
+
+            const gst = row.querySelector("[id*='vat_parsentage']");
+            if (!gst) return;
+
+            if (ctrl.checked) {
+                gst.disabled = false;
+            } else {
+                gst.value = "NA";
+                gst.disabled = true;
+            }
+
+            markRowModified(ctrl);
+        }
+
+
     </script>
 
     <script type="text/javascript">
@@ -299,7 +392,7 @@
 
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
-                const hdn = row.querySelector("input[type='hidden']");
+                const hdn = row.querySelector("input[id*='hdnIsModified']");
 
                 // ✅ validate only modified rows
                 if (!hdn || hdn.value !== "1") continue;
@@ -309,20 +402,29 @@
                 const gst = row.querySelector("[id*='vat_parsentage']");
                 const order = row.querySelector("[id*='txtOrder']");
 
-                // ---- TAX RADIO BUTTON (SAFE WAY) ----
-                let taxApplicable = "";
-                const radios = row.querySelectorAll("input[type='radio']");
-                for (let r of radios) {
-                    if (r.checked) {
-                        taxApplicable = r.value;
-                        break;
-                    }
-                }
-
                 // ---- RESET STYLES ----
                 [qty, rate, gst, order].forEach(c => {
                     if (c) c.classList.remove("field-error");
                 });
+
+                // ---- TAX RADIO BUTTON (SAFE WAY) ----
+                //let taxApplicable = "";
+                //const radios = row.querySelectorAll("input[type='radio']");
+                //for (let r of radios) {
+                //    if (r.checked) {
+                //        taxApplicable = r.value;
+                //        break;
+                //    }
+                //}
+
+                const chkTax = row.querySelector("input[id*='chkTaxApplicable']");
+
+                if (chkTax && chkTax.checked) {
+                    if (!gst || gst.value === "" || gst.value === "NA") {
+                        gst.classList.add("field-error");
+                        rowHasError = true;
+                    }
+                }
 
                 let rowHasError = false;
 
@@ -338,13 +440,13 @@
                     rowHasError = true;
                 }
 
-                // ---- TAX % REQUIRED IF TAX = YES ----
-                if (taxApplicable === "Yes") {
-                    if (!gst || gst.value === "" || gst.value === "NA") {
-                        gst.classList.add("field-error");
-                        rowHasError = true;
-                    }
-                }
+                //// ---- TAX % REQUIRED IF TAX = YES ----
+                //if (taxApplicable === "Yes") {
+                //    if (!gst || gst.value === "" || gst.value === "NA") {
+                //        gst.classList.add("field-error");
+                //        rowHasError = true;
+                //    }
+                //}
 
                 // ---- ORDER (MANDATORY & POSITIVE) ----
                 if (!order || order.value.trim() === "" || Number(order.value) <= 0) {
@@ -394,7 +496,7 @@
             let firstDuplicateRow = null;
 
             for (let i = 1; i < rows.length; i++) {
-                const hdn = rows[i].querySelector("input[type='hidden']");
+                const hdn = rows[i].querySelector("input[id*='hdnIsModified']");
                 if (!hdn || hdn.value !== "1") continue; // only modified rows
 
                 const orderBox = rows[i].querySelector("[id*='txtOrder']");
@@ -448,7 +550,7 @@
             // 1️⃣ Collect modified rows only
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
-                const hdn = row.querySelector("input[type='hidden']");
+                const hdn = row.querySelector("input[id*='hdnIsModified']");
                 if (hdn && hdn.value === "1") {
                     const orderBox = row.querySelector("[id*='txtOrder']");
                     if (orderBox) {
@@ -472,7 +574,7 @@
             // 3️⃣ Find next available order slot
             const usedOrders = new Set();
             for (let i = 1; i < rows.length; i++) {
-                const hdn = rows[i].querySelector("input[type='hidden']");
+                const hdn = rows[i].querySelector("input[id*='hdnIsModified']");
                 const orderBox = rows[i].querySelector("[id*='txtOrder']");
                 if (orderBox && (!hdn || hdn.value !== "1")) {
                     const val = parseInt(orderBox.value);
@@ -498,6 +600,7 @@
             alert("Order updated for modified rows only.");
         }
     </script>
+
     <script type="text/javascript">
         function scrollToMessage() {
             const ok = document.getElementById('<%= PanelOK.ClientID %>');
@@ -532,20 +635,20 @@
                     <td>&nbsp;</td>
                     <td colspan="4">
                         <table width="100%" cellpadding="4" cellspacing="0"
-                               style="border:1px solid #006699; background-color:#F4FAFF;">
+                            style="border: 1px solid #006699; background-color: #F4FAFF;">
                             <tr>
-                                <td style="width:20%; font-weight:bold;">PR No</td>
-                                <td style="width:30%;">
+                                <td style="width: 20%; font-weight: bold;">PR No</td>
+                                <td style="width: 30%;">
                                     <asp:Label ID="lblReqNo" runat="server"
                                         Text="(Not Generated)"
-                                        Style="font-weight:bold; color:#003366;" />
+                                        Style="font-weight: bold; color: #003366;" />
                                 </td>
 
-                                <td style="width:20%; font-weight:bold;">Status</td>
-                                <td style="width:30%;">
+                                <td style="width: 20%; font-weight: bold;">Status</td>
+                                <td style="width: 30%;">
                                     <asp:Label ID="lblStatus" runat="server"
                                         Text="Draft"
-                                        Style="font-weight:bold; color:#CC6600;" />
+                                        Style="font-weight: bold; color: #CC6600;" />
                                 </td>
                             </tr>
                         </table>
@@ -837,16 +940,10 @@
                                             <span id="lblModifiedCount">0</span>
                                         </span>
                                         <span style="margin-left: 15px;">
-                                            <asp:Button ID="btnShowModified" runat="server"
-                                                Text="Show Modified"
-                                                CssClass="btn btn-warning btn-sm btn_style"
-                                                OnClientClick="showModifiedOnly(); return false;" />
+                                            <asp:Button ID="btnShowModified" runat="server" Text="Show Modified" CssClass="btn btn-warning btn-sm btn_style" OnClientClick="showModifiedOnly(); return false;" />
                                             &nbsp; &nbsp;
 
-                                            <asp:Button ID="btnShowAll" runat="server"
-                                                Text="Show All"
-                                                CssClass="btn btn-secondary btn-sm btn_style"
-                                                OnClientClick="showAllRows(); return false;" />
+                                            <asp:Button ID="btnShowAll" runat="server" Text="Show All" CssClass="btn btn-secondary btn-sm btn_style" OnClientClick="showAllRows(); return false;" />
                                         </span>
 
                                     </td>
@@ -917,7 +1014,7 @@
                                                         <asp:TextBox ID="TextBox9" runat="server"></asp:TextBox>
                                                     </EditItemTemplate>
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="Quantity" runat="server" CssClass="textbox_style21" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
+                                                        <asp:TextBox ID="Quantity" runat="server" CssClass="textbox_style21" onkeyup="calculateDiscount(this)" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Vendor Rate">
@@ -925,42 +1022,50 @@
                                                         <asp:TextBox ID="TextBox4" runat="server"></asp:TextBox>
                                                     </EditItemTemplate>
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="Vendor_rate" runat="server" CssClass="textbox_style21" onkeyup="markRowModified(this)" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
+                                                        <asp:TextBox ID="Vendor_rate" runat="server" CssClass="textbox_style21" onkeyup="calculateDiscount(this)" onkeypress="return validate(event)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Dis. %">
                                                     <ItemTemplate>
                                                         <asp:TextBox ID="DiscountPercent" runat="server" CssClass="textbox_style21"
-                                                            onkeyup="calculateDiscount(this)"
-                                                            BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px" Width="60px"></asp:TextBox>
+                                                            onkeyup="calculateDiscount(this)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px" Width="60px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 
                                                 <asp:TemplateField HeaderText="Disc. Amount">
                                                     <ItemTemplate>
                                                         <asp:TextBox ID="DiscountAmount" runat="server" CssClass="textbox_style21"
-                                                            onkeyup="calculateDiscount(this)"
-                                                            BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px" Width="80px"></asp:TextBox>
+                                                            onkeyup="calculateDiscount(this)" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Height="22px" Width="80px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
                                                 <asp:TemplateField HeaderText="Taxable Amount">
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="TaxableAmount" runat="server" CssClass="textbox_style21"
-                                                            ReadOnly="true" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid"
+                                                        <asp:TextBox ID="TaxableAmount" runat="server" CssClass="textbox_style21" ReadOnly="true" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid"
                                                             Height="22px" Width="100px"></asp:TextBox>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
-                                                <asp:TemplateField HeaderText="Tax Applicable">
+                                                <%--<asp:TemplateField HeaderText="Tax Applicable">
                                                     <ItemTemplate>
-                                                        <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal">
+                                                        <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal" onchange="markRowModified(this)">
                                                             <asp:ListItem>Yes</asp:ListItem>
                                                             <asp:ListItem>No</asp:ListItem>
                                                         </asp:RadioButtonList>
                                                     </ItemTemplate>
+                                                </asp:TemplateField>--%>
+
+                                                <asp:TemplateField HeaderText="Tax Applicable">
+                                                    <ItemTemplate>
+                                                        <asp:CheckBox ID="chkTaxApplicable"
+                                                            runat="server"
+                                                            Text="Yes"
+                                                            onchange="markRowModified(this)" />
+                                                    </ItemTemplate>
                                                 </asp:TemplateField>
+
+
                                                 <asp:TemplateField HeaderText="Input %">
                                                     <ItemTemplate>
-                                                        <asp:DropDownList ID="vat_parsentage" runat="server" CssClass="dropdown_style">
+                                                        <asp:DropDownList ID="vat_parsentage" runat="server" CssClass="dropdown_style" onchange="markRowModified(this); recalcSummary();">
                                                         </asp:DropDownList>
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
@@ -978,6 +1083,20 @@
                                             <AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />
                                         </asp:GridView>
                                         <br />
+                                        <div style="text-align: right; margin-top: 10px; font-weight: bold;">
+                                            <span style="margin-right: 20px;">Total Taxable :
+        <span id="lblTotalTaxable">0.00</span>
+                                            </span>
+
+                                            <span style="margin-right: 20px;">Total GST :
+        <span id="lblTotalGST">0.00</span>
+                                            </span>
+
+                                            <span>Net Total :
+        <span id="lblNetTotal">0.00</span>
+                                            </span>
+                                        </div>
+
                                     </td>
                                 </tr>
                                 <%--<tr>
@@ -1012,7 +1131,7 @@
 
                                 <tr>
                                     <td>&nbsp;</td>
-                                    <td colspan="4" style="text-align:center; padding:10px;">
+                                    <td colspan="4" style="text-align: center; padding: 10px;">
 
                                         <asp:Button ID="btnReorder" runat="server"
                                             Text="Auto Reorder"
