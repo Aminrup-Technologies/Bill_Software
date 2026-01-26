@@ -587,6 +587,8 @@ namespace Bill_Software.corporate.business.app
                             return;
                         }
 
+                        bool isTaxApplicable = GetTaxApplicable(row);
+
                         dt.Rows.Add(
                             ((Label)row.FindControl("Ser_pro_code")).Text,
                             ((Label)row.FindControl("Ser_pro_Name")).Text,
@@ -596,11 +598,12 @@ namespace Bill_Software.corporate.business.app
                             ToDecimal(row, "Vendor_rate") ?? 0,
                             ToDecimal(row, "DiscountPercent"),
                             ToDecimal(row, "DiscountAmount"),
-                            GetTaxApplicable(row),
-                            GetGSTRate(row, GetTaxApplicable(row)),
+                            isTaxApplicable,
+                            GetGSTRate(row, isTaxApplicable),
                             ToInt(row, "txtOrder")
                         );
                     }
+
 
 
                     // 3️⃣ Bulk Save
@@ -811,7 +814,7 @@ namespace Bill_Software.corporate.business.app
             return rbl?.SelectedValue ?? "No";
         }
 
-        private bool GetTaxApplicable(GridViewRow row)
+        private bool GetTaxApplicable_OLD2(GridViewRow row)
         {
             RadioButtonList rbl =
                 row.FindControl("RadioButtonList1") as RadioButtonList;
@@ -822,6 +825,15 @@ namespace Bill_Software.corporate.business.app
             return rbl.SelectedItem.Text.Equals("Yes",
                 StringComparison.OrdinalIgnoreCase);
         }
+
+        private bool GetTaxApplicable(GridViewRow row)
+        {
+            CheckBox chk =
+                row.FindControl("chkTaxApplicable") as CheckBox;
+
+            return chk != null && chk.Checked;
+        }
+
 
 
         private decimal GetGSTRate_OLD(GridViewRow row, string taxApplicable)
