@@ -22,15 +22,6 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.DataList DataList1;
         
         /// <summary>
-        /// pnlPreview control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlPreview;
-        
-        /// <summary>
         /// lblPrevReqNo control.
         /// </summary>
         /// <remarks>
@@ -56,15 +47,6 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.GridView gvPreviewItems;
-        
-        /// <summary>
-        /// btnCancelPreview control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnCancelPreview;
         
         /// <summary>
         /// btnCreatePO control.

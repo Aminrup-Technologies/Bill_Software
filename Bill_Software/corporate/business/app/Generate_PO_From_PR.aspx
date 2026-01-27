@@ -104,9 +104,71 @@
                 font-weight: bold;
                 color: #0b5f8a;
             }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+        }
+
+        .popup-container.popup-lg {
+            width: 85%;
+            max-height: 90%;
+            background: #fff;
+            margin: 3% auto;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .popup-header {
+            padding: 10px 15px;
+            background: #0d6efd;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .popup-footer {
+            padding: 10px;
+            text-align: right;
+            border-top: 1px solid #ddd;
+        }
+
+        .popup-close {
+            float: right;
+            color: #fff;
+            font-size: 22px;
+            text-decoration: none;
+        }
+
+        .popup-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1 1 auto; /* 🔥 THIS IS THE FIX */
+            min-height: 200px; /* safety */
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+    <script>
+        function showPRPreview() {
+            document.getElementById('prPreviewPopup').style.display = 'block';
+        }
+
+        function hidePRPreview() {
+            document.getElementById('prPreviewPopup').style.display = 'none';
+        }
+    </script>
+    <script>
+        document.addEventListener('keydown', function (e) {
+            if (e.key === "Escape") hidePRPreview();
+        });
+    </script>
+
     <table cellpadding="0" cellspacing="0" class="auto-style1">
         <tr>
             <td colspan="4" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;View Purchase Requitions</span></td>
@@ -208,7 +270,7 @@
                 </asp:DataList>
 
                 <br />
-                <asp:Panel ID="pnlPreview" runat="server" Visible="false" CssClass="preview-box">
+                <%--<asp:Panel ID="pnlPreview" runat="server" Visible="false" CssClass="preview-box">
 
                     <div style="font-size: 14px; font-weight: bold; color: #0b5f8a; margin-bottom: 10px;">
                         PO Preview
@@ -219,7 +281,7 @@
                         <strong>PR No:</strong>
                         <asp:Label ID="lblPrevReqNo" runat="server" />
                         &nbsp;&nbsp;&nbsp;
-    <strong>Vendor:</strong>
+                        <strong>Vendor:</strong>
                         <asp:Label ID="lblPrevVendor" runat="server" />
                     </div>
 
@@ -282,15 +344,14 @@
 
                         &nbsp;&nbsp;
 
-    <asp:Button ID="btnCreatePO" runat="server"
-        Text="Create PO"
-        CssClass="btn btn-success btn_style"
-        OnClick="btnCreatePO_Click" />
+                    <asp:Button ID="btnCreatePO" runat="server"
+                        Text="Create PO"
+                        CssClass="btn btn-success btn_style"
+                        OnClick="btnCreatePO_Click" />
                     </div>
+                </asp:Panel>--%>
 
-
-
-                </asp:Panel>
+                
 
             </td>
         </tr>
@@ -307,4 +368,84 @@
             <td>&nbsp;</td>
         </tr>
     </table>
+    <div id="prPreviewPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-container popup-lg">
+
+            <div class="popup-header">
+                <span>PR Preview –
+                                <asp:Label ID="lblPrevReqNo" runat="server" />
+                </span>
+                <a href="javascript:void(0);" onclick="hidePRPreview();" class="popup-close">×</a>
+            </div>
+
+            <div class="popup-body">
+
+                <div style="margin-bottom: 10px;">
+                    <strong>Vendor:</strong>
+                    <asp:Label ID="lblPrevVendor" runat="server" />
+                </div>
+
+                <asp:GridView ID="gvPreviewItems"
+                    runat="server"
+                    AutoGenerateColumns="false"
+                    ShowFooter="true"
+                    CssClass="po-preview-grid"
+                    OnRowDataBound="gvPreviewItems_RowDataBound">
+
+                    <Columns>
+
+                        <asp:BoundField DataField="SlNo" HeaderText="Sl">
+                            <HeaderStyle CssClass="center" Width="5%" />
+                            <ItemStyle CssClass="center" />
+                        </asp:BoundField>
+
+                        <asp:BoundField DataField="ProductName" HeaderText="Item">
+                            <HeaderStyle Width="35%" />
+                        </asp:BoundField>
+
+                        <asp:BoundField DataField="Qnty" HeaderText="Qty" DataFormatString="{0:N2}">
+                            <HeaderStyle CssClass="center" Width="8%" />
+                            <ItemStyle CssClass="num" />
+                        </asp:BoundField>
+
+                        <asp:BoundField DataField="Rate" HeaderText="Rate" DataFormatString="{0:N2}">
+                            <HeaderStyle CssClass="center" Width="8%" />
+                            <ItemStyle CssClass="num" />
+                        </asp:BoundField>
+
+                        <asp:BoundField DataField="TaxableAmount" HeaderText="Before GST" DataFormatString="{0:N2}">
+                            <HeaderStyle CssClass="center" Width="12%" />
+                            <ItemStyle CssClass="num" />
+                        </asp:BoundField>
+
+                        <asp:BoundField DataField="TaxAmount" HeaderText="GST Amt" DataFormatString="{0:N2}">
+                            <HeaderStyle CssClass="center" Width="10%" />
+                            <ItemStyle CssClass="num" />
+                        </asp:BoundField>
+
+                        <asp:BoundField DataField="NetAmount" HeaderText="After GST" DataFormatString="{0:N2}">
+                            <HeaderStyle CssClass="center" Width="12%" />
+                            <ItemStyle CssClass="num amount" />
+                        </asp:BoundField>
+
+                    </Columns>
+                </asp:GridView>
+
+
+            </div>
+
+            <div class="popup-footer">
+                <asp:Button ID="btnCreatePO"
+                    runat="server"
+                    Text="Create PO"
+                    CssClass="btn btn-success btn_style"
+                    OnClick="btnCreatePO_Click" />
+
+                <button type="button" class="btn btn-secondary btn_style" onclick="hidePRPreview();">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
 </asp:Content>

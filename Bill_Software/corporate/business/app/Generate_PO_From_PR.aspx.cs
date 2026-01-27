@@ -18,10 +18,10 @@ namespace Bill_Software.corporate.business.app
             {
                 BindPRList();
             }
-            else if (ViewState["PreviewReqNo"] != null)
-            {
-                pnlPreview.Visible = true; // ✅ keep preview visible
-            }
+            //else if (ViewState["PreviewReqNo"] != null)
+            //{
+            //    //prPreviewPopup.Visible = true; // ✅ keep preview visible
+            //}
         }
 
         private void BindPRList()
@@ -63,7 +63,7 @@ namespace Bill_Software.corporate.business.app
         }
 
 
-        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        protected void DataList1_ItemCommand_OLD(object source, DataListCommandEventArgs e)
         {
             string reqNo = e.CommandArgument.ToString();
 
@@ -78,9 +78,30 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
+        protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
+        {
+            if (e.CommandName == "Preview")
+            {
+                string reqNo = e.CommandArgument.ToString();
+
+                LoadPreview(reqNo); // already correct
+
+                ScriptManager.RegisterStartupScript(
+                    this,
+                    GetType(),
+                    "ShowPRPreview",
+                    "showPRPreview();",
+                    true
+                );
+            }
+
+
+        }
+
+
         private void ShowPreview(string reqNo)
         {
-            pnlPreview.Visible = true;
+            //prPreviewPopup.Visible = true;
             ViewState["PreviewReqNo"] = reqNo;
 
             using (SqlConnection con = new SqlConnection(
@@ -115,9 +136,9 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private void LoadPreview(string reqNo)
+        private void LoadPreview_OLD(string reqNo)
         {
-            pnlPreview.Visible = true;              // ✅ SHOW preview panel
+            //prPreviewPopup.Visible = true;              // ✅ SHOW preview panel
             ViewState["PreviewReqNo"] = reqNo;       // ✅ REQUIRED for Create PO
 
             // ✅ HEADER
@@ -169,7 +190,64 @@ namespace Bill_Software.corporate.business.app
             }
 
             LoadPreviewTotals(reqNo);
-            gvPreviewItems.DataBind();
+        }
+
+        private void LoadPreview(string reqNo)
+        {
+            ViewState["PreviewReqNo"] = reqNo;
+
+            // HEADER
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmdHdr = new SqlCommand(@"
+            SELECT ReqNo, clientName
+            FROM tbl_RequisitionMain
+            WHERE ReqNo = @ReqNo", con);
+
+                cmdHdr.Parameters.AddWithValue("@ReqNo", reqNo);
+
+                con.Open();
+                using (SqlDataReader dr = cmdHdr.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        lblPrevReqNo.Text = dr["ReqNo"].ToString();
+                        lblPrevVendor.Text = dr["clientName"] == DBNull.Value ? "" : dr["clientName"].ToString();
+                    }
+                }
+            }
+
+            // 🔥 LOAD TOTALS FIRST
+            LoadPreviewTotals(reqNo);
+
+            // ITEMS
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlDataAdapter da = new SqlDataAdapter(@"
+            SELECT
+                ItemOrder AS SlNo,
+                ProductName,
+                Qnty,
+                Rate,
+                TaxableAmount,
+                TaxAmount,
+                NetAmount
+            FROM tbl_RequisitionNew
+            WHERE ReqNo = @ReqNo
+            ORDER BY ItemOrder", con);
+
+                da.SelectCommand.Parameters.AddWithValue("@ReqNo", reqNo);
+
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                ViewState["PreviewItems"] = dt;
+
+                gvPreviewItems.DataSource = dt;
+                gvPreviewItems.DataBind();   // ✅ Footer now sees totals
+            }
         }
 
 
@@ -227,7 +305,7 @@ namespace Bill_Software.corporate.business.app
                 cmd.ExecuteNonQuery();
             }
 
-            pnlPreview.Visible = false;
+            //prPreviewPopup.Visible = false;
             BindPRList();
         }
 
@@ -235,7 +313,7 @@ namespace Bill_Software.corporate.business.app
         {
             ViewState.Remove("PreviewReqNo");
             ViewState.Remove("PreviewItems");
-            pnlPreview.Visible = false;
+            //prPreviewPopup.Visible = false;
 
         }
 
@@ -264,7 +342,7 @@ namespace Bill_Software.corporate.business.app
         //    }
         //}
 
-        protected void gvPreviewItems_RowDataBound(object sender, GridViewRowEventArgs e)
+        protected void gvPreviewItems_RowDataBound_OLD(object sender, GridViewRowEventArgs e)
         {
             if (e.Row.RowType == DataControlRowType.Footer)
             {
@@ -272,6 +350,12 @@ namespace Bill_Software.corporate.business.app
                 decimal taxable = ViewState["TotalTaxable"] == DBNull.Value ? 0 : Convert.ToDecimal(ViewState["TotalTaxable"]);
                 decimal gst = ViewState["TotalGST"] == DBNull.Value ? 0 : Convert.ToDecimal(ViewState["TotalGST"]);
                 decimal net = ViewState["TotalNet"] == DBNull.Value ? 0 : Convert.ToDecimal(ViewState["TotalNet"]);
+
+                //decimal qty = ViewState["TotalQty"] == null ? 0 : Convert.ToDecimal(ViewState["TotalQty"]);
+                //decimal taxable = ViewState["TotalTaxable"] == null ? 0 : Convert.ToDecimal(ViewState["TotalTaxable"]);
+                //decimal gst = ViewState["TotalGST"] == null ? 0 : Convert.ToDecimal(ViewState["TotalGST"]);
+                //decimal net = ViewState["TotalNet"] == null ? 0 : Convert.ToDecimal(ViewState["TotalNet"]);
+
 
                 e.Row.Cells[0].Text = "Total";
                 e.Row.Cells[0].ColumnSpan = 2;
@@ -289,6 +373,29 @@ namespace Bill_Software.corporate.business.app
 
         }
 
+        protected void gvPreviewItems_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.Footer)
+            {
+                decimal qty = ViewState["TotalQty"] == null ? 0 : Convert.ToDecimal(ViewState["TotalQty"]);
+                decimal taxable = ViewState["TotalTaxable"] == null ? 0 : Convert.ToDecimal(ViewState["TotalTaxable"]);
+                decimal gst = ViewState["TotalGST"] == null ? 0 : Convert.ToDecimal(ViewState["TotalGST"]);
+                decimal net = ViewState["TotalNet"] == null ? 0 : Convert.ToDecimal(ViewState["TotalNet"]);
+
+                e.Row.Cells[0].Text = "Total";
+                e.Row.Cells[0].ColumnSpan = 2;
+                e.Row.Cells[0].HorizontalAlign = HorizontalAlign.Right;
+
+                e.Row.Cells[1].Visible = false;
+
+                e.Row.Cells[2].Text = qty.ToString("N2");
+                e.Row.Cells[4].Text = taxable.ToString("N2");
+                e.Row.Cells[5].Text = gst.ToString("N2");
+                e.Row.Cells[6].Text = net.ToString("N2");
+
+                e.Row.Font.Bold = true;
+            }
+        }
 
 
     }

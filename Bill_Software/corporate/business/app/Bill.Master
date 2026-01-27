@@ -9,6 +9,7 @@
     <script type="text/javascript" src="../../WebProperty/js/clock.js"></script>
     <title>FLAME-EX</title>
     <link rel="shortcut icon" href="../WebImages/aagrouplogo.png" />
+
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <style type="text/css">
