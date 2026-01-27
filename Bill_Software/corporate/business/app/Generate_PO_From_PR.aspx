@@ -193,14 +193,14 @@
                     Preview
                                 </asp:LinkButton>
 
-                                &nbsp;|&nbsp;
+                                <%--&nbsp;|&nbsp;--%>
 
-                <asp:LinkButton ID="lnkConvert" runat="server"
-                    CommandName="Convert"
-                    CommandArgument='<%# Eval("ReqNo") %>'
-                    OnClientClick="return confirm('Generate PO for this PR?');">
+                                <asp:LinkButton ID="lnkConvert" runat="server"
+                                    CommandName="Convert" Visible="false"
+                                    CommandArgument='<%# Eval("ReqNo") %>'
+                                    OnClientClick="return confirm('Generate PO for this PR?');">
                     Convert
-                </asp:LinkButton>
+                                </asp:LinkButton>
                             </td>
                         </tr>
                     </ItemTemplate>
