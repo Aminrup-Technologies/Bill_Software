@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="View_PO_Details.aspx.cs" Inherits="Bill_Software.corporate.business.app.View_PO_Details" %>
+﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="View_PO_Details.aspx.cs" MaintainScrollPositionOnPostback="true" Inherits="Bill_Software.corporate.business.app.View_PO_Details" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
@@ -181,22 +181,148 @@
                 margin: 0 8px;
             }
 
-        .po-grid th {
-            background: #0b5a83;
-            color: white;
+        .po-card {
+            border: 1px solid #e2e6ea;
+            border-radius: 8px;
+            background: #fff;
+            margin: 15px 0;
+        }
+
+        .po-card-header {
+            padding: 10px 14px;
+            font-weight: 600;
+            background: #f5f7fa;
+            border-bottom: 1px solid #e2e6ea;
+        }
+
+        .po-card-body {
+            padding: 14px;
+        }
+
+        .po-section {
+            margin-bottom: 14px;
+        }
+
+        .po-section-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .po-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .po-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .po-grid-4 > div,
+        .po-grid-2 > div {
+            min-width: 0;
+        }
+
+
+        .po-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .po-input,
+        select,
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
             font-size: 12px;
-            padding: 6px;
+            color: #555;
         }
 
-        .po-grid td {
-            padding: 6px;
-            border-bottom: 1px solid #ddd;
+
+        .po-radio-inline {
+            margin-bottom: 6px;
         }
 
-        .po-grid .num {
-            text-align: right;
-            white-space: nowrap;
+        label {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 2px;
+            display: block;
         }
+
+        .req {
+            color: #d9534f;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .po-radio-group {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 6px;
+        }
+
+            .po-radio-group label {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                font-size: 13px;
+            }
+
+        select:disabled {
+            background-color: #f3f4f6;
+            color: #999;
+            border-style: dashed;
+        }
+
+
+        .po-subsection {
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .po-subsection:last-child {
+            border-bottom: none;
+        }
+        .op-title {
+            margin-top: 10px;
+            padding-top: 6px;
+            border-top: 2px solid #0d6efd;
+        }
+        .req {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .po-input.required {
+            border-left: 3px solid #dc3545;
+        }
+
+        .po-input, select {
+            height: 34px;
+        }
+        .po-lock-hint {
+    font-size: 12px;
+    color: #856404;
+    background: #fff3cd;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -348,6 +474,147 @@
                     </td>
                     <td>&nbsp;</td>
                 </tr>
+
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan="4">
+                        <asp:Panel ID="pnlPODetails" runat="server">
+
+                            <div class="po-card">
+
+                                <!-- HEADER -->
+                                <div class="po-card-header">
+                                    PO Delivery & Billing Details
+                                </div>
+
+                                <div class="po-card-body">
+
+                                    <!-- ================= BILL TO / SHIP TO ================= -->
+                                    <div class="po-grid-2">
+                                        <div class="po-subsection">
+                                            <!-- BILL TO -->
+                                            <div class="po-section">
+
+                                                <div class="po-section-title">Bill To</div>
+
+                                                <asp:RadioButtonList ID="rblBillToType" runat="server"
+                                                    CssClass="po-radio-group"
+                                                    RepeatDirection="Horizontal"
+                                                    AutoPostBack="true" RepeatColumns="2" CellPadding="5" CellSpacing="10" RepeatLayout="Table"
+                                                    OnSelectedIndexChanged="rblBillToType_SelectedIndexChanged">
+                                                    <asp:ListItem Text="Company" Value="Company" />
+                                                    <asp:ListItem Text="Store" Value="Store" />
+                                                </asp:RadioButtonList>
+
+
+                                                <asp:DropDownList ID="ddlBillToCompany" runat="server"
+                                                    CssClass="po-input" />
+
+                                                <asp:DropDownList ID="ddlBillToStore" runat="server"
+                                                    CssClass="po-input" />
+                                            </div>
+                                        </div>
+                                        <div class="po-subsection">
+                                            <!-- SHIP TO -->
+                                            <div class="po-section">
+                                                <div class="po-section-title">Ship To (Consignee)</div>
+
+                                                <asp:RadioButtonList ID="rblShipToType" runat="server"
+                                                    CssClass="po-radio-inline"
+                                                    RepeatDirection="Horizontal"
+                                                    AutoPostBack="true" RepeatColumns="2" CellPadding="5" CellSpacing="10" RepeatLayout="Table"
+                                                    OnSelectedIndexChanged="rblShipToType_SelectedIndexChanged">
+                                                    <asp:ListItem Text="Store" Value="Store" />
+                                                    <asp:ListItem Text="Client (Direct Delivery)" Value="Client" />
+                                                </asp:RadioButtonList>
+
+                                                <asp:DropDownList ID="ddlShipToStore" runat="server"
+                                                    CssClass="po-input" />
+
+                                                <asp:DropDownList ID="ddlShipToClient" runat="server"
+                                                    CssClass="po-input" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ================= OPERATIONAL DETAILS ================= -->
+                                    <div class="po-section">
+                                        <div class="po-section-title op-title">Operational Details</div>
+
+                                        <div class="po-grid-4">
+
+                                            <div>
+                                                <label>Engineer Name <span class="req">*</span></label>
+                                                <asp:TextBox ID="txtEngineerName" runat="server"
+                                                    CssClass="po-input" />
+                                            </div>
+
+                                            <div>
+                                                <label>Dispatch Mode</label>
+                                                <asp:DropDownList ID="ddlDispatchMode" runat="server"
+                                                    CssClass="po-input">
+                                                    <asp:ListItem Text="Transport" />
+                                                    <asp:ListItem Text="Courier" />
+                                                    <asp:ListItem Text="DTDC" />
+                                                </asp:DropDownList>
+                                            </div>
+
+                                            <div>
+                                                <label>Dispatch Upto</label>
+                                                <asp:TextBox ID="txtDispatchUpto" runat="server"
+                                                    CssClass="po-input" />
+                                            </div>
+
+                                            <div>
+                                                <label>Delivery Basis</label>
+                                                <asp:DropDownList ID="ddlDeliveryBasis" runat="server"
+                                                    CssClass="po-input">
+                                                    <asp:ListItem Text="Door Delivery" />
+                                                    <asp:ListItem Text="Godown Delivery" />
+                                                    <asp:ListItem Text="By Hand" />
+                                                </asp:DropDownList>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="po-grid-2 mt-10">
+
+                                            <div>
+                                                <label>Freight Terms</label>
+                                                <asp:DropDownList ID="ddlFreightTerms" runat="server"
+                                                    CssClass="po-input">
+                                                    <asp:ListItem Text="Paid" />
+                                                    <asp:ListItem Text="To Pay" />
+                                                    <asp:ListItem Text="Add in Invoice" />
+                                                </asp:DropDownList>
+                                            </div>
+
+                                            <div>
+                                                <label>Remarks</label>
+                                                <asp:TextBox ID="txtRemarks" runat="server"
+                                                    CssClass="po-input"
+                                                    TextMode="MultiLine"
+                                                    Rows="2" />
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </asp:Panel>
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
+
+                <tr>
+                    <td>&nbsp;</td>
+                    <td colspan="2">&nbsp;</td>
+                    <td colspan="2">&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+
                 <tr>
                     <td>&nbsp;</td>
                     <td colspan="2">&nbsp;</td>
@@ -479,9 +746,13 @@
                 <tr>
                     <td>&nbsp;</td>
                     <td colspan="4" style="text-align: center; padding: 10px;">
+                        <div class="po-lock-hint">
+    <i class="fa fa-lock"></i>
+    Once released, this PO cannot be edited.
+</div>
 
                         <asp:Button ID="btnReleasePO" runat="server"
-                            Text="Release Purchase Order"
+                            Text="Release Purchase Order" Width="150px"
                             CssClass="btn btn-success btn-lg btn_style"
                             OnClientClick="return confirmReleasePO(this);"
                             OnClick="btnReleasePO_Click" />

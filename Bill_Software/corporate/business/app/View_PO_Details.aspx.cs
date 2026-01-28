@@ -42,6 +42,13 @@ namespace Bill_Software.corporate.business.app
                 }
 
                 LoadPO(poId);
+
+                if (lblStatus.Text == "Draft")
+                {
+                    LoadBillToMasters();
+                    LoadShipToMasters();
+                }
+
             }
         }
 
@@ -121,6 +128,309 @@ namespace Bill_Software.corporate.business.app
 
         #endregion
 
+        private void LoadBillToMasters()
+        {
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlDataAdapter da1 =
+                    new SqlDataAdapter("SELECT ID, Name FROM tbl_Company", con);
+
+                DataTable dtCompany = new DataTable();
+                da1.Fill(dtCompany);
+
+                ddlBillToCompany.DataSource = dtCompany;
+                ddlBillToCompany.DataTextField = "Name";
+                ddlBillToCompany.DataValueField = "ID";
+                ddlBillToCompany.DataBind();
+
+                SqlDataAdapter da2 =
+                    new SqlDataAdapter("SELECT Id, StoreName FROM Stores WHERE IsActive=1", con);
+
+                DataTable dtStore = new DataTable();
+                da2.Fill(dtStore);
+
+                ddlBillToStore.DataSource = dtStore;
+                ddlBillToStore.DataTextField = "StoreName";
+                ddlBillToStore.DataValueField = "Id";
+                ddlBillToStore.DataBind();
+            }
+        }
+
+        private void LoadShipToMasters()
+        {
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlDataAdapter daStore =
+                    new SqlDataAdapter("SELECT Id, StoreName FROM Stores WHERE IsActive=1", con);
+
+                DataTable dtStore = new DataTable();
+                daStore.Fill(dtStore);
+
+                ddlShipToStore.DataSource = dtStore;
+                ddlShipToStore.DataTextField = "StoreName";
+                ddlShipToStore.DataValueField = "Id";
+                ddlShipToStore.DataBind();
+
+                SqlDataAdapter daClient =
+                    new SqlDataAdapter("SELECT Id, Client_Name FROM tbl_Client", con);
+
+                DataTable dtClient = new DataTable();
+                daClient.Fill(dtClient);
+
+                ddlShipToClient.DataSource = dtClient;
+                ddlShipToClient.DataTextField = "Client_Name";
+                ddlShipToClient.DataValueField = "Id";
+                ddlShipToClient.DataBind();
+            }
+        }
+
+        protected void rblBillToType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ddlBillToCompany.Enabled = (rblBillToType.SelectedValue == "Company");
+            ddlBillToStore.Enabled = (rblBillToType.SelectedValue == "Store");
+        }
+
+        protected void rblShipToType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ddlShipToStore.Enabled = (rblShipToType.SelectedValue == "Store");
+            ddlShipToClient.Enabled = (rblShipToType.SelectedValue == "Client");
+        }
+
+        private void ApplyStatusUI(string status, bool isLocked)
+        {
+            bool isDraft = status == "Draft";
+
+            pnlPODetails.Visible = isDraft && !isLocked;
+
+            btnReleasePO.Visible = isDraft && !isLocked;
+            btnPrintPO.Visible = !isDraft;
+
+            if (!isDraft)
+            {
+                btnPrintPO.PostBackUrl =
+                    "Print_PO.aspx?poId=" + lblPO_Id.Text;
+            }
+        }
+
+        private bool ValidateBeforeRelease()
+        {
+            if (string.IsNullOrWhiteSpace(txtEngineerName.Text))
+            {
+                ShowError("Engineer Name is mandatory.");
+                return false;
+            }
+
+            if (rblBillToType.SelectedIndex == -1)
+            {
+                ShowError("Please select Bill To.");
+                return false;
+            }
+
+            if (rblShipToType.SelectedIndex == -1)
+            {
+                ShowError("Please select Ship To.");
+                return false;
+            }
+
+            return true;
+        }
+
+        protected void btnReleasePO_Click(object sender, EventArgs e)
+        {
+            if (!ValidateBeforeRelease())
+                return;
+
+            int poId = Convert.ToInt32(lblPO_Id.Text);
+
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                con.Open();
+                SqlTransaction tran = con.BeginTransaction();
+
+                try
+                {
+                    SavePartySnapshots(con, tran, poId);
+                    SaveReleaseDetails(con, tran, poId);
+
+                    SqlCommand cmd = new SqlCommand("sp_ReleasePO_Final", con, tran);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@PO_Id", poId);
+                    cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
+                    cmd.ExecuteNonQuery();
+
+                    tran.Commit();
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    ShowError("Release failed: " + ex.Message);
+                    return;
+                }
+            }
+
+            LoadPO(poId);
+            ShowSuccess("PO released and locked successfully.");
+        }
+
+        private void SavePartySnapshots(SqlConnection con, SqlTransaction tran, int poId)
+        {
+            // Always clean existing (safety if reattempt)
+            SqlCommand del = new SqlCommand(
+                "DELETE FROM tbl_PO_PartySnapshot WHERE PO_Id = @PO_Id",
+                con, tran);
+            del.Parameters.AddWithValue("@PO_Id", poId);
+            del.ExecuteNonQuery();
+
+            // 1️⃣ Vendor (always from PO header)
+            InsertVendorSnapshot(con, tran, poId);
+
+            // 2️⃣ Bill To
+            if (rblBillToType.SelectedValue == "Company")
+                InsertCompanySnapshot(con, tran, poId, "BillTo",
+                    Convert.ToInt32(ddlBillToCompany.SelectedValue));
+            else
+                InsertStoreSnapshot(con, tran, poId, "BillTo",
+                    Convert.ToInt32(ddlBillToStore.SelectedValue));
+
+            // 3️⃣ Ship To
+            if (rblShipToType.SelectedValue == "Store")
+                InsertStoreSnapshot(con, tran, poId, "ShipTo",
+                    Convert.ToInt32(ddlShipToStore.SelectedValue));
+            else
+                InsertClientSnapshot(con, tran, poId, "ShipTo",
+                    Convert.ToInt32(ddlShipToClient.SelectedValue));
+        }
+
+        private void InsertVendorSnapshot(SqlConnection con, SqlTransaction tran, int poId)
+        {
+            SqlCommand cmd = new SqlCommand(@"
+        INSERT INTO tbl_PO_PartySnapshot
+        (PO_Id, PartyRole, SourceTable, SourceId,
+         Name, Address, City, State, Pin,
+         GSTNo, PANNo, ContactPerson, ContactNo, Email)
+        SELECT
+            H.PO_Id,
+            'Vendor',
+            'tbl_Vendor',
+            V.Id,
+            V.Vendor_Name,
+            CONCAT(ISNULL(V.Address1,''),' ',ISNULL(V.Address2,'')),
+            V.City,
+            V.State,
+            V.pin,
+            V.Vat_No,
+            V.Pan_No,
+            V.Rep_Name,
+            V.Rep_phone,
+            V.Com_email
+        FROM tbl_PO_Header H
+        JOIN tbl_Vendor V ON V.Id = H.VendorId
+        WHERE H.PO_Id = @PO_Id
+    ", con, tran);
+
+            cmd.Parameters.AddWithValue("@PO_Id", poId);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void InsertCompanySnapshot(SqlConnection con, SqlTransaction tran,
+    int poId, string role, int companyId)
+        {
+            SqlCommand cmd = new SqlCommand(@"
+        INSERT INTO tbl_PO_PartySnapshot
+        (PO_Id, PartyRole, SourceTable, SourceId, Name, Address)
+        SELECT
+            @PO_Id, @Role, 'tbl_Company', ID, Name, Address
+        FROM tbl_Company
+        WHERE ID = @ID
+    ", con, tran);
+
+            cmd.Parameters.AddWithValue("@PO_Id", poId);
+            cmd.Parameters.AddWithValue("@Role", role);
+            cmd.Parameters.AddWithValue("@ID", companyId);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void InsertStoreSnapshot(SqlConnection con, SqlTransaction tran,
+            int poId, string role, int storeId)
+        {
+            SqlCommand cmd = new SqlCommand(@"
+        INSERT INTO tbl_PO_PartySnapshot
+        (PO_Id, PartyRole, SourceTable, SourceId,
+         Name, Address, ContactPerson, ContactNo, Email)
+        SELECT
+            @PO_Id, @Role, 'Stores', Id,
+            StoreName, StoreAddress,
+            StoreManagerName, Mobile, Email
+        FROM Stores
+        WHERE Id = @ID
+    ", con, tran);
+
+            cmd.Parameters.AddWithValue("@PO_Id", poId);
+            cmd.Parameters.AddWithValue("@Role", role);
+            cmd.Parameters.AddWithValue("@ID", storeId);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void InsertClientSnapshot(SqlConnection con, SqlTransaction tran,
+            int poId, string role, int clientId)
+        {
+            SqlCommand cmd = new SqlCommand(@"
+        INSERT INTO tbl_PO_PartySnapshot
+        (PO_Id, PartyRole, SourceTable, SourceId,
+         Name, Address, City, State, Pin,
+         GSTNo, PANNo, ContactPerson, ContactNo, Email)
+        SELECT
+            @PO_Id, @Role, 'tbl_Client', C.Id,
+            C.Client_Name,
+            C.Address1,
+            C.City,
+            C.State,
+            C.pin,
+            C.clientgstno,
+            C.Pan_no,
+            C.Rep_Name,
+            C.Rep_phone,
+            C.Com_email
+        FROM tbl_Client C
+        WHERE C.Id = @ID
+    ", con, tran);
+
+            cmd.Parameters.AddWithValue("@PO_Id", poId);
+            cmd.Parameters.AddWithValue("@Role", role);
+            cmd.Parameters.AddWithValue("@ID", clientId);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void SaveReleaseDetails(SqlConnection con, SqlTransaction tran, int poId)
+        {
+            SqlCommand cmd = new SqlCommand(@"
+        UPDATE tbl_PO_Header
+        SET
+            EngineerName   = @Engineer,
+            DispatchMode   = @DispatchMode,
+            DispatchUpto   = @DispatchUpto,
+            DeliveryBasis  = @DeliveryBasis,
+            FreightTerms   = @FreightTerms,
+            Remarks        = @Remarks
+        WHERE PO_Id = @PO_Id
+          AND PO_Status = 'Draft'
+    ", con, tran);
+
+            cmd.Parameters.AddWithValue("@Engineer", txtEngineerName.Text.Trim());
+            cmd.Parameters.AddWithValue("@DispatchMode", ddlDispatchMode.SelectedValue);
+            cmd.Parameters.AddWithValue("@DispatchUpto", txtDispatchUpto.Text.Trim());
+            cmd.Parameters.AddWithValue("@DeliveryBasis", ddlDeliveryBasis.SelectedValue);
+            cmd.Parameters.AddWithValue("@FreightTerms", ddlFreightTerms.SelectedValue);
+            cmd.Parameters.AddWithValue("@Remarks", txtRemarks.Text.Trim());
+            cmd.Parameters.AddWithValue("@PO_Id", poId);
+
+            cmd.ExecuteNonQuery();
+        }
+
+
         #region Summary Calculation
 
         private void CalculatePOSummary(SqlConnection con, int poId)
@@ -154,7 +464,7 @@ namespace Bill_Software.corporate.business.app
 
         #region UI State
 
-        private void ApplyStatusUI(string status, bool isLocked)
+        private void ApplyStatusUI_OLD(string status, bool isLocked)
         {
             bool isDraft = status.Equals("Draft", StringComparison.OrdinalIgnoreCase);
 
@@ -188,7 +498,7 @@ namespace Bill_Software.corporate.business.app
 
         #region Release PO
 
-        protected void btnReleasePO_Click(object sender, EventArgs e)
+        protected void btnReleasePO_Click_OLD(object sender, EventArgs e)
         {
             if (lblStatus.Text != "Draft")
             {
