@@ -221,10 +221,10 @@
             gap: 14px;
         }
 
-        .po-grid-4 > div,
-        .po-grid-2 > div {
-            min-width: 0;
-        }
+            .po-grid-4 > div,
+            .po-grid-2 > div {
+                min-width: 0;
+            }
 
 
         .po-input {
@@ -295,18 +295,21 @@
             border-bottom: 1px dashed #e0e0e0;
         }
 
-        .po-subsection:last-child {
-            border-bottom: none;
-        }
+            .po-subsection:last-child {
+                border-bottom: none;
+            }
+
         .op-title {
             margin-top: 10px;
             padding-top: 6px;
             border-top: 2px solid #0d6efd;
         }
+
         .req {
             color: #dc3545;
             font-weight: bold;
         }
+
         .po-input.required {
             border-left: 3px solid #dc3545;
         }
@@ -314,15 +317,15 @@
         .po-input, select {
             height: 34px;
         }
-        .po-lock-hint {
-    font-size: 12px;
-    color: #856404;
-    background: #fff3cd;
-    padding: 6px 10px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
 
+        .po-lock-hint {
+            font-size: 12px;
+            color: #856404;
+            background: #fff3cd;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -747,9 +750,9 @@
                     <td>&nbsp;</td>
                     <td colspan="4" style="text-align: center; padding: 10px;">
                         <div class="po-lock-hint">
-    <i class="fa fa-lock"></i>
-    Once released, this PO cannot be edited.
-</div>
+                            <i class="fa fa-lock"></i>
+                            Once released, this PO cannot be edited.
+                        </div>
 
                         <asp:Button ID="btnReleasePO" runat="server"
                             Text="Release Purchase Order" Width="150px"
