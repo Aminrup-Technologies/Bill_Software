@@ -380,6 +380,7 @@
     <Content Include="corporate\business\print\NewPurchaseOrder.aspx" />
     <Content Include="corporate\business\print\NewQuotation.aspx" />
     <Content Include="corporate\business\print\Patty_cash_expencess_voutcher.aspx" />
+    <Content Include="corporate\business\print\Print_PO.aspx" />
     <Content Include="corporate\business\print\proforma_invoice.aspx" />
     <Content Include="corporate\business\print\purchess_payment.aspx" />
     <Content Include="corporate\business\print\purches_bill.aspx" />
@@ -1646,6 +1647,13 @@
     </Compile>
     <Compile Include="corporate\business\print\Patty_cash_expencess_voutcher.aspx.designer.cs">
       <DependentUpon>Patty_cash_expencess_voutcher.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\Print_PO.aspx.cs">
+      <DependentUpon>Print_PO.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\Print_PO.aspx.designer.cs">
+      <DependentUpon>Print_PO.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\print\proforma_invoice.aspx.cs">
       <DependentUpon>proforma_invoice.aspx</DependentUpon>

@@ -210,7 +210,7 @@ namespace Bill_Software.corporate.business.app
             if (!isDraft)
             {
                 btnPrintPO.PostBackUrl =
-                    "Print_PO.aspx?poId=" + lblPO_Id.Text;
+                    "~/corporate/business/print/Print_PO.aspx?poId=" + lblPO_Id.Text;
             }
         }
 
