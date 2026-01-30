@@ -231,11 +231,6 @@
                                     DataField="ProductName"
                                     ItemStyle-HorizontalAlign="Left" />
 
-                                <asp:BoundField HeaderText="HSN"
-                                    DataField="HSNCode"
-                                    ItemStyle-HorizontalAlign="Center" />
-
-
                                 <asp:BoundField HeaderText="Qty" DataField="Quantity"
                                     DataFormatString="{0:N2}" />
 
