@@ -513,11 +513,25 @@ namespace Bill_Software.corporate.business.print
 
             lblDispatchModeText.Text = NAIfEmpty(Safe(hdr["DispatchMode"]));
 
-            if (hdr["DispatchUpto"] != DBNull.Value)
-                lblDispatchUptoText.Text =
-                    Convert.ToDateTime(hdr["DispatchUpto"]).ToString("dd-MMM-yyyy");
+            //if (hdr["DispatchUpto"] != DBNull.Value)
+            //    lblDispatchUptoText.Text =
+            //        Convert.ToDateTime(hdr["DispatchUpto"]).ToString("dd-MMM-yyyy");
+            //else
+            //    lblDispatchUptoText.Text = "______________";
+
+            // Dispatch Upto (SAFE HANDLING)
+            string dispatchUptoRaw = Safe(hdr["DispatchUpto"]);
+
+            DateTime dispatchDate;
+            if (!string.IsNullOrWhiteSpace(dispatchUptoRaw) &&
+                DateTime.TryParse(dispatchUptoRaw, out dispatchDate))
+            {
+                lblDispatchUptoText.Text = dispatchDate.ToString("dd-MMM-yyyy");
+            }
             else
+            {
                 lblDispatchUptoText.Text = "______________";
+            }
 
             /* ===============================
                Delivery Basis
