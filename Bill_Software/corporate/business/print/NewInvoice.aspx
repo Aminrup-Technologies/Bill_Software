@@ -509,7 +509,7 @@
                                         </tr>
                                         <asp:Panel ID="PnlGstKvqa" runat="server">
                                             <tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GST NUMBER: 20AESPD7535D1ZS</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GST NUMBER: 921030046141801</td>
                                             </tr>
                                             <%--<tr>
                                                 <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">HSN CODE/SAC: 998214</td>
@@ -521,7 +521,7 @@
                                             </tr>
                                         </asp:Panel>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">PAN NUMBER: AESPD7535D</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">GSTIN No.: 20AESPD7535D1ZS</td>
                                         </tr>
                                     </table>
                                 </td>

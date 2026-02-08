@@ -32,6 +32,12 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
+            // show once per login
+            if (Session["HOME_PRPO_NOTICE"] == null)
+            {
+                pnlNotification.Visible = true;
+            }
+
             // 1. Enforce mandatory update
             if (UserRequiresUpdate())
             {
@@ -50,6 +56,12 @@ namespace Bill_Software.corporate.business.app
                 Binddata();
                 IpAddress();
             }
+        }
+
+        protected void btnDismiss_Click(object sender, EventArgs e)
+        {
+            Session["HOME_PRPO_NOTICE"] = true;
+            pnlNotification.Visible = false;
         }
 
         private bool UserRequiresUpdate()

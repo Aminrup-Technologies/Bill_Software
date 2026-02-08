@@ -13,6 +13,24 @@ namespace Bill_Software.corporate.business.app {
     public partial class WebForm1 {
         
         /// <summary>
+        /// pnlNotification control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlNotification;
+        
+        /// <summary>
+        /// btnDismiss control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnDismiss;
+        
+        /// <summary>
         /// PanelMain control.
         /// </summary>
         /// <remarks>

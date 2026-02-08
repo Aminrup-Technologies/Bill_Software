@@ -1,6 +1,8 @@
 ﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Bill.master.cs" Inherits="Bill_Software.corporate.business.app.Bill" %>
 
 <!DOCTYPE html>
+<%@ Register Src="~/corporate/business/app/GlobalNotification.ascx"
+    TagPrefix="uc" TagName="GlobalNotification" %>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
@@ -322,6 +324,9 @@
                 <div class="body_contain">
                     <div>
                         <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                            <!-- Global notification FIRST -->
+                            <uc:GlobalNotification runat="server" ID="GlobalNotification" />
+
                             <p>&nbsp;</p>
                         </asp:ContentPlaceHolder>
                     </div>

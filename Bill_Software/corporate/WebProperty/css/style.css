@@ -1,4 +1,4 @@
-
+﻿
 @charset "utf-8";
 /* CSS Document */
 @font-face {
@@ -89,3 +89,39 @@ border-radius: 3px;
 .iframestyle{ color:#b3c71f;   font:normal 11px/11px 'Arial';  text-align:right;}
 
 
+.erp-alert {
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border-left: 5px solid;
+    position: relative;
+    font-size: 13px;
+    background: #f9f9f9;
+}
+
+.erp-alert-info {
+    border-color: #1e90ff;
+    background: #f0f8ff;
+}
+
+.erp-alert-warning {
+    border-color: #ff9800;
+    background: #fff8e1;
+}
+
+.erp-alert-critical {
+    border-color: #f44336;
+    background: #fdecea;
+}
+
+.erp-alert-close {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    color: #555;
+}
+
+.erp-alert-msg {
+    color: #333;
+}

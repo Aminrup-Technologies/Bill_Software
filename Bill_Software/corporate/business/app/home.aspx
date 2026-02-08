@@ -39,9 +39,47 @@
             cursor: pointer;
             font-weight: bold;
         }
+
+        .erp-alert {
+    background: #f0f8ff;
+    border-left: 5px solid #1e90ff;
+    padding: 12px 16px;
+    margin-bottom: 15px;
+    position: relative;
+    font-size: 13px;
+}
+
+.erp-alert-sub {
+    font-size: 12px;
+    color: #444;
+}
+
+.erp-alert-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #555;
+}
+
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+    <asp:Panel ID="pnlNotification" runat="server" Visible="false" CssClass="erp-alert">
+        <strong>📢 New Module Live</strong><br />
+        The <b>PR–PO (Purchase Requisition → Purchase Order)</b> module has been incorporated into the ERP.
+    <br />
+        <span class="erp-alert-sub">Access via <b>Procurement → PR–PO</b></span>
+
+        <asp:LinkButton ID="btnDismiss"
+            runat="server"
+            CssClass="erp-alert-close"
+            OnClick="btnDismiss_Click">
+        ✕
+        </asp:LinkButton>
+    </asp:Panel>
+
     <asp:Panel ID="PanelMain" runat="server">
         <table cellpadding="0" cellspacing="1" class="style1">
             <tr>

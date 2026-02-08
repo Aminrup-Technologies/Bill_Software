@@ -249,6 +249,7 @@
     <Content Include="corporate\business\app\EditPurchase.aspx" />
     <Content Include="corporate\business\app\edit_purchaseorder.aspx" />
     <Content Include="corporate\business\app\Generate_PO_From_PR.aspx" />
+    <Content Include="corporate\business\app\GlobalNotification.ascx" />
     <Content Include="corporate\business\app\home.aspx" />
     <Content Include="corporate\business\app\HydrantProduct.aspx" />
     <Content Include="corporate\business\app\hydrent_invoice.aspx" />
@@ -730,6 +731,13 @@
     </Compile>
     <Compile Include="corporate\business\app\Generate_PO_From_PR.aspx.designer.cs">
       <DependentUpon>Generate_PO_From_PR.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\GlobalNotification.ascx.cs">
+      <DependentUpon>GlobalNotification.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\GlobalNotification.ascx.designer.cs">
+      <DependentUpon>GlobalNotification.ascx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\home.aspx.cs">
       <DependentUpon>home.aspx</DependentUpon>

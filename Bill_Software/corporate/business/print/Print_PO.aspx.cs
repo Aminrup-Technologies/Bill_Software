@@ -11,569 +11,227 @@ namespace Bill_Software.corporate.business.print
 {
     public partial class Print_PO : System.Web.UI.Page
     {
-        decimal _totalQty = 0;
-        decimal _totalDisc = 0;
-        decimal _totalTaxable = 0;
-        decimal _totalGST = 0;
-        decimal _grandTotal = 0;
-        decimal _totalGSTAmount = 0;
+        decimal _totalQty = 0, _totalTaxable = 0, _totalGST = 0, _grandTotal = 0;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            if (!IsPostBack && Request.QueryString["poId"] != null)
             {
-                if (Request.QueryString["poId"] == null)
-                    return;
                 int poId;
-                if (!int.TryParse(Request.QueryString["poId"], out poId))
-                    return;
-
-                LoadPODetails(poId);
+                if (int.TryParse(Request.QueryString["poId"], out poId))
+                    LoadPODetails(poId);
             }
         }
 
         private void LoadPODetails(int poId)
         {
             DataSet ds = GetPOData(poId);
-
-            if (ds.Tables.Count < 3 || ds.Tables[0].Rows.Count == 0)
-                return;
+            if (ds == null || ds.Tables.Count < 3 || ds.Tables[0].Rows.Count == 0) return;
 
             DataRow hdr = ds.Tables[0].Rows[0];
             DataTable partyTable = ds.Tables[1];
             DataTable itemTable = ds.Tables[2];
 
-            // 1️⃣ Header (PO No, Date, Engineer, Dispatch, etc.)
-            BindHeader(ds.Tables[0]);
+            // 1. Map Header & Terms
+            BindHeaderAndTerms(hdr);
 
-            // 2️⃣ Parties (Vendor / Bill To / Ship To)
-            BindParties(partyTable);
+            // 2. Map Address Blocks
+            BindAddresses(partyTable);
 
-            // 3️⃣ Commercial / Logistics Terms  ✅ (THIS WAS MISSING)
-            BindCommercialTerms(hdr, partyTable);
+            // 3. Map Payment
+            BindPaymentDetails(hdr);
 
-            // 4️⃣ Items (bind grid + accumulate totals)
-            BindItems(itemTable);
+            // 4. Bind Grid (Accumulates Totals)
+            _totalQty = 0; _totalTaxable = 0; _totalGST = 0; _grandTotal = 0;
+            gvItems.DataSource = itemTable;
+            gvItems.DataBind();
 
-            // 5️⃣ Totals (if you still need this method)
-            BindTotalsFromItems(itemTable);
+            // 5. Finalize Summary & Words
+            lblGrandTotal.Text = _grandTotal.ToString("N2");
+            lblAmountInWords.Text = "Rupees " + NumberToWords((long)_grandTotal) + " Only";
 
-            // 6️⃣ GST Split (uses final _totalGST + party states)
-            BindGSTSplit(partyTable);
+            // 6. GST Calculation
+            BindGSTSummary(partyTable);
         }
 
-
-
-        #region DB
-
-        private DataSet GetPOData(int poId)
+        private void BindHeaderAndTerms(DataRow r)
         {
-            DataSet ds = new DataSet();
+            lblPONo.Text = Safe(r["PO_No"]);
+            lblPODate.Text = FormatDate(r["PO_Date"]);
+            lblReqNo.Text = Safe(r["ReqNo"]);
+            lblEngineer.Text = Safe(r["EngineerName"]);
+            lblRemarks.Text = Safe(r["Remarks"]);
+            lblPreparedBy.Text = Safe(r["CreatedBy"]);
 
-            using (SqlConnection con = new SqlConnection(
-                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            lblRateRef.Text = Safe(r["SpecialRateRef"]);
+            lblApprovedBy.Text = Safe(r["SpecialRateApprovedBy"]);
+            lblFreight.Text = Safe(r["FreightTerms"]);
+            lblDispatchMode.Text = Safe(r["DispatchMode"]);
+
+            string disp = Safe(r["DispatchUpto"]);
+            DateTime dDisp;
+            lblDispatchUpto.Text = DateTime.TryParse(disp, out dDisp) ? dDisp.ToString("dd-MMM-yyyy") : disp;
+
+            lblDeliveryBasis.Text = Safe(r["DeliveryBasis"]);
+        }
+
+        private void BindAddresses(DataTable dt)
+        {
+            // Vendor (Two Columns)
+            DataRow[] vendors = dt.Select("PartyRole='Vendor'");
+            if (vendors.Length > 0)
             {
-                using (SqlCommand cmd =
-                    new SqlCommand("sp_GetReleasedPO_Details", con))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@PO_Id", poId);
+                DataRow v = vendors[0];
+                // Left Column: Name & Address
+                StringBuilder sbLeft = new StringBuilder();
+                sbLeft.Append($"<div style='font-size:13px; font-weight:bold; margin-bottom:4px;'>{Safe(v["Name"])}</div>");
+                sbLeft.Append($"{Safe(v["Address"]).Replace(",", ",<br/>")}<br/>");
+                sbLeft.Append($"{Safe(v["City"])}, {Safe(v["State"])} - {Safe(v["Pin"])}");
+                litVendorLeft.Text = sbLeft.ToString();
 
-                    SqlDataAdapter da = new SqlDataAdapter(cmd);
-                    da.Fill(ds);
-                }
+                // Right Column: Contact, Email, GST, PAN
+                StringBuilder sbRight = new StringBuilder();
+                sbRight.Append(VendorRow("Contact Person", Safe(v["ContactPerson"])));
+                sbRight.Append(VendorRow("Contact No.", Safe(v["ContactNo"])));
+                sbRight.Append(VendorRow("Email ID", Safe(v["Email"])));
+                sbRight.Append(VendorRow("PAN No", Safe(v["PANNo"])));
+                sbRight.Append(VendorRow("GSTIN", Safe(v["GSTNo"])));
+                litVendorRight.Text = sbRight.ToString();
             }
 
-            return ds;
+            // Bill To & Ship To
+            litBillTo.Text = BuildAddressLabelFormat(dt, "BillTo");
+            litShipTo.Text = BuildAddressLabelFormat(dt, "ShipTo");
         }
 
-        private void BindGSTSplit(DataTable partyTable)
+        private string VendorRow(string label, string val)
         {
-            decimal totalGST = _totalGST; // already calculated from items
+            if (string.IsNullOrEmpty(val)) return "";
+            return $"<div style='margin-bottom:3px;'><span class='info-label'>{label}:</span> {val}</div>";
+        }
 
-            lblTotalGST.Text = totalGST.ToString("N2");
+        private string BuildAddressLabelFormat(DataTable dt, string role)
+        {
+            DataRow[] rows = dt.Select($"PartyRole='{role}'");
+            if (rows.Length == 0) return "";
+            DataRow r = rows[0];
 
-            if (IsIntraState(partyTable))
+            StringBuilder sb = new StringBuilder();
+            sb.Append(VendorRow("Company Name", Safe(r["Name"])));
+            sb.Append(VendorRow("Address", $"{Safe(r["Address"])} {Safe(r["City"])} {Safe(r["Pin"])}"));
+            sb.Append(VendorRow("Contact Person", Safe(r["ContactPerson"])));
+            sb.Append(VendorRow("Contact No.", Safe(r["ContactNo"])));
+            sb.Append(VendorRow("Email ID", Safe(r["Email"])));
+            sb.Append(VendorRow("PAN No", Safe(r["PANNo"])));
+            sb.Append(VendorRow("GSTIN", Safe(r["GSTNo"])));
+            return sb.ToString();
+        }
+
+        private void BindPaymentDetails(DataRow r)
+        {
+            try
             {
-                decimal halfGST = totalGST / 2;
+                lblPayMode.Text = Safe(r["PaymentMode"]);
+                lblChequeNo.Text = Safe(r["ChequeNo"]);
+                lblChequeDate.Text = FormatDate(r["ChequeDate"]);
+                lblPayAmount.Text = Safe(r["Amount"]) != "" ? Convert.ToDecimal(r["Amount"]).ToString("N2") : "-";
+                lblBankName.Text = Safe(r["BankName"]);
+            }
+            catch { }
+        }
 
-                lblCGST.Text = halfGST.ToString("N2");
-                lblSGST.Text = halfGST.ToString("N2");
+        private void BindGSTSummary(DataTable dt)
+        {
+            string vState = "", bState = "";
+            DataRow[] v = dt.Select("PartyRole='Vendor'");
+            DataRow[] b = dt.Select("PartyRole='BillTo'");
+            if (v.Length > 0) vState = Safe(v[0]["State"]);
+            if (b.Length > 0) bState = Safe(b[0]["State"]);
 
-                //lblCGST.Text = $"@{_gstRate / 2}% {halfGST:N2}";
-                //lblSGST.Text = $"@{_gstRate / 2}% {halfGST:N2}";
+            decimal taxPer = _totalTaxable > 0 ? (_totalGST / _totalTaxable) * 100 : 0;
+            bool isIntra = !string.IsNullOrEmpty(vState) && vState.Equals(bState, StringComparison.OrdinalIgnoreCase);
 
-                phCGSTSGST.Visible = true;
-                phIGST.Visible = false;
+            StringBuilder sb = new StringBuilder();
+            if (isIntra)
+            {
+                decimal halfAmt = Math.Round(_totalGST / 2, 2);
+                decimal halfPer = taxPer / 2;
+                sb.Append($"<tr><td>CGST</td><td class='text-center'>{halfPer:0.##}%</td><td class='text-right'>{halfAmt:N2}</td></tr>");
+                sb.Append($"<tr><td>SGST</td><td class='text-center'>{halfPer:0.##}%</td><td class='text-right'>{halfAmt:N2}</td></tr>");
             }
             else
             {
-                lblIGST.Text = totalGST.ToString("N2");
-
-                phIGST.Visible = true;
-                phCGSTSGST.Visible = false;
+                sb.Append($"<tr><td>IGST</td><td class='text-center'>{taxPer:0.##}%</td><td class='text-right'>{_totalGST:N2}</td></tr>");
             }
+            phGST.Controls.Add(new LiteralControl(sb.ToString()));
         }
-
-
-        #endregion
-
-        #region Header
-
-        private bool IsIntraState(DataTable partyTable)
-        {
-            string vendorState = "";
-            string billToState = "";
-
-            foreach (DataRow r in partyTable.Rows)
-            {
-                if (r["PartyRole"].ToString() == "Vendor")
-                    vendorState = r["State"].ToString().Trim();
-
-                if (r["PartyRole"].ToString() == "BillTo")
-                    billToState = r["State"].ToString().Trim();
-            }
-
-            return !string.IsNullOrEmpty(vendorState)
-                && vendorState.Equals(billToState, StringComparison.OrdinalIgnoreCase);
-        }
-
-
-        private void BindHeader(DataTable dt)
-        {
-            DataRow r = dt.Rows[0];
-
-            lblPONo.Text = r["PO_No"].ToString();
-            lblReqNo.Text = r["ReqNo"].ToString();
-            lblPODate.Text =
-                Convert.ToDateTime(r["PO_Date"]).ToString("dd-MMM-yyyy");
-
-            lblEngineer.Text = r["EngineerName"].ToString();
-            lblDispatchMode.Text = r["DispatchMode"].ToString();
-            lblDeliveryBasis.Text = r["DeliveryBasis"].ToString();
-
-            lblPreparedBy.Text = r["CreatedBy"].ToString();
-            lblRemarks.Text = r["Remarks"].ToString();
-        }
-
-        #endregion
-
-        #region Parties
-
-        private void BindParties(DataTable dt)
-        {
-            litVendor.Text = BuildPartyHtml(dt, "Vendor");
-            litBillTo.Text = BuildPartyHtml(dt, "BillTo");
-            litShipTo.Text = BuildPartyHtml(dt, "ShipTo");
-        }
-
-        private string BuildPartyHtml(DataTable dt, string role)
-        {
-            DataRow[] rows = dt.Select($"PartyRole='{role}'");
-            if (rows.Length == 0) return string.Empty;
-
-            DataRow r = rows[0];
-            StringBuilder sb = new StringBuilder();
-
-            /* =========================
-               VENDOR – 2 COLUMN LAYOUT
-               ========================= */
-            if (role == "Vendor")
-            {
-                sb.Append("<table width='100%' style='border-collapse:collapse;'>");
-                sb.Append("<tr>");
-
-                /* LEFT COLUMN : NAME + ADDRESS */
-                sb.Append("<td width='70%' valign='top'>");
-
-                sb.Append("<b>" + r["Name"] + "</b><br/>");
-
-                if (!string.IsNullOrWhiteSpace(r["Address"].ToString()))
-                    sb.Append(
-                        HttpUtility.HtmlEncode(r["Address"].ToString())
-                        .Replace(",", ",<br/>") + "<br/>"
-                    );
-
-                string city = r["City"].ToString();
-                string state = r["State"].ToString();
-                string pin = r["Pin"].ToString();
-
-                if (!string.IsNullOrWhiteSpace(city) || !string.IsNullOrWhiteSpace(state))
-                    sb.Append($"{city}{(city != "" && state != "" ? ", " : "")}{state}<br/>");
-
-                if (!string.IsNullOrWhiteSpace(pin))
-                    sb.Append(pin + "<br/>");
-
-                if (!string.IsNullOrWhiteSpace(r["GSTNo"].ToString()))
-                    sb.Append("<b>GSTIN:</b> " + r["GSTNo"] + "<br/>");
-
-                if (!string.IsNullOrWhiteSpace(r["PANNo"].ToString()))
-                    sb.Append("<b>PAN:</b> " + r["PANNo"] + "<br/>");
-
-                sb.Append("</td>");
-
-                /* RIGHT COLUMN : CONTACT DETAILS */
-                sb.Append("<td width='30%' valign='top' style='text-align:right; padding-top:10px;'>");
-
-                if (!string.IsNullOrWhiteSpace(r["ContactPerson"].ToString()))
-                    sb.Append("<b>Contact:</b> " + r["ContactPerson"] + "<br/>");
-
-                if (!string.IsNullOrWhiteSpace(r["ContactNo"].ToString()))
-                    sb.Append("<b>Phone:</b> " + r["ContactNo"] + "<br/>");
-
-                sb.Append("</td>");
-
-                sb.Append("</tr>");
-                sb.Append("</table>");
-
-                return sb.ToString();
-            }
-
-            /* =========================
-               BILL TO / SHIP TO – SAME AS OLD
-               ========================= */
-
-            sb.Append("<b>" + r["Name"] + "</b><br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["Address"].ToString()))
-                sb.Append(
-                    HttpUtility.HtmlEncode(r["Address"].ToString())
-                    .Replace(",", ",<br/>") + "<br/>"
-                );
-
-            string c = r["City"].ToString();
-            string s = r["State"].ToString();
-            string p = r["Pin"].ToString();
-
-            if (!string.IsNullOrWhiteSpace(c) || !string.IsNullOrWhiteSpace(s))
-                sb.Append($"{c}{(c != "" && s != "" ? ", " : "")}{s}<br/>");
-
-            if (!string.IsNullOrWhiteSpace(p))
-                sb.Append(p + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["GSTNo"].ToString()))
-                sb.Append("<b>GSTIN:</b> " + r["GSTNo"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["PANNo"].ToString()))
-                sb.Append("<b>PAN:</b> " + r["PANNo"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["ContactPerson"].ToString()))
-                sb.Append("<b>Contact:</b> " + r["ContactPerson"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["ContactNo"].ToString()))
-                sb.Append("<b>Phone:</b> " + r["ContactNo"] + "<br/>");
-
-            return sb.ToString();
-        }
-
-
-
-        private string BuildPartyHtml_OLD(DataTable dt, string role)
-        {
-            DataRow[] rows = dt.Select($"PartyRole='{role}'");
-            if (rows.Length == 0) return string.Empty;
-
-            DataRow r = rows[0];
-            StringBuilder sb = new StringBuilder();
-
-            sb.Append("<b>" + r["Name"] + "</b><br/>");
-
-            //if (!string.IsNullOrWhiteSpace(r["Address"].ToString()))
-            //    sb.Append(r["Address"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["Address"].ToString()))
-                //sb.Append(r["Address"].ToString().Replace(",", ",<br/>") + "<br/>");
-                sb.Append(HttpUtility.HtmlEncode(r["Address"].ToString()).Replace(",", ",<br/>"));
-
-            //sb.Append($"{r["City"]}, {r["State"]} {r["Pin"]}<br/>");
-
-            string city = r["City"].ToString();
-            string state = r["State"].ToString();
-            string pin = r["Pin"].ToString();
-
-            if (!string.IsNullOrWhiteSpace(city) || !string.IsNullOrWhiteSpace(state))
-            {
-                sb.Append($"{city}{(city != "" && state != "" ? ", " : "")}{state}<br/>");
-            }
-
-            if (!string.IsNullOrWhiteSpace(pin))
-                sb.Append(pin + "<br/>");
-
-
-            //if (!string.IsNullOrEmpty(r["GSTNo"].ToString()))
-            //    sb.Append("<b>GST:</b> " + r["GSTNo"] + "<br/>");
-
-            //if (!string.IsNullOrEmpty(r["ContactPerson"].ToString()))
-            //    sb.Append("<b>Contact:</b> " + r["ContactPerson"] + "<br/>");
-
-            //if (!string.IsNullOrEmpty(r["ContactNo"].ToString()))
-            //    sb.Append("<b>Phone:</b> " + r["ContactNo"] + "<br/>");
-
-            //if (!string.IsNullOrWhiteSpace(r["GSTNo"].ToString()))
-            //    sb.Append("<b>GST:</b> " + r["GSTNo"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["GSTNo"].ToString()))
-                sb.Append("<b>GSTIN:</b> " + r["GSTNo"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["PANNo"].ToString()))
-                sb.Append("<b>PAN:</b> " + r["PANNo"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["ContactPerson"].ToString()))
-                sb.Append("<b>Contact:</b> " + r["ContactPerson"] + "<br/>");
-
-            if (!string.IsNullOrWhiteSpace(r["ContactNo"].ToString()))
-                sb.Append("<b>Phone:</b> " + r["ContactNo"] + "<br/>");
-
-            return sb.ToString();
-        }
-
-        #endregion
-
-        #region Items
-
-        private void BindItems(DataTable dt)
-        {
-            // 🔹 RESET TOTALS (VERY IMPORTANT)
-            _totalQty = 0;
-            _totalDisc = 0;
-            _totalTaxable = 0;
-            _totalGST = 0;
-            _grandTotal = 0;
-
-            gvItems.DataSource = dt;
-            gvItems.DataBind();
-        }
-
-
-        #endregion
-
-        #region Totals (Derived from Items)
-
-        private void BindTotalsFromItems(DataTable dt)
-        {
-            decimal totalQty = 0;
-            decimal totalGST = 0;
-            decimal grandTotal = 0;
-
-            foreach (DataRow r in dt.Rows)
-            {
-                totalQty += Convert.ToDecimal(r["Quantity"]);
-                totalGST += Convert.ToDecimal(r["TaxAmount"]);
-                grandTotal += Convert.ToDecimal(r["NetAmount"]);
-            }
-
-            //lblTotalQty.Text = totalQty.ToString("N2");
-            //lblTotalGST.Text = totalGST.ToString("N2");
-            //lblGrandTotal.Text = grandTotal.ToString("N2");
-        }
-
-        #endregion
-
-        //protected void gvItems_RowDataBound1(object sender, System.Web.UI.WebControls.GridViewRowEventArgs e)
-        //{
-        //    // Data rows
-        //    if (e.Row.RowType == DataControlRowType.DataRow)
-        //    {
-        //        _totalQty += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "Quantity"));
-        //        _totalDisc += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "DiscountAmount"));
-        //        _totalTaxable += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "TaxableAmount"));
-        //        _totalGST += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "TaxAmount"));
-        //        _grandTotal += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "NetAmount"));
-        //    }
-
-        //    // Footer row
-        //    if (e.Row.RowType == DataControlRowType.Footer)
-        //    {
-        //        e.Row.Cells[1].Text = "<b>TOTAL</b>";
-        //        e.Row.Cells[1].HorizontalAlign = HorizontalAlign.Right;
-
-        //        e.Row.Cells[2].Text = _totalQty.ToString("N2");
-        //        e.Row.Cells[4].Text = _totalDisc.ToString("N2");
-        //        e.Row.Cells[5].Text = _totalTaxable.ToString("N2");
-        //        e.Row.Cells[6].Text = _totalGST.ToString("N2");
-        //        e.Row.Cells[7].Text = _grandTotal.ToString("N2");
-
-        //        e.Row.Font.Bold = true;
-        //    }
-        //    lblAmountInWords.Text = AmountInWords(Convert.ToDecimal(_grandTotal));
-
-        //}
 
         protected void gvItems_RowDataBound1(object sender, GridViewRowEventArgs e)
         {
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
                 _totalQty += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "Quantity"));
-                _totalDisc += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "DiscountAmount"));
                 _totalTaxable += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "TaxableAmount"));
                 _totalGST += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "TaxAmount"));
                 _grandTotal += Convert.ToDecimal(DataBinder.Eval(e.Row.DataItem, "NetAmount"));
             }
-
-            if (e.Row.RowType == DataControlRowType.Footer)
+            else if (e.Row.RowType == DataControlRowType.Footer)
             {
-                e.Row.Cells[1].Text = "<b>TOTAL</b>";
-                e.Row.Cells[1].HorizontalAlign = HorizontalAlign.Right;
-
+                e.Row.Cells[1].Text = "TOTAL";
+                e.Row.Cells[1].Font.Bold = true;
                 e.Row.Cells[2].Text = _totalQty.ToString("N2");
-                e.Row.Cells[4].Text = _totalDisc.ToString("N2");
+                e.Row.Cells[2].CssClass = "text-center bold";
                 e.Row.Cells[5].Text = _totalTaxable.ToString("N2");
+                e.Row.Cells[5].CssClass = "text-right bold";
                 e.Row.Cells[6].Text = _totalGST.ToString("N2");
+                e.Row.Cells[6].CssClass = "text-right bold";
                 e.Row.Cells[7].Text = _grandTotal.ToString("N2");
-
-                e.Row.Font.Bold = true;
-
-                // ✅ Amount in Words — ONCE, final value
-                lblAmountInWords.Text = AmountInWords(_grandTotal);
+                e.Row.Cells[7].CssClass = "text-right bold";
             }
         }
 
-
-        private string AmountInWords(decimal amount)
+        private DataSet GetPOData(int poId)
         {
-            return "Rupees " + NumberToWords((long)amount) + " Only";
+            DataSet ds = new DataSet();
+            string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(cs))
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetReleasedPO_Details", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@PO_Id", poId);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(ds);
+                }
+            }
+            return ds;
+        }
+
+        private string Safe(object o) { return o == null || o == DBNull.Value ? "" : o.ToString().Trim(); }
+        private string FormatDate(object o)
+        {
+            DateTime dt;
+            return DateTime.TryParse(Safe(o), out dt) ? dt.ToString("dd-MMM-yyyy") : Safe(o);
         }
 
         private string NumberToWords(long number)
         {
-            if (number == 0)
-                return "Zero";
-
-            if (number < 0)
-                return "Minus " + NumberToWords(Math.Abs(number));
-
+            if (number == 0) return "Zero";
+            if (number < 0) return "Minus " + NumberToWords(Math.Abs(number));
             string words = "";
-
-            if ((number / 10000000) > 0)
-            {
-                words += NumberToWords(number / 10000000) + " Crore ";
-                number %= 10000000;
-            }
-
-            if ((number / 100000) > 0)
-            {
-                words += NumberToWords(number / 100000) + " Lakh ";
-                number %= 100000;
-            }
-
-            if ((number / 1000) > 0)
-            {
-                words += NumberToWords(number / 1000) + " Thousand ";
-                number %= 1000;
-            }
-
-            if ((number / 100) > 0)
-            {
-                words += NumberToWords(number / 100) + " Hundred ";
-                number %= 100;
-            }
-
+            if ((number / 10000000) > 0) { words += NumberToWords(number / 10000000) + " Crore "; number %= 10000000; }
+            if ((number / 100000) > 0) { words += NumberToWords(number / 100000) + " Lakh "; number %= 100000; }
+            if ((number / 1000) > 0) { words += NumberToWords(number / 1000) + " Thousand "; number %= 1000; }
+            if ((number / 100) > 0) { words += NumberToWords(number / 100) + " Hundred "; number %= 100; }
             if (number > 0)
             {
-                if (words != "")
-                    words += "and ";
-
-                string[] unitsMap = { "Zero","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten",
-            "Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen" };
-
-                string[] tensMap = { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
-
-                if (number < 20)
-                    words += unitsMap[number];
-                else
-                    words += tensMap[number / 10] + " " + unitsMap[number % 10];
+                if (words != "") words += "and ";
+                var unitsMap = new[] { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+                var tensMap = new[] { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+                if (number < 20) words += unitsMap[number];
+                else words += tensMap[number / 10] + " " + unitsMap[number % 10];
             }
-
             return words.Trim();
         }
-
-        private string Safe(object o)
-        {
-            return o == null ? "" : o.ToString().Trim();
-        }
-
-        private void BindCommercialTerms(DataRow hdr, DataTable partyTable)
-        {
-            /* ===============================
-               Rates / Special Rates
-               =============================== */
-
-            lblRateRef.Text = LineIfEmpty(Safe(hdr["SpecialRateRef"]));
-            lblSpecialRateApprovedBy.Text = LineIfEmpty(Safe(hdr["SpecialRateApprovedBy"]));
-
-            /* ===============================
-               Freight Charges
-               =============================== */
-
-            lblFreightTerms.Text = NAIfEmpty(Safe(hdr["FreightTerms"]));
-
-            /* ===============================
-               Mode of Despatch + Dispatch Upto
-               =============================== */
-
-            lblDispatchModeText.Text = NAIfEmpty(Safe(hdr["DispatchMode"]));
-
-            //if (hdr["DispatchUpto"] != DBNull.Value)
-            //    lblDispatchUptoText.Text =
-            //        Convert.ToDateTime(hdr["DispatchUpto"]).ToString("dd-MMM-yyyy");
-            //else
-            //    lblDispatchUptoText.Text = "______________";
-
-            // Dispatch Upto (SAFE HANDLING)
-            string dispatchUptoRaw = Safe(hdr["DispatchUpto"]);
-
-            DateTime dispatchDate;
-            if (!string.IsNullOrWhiteSpace(dispatchUptoRaw) &&
-                DateTime.TryParse(dispatchUptoRaw, out dispatchDate))
-            {
-                lblDispatchUptoText.Text = dispatchDate.ToString("dd-MMM-yyyy");
-            }
-            else
-            {
-                lblDispatchUptoText.Text = "______________";
-            }
-
-            /* ===============================
-               Delivery Basis
-               =============================== */
-
-            lblDeliveryBasisText.Text = NAIfEmpty(Safe(hdr["DeliveryBasis"]));
-
-            /* ===============================
-               Bill Sent To / LR Sent To
-               =============================== */
-
-            string billTo = "";
-            string shipTo = "";
-
-            foreach (DataRow r in partyTable.Rows)
-            {
-                if (r["PartyRole"].ToString() == "BillTo")
-                    billTo = Safe(r["Name"]);
-
-                if (r["PartyRole"].ToString() == "ShipTo")
-                    shipTo = Safe(r["Name"]);
-            }
-
-            lblBillSentTo.Text = NAIfEmpty(billTo);
-            lblLRSentTo.Text = NAIfEmpty(shipTo);
-        }
-
-
-        private string LineIfEmpty(string value)
-        {
-            return string.IsNullOrWhiteSpace(value)
-                ? "<span style='display:inline-block; width:140px; border-bottom:1px solid #000;'>&nbsp;</span>"
-                : value.Trim();
-        }
-
-
-        private string NAIfEmpty(string value)
-        {
-            return string.IsNullOrWhiteSpace(value)
-                ? "<span style='display:inline-block; min-width:80px; text-align:center;'>NA</span>"
-                : value.Trim();
-        }
-
     }
 }

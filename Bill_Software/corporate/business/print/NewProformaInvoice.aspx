@@ -453,16 +453,16 @@
                                             <td class="" style="background-color: #e31e24; color: white; text-align: center;">ACCOUNT DETAILS FOR BANK TRANSFER</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK: ICICI BANK</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK: Axis Bank Limited</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 012805007421</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 921030046141801</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: ICIC0000001</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: UTIB0000012</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: Sakchi, Jamshedpur - 831001</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: Bistupur, Jamshedpur</td>
                                         </tr>
                                         <tr>
                                             <td class="gap" style="text-align: justify; border: 0;">&nbsp</td>
@@ -484,7 +484,7 @@
                                             </tr>
                                         </asp:Panel>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">PAN NUMBER: ADF56JNB2</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">GSTIN No.: 20AESPD7535D1ZS</td>
                                         </tr>
                                     </table>
                                 </td>
