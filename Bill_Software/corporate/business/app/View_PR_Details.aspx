@@ -66,6 +66,20 @@
             border: 1px solid #cfe3ff;
             font-size: 12px;
         }
+
+        .delete-link {
+            color: #d9534f;
+            font-weight: bold;
+        }
+        .delete-link:hover {
+            color: #a94442;
+            text-decoration: underline;
+        }
+
+        .Grid tr {
+            transition: opacity 0.2s ease-in-out;
+        }
+
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -155,6 +169,7 @@
             if (badge) badge.style.display = "inline";
 
             row.style.backgroundColor = "#fff7cc";
+            row.style.opacity = "1";
 
             if (typeof updateModifiedCounter === "function") {
                 updateModifiedCounter();
@@ -443,7 +458,7 @@
                 if (firstErrorRow) {
                     firstErrorRow.scrollIntoView({ behavior: "smooth", block: "center" });
                 }
-                alert("Please correct highlighted fields in modified rows.");
+                alert("Please complete Quantity, Rate, GST and Order only for the rows you edited.");
                 return false;
             }
 
@@ -454,6 +469,24 @@
 
             return true;
         }
+
+        function applyInactiveRowStyle() {
+            const grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            if (!grid) return;
+
+            const rows = grid.getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) {
+                const hdn = rows[i].querySelector("input[type='hidden'][id*='hdnIsModified']");
+                if (hdn && hdn.value !== "1") {
+                    rows[i].style.opacity = "0.85";   // inactive look
+                }
+            }
+        }
+
+        window.onload = function () {
+            applyInactiveRowStyle();
+        };
 
         function autoAssignOrder(ctrl) {
             if (ctrl.value.trim() !== "") return;
@@ -595,7 +628,7 @@
         <ContentTemplate>
             <table class="style1">
                 <tr>
-                    <td bgcolor="#19658A" colspan="6">&nbsp;<span class="style2">Create Purchase Requisition</span>&nbsp;</td>
+                    <td bgcolor="#19658A" colspan="6">&nbsp;<span class="style2">Modify Purchase Requisition</span>&nbsp;</td>
                 </tr>
                 <tr>
                     <td width="10%">&nbsp;</td>
@@ -1039,7 +1072,7 @@
 
                                                 <asp:TemplateField HeaderText="Order">
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="txtOrder" runat="server" onfocus="autoAssignOrder(this)" onkeyup="markRowModified(this)" CssClass="textbox_style21" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Width="50px" />
+                                                        <asp:TextBox ID="txtOrder" runat="server" ToolTip="Leave blank to auto-assign. Must be unique." onfocus="autoAssignOrder(this)" onkeyup="markRowModified(this)" CssClass="textbox_style21" BorderColor="#333333" BorderWidth="1px" BorderStyle="Solid" Width="50px" />
                                                     </ItemTemplate>
                                                 </asp:TemplateField>
 

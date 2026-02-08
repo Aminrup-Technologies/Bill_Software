@@ -14,7 +14,6 @@ namespace Bill_Software.corporate.business.app
     {
         DB_UTILITY DbCL = new DB_UTILITY();
         public DataTable first_datatable;
-        public static DataTable Dt = new DataTable("Table");
         private List<string> vatRates;
         private List<string> serviceTaxRates;
 
@@ -191,15 +190,26 @@ namespace Bill_Software.corporate.business.app
 
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-                gd_Service_Product.DataSource = dt;
-                gd_Service_Product.DataBind();
 
+                // 🔒 Ensure IsModified column exists AFTER fill
+                if (!dt.Columns.Contains("IsModified"))
+                {
+                    dt.Columns.Add("IsModified", typeof(bool));
+                }
+
+                // 🔒 Initialize all rows as NOT modified
+                foreach (DataRow r in dt.Rows)
+                {
+                    r["IsModified"] = false;
+                }
+
+                // 🔐 Load ONCE into ViewState
+                PRItems = dt;
+                BindGridFromViewState();
                 Panel2.Visible = true;
             }
             CalculatePRSummary_DB(CurrentReqNo);
             //ApplyStatusUI(lblStatus.Text);
-
-
         }
 
         private void ShowSuccess(string message)
@@ -359,9 +369,36 @@ namespace Bill_Software.corporate.business.app
                 Binddata1("SELECT Service_code, Service_name FROM tbl_Service WHERE Service_name = '" + selectedText + "'");
             }
 
-            gd_Service_Product.DataSource = Dt;
-            gd_Service_Product.DataBind();
-            ViewState["dt"] = Dt;
+            foreach (DataRow src in first_datatable.Rows)
+            {
+                string code = src[0].ToString();
+
+                bool exists = PRItems.AsEnumerable()
+                    .Any(r => r.Field<string>("Ser_pro_code") == code);
+
+                if (exists) continue;
+
+                DataRow dr = PRItems.NewRow();
+                dr["id"] = 0;
+                dr["Ser_pro_code"] = code;
+                dr["Ser_pro_Name"] = src[1].ToString();
+                dr["ParentCategoryId"] = Convert.ToInt32(cmbproduct_service.SelectedValue);
+                dr["Qnty"] = 0;
+                dr["Rate"] = 0;
+                dr["DiscountPercent"] = 0;
+                dr["DiscountAmount"] = 0;
+                dr["TaxableAmount"] = 0;
+                dr["IsTaxApplicable"] = false;
+                dr["gstrate"] = 0;
+                //dr["ItemOrder"] = PRItems.Rows.Count + 1;
+                dr["ItemOrder"] = 0; // 👈 blank order initially
+                dr["IsModified"] = false;
+
+                PRItems.Rows.Add(dr);
+            }
+
+            BindGridFromViewState();
+
 
             cmbproduct_service.SelectedValue = prevValue; // restore
 
@@ -406,103 +443,18 @@ namespace Bill_Software.corporate.business.app
             DbCL.ConnectDb();
             try
             {
-                // Create and configure the SqlCommand
-                SqlCommand com1 = new SqlCommand(cmdstring, DbCL.Conn);
-
-                // Use SqlDataAdapter to fill the DataTable directly
+                SqlDataAdapter da = new SqlDataAdapter(cmdstring, DbCL.Conn);
                 DataTable dt = new DataTable();
-                SqlDataAdapter da = new SqlDataAdapter(com1);
-                da.Fill(dt); // Fill the DataTable with data
+                da.Fill(dt);
 
-                // Check if the DataTable has rows to process
-                if (dt.Rows.Count > 0)
-                {
-                    first_datatable = dt;
-
-                    // Call the appropriate grid function based on Label2.Text
-                    if (Label2.Text == "1")
-                    {
-                        newgrid1();
-                    }
-                    else
-                    {
-                        newgrid();
-                    }
-
-                    // Update Label2 to ensure the function executes only once
-                    Label2.Text = (Convert.ToInt32(Label2.Text) + 1).ToString();
-                }
+                first_datatable = dt;
             }
             finally
             {
-                // Close the database connection in the finally block to ensure it always closes
                 DbCL.Conn.Close();
             }
         }
 
-        private void newgrid1()
-        {
-            DataTable dt = first_datatable;
-
-            // Ensure Dt is initialized
-            if (Dt == null)
-                Dt = new DataTable();
-
-            // Clear existing columns and rows if needed
-            Dt.Clear();
-            Dt.Columns.Clear();
-
-            // Add necessary columns
-            Dt.Columns.Add("Ser_pro_code", typeof(string));
-            Dt.Columns.Add("Ser_pro_Name", typeof(string));
-
-            //// Add the "Order" column here
-            if (!Dt.Columns.Contains("Order"))
-            {
-                Dt.Columns.Add("Order", typeof(int));
-            }
-
-            // Add rows from first_datatable
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                DataRow dr = Dt.NewRow();
-                dr["Ser_pro_code"] = dt.Rows[i][0].ToString();
-                dr["Ser_pro_Name"] = dt.Rows[i][1].ToString();
-
-                // Initialize order, e.g., by default assign sequential order
-                //dr["Order"] = i + 1;
-
-                Dt.Rows.Add(dr);
-            }
-        }
-
-        private void newgrid()
-        {
-            DataTable dt = first_datatable;
-
-            if (Dt == null)
-                Dt = new DataTable();
-
-            Dt.Clear();
-            Dt.Columns.Clear();
-
-            // Add columns
-            Dt.Columns.Add("Ser_pro_code", typeof(string));
-            Dt.Columns.Add("Ser_pro_Name", typeof(string));
-
-            // Add the Order column
-            Dt.Columns.Add("Order", typeof(int));
-
-            // Fill rows with default Order values (1-based index)
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                DataRow dr = Dt.NewRow();
-                dr["Ser_pro_code"] = dt.Rows[i][0].ToString();
-                dr["Ser_pro_Name"] = dt.Rows[i][1].ToString();
-                //dr["Order"] = i + 1;  // default ordering sequence
-                Dt.Rows.Add(dr);
-            }
-        }
 
         private void AppendJs(WebControl ctrl, string eventName, string js)
         {
@@ -642,10 +594,14 @@ namespace Bill_Software.corporate.business.app
             }
 
             // --- Reset Modified Flag ---
-            HiddenField hdn =
-                (HiddenField)e.Row.FindControl("hdnIsModified");
+            HiddenField hdn = (HiddenField)e.Row.FindControl("hdnIsModified");
 
-            hdn.Value = "0"; // reloaded from DB, not modified
+            bool isModified =
+                drv["IsModified"] != DBNull.Value &&
+                Convert.ToBoolean(drv["IsModified"]);
+
+            hdn.Value = isModified ? "1" : "0";
+
         }
 
         private void BindGSTDropdown(DropDownList ddl)
@@ -673,16 +629,38 @@ namespace Bill_Software.corporate.business.app
 
             int rowId = Convert.ToInt32(e.CommandArgument);
 
-            using (SqlConnection con = new SqlConnection(
-                ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            if (rowId > 0)
             {
-                SqlCommand cmd = new SqlCommand("DELETE FROM tbl_RequisitionNew WHERE id=@id", con);
-                cmd.Parameters.AddWithValue("@id", rowId);
-                con.Open();
-                cmd.ExecuteNonQuery();
+                DataRow[] rows = PRItems.Select("id=" + rowId);
+                if (rows.Length > 0)
+                    PRItems.Rows.Remove(rows[0]);
+            }
+            else
+            {
+                // remove first NEW modified row (UI-only delete)
+                DataRow row = PRItems.AsEnumerable()
+                    .FirstOrDefault(r => r.Field<int>("id") == 0);
+
+                if (row != null)
+                    PRItems.Rows.Remove(row);
             }
 
-            LoadPR(CurrentReqNo); // refresh grid
+
+            // DB removal only if persisted
+            if (rowId > 0)
+            {
+                using (SqlConnection con = new SqlConnection(
+                    ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+                {
+                    SqlCommand cmd = new SqlCommand(
+                        "DELETE FROM tbl_RequisitionNew WHERE id=@id", con);
+                    cmd.Parameters.AddWithValue("@id", rowId);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            NormalizeItemOrder();
+            BindGridFromViewState();
             CalculatePRSummary_DB(CurrentReqNo);
         }
 
@@ -895,56 +873,10 @@ namespace Bill_Software.corporate.business.app
             return "PR/" + DateTime.Now.Year + "/" + nextId.ToString("D5");
         }
 
-        private bool validateModifiedRows_Server()
-        {
-            foreach (GridViewRow row in gd_Service_Product.Rows)
-            {
-                HiddenField hdn = (HiddenField)row.FindControl("hdnIsModified");
-                if (hdn?.Value != "1") continue;
-
-                if (string.IsNullOrWhiteSpace(
-                    ((TextBox)row.FindControl("Quantity")).Text))
-                    return false;
-            }
-            return true;
-        }
-
-
-
         protected void Button3_Click(object sender, EventArgs e)
         {
             btnSubmit_Click(sender, e);
         }
-
-        //protected void btnSubmit_Click(object sender, EventArgs e)
-        //{
-        //    if (string.IsNullOrEmpty(CurrentReqNo))
-        //    {
-        //        ShowError("Please save the PR before submitting.");
-        //        return;
-        //    }
-
-        //    CalculatePRSummary_DB(CurrentReqNo);
-        //    if (decimal.Parse(lblNet.Text) <= 0)
-        //    {
-        //        ShowError("PR total amount must be greater than zero.");
-        //        return;
-        //    }
-
-        //    using (SqlConnection con = new SqlConnection(
-        //        ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-        //    {
-        //        SqlCommand cmd = new SqlCommand("sp_SubmitRequisition", con);
-        //        cmd.CommandType = CommandType.StoredProcedure;
-        //        cmd.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
-        //        cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
-        //        con.Open();
-        //        cmd.ExecuteNonQuery();
-        //    }
-
-        //    ApplyStatusUI("Submitted");
-        //    ShowSuccess("PR submitted successfully for approval.");
-        //}
 
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
@@ -1179,8 +1111,9 @@ namespace Bill_Software.corporate.business.app
                     tran.Commit();
 
                     ShowSuccess("Modified items saved successfully.");
-                    RebindGrid(); // reload from DB
-                    CalculatePRSummary_DB(lblReqNo.Text.ToString());
+                    // Reload once AFTER save
+                    LoadPR(CurrentReqNo);
+                    CalculatePRSummary_DB(CurrentReqNo);
                 }
                 catch (Exception ex)
                 {
@@ -1279,6 +1212,59 @@ namespace Bill_Software.corporate.business.app
             Response.Redirect("Approve_PR.aspx");
         }
 
+        #region PR ITEM VIEWSTATE (SAFE ADD)
 
+        private DataTable PRItems
+        {
+            get
+            {
+                if (ViewState["PR_ITEMS"] == null)
+                    ViewState["PR_ITEMS"] = CreatePRItemTable();
+
+                return (DataTable)ViewState["PR_ITEMS"];
+            }
+            set
+            {
+                ViewState["PR_ITEMS"] = value;
+            }
+        }
+
+        private DataTable CreatePRItemTable()
+        {
+            DataTable dt = new DataTable();
+
+            dt.Columns.Add("id", typeof(int)); // 0 = new
+            dt.Columns.Add("Ser_pro_code", typeof(string));
+            dt.Columns.Add("Ser_pro_Name", typeof(string));
+            dt.Columns.Add("ParentCategoryId", typeof(int));
+            dt.Columns.Add("Description", typeof(string));
+            dt.Columns.Add("Qnty", typeof(decimal));
+            dt.Columns.Add("Rate", typeof(decimal));
+            dt.Columns.Add("DiscountPercent", typeof(decimal));
+            dt.Columns.Add("DiscountAmount", typeof(decimal));
+            dt.Columns.Add("TaxableAmount", typeof(decimal));
+            dt.Columns.Add("IsTaxApplicable", typeof(bool));
+            dt.Columns.Add("gstrate", typeof(decimal));
+            dt.Columns.Add("ItemOrder", typeof(int));
+            dt.Columns.Add("IsModified", typeof(bool));
+
+            return dt;
+        }
+
+        private void BindGridFromViewState()
+        {
+            gd_Service_Product.DataSource = PRItems;
+            gd_Service_Product.DataBind();
+        }
+
+        private void NormalizeItemOrder()
+        {
+            int i = 1;
+            foreach (DataRow r in PRItems.Rows)
+            {
+                r["ItemOrder"] = i++;
+            }
+        }
+        #endregion
     }
 }
