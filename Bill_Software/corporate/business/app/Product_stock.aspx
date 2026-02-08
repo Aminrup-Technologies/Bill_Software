@@ -93,6 +93,42 @@
             margin-bottom: 6px;
             border: 1px solid #e0d7a6;
         }
+
+        .search-result b {
+            font-size: 13px;
+        }
+
+        .search-result span {
+            white-space: nowrap;
+        }
+
+        /* Selected row highlight */
+        .search-result.active {
+            background: #d9ecff;
+            border-left: 4px solid #19658A;
+        }
+
+        /* Sticky selected product */
+        .search-result.sticky {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: #cfe6ff;
+            border-bottom: 2px solid #19658A;
+        }
+
+        /* Copy SKU */
+        .copy-sku {
+            font-size: 11px;
+            color: #19658A;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .copy-sku:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </asp:Content>
 
@@ -200,6 +236,18 @@
             selectedIndex = -1;
         }
 
+        function copySKU(e, sku) {
+            e.stopPropagation(); // prevent row selection
+
+            navigator.clipboard.writeText(sku).then(() => {
+                e.target.innerText = "Copied!";
+                setTimeout(() => {
+                    e.target.innerText = sku;
+                }, 800);
+            });
+        }
+
+
         // ================= SEARCH RESULTS =================
         function fetchSearch(search) {
             fetch("Product_stock.aspx/SearchProducts", {
@@ -212,12 +260,26 @@
                 products = d.d || [];
                 selectedIndex = -1;
 
-                let html = products.map((p, i) =>`
-            <div class="search-result" data-index="${i}"
-                 onclick="selectProduct(${i})">
-                <b>${p.ProductName}</b><br/>
-                <span style="font-size:11px;color:#666">${p.CategoryName}</span>
-            </div>`).join("");
+                let html = products.map((p, i) => `
+                <div class="search-result" data-index="${i}"
+                     onclick="selectProduct(${i}, event)">
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>${p.ProductName}</b>
+
+                        <span class="copy-sku"
+                              title="Click to copy Product ID"
+                              onclick="copySKU(event, '${p.ProductID}')">
+                            ${p.ProductID}
+                        </span>
+                    </div>
+
+                    <div style="font-size:11px; color:#666;">
+                        ${p.CategoryName}
+                    </div>
+
+                </div>
+            `).join("");
 
                 searchResults.innerHTML = html || "<div>No products found</div>";
             });
@@ -247,23 +309,42 @@
         }
 
         // ================= STOCK =================
-        function selectProduct(index) {
+        function selectProduct(index, event) {
             selectedIndex = index;
-            highlightSelection();
+
+            // Remove previous states
+            document.querySelectorAll('.search-result')
+                .forEach(r => r.classList.remove('active', 'sticky'));
+
+            const selectedRow =
+                document.querySelector(`.search-result[data-index="${index}"]`);
+
+            if (!selectedRow) return;
+
+            // Highlight & stick
+            selectedRow.classList.add('active', 'sticky');
+
+            // Scroll list so it stays visible
+            selectedRow.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest"
+            });
 
             const p = products[index];
 
+            // Load stock (existing logic)
             fetch("Product_stock.aspx/GetStock", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ productId: p.ProductID })
             })
-            .then(r=>r.json())
-            .then(d=> {
+            .then(r => r.json())
+            .then(d => {
                 currentStock = d.d || [];
                 renderStock(p.ProductName);
             });
         }
+
 
         // ================= RENDER STOCK =================
         function renderStock(productName) {
