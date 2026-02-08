@@ -185,9 +185,9 @@
                                         <li id="AddFactory" runat="server"><a href="AddFactory.aspx">Add Factory</a></li>
                                     </ul>
                             </li>
-                            <li id="Quotatio" runat="server">Quotation / PO
+                            <li id="Quotatio" runat="server">Quotation
 									<ul class="nav first">
-                                        <li id="Create_quotation" runat="server"><a href="Create_quotation.aspx">Create Quotation / PO</a></li>
+                                        <li id="Create_quotation" runat="server"><a href="Create_quotation.aspx">Create Quotation</a></li>
                                         <li id="View_quotation" runat="server"><a href="View_quotation.aspx">View Quotation</a></li>
                                         <li id="Seartch_quotation" runat="server"><a href="Seartch_quotation.aspx">Search Quotation</a></li>
                                         <li id="Edit_quatation" runat="server"><a href="Edit_quatation.aspx">Edit Quotation</a></li>
@@ -284,12 +284,12 @@
 							  </li>--%>
 
 
-                            <li id="PurchaseRequisition" runat="server">Purchase Requisition
+                            <li id="PurchaseRequisition" runat="server" visible="false">Purchase Requisition
 									<ul class="nav first">
-                                        <li id="RequisitionManual" runat="server"><a href="RequisitionManual.aspx">Create</a></li>
-                                        <li id="RequisitionManualView" runat="server"><a href="RequisitionManualView.aspx">View</a></li>
-                                        <li id="RequisitionManualSearch" runat="server"><a href="RequisitionManualSearch.aspx">Search</a></li>
-                                        <li id="RequisitionManualDelete" runat="server"><a href="RequisitionManualDelete.aspx">Delete</a></li>
+                                        <li id="RequisitionManual" runat="server" visible="false"><a href="RequisitionManual.aspx">Create</a></li>
+                                        <li id="RequisitionManualView" runat="server" visible="false"><a href="RequisitionManualView.aspx">View</a></li>
+                                        <li id="RequisitionManualSearch" runat="server" visible="false"><a href="RequisitionManualSearch.aspx">Search</a></li>
+                                        <li id="RequisitionManualDelete" runat="server" visible="false"><a href="RequisitionManualDelete.aspx">Delete</a></li>
                                     </ul>
                             </li>
 
