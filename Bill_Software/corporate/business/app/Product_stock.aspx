@@ -6,20 +6,24 @@
     <style>
         .auto-style1 {
             width: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .style2 {
             color: #fff;
             font-weight: bold;
+            padding: 10px;
+            display: block;
         }
 
         .search-container {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             background: #F4F8FB;
-            padding: 10px;
+            padding: 15px;
             border: 1px solid #B5C7D3;
             border-radius: 4px;
+            align-items: center;
         }
 
         .search-input {
@@ -27,40 +31,64 @@
             padding: 8px 10px;
             border: 1px solid #9FB3C8;
             border-radius: 3px;
-        }
-
-        .search-btn, .clear-btn {
-            padding: 8px 14px;
-            font-size: 12px;
-            font-weight: bold;
-            border: none;
-            color: #fff;
-            border-radius: 3px;
-            cursor: pointer;
+            height: 35px;
         }
 
         .search-btn {
             background: #19658A;
-        }
-
-        .clear-btn {
-            background: #777;
-        }
-
-        .section-title {
-            font-size: 12px;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            height: 35px;
+            border-radius: 3px;
+            cursor: pointer;
             font-weight: bold;
-            margin-bottom: 6px;
+        }
+
+            .search-btn:hover {
+                background: #145270;
+            }
+
+        /* Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #19658A;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            gap: 10px;
+            color: #19658A;
         }
 
         .search-result {
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
+            transition: 0.2s;
         }
 
             .search-result:hover {
-                background: #E8F1FF;
+                background: #f0f7ff;
             }
 
             .search-result.active {
@@ -68,328 +96,200 @@
                 border-left: 4px solid #19658A;
             }
 
-        .category {
+        .copy-sku {
+            font-size: 11px;
+            color: #19658A;
+            cursor: pointer;
+            background: #eef4f7;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .category-header {
             background: #006699;
-            color: #fff;
+            color: white;
+            padding: 8px;
             font-weight: bold;
-            padding: 6px;
+            border-radius: 4px 4px 0 0;
         }
 
         .table2 {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 10px;
         }
 
             .table2 td {
-                border: 1px solid #999;
-                padding: 6px;
+                border: 1px solid #ccc;
+                padding: 8px;
+                font-size: 13px;
             }
 
         .summary-box {
             background: #FFFCE8;
-            padding: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 6px;
+            padding: 10px;
             border: 1px solid #e0d7a6;
+            font-weight: bold;
+            margin: 10px 0;
+            border-radius: 4px;
         }
-
-        .search-result b {
-            font-size: 13px;
-        }
-
-        .search-result span {
-            white-space: nowrap;
-        }
-
-        /* Selected row highlight */
-        .search-result.active {
-            background: #d9ecff;
-            border-left: 4px solid #19658A;
-        }
-
-        /* Sticky selected product */
-        .search-result.sticky {
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            background: #cfe6ff;
-            border-bottom: 2px solid #19658A;
-        }
-
-        /* Copy SKU */
-        .copy-sku {
-            font-size: 11px;
-            color: #19658A;
-            cursor: pointer;
-            margin-left: 8px;
-        }
-
-        .copy-sku:hover {
-            text-decoration: underline;
-        }
-
     </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
     <table class="auto-style1">
         <tr>
-            <td colspan="4" bgcolor="#19658A">
-                <span class="style2">Product Stock</span>
-            </td>
+            <td bgcolor="#19658A"><span class="style2">Product Inventory Manager</span></td>
         </tr>
-
         <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <!-- SEARCH -->
-        <tr>
-            <td></td>
-            <td colspan="2">
-                <div style="font-size: 11px; color: #666; margin-bottom: 4px;">
-                    Search by Product Code or Product Name
-                </div>
+            <td>
                 <div class="search-container">
+                    <select id="ddlCategory" class="search-input" style="flex: 0 0 200px;" onchange="triggerSearch()">
+                        <option value="">All Categories (Show All)</option>
+                    </select>
+
                     <input type="text" id="txtSearch" class="search-input"
-                        placeholder="🔍 Search product name..." />
+                        placeholder="Search by name or Product ID..." onkeyup="handleKeyUp(event)" />
+
                     <button type="button" class="search-btn" onclick="triggerSearch()">Search</button>
-                    <button type="button" class="clear-btn" onclick="clearSearch()">Clear</button>
+                    <button type="button" class="clear-btn" onclick="clearSearch()"
+                        style="background: #777; color: white; border: none; padding: 0 15px; height: 35px; border-radius: 3px; cursor: pointer;">
+                        Clear
+                    </button>
                 </div>
             </td>
-            <td></td>
         </tr>
-
         <tr>
-            <td colspan="4">&nbsp;</td>
-        </tr>
-
-        <!-- SPLIT VIEW -->
-        <tr>
-            <td></td>
-            <td colspan="2">
-
-                <div style="display: flex; gap: 16px; align-items: flex-start;">
-
-                    <!-- LEFT: PRODUCTS -->
-                    <div style="width: 45%; max-height: 420px; overflow-y: auto;">
-                        <div class="section-title">Matching Products</div>
+            <td>
+                <div style="display: flex; gap: 20px; margin-top: 20px; align-items: flex-start;">
+                    <div style="width: 40%; max-height: 500px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
                         <div id="searchResults"></div>
                     </div>
-
-                    <!-- RIGHT: STOCK -->
-                    <div style="width: 55%; position: sticky; top: 10px;">
+                    <div style="width: 60%; position: sticky; top: 10px;">
                         <div id="stockDetails">
-                            <div style="color: #777; font-size: 12px;">
-                                Select a product to view stock
-                            </div>
+                            <div style="text-align: center; padding: 50px; color: #999;">Select a product to view store-wise stock</div>
                         </div>
                     </div>
-
                 </div>
-
             </td>
-            <td></td>
         </tr>
     </table>
 
-    <script>
-        let searchTimer = null;
-        let selectedIndex = -1;
+    <script type="text/javascript">
         let products = [];
-        let currentStock = [];
+        let timer = null;
 
-        const SEARCH_DELAY = 600;
-
-        // ================= SEARCH =================
-        document.getElementById("txtSearch").addEventListener("keyup", function (e) {
-            clearTimeout(searchTimer);
-
-            if (["ArrowUp", "ArrowDown", "Enter"].includes(e.key)) {
-                handleKeyboard(e.key);
-                return;
-            }
-
-            const val = this.value.trim();
-            searchTimer = setTimeout(() => {
-                if (val.length === 0) clearUI();
-                else fetchSearch(val);
-            }, SEARCH_DELAY);
+        document.addEventListener("DOMContentLoaded", () => {
+            loadCategories();
+            triggerSearch();
         });
 
-        function triggerSearch() {
-            const val = txtSearch.value.trim();
-            if (val) fetchSearch(val);
-        }
-
-        function clearSearch() {
-            txtSearch.value = "";
-            clearUI();
-        }
-
-        function clearUI() {
-            searchResults.innerHTML = "";
-            stockDetails.innerHTML = "<div style='color:#777;'>Select a product to view stock</div>";
-            products = [];
-            selectedIndex = -1;
-        }
-
-        function copySKU(e, sku) {
-            e.stopPropagation(); // prevent row selection
-
-            navigator.clipboard.writeText(sku).then(() => {
-                e.target.innerText = "Copied!";
-                setTimeout(() => {
-                    e.target.innerText = sku;
-                }, 800);
+        function loadCategories() {
+            fetch("Product_stock.aspx/GetCategories", { method: "POST", headers: { "Content-Type": "application/json" } })
+            .then(r => r.json()).then(d => {
+                const ddl = document.getElementById("ddlCategory");
+                d.d.forEach(c => { ddl.options.add(new Option(c, c)); });
             });
         }
 
-
-        // ================= SEARCH RESULTS =================
-        function fetchSearch(search) {
-            fetch("Product_stock.aspx/SearchProducts", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ search })
-            })
-            .then(r=>r.json())
-            .then(d=> {
-                products = d.d || [];
-                selectedIndex = -1;
-
-                let html = products.map((p, i) => `
-                <div class="search-result" data-index="${i}"
-                     onclick="selectProduct(${i}, event)">
-
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b>${p.ProductName}</b>
-
-                        <span class="copy-sku"
-                              title="Click to copy Product ID"
-                              onclick="copySKU(event, '${p.ProductID}')">
-                            ${p.ProductID}
-                        </span>
-                    </div>
-
-                    <div style="font-size:11px; color:#666;">
-                        ${p.CategoryName}
-                    </div>
-
-                </div>
-            `).join("");
-
-                searchResults.innerHTML = html || "<div>No products found</div>";
-            });
+        function handleKeyUp(e) {
+            clearTimeout(timer);
+            timer = setTimeout(triggerSearch, 500);
         }
 
-        // ================= KEYBOARD NAV =================
-        function handleKeyboard(key) {
-            if (products.length === 0) return;
-
-            if (key === "ArrowDown") selectedIndex = Math.min(selectedIndex + 1, products.length - 1);
-            if (key === "ArrowUp") selectedIndex = Math.max(selectedIndex - 1, 0);
-            if (key === "Enter" && selectedIndex >= 0) {
-                selectProduct(selectedIndex);
+        function renderResults() {
+            if (products.length === 0) {
+                searchResults.innerHTML = '<div style="padding:20px; color:#999;">No products found.</div>';
                 return;
             }
-
-            highlightSelection();
+            searchResults.innerHTML = products.map((p, i) => `
+                <div class="search-result" onclick="selectProduct(${i})">
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${p.ProductName}</b>
+                        <span class="copy-sku" onclick="copySKU(event, '${p.ProductID}')">${p.ProductID}</span>
+                    </div>
+                    <div style="font-size:11px; color:#666;">${p.CategoryName}</div>
+                </div>
+            `).join('');
         }
 
-        function highlightSelection() {
-            document.querySelectorAll(".search-result").forEach(e=>e.classList.remove("active"));
-            const el = document.querySelector(`.search-result[data-index="${selectedIndex}"]`);
-            if (el) {
-                el.classList.add("active");
-                el.scrollIntoView({ block: "nearest" });
-            }
-        }
-
-        // ================= STOCK =================
-        function selectProduct(index, event) {
-            selectedIndex = index;
-
-            // Remove previous states
-            document.querySelectorAll('.search-result')
-                .forEach(r => r.classList.remove('active', 'sticky'));
-
-            const selectedRow =
-                document.querySelector(`.search-result[data-index="${index}"]`);
-
-            if (!selectedRow) return;
-
-            // Highlight & stick
-            selectedRow.classList.add('active', 'sticky');
-
-            // Scroll list so it stays visible
-            selectedRow.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest"
-            });
-
+        function selectProduct(index) {
             const p = products[index];
+            document.querySelectorAll('.search-result').forEach((r, i) => r.classList.toggle('active', i === index));
 
-            // Load stock (existing logic)
+            stockDetails.innerHTML = `
+                <div class="category-header">${p.ProductName}</div>
+                <div class="loading-box"><div class="spinner"></div>Loading stock for ${p.ProductID}...</div>`;
+
             fetch("Product_stock.aspx/GetStock", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ productId: p.ProductID })
             })
+            .then(r => r.json()).then(d => {
+                const stock = d.d || [];
+                let total = stock.reduce((acc, curr) => acc + parseFloat(curr.StockQty), 0);
+
+                let html = `
+                    <div class="category-header">${p.ProductName}</div>
+                    <div class="summary-box">Total Available: ${total.toFixed(2)}</div>
+                    <table class="table2">
+                        <tr style="background:#f8f8f8; font-weight:bold;"><td>Store Location</td><td align="right">Quantity</td></tr>
+                        ${stock.map(s => `<tr><td>${s.StoreName}</td><td align="right" style="color:${parseFloat(s.StockQty) <= 0 ? 'red' : 'green'}">${s.StockQty}</td></tr>`).join('')}
+                    </table>`;
+                stockDetails.innerHTML = html;
+            });
+        }
+
+        function clearSearch() {
+            // 1. Reset inputs
+            document.getElementById("txtSearch").value = "";
+            document.getElementById("ddlCategory").selectedIndex = 0;
+
+            // 2. Reset the Stock View (Right Side)
+            document.getElementById("stockDetails").innerHTML = `
+            <div style="text-align:center; padding:50px; color:#999;">
+                Select a product to view store-wise stock
+            </div>`;
+
+            // 3. Trigger a fresh search to show "All" again
+            triggerSearch();
+        }
+
+        function triggerSearch() {
+            const search = document.getElementById("txtSearch").value;
+            const cat = document.getElementById("ddlCategory").value;
+
+            searchResults.innerHTML = `
+            <div class="loading-box">
+                <div class="spinner"></div>
+                Searching...
+            </div>`;
+
+            fetch("Product_stock.aspx/SearchProducts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ search: search, category: cat })
+            })
             .then(r => r.json())
             .then(d => {
-                currentStock = d.d || [];
-                renderStock(p.ProductName);
+                products = d.d || [];
+                renderResults();
+            })
+            .catch(() => {
+                searchResults.innerHTML =
+                    '<div style="padding:20px; color:red;">Connection error.</div>';
             });
         }
 
 
-        // ================= RENDER STOCK =================
-        function renderStock(productName) {
-            let total = currentStock.reduce((s, x) =>s + parseFloat(x.StockQty || 0), 0);
-
-            let html = `
-    <div class="category">Stock Availability – ${productName}</div>
-
-    <div class="summary-box">
-        Total Stock (All Stores): ${total.toFixed(2)}
-    </div>
-
-    <div style="margin-bottom:6px;">
-        <select id="storeFilter" onchange="applyStoreFilter()">
-            <option value="">All Stores</option>
-            ${[...new Set(currentStock.map(x=>x.StoreName))]
-                        .map(s=>`<option value="${s}">${s}</option>`).join("")}
-        </select>
-    </div>
-
-    <table class="table2">
-        <tr style="background:#f0f0f0;font-weight:bold;">
-            <td>Store</td>
-            <td style="text-align:right;">Available Qty</td>
-        </tr>`;
-
-            currentStock.forEach(s=> {
-                html += `
-        <tr class="store">
-            <td>${s.StoreName}</td>
-            <td style="text-align:right">${s.StockQty}</td>
-        </tr>`;
-            });
-
-            html += "</table>";
-            stockDetails.innerHTML = html;
-        }
-
-        function applyStoreFilter() {
-            const val = document.getElementById("storeFilter").value;
-            const rows = document.querySelectorAll(".store");
-            rows.forEach(r=> {
-                r.style.display = (!val || r.cells[0].innerText === val) ? "" : "none";
-            });
+        function copySKU(e, sku) {
+            e.stopPropagation();
+            navigator.clipboard.writeText(sku);
+            const el = e.target;
+            const old = el.innerText;
+            el.innerText = "Copied!";
+            setTimeout(() => el.innerText = old, 1000);
         }
     </script>
-
 </asp:Content>

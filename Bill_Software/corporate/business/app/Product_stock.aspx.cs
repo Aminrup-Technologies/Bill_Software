@@ -20,33 +20,45 @@ namespace Bill_Software.corporate.business.app
 
         // 🔍 Product Search (uses NormalizedProductName inside SP)
         [WebMethod]
-        public static List<ProductResult> SearchProducts(string search)
+        public static List<ProductResult> SearchProducts(string search, string category)
         {
             List<ProductResult> list = new List<ProductResult>();
 
-            if (string.IsNullOrWhiteSpace(search))
-                return list;
+            // We removed the "string.IsNullOrWhiteSpace" check so "Show All" works
 
             DB_UTILITY db = new DB_UTILITY();
             db.Sqlconnection();
             db.ConnectDb();
 
-            SqlCommand cmd = new SqlCommand("sp_SearchProductsFast", db.Conn);
-            cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@Search", search);
-
-            SqlDataReader dr = cmd.ExecuteReader();
-            while (dr.Read())
+            try
             {
-                list.Add(new ProductResult
+                SqlCommand cmd = new SqlCommand("sp_SearchProductsFast", db.Conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                // Pass both parameters to the Stored Procedure
+                cmd.Parameters.AddWithValue("@Search", search ?? "");
+                cmd.Parameters.AddWithValue("@Category", category ?? "");
+
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
                 {
-                    ProductID = dr["ProductID"].ToString(),
-                    ProductName = dr["ProductName"].ToString(),
-                    CategoryName = dr["CategoryName"].ToString()
-                });
+                    list.Add(new ProductResult
+                    {
+                        ProductID = dr["ProductID"].ToString(),
+                        ProductName = dr["ProductName"].ToString(),
+                        CategoryName = dr["CategoryName"].ToString()
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error if needed
+            }
+            finally
+            {
+                db.Conn.Close();
             }
 
-            db.Conn.Close();
             return list;
         }
 
@@ -55,29 +67,75 @@ namespace Bill_Software.corporate.business.app
         public static List<StoreStock> GetStock(string productId)
         {
             List<StoreStock> list = new List<StoreStock>();
+            if (string.IsNullOrWhiteSpace(productId)) return list;
 
-            if (string.IsNullOrWhiteSpace(productId))
-                return list;
+            try
+            {
+                DB_UTILITY db = new DB_UTILITY();
+                // Ensure db.Sqlconnection() and ConnectDb() are inside the using if possible, 
+                // or ensure you close the connection in a finally block.
+                db.Sqlconnection();
+                db.ConnectDb();
+
+                using (SqlCommand cmd = new SqlCommand("sp_GetProductStockByStore", db.Conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@ProductID", productId);
+
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            list.Add(new StoreStock
+                            {
+                                StoreName = dr["ShippedToStoreName"].ToString(),
+                                StockQty = dr["StockQty"].ToString()
+                            });
+                        }
+                    }
+                }
+                db.Conn.Close(); // Explicitly close
+            }
+            catch (Exception ex)
+            {
+                // Log error (e.g., LogError(ex))
+                throw new Exception("Database error occurred.");
+            }
+
+            return list;
+        }
+
+        [WebMethod]
+        public static List<string> GetCategories()
+        {
+            List<string> list = new List<string>();
 
             DB_UTILITY db = new DB_UTILITY();
             db.Sqlconnection();
             db.ConnectDb();
 
-            SqlCommand cmd = new SqlCommand("sp_GetProductStockByStore", db.Conn);
-            cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@ProductID", productId);
-
-            SqlDataReader dr = cmd.ExecuteReader();
-            while (dr.Read())
+            try
             {
-                list.Add(new StoreStock
+                // Use the new Stored Procedure we created earlier
+                SqlCommand cmd = new SqlCommand("sp_GetProductCategories", db.Conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
                 {
-                    StoreName = dr["ShippedToStoreName"].ToString(),
-                    StockQty = dr["StockQty"].ToString()
-                });
+                    // Adding the category name string to the list
+                    list.Add(dr["ProductOrServiceCat"].ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle or log error
+            }
+            finally
+            {
+                db.Conn.Close();
             }
 
-            db.Conn.Close();
             return list;
         }
     }
@@ -95,4 +153,6 @@ namespace Bill_Software.corporate.business.app
         public string StoreName { get; set; }
         public string StockQty { get; set; }
     }
+
+    
 }
