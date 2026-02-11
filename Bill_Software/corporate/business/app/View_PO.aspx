@@ -104,9 +104,10 @@
                     <HeaderTemplate>
                         <table class="pr-header" width="100%" cellspacing="0">
                             <tr class="pr-column-header">
-                                <th style="width: 5%">Sl</th>
-                                <th style="width: 20%">PO No</th>
-                                <th style="width: 20%">Req No</th>
+                                <th style="width: 3%">Sl</th>
+                                <th style="width: 22%">Vendor</th>
+                                <th style="width: 15%">PO No</th>
+                                <th style="width: 15%">Req No</th>
                                 <th style="width: 15%">Created By</th>
                                 <th style="width: 15%">Created On</th>
                                 <th style="width: 10%">Status</th>
@@ -114,27 +115,37 @@
                             </tr>
                     </HeaderTemplate>
 
+
                     <ItemTemplate>
                         <tr class="pr-row">
                             <td align="center">
                                 <asp:Label ID="lblSlNo" runat="server" />
                             </td>
 
+                            <!-- Vendor -->
+                            <td><%# Eval("Vendor_Name") %></td>
+
+                            <!-- PO No -->
                             <td><%# Eval("PO_No") %></td>
 
+                            <!-- Req No -->
                             <td><%# Eval("ReqNo") %></td>
 
-                            <td><%# Eval("CreatedBy") %></td>
+                            <!-- Created By -->
+                            <td><%# Eval("CreatedByName") %></td>
 
+                            <!-- Created On -->
                             <td>
                                 <%# Eval("CreatedOn", "{0:dd-MMM-yyyy hh:mm tt}") %>
                             </td>
 
+                            <!-- Status -->
                             <td>
                                 <asp:Label ID="lblStatus" runat="server"
                                     Text='<%# Eval("PO_Status") %>' />
                             </td>
 
+                            <!-- View -->
                             <td align="center">
                                 <asp:ImageButton
                                     ID="btnView"
@@ -142,11 +153,12 @@
                                     CommandName="View"
                                     CommandArgument='<%# Eval("PO_Id") %>'
                                     ImageUrl="~/corporate/business/WebImages/viewicon.png"
-                                    ToolTip="View / Modify PR"
+                                    ToolTip="View PO"
                                     Height="18" Width="18" />
                             </td>
                         </tr>
                     </ItemTemplate>
+
 
                     <FooterTemplate>
                         </table>

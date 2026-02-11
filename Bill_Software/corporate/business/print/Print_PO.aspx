@@ -91,8 +91,8 @@
                         <div style="font-size: 22px; font-weight: bold; letter-spacing: 1px;">FLAME-EX</div>
                         <div style="font-size: 11px; margin-top: 3px;">
                             Bagbera Colony, Block No-35/2/4, Road No.2<br />
-                            Jamshedpur – 831012, Jharkhand<br />
-                            <b>GSTIN: 20ABCDE1234F1Z5</b>
+                            Jamshedpur – 831002, Jamshedpur, Jharkhand<br />
+                            <b>GSTIN: 20AESPD7535D1ZS</b>
                         </div>
                         <div style="margin-top: 6px; font-size: 14px; font-weight: bold; border: 1px solid #000; padding: 3px 15px; display: inline-block; background: #eee;">PURCHASE ORDER</div>
                     </td>

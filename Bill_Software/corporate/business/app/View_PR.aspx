@@ -50,7 +50,6 @@
             background-color: #f4f9ff;
             transition: 0.2s;
         }
-
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -89,69 +88,98 @@
             <td colspan="4">
                 <asp:DataList ID="DataList1" runat="server"
                     Width="100%"
-                    GridLines="Both"
                     OnItemCommand="DataList1_ItemCommand"
                     OnItemDataBound="DataList1_ItemDataBound">
 
                     <HeaderTemplate>
-                        <headertemplate>
                         <table class="pr-header" width="100%">
                             <tr>
-                                <th style="width:5%">Sl</th>
-                                <th style="width:25%">Client</th>
-                                <th style="width:20%">PR No</th>
-                                <th style="width:15%">Created By</th>
-                                <th style="width:15%">Created On</th>
-                                <th style="width:10%">Status</th>
-                                <th style="width:5%">View</th>
+                                <th style="width: 4%">Sl</th>
+                                <th style="width: 14%">Client</th>
+                                <th style="width: 10%">PR No</th>
+
+                                <th style="width: 18%">Created</th>
+                                <th style="width: 18%">Submitted</th>
+                                <th style="width: 18%">Approved</th>
+
+                                <th style="width: 8%">Status</th>
+                                <th style="width: 4%">View</th>
                             </tr>
                         </table>
-                    </headertemplate>
                     </HeaderTemplate>
+
                     <ItemTemplate>
                         <table class="pr-row" width="100%">
                             <tr>
-                                <td style="width: 5%; text-align: center">
+                                <!-- SL -->
+                                <td style="width: 4%; text-align: center">
                                     <asp:Label ID="lblSlNo" runat="server" />
                                 </td>
 
-                                <td style="width: 25%">
+                                <!-- Client -->
+                                <td style="width: 14%">
                                     <%# Eval("clientName") %>
                                 </td>
 
-                                <td style="width: 20%; font-weight: 600">
+                                <!-- PR No -->
+                                <td style="width: 10%; font-weight: 600">
                                     <%# Eval("ReqNo") %>
                                 </td>
 
-                                <td style="width: 15%">
-                                    <%# Eval("CreatedBy") %>
+                                <!-- Created -->
+                                <td style="width: 18%">
+                                    <b><%# Eval("CreatedByName") %></b>
+                                    <br />
+                                    <small>ID: <%# Eval("CreatedById") %><br />
+                                        <%# Eval("CreatedOn","{0:dd-MMM-yyyy HH:mm}") %>
+                                    </small>
                                 </td>
 
-                                <td style="width: 15%">
-                                    <%# Eval("CreatedOn","{0:dd-MMM-yyyy HH:mm tt}") %>
+                                <!-- Submitted -->
+                                <td style="width: 18%">
+                                    <%# Eval("SubmittedByName") == DBNull.Value ? "-" : Eval("SubmittedByName") %>
+                                    <br />
+                                    <small>
+                                        <%# Eval("SubmittedById") %>
+                                        <%# Eval("SubmittedOn","{0:dd-MMM-yyyy HH:mm}") %>
+                                    </small>
                                 </td>
 
-                                <td style="width: 10%; text-align: center">
+                                <!-- Approved -->
+                                <td style="width: 18%">
+                                    <%# Eval("ApprovedByName") == DBNull.Value ? "-" : Eval("ApprovedByName") %>
+                                    <br />
+                                    <small>
+                                        <%# Eval("ApprovedById") %>
+                                        <%# Eval("ApprovedOn","{0:dd-MMM-yyyy HH:mm}") %>
+                                    </small>
+                                </td>
+
+                                <!-- Status -->
+                                <td style="width: 8%; text-align: center">
                                     <asp:Label ID="lblStatus"
                                         runat="server"
                                         Text='<%# Eval("Status") %>' />
                                 </td>
 
-                                <td style="width: 5%; text-align: center">
+                                <!-- View -->
+                                <td style="width: 4%; text-align: center">
                                     <asp:ImageButton
                                         ID="btnView"
                                         runat="server"
                                         CommandName="View"
                                         CommandArgument='<%# Eval("ReqNo") %>'
                                         ImageUrl="~/corporate/business/WebImages/viewicon.png"
-                                        ToolTip="View / Modify PR"
-                                        Height="18" Width="18" />
+                                        ToolTip="View PR"
+                                        Height="18"
+                                        Width="18" />
                                 </td>
                             </tr>
                         </table>
                     </ItemTemplate>
 
                 </asp:DataList>
+
 
             </td>
         </tr>

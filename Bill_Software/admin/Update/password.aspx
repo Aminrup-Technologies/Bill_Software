@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <link href="/WebProperty/css/style.css" rel="stylesheet" type="text/css" />
-    <title>Aminrup Technologies.</title>
+    <title>FLAME-EX.</title>
     <link rel="shortcut icon" href="../../WebImages/i2i_logo.png" />
     <style type="text/css">
         .style1 {

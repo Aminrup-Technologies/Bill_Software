@@ -436,7 +436,7 @@
                                             <td class="" style="background-color: #e31e24; color: white; text-align: center;">PAYMENT TERMS</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">All Advance Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “Aminrup Technologies” at the Account Details Provided.</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">All Advance Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “FLAME-EX” at the Account Details Provided.</td>
                                         </tr>
                                         <tr>
                                             <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">All Invoices shall be paid by the Client within Seven (7) Days of the Date of Invoice. In the event of Late Payment, the Company shall be entitled to charge Interest on any Outstanding Amounts at a rate of 1.5% per Month. GST at Current Rates is payable in addition to the Amount Quoted in accordance with the HSN/SAC Code.</td>
@@ -472,20 +472,20 @@
                                         </tr>
                                         <asp:Panel ID="PnlGstKvqa" runat="server">
                                             <tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GST NUMBER: 19AAEFI5315E1ZL</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GSTIN No.: 20AESPD7535D1ZS</td>
                                             </tr>
                                             <%--<tr>
                                                 <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">HSN CODE/SAC: 998214</td>
                                             </tr>--%>
                                         </asp:Panel>
-                                        <asp:Panel ID="PnlTaxKvqa" runat="server">
+                                        <asp:Panel ID="PnlTaxKvqa" runat="server" Visible="false">
                                             <tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">SERVICE TAX NUMBER: AAEFI5315ESD001</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GSTIN No.: 20AESPD7535D1ZS</td>
                                             </tr>
                                         </asp:Panel>
-                                        <tr>
+                                        <%--<tr>
                                             <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">GSTIN No.: 20AESPD7535D1ZS</td>
-                                        </tr>
+                                        </tr>--%>
                                     </table>
                                 </td>
                             </tr>

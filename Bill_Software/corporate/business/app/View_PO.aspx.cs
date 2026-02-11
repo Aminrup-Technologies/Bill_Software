@@ -16,13 +16,43 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
+        //private void BindPOList()
+        //{
+        //    using (SqlConnection con = new SqlConnection(
+        //        ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+        //    {
+        //        SqlDataAdapter da = new SqlDataAdapter(
+        //            "SELECT * FROM tbl_PO_Header ORDER BY CreatedOn DESC", con);
+
+        //        DataTable dt = new DataTable();
+        //        da.Fill(dt);
+
+        //        DataListPO.DataSource = dt;
+        //        DataListPO.DataBind();
+        //    }
+        //}
+
         private void BindPOList()
         {
             using (SqlConnection con = new SqlConnection(
                 ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                SqlDataAdapter da = new SqlDataAdapter(
-                    "SELECT * FROM tbl_PO_Header ORDER BY CreatedOn DESC", con);
+                SqlDataAdapter da = new SqlDataAdapter(@"
+            SELECT
+                H.PO_Id,
+                H.PO_No,
+                H.ReqNo,
+                H.PO_Status,
+                H.CreatedOn,
+                V.Vendor_Name,
+                U.Name AS CreatedByName
+            FROM tbl_PO_Header H
+            LEFT JOIN tbl_Vendor V
+                ON V.Id = H.VendorId
+            LEFT JOIN tbl_login U
+                ON U.User_Id = H.CreatedBy
+            ORDER BY H.CreatedOn DESC
+        ", con);
 
                 DataTable dt = new DataTable();
                 da.Fill(dt);
@@ -31,6 +61,7 @@ namespace Bill_Software.corporate.business.app
                 DataListPO.DataBind();
             }
         }
+
 
 
         protected void DataListPO_ItemCommand(object source, DataListCommandEventArgs e)
