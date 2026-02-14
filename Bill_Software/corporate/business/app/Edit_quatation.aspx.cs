@@ -297,8 +297,8 @@ namespace Bill_Software.corporate.business.app
             public int? SlNo { get; set; }
             public decimal? ServiceTax1 { get; set; }
             public decimal? SubTotal { get; set; }
-            public decimal? CGSTorSGST { get; set; }
-            public decimal? IGST { get; set; }
+            public string CGSTorSGST { get; set; }
+            public string IGST { get; set; }
             public string ProSer { get; set; }
             public DateTime? MailStatusDate { get; set; }
             public string PlaceOfSupply { get; set; }
@@ -333,6 +333,7 @@ namespace Bill_Software.corporate.business.app
             public decimal? FreightVATPercent { get; set; }
             public string OtherChargeName { get; set; }
             public decimal? OtherChargeAmount { get; set; }
+
         }
 
         private void BindClientDetails(string Quotation_no)
@@ -370,8 +371,8 @@ namespace Bill_Software.corporate.business.app
                         SlNo = reader["Sl_no"] as int?,
                         ServiceTax1 = reader["service_tax1"] as decimal?,
                         SubTotal = reader["sub_total"] as decimal?,
-                        CGSTorSGST = reader["cgstOrsgst"] as decimal?,
-                        IGST = reader["igst"] as decimal?,
+                        CGSTorSGST = reader["cgstOrsgst"].ToString(),
+                        IGST = reader["igst"].ToString(),
                         ProSer = reader["ProSer"].ToString(),
                         MailStatusDate = reader["mailStatusDate"] as DateTime?,
                         PlaceOfSupply = reader["PlaceofSupply"].ToString(),
@@ -399,7 +400,16 @@ namespace Bill_Software.corporate.business.app
                         DeletedById = reader["DeletedById"] as int?,
                         DeletedOn = reader["DeletedOn"] as DateTime?,
                         TimsStamp = reader["TimsStamp"] as DateTime?,
-                        DiscountView = reader["DiscountView"].ToString()
+                        // Add these specifically:
+                        DiscountView = reader["DiscountView"]?.ToString(),
+
+                        // Ensure your new financial fields are also mapped here
+                        TCSAmount = reader["TCS_Amount"] != DBNull.Value ? Convert.ToDecimal(reader["TCS_Amount"]) : (decimal?)null,
+                        TCSPercent = reader["TCS_Percent"] != DBNull.Value ? Convert.ToDecimal(reader["TCS_Percent"]) : (decimal?)null,
+                        FreightAmount = reader["Freight_Amount"] != DBNull.Value ? Convert.ToDecimal(reader["Freight_Amount"]) : (decimal?)null,
+                        FreightVATPercent = reader["Freight_VAT_Percent"] != DBNull.Value ? Convert.ToDecimal(reader["Freight_VAT_Percent"]) : (decimal?)null,
+                        OtherChargeName = reader["OtherCharge_Name"].ToString(),
+                        OtherChargeAmount = reader["OtherCharge_Amount"] != DBNull.Value ? Convert.ToDecimal(reader["OtherCharge_Amount"]) : (decimal?)null
                     };
                 }
                 reader.Close();
@@ -412,6 +422,7 @@ namespace Bill_Software.corporate.business.app
             Quotation q = GetQuotationByNo(quotationNo);
             if (q != null)
             {
+                // 1. Date Handling
                 DateTime tempDate;
                 if (DateTime.TryParseExact(q.QuotationDate, "dd-MMM-yyyy", null, System.Globalization.DateTimeStyles.None, out tempDate))
                 {
@@ -419,175 +430,125 @@ namespace Bill_Software.corporate.business.app
                 }
                 else
                 {
-                    txtquotationDate.Text = q.QuotationDate; // fallback if parsing fails
+                    txtquotationDate.Text = q.QuotationDate;
                 }
 
-                txt_valdays.Text = q.ValidityDays.ToString();
-                ListItem item = DDL_ItemViewType.Items.FindByText(q.DetailedView);
-                if (item != null)
-                {
-                    DDL_ItemViewType.ClearSelection();
-                    item.Selected = true;
-                }
+                // 2. Metadata & Client
+                txt_valdays.Text = q.ValidityDays?.ToString() ?? "0";
+
+                ListItem itemView = DDL_ItemViewType.Items.FindByText(q.DetailedView);
+                if (itemView != null) { DDL_ItemViewType.ClearSelection(); itemView.Selected = true; }
 
                 if (cmbClient.Items.FindByValue(q.ClientId) != null)
                 {
                     cmbClient.SelectedValue = q.ClientId;
                 }
 
-                ListItem item1 = DDL_DiscountView.Items.FindByText(q.DiscountView);
-                if (item1 != null) { DDL_DiscountView.ClearSelection(); item1.Selected = true; }
+                ListItem discView = DDL_DiscountView.Items.FindByText(q.DiscountView);
+                if (discView != null) { DDL_DiscountView.ClearSelection(); discView.Selected = true; }
 
-                //ListItem item2 = DDL_DeliveryTerms.Items.FindByText(q.DeliveryTenure);
-                //if (item2 != null) { DDL_DeliveryTerms.ClearSelection(); item2.Selected = true; }
-
-                // DELIVERY TENURE
+                // 3. Delivery Tenure Logic
                 ListItem deliveryItem = DDL_DeliveryTerms.Items.FindByText(q.DeliveryTenure);
-
                 DDL_DeliveryTerms.ClearSelection();
-
                 if (deliveryItem != null)
                 {
-                    // Matches predefined options (10-12, 3-4, 1-2)
                     deliveryItem.Selected = true;
                     manualInputRow.Style["display"] = "none";
                 }
                 else
                 {
-                    // Manual input case
                     DDL_DeliveryTerms.SelectedValue = "4"; // Manual Input
                     txt_deltrms.Text = q.DeliveryTenure;
                     manualInputRow.Style["display"] = "";
                 }
 
-
-                //ListItem item3 = DDL_pkgfrwd.Items.FindByText(q.PackingCharges);
-                //if (item3 != null) { DDL_pkgfrwd.ClearSelection(); item3.Selected = true; }
-
-                // PACKAGE FORWARDING
+                // 4. Package Forwarding Logic
                 ListItem pkgItem = DDL_pkgfrwd.Items.FindByText(q.PackingCharges);
-
                 DDL_pkgfrwd.ClearSelection();
-
                 if (pkgItem != null)
                 {
-                    // Matches NILL / At Actuals
                     pkgItem.Selected = true;
                     manualInputPkgRow.Style["display"] = "none";
                 }
                 else
                 {
-                    // Manual input case
                     DDL_pkgfrwd.SelectedValue = "3"; // Manual Input
                     txt_pkgfrwd.Text = q.PackingCharges;
                     manualInputPkgRow.Style["display"] = "";
                 }
 
-
                 txt_remarks.Text = q.Remarks;
 
-                // TCS
-                txt_tcs_amnt.Text = q.TCSAmount.HasValue
-                    ? q.TCSAmount.Value.ToString("0.00")
-                    : "0";
+                // 5. Financial Fields (TCS, Freight, Other)
+                txt_tcs_amnt.Text = q.TCSAmount.HasValue ? q.TCSAmount.Value.ToString("0.00") : "0.00";
+                txt_tcs_percent.Text = q.TCSPercent.HasValue ? q.TCSPercent.Value.ToString("0.00") : "0.00";
+                txt_delivery_amnt.Text = q.FreightAmount.HasValue ? q.FreightAmount.Value.ToString("0.00") : "0.00";
+                txt_freight_percent.Text = q.FreightVATPercent.HasValue ? q.FreightVATPercent.Value.ToString("0.00") : "0.00";
 
-                txt_tcs_percent.Text = q.TCSPercent.HasValue
-                    ? q.TCSPercent.Value.ToString("0.00")
-                    : "0";
-
-                // Freight
-                txt_delivery_amnt.Text = q.FreightAmount.HasValue
-                    ? q.FreightAmount.Value.ToString("0.00")
-                    : "0";
-
-                txt_freight_percent.Text = q.FreightVATPercent.HasValue
-                    ? q.FreightVATPercent.Value.ToString("0.00")
-                    : "0";
-
-                // Other Charges
                 TextBox1.Text = q.OtherChargeName ?? string.Empty;
+                txt_othr_amnt.Text = q.OtherChargeAmount.HasValue ? q.OtherChargeAmount.Value.ToString("0.00") : "0.00";
 
-                txt_othr_amnt.Text = q.OtherChargeAmount.HasValue
-                    ? q.OtherChargeAmount.Value.ToString("0.00")
-                    : "0";
-
-
-                if (q.RecordType.ToString() == "Quotation")
+                // 6. Record Type & PO Fields
+                if (q.RecordType == "Quotation")
                 {
-                    PO_DataInputs.Visible = false;
                     rbQt.Checked = true;
                     rbPo.Checked = false;
-                    rbQt.Enabled = false;
-                    rbPo.Enabled = false;
-
-                    txb_ponumber.Text = "";
-                    txb_donumber.Text = "";
-                    txb_podate.Text = "";
-                    txb_strtdt.Text = "";
-                    txb_enddt.Text = "";
+                    PO_DataInputs.Visible = false;
+                    txb_ponumber.Text = txb_donumber.Text = txb_podate.Text = txb_strtdt.Text = txb_enddt.Text = "";
                 }
                 else
                 {
-                    txb_ponumber.Text = q.PO_Number;
-                    txb_donumber.Text = q.DO_Number;
-                    txb_podate.Text = FormatDate(q.PO_Date.ToString());
-                    txb_strtdt.Text = FormatDate(q.ValidityStartDate.ToString());
-                    txb_enddt.Text = FormatDate(q.ValidityEndDate.ToString());
-
-                    rbQt.Enabled = false;
-                    rbPo.Enabled = false;
                     rbQt.Checked = false;
                     rbPo.Checked = true;
                     PO_DataInputs.Visible = true;
-                    
+                    txb_ponumber.Text = q.PO_Number;
+                    txb_donumber.Text = q.DO_Number;
+                    txb_podate.Text = FormatDate(q.PO_Date);
+                    txb_strtdt.Text = FormatDate(q.ValidityStartDate);
+                    txb_enddt.Text = FormatDate(q.ValidityEndDate);
                 }
 
-                ListItem item4 = ddlPlaceOfSupply.Items.FindByText(q.PlaceOfSupply);
-                if (item4 != null)
+                // Static Protection
+                rbQt.Enabled = rbPo.Enabled = false;
+
+                // 7. Grid Parity Call
+                ToggleGridColumns();
+
+                // 8. Supply & GST
+                ListItem supplyItem = ddlPlaceOfSupply.Items.FindByText(q.PlaceOfSupply);
+                if (supplyItem != null) { ddlPlaceOfSupply.ClearSelection(); supplyItem.Selected = true; }
+
+                if (!string.IsNullOrEmpty(q.CGSTorSGST) && q.CGSTorSGST.Trim().ToUpper() == "YES")
                 {
-                    ddlPlaceOfSupply.ClearSelection();
-                    item4.Selected = true;
+                    RadioButtonGst.SelectedValue = "1"; // Select CGST/SGST
+                }
+                else
+                {
+                    RadioButtonGst.SelectedValue = "0"; // Default to IGST if column is empty or NULL
                 }
 
-                if (q.ReferenceData.ToString() == "Yes")
+                // 9. Reference Data Logic
+                if (q.ReferenceData == "Yes")
                 {
                     rbYes.Checked = true;
                     rbNo.Checked = false;
+                    txt_clientrefname.Text = q.ReferenceName;
+                    txt_clientrefid.Text = q.ReferenceId;
+                    txt_clientrefname.ReadOnly = txt_clientrefid.ReadOnly = txt_clientrefdate.ReadOnly = false;
 
-                    txt_clientrefname.Text = q.ReferenceName.ToString();
-                    txt_clientrefid.Text = q.ReferenceId.ToString();
-                    DateTime dt;
-                    if (DateTime.TryParseExact(q.ReferenceDate, "dd-MMM-yyyy", null, System.Globalization.DateTimeStyles.None, out dt))
-                    {
-                        txt_clientrefdate.Text = dt.ToString("dd-MMM-yyyy");
-                    }
-                    else
-                    {
-                        txt_clientrefdate.Text = ""; // fallback for invalid or empty values
-                    }
+                    DateTime refDt;
+                    txt_clientrefdate.Text = DateTime.TryParseExact(q.ReferenceDate, "dd-MMM-yyyy", null, System.Globalization.DateTimeStyles.None, out refDt)
+                        ? refDt.ToString("dd-MMM-yyyy") : q.ReferenceDate;
                 }
                 else
                 {
                     rbYes.Checked = false;
                     rbNo.Checked = true;
-
                     txt_clientrefname.Text = "N/A";
                     txt_clientrefid.Text = "N/A";
                     txt_clientrefdate.Text = "01-Jan-2000";
+                    txt_clientrefname.ReadOnly = txt_clientrefid.ReadOnly = txt_clientrefdate.ReadOnly = true;
                 }
-
-                if (q.CGSTorSGST.ToString() == "Yes")
-                {
-                    RadioButtonGst.SelectedValue = "1";
-                }
-                else
-                {
-                    RadioButtonGst.SelectedValue = "0";
-                }
-            }
-            else
-            {
-                // Handle not found case
             }
         }
 
@@ -996,17 +957,34 @@ namespace Bill_Software.corporate.business.app
             DataUpdaterMethod();
         }
 
-        // Updated Method: DataUpdaterMethod()
+        private object GetSafeDate(string dateText)
+        {
+            DateTime dt;
+            // Tries to parse your specific format (dd-MMM-yyyy) or general formats
+            if (DateTime.TryParseExact(dateText, "dd-MMM-yyyy",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out dt))
+            {
+                return dt;
+            }
+            if (DateTime.TryParse(dateText, out dt))
+            {
+                return dt;
+            }
+            // Return SQL-safe min date if empty or invalid
+            return "1900-01-01";
+        }
+
         private void DataUpdaterMethod()
         {
             string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
             string qno = lblqno.Text;
-            string query = "select Status1, Status2, PaymentStatus from tbl_Quotation where Quotation_no=@Quotation_no";
-            SqlParameter[] pram = {
-                new SqlParameter("@Quotation_no", qno)
-            };
 
-            DataTable dtProInvPay = DbCL.SPreturn_dt(query, pram);
+            // 1. Validation Check (Proforma/Tax/Payment)
+            string query = "select Status1, Status2, PaymentStatus from tbl_Quotation where Quotation_no=@Quotation_no";
+            SqlParameter[] checkParam = { new SqlParameter("@Quotation_no", qno) };
+            DataTable dtProInvPay = DbCL.SPreturn_dt(query, checkParam);
+
             if (dtProInvPay.Rows.Count > 0)
             {
                 string pro = dtProInvPay.Rows[0]["Status1"].ToString();
@@ -1015,425 +993,171 @@ namespace Bill_Software.corporate.business.app
 
                 if (pro == "Yes" || inv == "Yes" || pay == "Yes")
                 {
-                    string status = string.Join(" ", new[] {
-                        pro == "Yes" ? "Proforma Invoice" : null,
-                        inv == "Yes" ? "Tax Invoice" : null,
-                        pay == "Yes" ? "Payment Invoice" : null
-                    }.Where(x => x != null));
-
+                    lblErrorMsg.Text = "Cannot update. Please delete associated invoices first.";
                     PanelError.Visible = true;
-                    lblErrorMsg.Text = "Delete " + status;
                     return;
                 }
-
-                decimal new_sub_total = 0, new_total_Service = 0, new_Gross_amount = 0;
-
-                string versionQuery = "SELECT ISNULL(MAX(Version), 0) + 1 FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no";
-                        SqlParameter[] versionParam = {
-                    new SqlParameter("@Quotation_no", qno)
-                };
-                int newVersion = Convert.ToInt32(DbCL.ExecuteScalar(versionQuery, versionParam));
-
-                // Soft delete old
-                string softDeleteQuery = @"UPDATE tbl_Quotaion_details SET IsDeleted = 1, IsLatest = 0, DeletedById = @DeletedById, DeletedOn = GETDATE()
-                                  WHERE Quotation_no = @Quotation_no AND IsDeleted = 0 AND IsLatest = 1";
-                SqlParameter[] softParams = {
-                    new SqlParameter("@Quotation_no", qno),
-                    new SqlParameter("@DeletedById", userId)
-                };
-                DbCL.ExecuteNonQuery(softDeleteQuery, softParams);
-
-                for (int i = 0; i < gd_Service_Product.Rows.Count; i++)
-                {
-                    CheckBox chk = (CheckBox)gd_Service_Product.Rows[i].FindControl("chk");
-                    if (chk.Checked)
-                    {
-                        string ProductId = ((Label)gd_Service_Product.Rows[i].FindControl("ProductID"))?.Text?.Trim() ?? ""; //ID
-                        string Product_code = ((Label)gd_Service_Product.Rows[i].FindControl("Product_code"))?.Text?.Trim() ?? ""; //HSN
-                        string ProductName = ((Label)gd_Service_Product.Rows[i].FindControl("ProductName"))?.Text?.Trim() ?? "";
-                        string Brand = ((Label)gd_Service_Product.Rows[i].FindControl("Brand"))?.Text?.Trim() ?? "";
-                        string ProductOrServiceCat = ((Label)gd_Service_Product.Rows[i].FindControl("ProductOrServiceCat"))?.Text?.Trim() ?? "";
-                        string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type"))?.Text?.Trim() ?? "";
-                        string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit"))?.Text?.Trim() ?? "";
-                        string InvStatus = "No";
-                        string Specification = ((TextBox)gd_Service_Product.Rows[i].FindControl("Specification"))?.Text?.Trim() ?? "~";
-                        string ItemNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemNo"))?.Text?.Trim() ?? "";
-                        string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo"))?.Text?.Trim() ?? "";
-                        string PackSize = ((TextBox)gd_Service_Product.Rows[i].FindControl("PackSize"))?.Text?.Trim() ?? "";
-                        string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks"))?.Text?.Trim() ?? "";
-                        string DeliveryDate = ((TextBox)gd_Service_Product.Rows[i].FindControl("DeliveryDate"))?.Text?.Trim() ?? "";
-                        string Department = ((TextBox)gd_Service_Product.Rows[i].FindControl("Department"))?.Text?.Trim() ?? "";
-                        string h = ((TextBox)gd_Service_Product.Rows[i].FindControl("txtOrder"))?.Text?.Trim() ?? "0";
-
-                        decimal Quantity = Convert.ToDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity"))?.Text);
-                        decimal Sail_Rate = Convert.ToDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate"))?.Text);
-                        decimal Tax_Rate = Convert.ToDecimal(((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate"))?.Text);
-                        decimal disc;
-                        decimal Discount_Rate = decimal.TryParse(((TextBox)gd_Service_Product.Rows[i].FindControl("Discount_Rate"))?.Text, out disc) ? disc : 0;
-
-                        decimal discounted_rate = Sail_Rate - (Sail_Rate * Discount_Rate / 100);
-                        decimal taxMultiplier = (Tax_Rate + 100) / 100;
-                        decimal Total_sail_rate = taxMultiplier * discounted_rate;
-                        decimal Total_sail_rate1 = Total_sail_rate * Quantity;
-                        decimal Total_sail_rate2 = discounted_rate * Quantity;
-                        decimal Service_tax = (Tax_Rate * Quantity * discounted_rate) / 100;
-
-                        new_sub_total += Total_sail_rate2;
-                        new_total_Service += Service_tax;
-                        new_Gross_amount = Math.Round(new_Gross_amount + Total_sail_rate1, 2);
-
-                        SqlParameter[] insertParams = {
-                            new SqlParameter("@Sl_no", h),
-                            new SqlParameter("@Quotation_no", qno),
-                            new SqlParameter("@Product_id", ProductId),
-                            new SqlParameter("@Product_Code", Product_code),
-                            new SqlParameter("@Product_name", ProductName),
-                            new SqlParameter("@Quantity", Quantity),
-                            new SqlParameter("@sail_rate", Sail_Rate),
-                            new SqlParameter("@Service_tax_rate", Tax_Rate),
-                            new SqlParameter("@discount_rate", Discount_Rate),
-                            new SqlParameter("@new_sailrate", discounted_rate),
-                            new SqlParameter("@Total_sail_rate", Total_sail_rate),
-                            new SqlParameter("@Total_sail_rate1", Total_sail_rate1),
-                            new SqlParameter("@Total_sail_rate2", Total_sail_rate2),
-                            new SqlParameter("@specification", Brand),
-                            new SqlParameter("@Misc", Specification),
-                            new SqlParameter("@InvStatus", InvStatus),
-                            new SqlParameter("@Type", Type),
-                            new SqlParameter("@Unit", Unit),
-                            new SqlParameter("@ProductOrServiceCat", ProductOrServiceCat),
-                            new SqlParameter("@ItemRemarks", ItemRemarks),
-                            new SqlParameter("@ItemNo", ItemNo),
-                            new SqlParameter("@MaterialNo", MaterialNo),
-                            new SqlParameter("@PackSize", PackSize),
-                            new SqlParameter("@DeliveryDate", DeliveryDate),
-                            new SqlParameter("@Department", Department),
-                            new SqlParameter("@AddedById", userId),
-                            new SqlParameter("@Version", newVersion)
-                        };
-
-                        string insertQry = @"INSERT INTO tbl_Quotaion_details
-                    (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discount_rate, new_sailrate,
-                     Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat,
-                     ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest)
-                    VALUES
-                    (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discount_rate, @new_sailrate,
-                     @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat,
-                     @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), @Version, 0, 1)";
-
-                        DbCL.ExecuteNonQuery(insertQry, insertParams);
-                    }
-                }
-
-                //DbCL.executeRdr("UPDATE tbl_Quotation SET Gross = '" + new_Gross_amount + "', Service_tax = '" + (new_Gross_amount % 1) +
-                //                 "', Net_amount = '" + new_Gross_amount + "', service_tax1 = '" + new_total_Service +
-                //                 "', sub_total = '" + new_sub_total + "' WHERE Quotation_no = '" + qno + "'");
-
-
-                string CGSTSGSTSTATUS = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
-                string IGSTSTATUS = RadioButtonGst.SelectedIndex != 0 ? "YES" : "";
-
-                string placeOfSupply = ddlPlaceOfSupply.Text?.Trim();
-
-                int validDays = 0;
-                int.TryParse(txt_valdays.Text?.Trim(), out validDays);
-
-                string deliveryTenure = "";
-                if (DDL_DeliveryTerms.SelectedValue == "4")      // Manual
-                    deliveryTenure = txt_deltrms.Text.Trim();
-                else if (DDL_DeliveryTerms.SelectedValue != "0")
-                    deliveryTenure = DDL_DeliveryTerms.SelectedItem.Text;
-
-                string packageForwarding = "";
-                if (DDL_pkgfrwd.SelectedValue == "3")             // Manual
-                    packageForwarding = txt_pkgfrwd.Text.Trim();
-                else if (DDL_pkgfrwd.SelectedValue != "0")
-                    packageForwarding = DDL_pkgfrwd.SelectedItem.Text;
-
-                string referenceOption = rbYes.Checked ? "Yes" : "No";
-
-                string referenceName = referenceOption == "Yes"
-                    ? txt_clientrefname.Text.Trim()
-                    : "N/A";
-
-                string referenceId = referenceOption == "Yes"
-                    ? txt_clientrefid.Text.Trim()
-                    : "N/A";
-
-                string referenceDate = referenceOption == "Yes"
-                    ? txt_clientrefdate.Text.Trim()
-                    : "1900-01-01";
-
-                string remarks = txt_remarks.Text?.Trim();
-                string itemview = DDL_ItemViewType.SelectedItem.Text?.Trim();
-                string discountView = DDL_DiscountView.SelectedItem.Text?.Trim();
-
-
-                string recordtyp = rbPo.Checked ? "Purchase Order" : "Quotation";
-
-                string DO_number = recordtyp == "Quotation"
-                    ? "N/A"
-                    : txb_donumber.Text.Trim();
-
-                string PO_number = recordtyp == "Quotation"
-                    ? "N/A"
-                    : txb_ponumber.Text.Trim();
-
-                string PO_Date = recordtyp == "Quotation"
-                    ? "1900-01-01"
-                    : txb_podate.Text.Trim();
-
-                string ValStart_Date = recordtyp == "Quotation"
-                    ? "1900-01-01"
-                    : txb_strtdt.Text.Trim();
-
-                string ValEnd_Date = recordtyp == "Quotation"
-                    ? "1900-01-01"
-                    : txb_enddt.Text.Trim();
-
-
-                decimal tcsAmount = 0;
-                decimal.TryParse(txt_tcs_amnt.Text, out tcsAmount);
-
-                decimal tcsPercent = 0;
-                decimal.TryParse(txt_tcs_percent.Text, out tcsPercent);
-
-                decimal deliveryAmount = 0;
-                decimal.TryParse(txt_delivery_amnt.Text, out deliveryAmount);
-
-                decimal freightPercent = 0;
-                decimal.TryParse(txt_freight_percent.Text, out freightPercent);
-
-                decimal otherAmount = 0;
-                decimal.TryParse(txt_othr_amnt.Text, out otherAmount);
-
-
-                //decimal grossAmount = new_Gross_amount;
-                //decimal serviceTax = new_total_Service;
-                //decimal subTotal = new_sub_total;
-                //decimal netAmount = total_sail_rate_details;
-
-
-                DbCL.executeRdr(
-                    "UPDATE tbl_Quotation SET " +
-
-                    "Gross = '" + new_Gross_amount + "', " +
-                    "Service_tax = '" + new_total_Service + "', " +
-                    "Net_amount = '" + new_Gross_amount + "', " +
-                    "service_tax1 = '" + new_total_Service + "', " +
-                    "sub_total = '" + new_sub_total + "', " +
-
-                    "ValidityDays = '" + validDays + "', " +
-                    "DeliveryTenure = '" + deliveryTenure + "', " +
-                    "PackingCharges = '" + packageForwarding + "', " +
-
-                    "cgstOrsgst = '" + CGSTSGSTSTATUS + "', " +
-                    "igst = '" + IGSTSTATUS + "', " +
-                    "PlaceofSupply = '" + ddlPlaceOfSupply.Text.Trim() + "', " +
-
-                    "ReferenceData = '" + referenceOption + "', " +
-                    "ReferenceName = '" + referenceName + "', " +
-                    "ReferenceId = '" + referenceId + "', " +
-                    "ReferenceDate = '" + referenceDate + "', " +
-
-                    "Remarks = '" + remarks + "', " +
-                    "DetailedView = '" + itemview + "', " +
-                    "DiscountView = '" + DDL_DiscountView.SelectedItem.Text.Trim() + "', " +
-
-                    "RecordType = '" + recordtyp + "', " +
-                    "DO_Number = '" + DO_number + "', " +
-                    "PO_Number = '" + PO_number + "', " +
-                    "PO_Date = '" + PO_Date + "', " +
-                    "Validity_StartDate = '" + ValStart_Date + "', " +
-                    "Validity_EndDate = '" + ValEnd_Date + "', " +
-
-                    "TCS_Amount = '" + tcsAmount + "', " +
-                    "TCS_Percent = '" + tcsPercent + "', " +
-                    "Freight_Amount = '" + deliveryAmount + "', " +
-                    "Freight_VAT_Percent = '" + freightPercent + "', " +
-                    "OtherCharge_Amount = '" + otherAmount + "', " +
-                    "ModifiedById = '" + userId + "', " +
-                    "ModifiedOn = GETDATE() WHERE Quotation_no = '" + qno + "'"
-                    );
-
-
-                double NewGross = Convert.ToDouble(new_Gross_amount);
-                updatedueamountdetails(NewGross);
-
-                lblOk.Text = "Data Updated Successfully.....";
-                PanelOK.Visible = true;
-                btnSabe.Visible = false;
             }
-        }
 
-        private void DataUpdaterMethod_OLD()
-        {
-            string qno = lblqno.Text;
-            string query = "select Status1,Status2,PaymentStatus from tbl_Quotation where Quotation_no=@Quotation_no";
-            SqlParameter[] pram = {
-                new SqlParameter("@Quotation_no",qno)
+            decimal new_sub_total = 0, new_total_Service = 0, new_Gross_amount = 0;
+
+            // 2. Determine Next Integer Version
+            string versionQuery = "SELECT ISNULL(MAX(Version), 0) + 1 FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no";
+            SqlParameter[] versionParam = { new SqlParameter("@Quotation_no", qno) };
+            int newVersion = Convert.ToInt32(DbCL.ExecuteScalar(versionQuery, versionParam));
+
+            // 3. Soft delete old latest records
+            string softDeleteQuery = @"UPDATE tbl_Quotaion_details SET IsDeleted = 1, IsLatest = 0, DeletedById = @DeletedById, DeletedOn = GETDATE()
+                              WHERE Quotation_no = @Quotation_no AND IsDeleted = 0 AND IsLatest = 1";
+            SqlParameter[] softParams = {
+        new SqlParameter("@Quotation_no", qno),
+        new SqlParameter("@DeletedById", userId)
+    };
+            DbCL.ExecuteNonQuery(softDeleteQuery, softParams);
+
+            // 4. Loop through Grid to Insert New Versions
+            for (int i = 0; i < gd_Service_Product.Rows.Count; i++)
+            {
+                CheckBox chk = (CheckBox)gd_Service_Product.Rows[i].FindControl("chk");
+                if (chk != null && chk.Checked)
+                {
+                    // Data Extraction
+                    string ProductId = ((Label)gd_Service_Product.Rows[i].FindControl("ProductID"))?.Text ?? "";
+                    string Product_code = ((Label)gd_Service_Product.Rows[i].FindControl("Product_code"))?.Text ?? "";
+                    string ProductName = ((Label)gd_Service_Product.Rows[i].FindControl("ProductName"))?.Text ?? "";
+                    string Brand = ((Label)gd_Service_Product.Rows[i].FindControl("Brand"))?.Text ?? "";
+                    string ProductOrServiceCat = ((Label)gd_Service_Product.Rows[i].FindControl("ProductOrServiceCat"))?.Text ?? "";
+                    string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type"))?.Text ?? "";
+                    string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit"))?.Text ?? "";
+                    string Specification = ((TextBox)gd_Service_Product.Rows[i].FindControl("Specification"))?.Text ?? "~";
+                    string ItemNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemNo"))?.Text ?? "";
+                    string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo"))?.Text ?? "";
+                    string PackSize = ((TextBox)gd_Service_Product.Rows[i].FindControl("PackSize"))?.Text ?? "";
+                    string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks"))?.Text ?? "";
+                    string DeliveryDate = ((TextBox)gd_Service_Product.Rows[i].FindControl("DeliveryDate"))?.Text ?? "";
+                    string Department = ((TextBox)gd_Service_Product.Rows[i].FindControl("Department"))?.Text ?? "";
+                    string slNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("txtOrder"))?.Text ?? "0";
+
+                    decimal Quantity = ParseDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text);
+                    decimal Sail_Rate = ParseDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate")).Text);
+                    decimal Tax_Rate = ParseDecimal(((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate")).Text);
+                    decimal Discount_Rate = ParseDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Discount_Rate")).Text);
+
+                    // Calculations
+                    decimal discounted_rate = Sail_Rate - (Sail_Rate * Discount_Rate / 100);
+                    decimal rowTaxAmt = (Tax_Rate * discounted_rate) / 100;
+                    decimal rateIncl = discounted_rate + rowTaxAmt;
+
+                    new_sub_total += (discounted_rate * Quantity);
+                    new_total_Service += (rowTaxAmt * Quantity);
+                    new_Gross_amount += (rateIncl * Quantity);
+
+                    SqlParameter[] insertParams = {
+                new SqlParameter("@Sl_no", slNo),
+                new SqlParameter("@Quotation_no", qno),
+                new SqlParameter("@Product_id", ProductId),
+                new SqlParameter("@Product_Code", Product_code),
+                new SqlParameter("@Product_name", ProductName),
+                new SqlParameter("@Quantity", Quantity),
+                new SqlParameter("@sail_rate", Sail_Rate),
+                new SqlParameter("@Service_tax_rate", Tax_Rate),
+                new SqlParameter("@discount_rate", Discount_Rate),
+                new SqlParameter("@new_sailrate", discounted_rate),
+                new SqlParameter("@Total_sail_rate", rateIncl),
+                new SqlParameter("@Total_sail_rate1", rateIncl * Quantity),
+                new SqlParameter("@Total_sail_rate2", discounted_rate * Quantity),
+                new SqlParameter("@specification", Brand),
+                new SqlParameter("@Misc", Specification),
+                new SqlParameter("@Type", Type),
+                new SqlParameter("@Unit", Unit),
+                new SqlParameter("@ProductOrServiceCat", ProductOrServiceCat),
+                new SqlParameter("@ItemRemarks", ItemRemarks),
+                new SqlParameter("@ItemNo", ItemNo),
+                new SqlParameter("@MaterialNo", MaterialNo),
+                new SqlParameter("@PackSize", PackSize),
+                new SqlParameter("@DeliveryDate", DeliveryDate),
+                new SqlParameter("@Department", Department),
+                new SqlParameter("@AddedById", userId),
+                new SqlParameter("@Version", newVersion)
             };
 
-            dtProInvPay = DbCL.SPreturn_dt(query, pram);
-            if (dtProInvPay.Rows.Count > 0)
-            {
-                string status = "";
-                string pro = dtProInvPay.Rows[0]["Status1"].ToString();
-                string inv = dtProInvPay.Rows[0]["Status2"].ToString();
-                string pay = dtProInvPay.Rows[0]["PaymentStatus"].ToString();
-                if (pro == "Yes" || inv == "Yes" || pay == "Yes")
-                {
-                    if (pro == "Yes")
-                    {
-                        status = "Proforma Invoice";
-                    }
-                    if (inv == "Yes")
-                    {
-                        status = status + " Tax Invoice";
-                    }
-                    if (pay == "Yes")
-                    {
-                        status = status + " Payment Invoice";
-                    }
-                    status = "Delete " + status;
+                    string insertQry = @"INSERT INTO tbl_Quotaion_details 
+                (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discount_rate, new_sailrate, 
+                 Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, 
+                 ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest)
+                VALUES 
+                (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discount_rate, @new_sailrate, 
+                 @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, 'No', @Type, @Unit, @ProductOrServiceCat, 
+                 @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), @Version, 0, 1)";
 
-                    PanelError.Visible = true;
-                    lblErrorMsg.Text = status;
-                }
-                else
-                {
-                    double gross = 0;
-                    double netamount = 0;
-                    double totaltax = 0;
-                    double subtotal = 0;
-                    double taxamo = 0;
-
-
-                    DbCL.executeRdr("delete from tbl_Quotaion_details where Quotation_no='" + lblqno.Text + "'");
-                    DbCL.executeRdr("delete from tbl_quotation_vat where Quotation_no='" + lblqno.Text + "'");
-
-                    int i = 0;
-                    int h = 1;
-                    DataTable dt1;
-                    DbCL.Sqlconnection();
-                    DbCL.ConnectDb();
-                    dt1 = (DataTable)ViewState["PhaseProductData"];
-                    if (dt1 != null)
-                    {
-
-                        for (i = 0; i <= dt1.Rows.Count - 1; i++)
-                        {
-                            SqlTransaction trans = null;
-                            SqlConnection conn = null;
-                            SqlCommand cmd = null;
-                            try
-                            {
-                                CheckBox chk = (CheckBox)(gd_Service_Product.Rows[i].FindControl("chk"));
-                                if (chk.Checked == true)
-                                {
-                                    string cnnString = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString();
-                                    conn = new SqlConnection(cnnString);
-                                    cmd = new SqlCommand { CommandType = CommandType.Text, Connection = conn };
-                                    conn.Open();
-                                    trans = conn.BeginTransaction();
-                                    cmd.Transaction = trans;
-
-                                    string Product_code = ((Label)gd_Service_Product.Rows[i].FindControl("Product_code")).Text;
-                                    string ProductName = ((Label)gd_Service_Product.Rows[i].FindControl("ProductName")).Text;
-                                    string Brand = ((Label)gd_Service_Product.Rows[i].FindControl("Brand")).Text;
-                                    string Quantity = ((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text;
-                                    string Sail_Rate = ((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate")).Text;
-                                    string Tax_Rate = ((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate")).Text;
-
-                                    string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type")).Text;
-                                    string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit")).Text;
-
-                                    string ProductOrServiceCat = ((Label)gd_Service_Product.Rows[i].FindControl("ProductOrServiceCat")).Text;
-
-                                    double quantity = 0;
-                                    double sailrate = 0;
-                                    double taxrate = 0;
-                                    double Total_sail_rate = 0;
-                                    double Total_sail_rate1 = 0;
-                                    double Total_sail_rate2 = 0;
-
-                                    if (RadioDiscountInflation.SelectedIndex == 0)
-                                    {
-                                        sailrate = Convert.ToDouble(Sail_Rate);
-                                        sailrate = Math.Round(((Convert.ToDouble(txtPercentage.Text) * sailrate) / 100), 2);
-                                        sailrate = Math.Round((Convert.ToDouble(Sail_Rate) - sailrate), 2);
-                                    }
-                                    else if (RadioDiscountInflation.SelectedIndex == 1)
-                                    {
-                                        sailrate = Convert.ToDouble(Sail_Rate);
-                                        sailrate = Math.Round(((Convert.ToDouble(txtPercentage.Text) * sailrate) / 100), 2);
-                                        sailrate = Math.Round((Convert.ToDouble(Sail_Rate) + sailrate), 2);
-                                    }
-                                    else if (RadioDiscountInflation.SelectedIndex == 2)
-                                    {
-                                        sailrate = Convert.ToDouble(Sail_Rate);
-                                    }
-
-                                    quantity = Convert.ToDouble(Quantity);
-                                    taxrate = Convert.ToDouble(Tax_Rate);
-
-                                    Total_sail_rate = sailrate + Math.Round(((sailrate * taxrate) / 100), 2);
-                                    Total_sail_rate1 = Math.Round((Total_sail_rate * quantity), 2);
-                                    Total_sail_rate2 = Math.Round((sailrate * quantity), 2);
-
-                                    subtotal = subtotal + Total_sail_rate2;
-                                    subtotal = Math.Round(subtotal);
-
-                                    gross = gross + Total_sail_rate1;
-                                    netamount = gross;
-
-                                    netamount = Math.Round(netamount);
-
-                                    taxamo = Math.Round(((sailrate * taxrate) / 100), 2);
-                                    totaltax = totaltax + taxamo;
-                                    totaltax = Math.Round(totaltax);
-
-                                    decimal service = (Convert.ToDecimal(Tax_Rate) * Convert.ToDecimal(Quantity) * Convert.ToDecimal(Sail_Rate)) / 100;
-
-                                    insertvatamount(service, Tax_Rate);
-                                    cmd.CommandText = ("insert into tbl_Quotaion_details(Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,specification,Type,Unit,ProductOrServiceCat)values('" + h.ToString() + "','" + lblqno.Text + "','" + Product_code + "','" + ProductName + "','" + Quantity + "','" + sailrate + "','" + Tax_Rate + "','" + Total_sail_rate + "','" + Total_sail_rate1 + "','" + Total_sail_rate2 + "','" + Brand.ToString() + "','" + Type.ToString() + "','" + Unit.ToString() + "','" + ProductOrServiceCat.ToString() + "')");
-
-                                    cmd.ExecuteNonQuery();
-                                    trans.Commit();
-                                    conn.Close();
-                                    trans.Dispose();
-                                    conn.Dispose();
-                                    cmd.Dispose();
-                                    h = h + 1;
-
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                i = 1;
-                                if (trans != null) trans.Rollback();
-                                throw ex;
-                            }
-                            finally
-                            {
-                                if (conn != null) conn.Close();
-                            }
-
-                        }
-                    }
-
-                    DbCL.Conn.Close();
-                    Service_tax = Convert.ToDecimal(gross) % 1;
-
-                    DbCL.executeRdr("update tbl_Quotation set Gross='" + gross + "',Service_tax='" + Service_tax + "',Net_amount='" + netamount + "',service_tax1='" + totaltax + "',sub_total='" + subtotal + "' where Quotation_no='" + lblqno.Text + "'");
-
-                    updatedueamountdetails(netamount);
-
-                    lblOk.Text = "Data Updated Successfully.....";
-                    PanelOK.Visible = true;
-                    btnSabe.Visible = false;
+                    DbCL.ExecuteNonQuery(insertQry, insertParams);
                 }
             }
+
+            // 5. Update Header Table (tbl_Quotation)
+            decimal tcsAmount = ParseDecimal(txt_tcs_amnt.Text);
+            decimal tcsPercent = ParseDecimal(txt_tcs_percent.Text);
+            decimal deliveryAmount = ParseDecimal(txt_delivery_amnt.Text);
+            decimal freightPercent = ParseDecimal(txt_freight_percent.Text);
+            decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
+            string otherChargeName = TextBox1.Text.Trim();
+
+            decimal finalNet = Math.Round(new_Gross_amount + tcsAmount + deliveryAmount + otherAmount, 2);
+
+            string updateHeader = @"UPDATE tbl_Quotation SET 
+        Gross = @Gross, Service_tax = @STax, Net_amount = @Net, service_tax1 = @STax1, sub_total = @SubT,
+        ValidityDays = @VDays, DeliveryTenure = @DTenure, PackingCharges = @PCharge, 
+        cgstOrsgst = @CGST, igst = @IGST, PlaceofSupply = @POS, 
+        ReferenceData = @RefD, ReferenceName = @RefN, ReferenceId = @RefI, ReferenceDate = @RefDt,
+        Remarks = @Remarks, DetailedView = @DView, DiscountView = @DiscView, 
+        RecordType = @RType, DO_Number = @DONum, PO_Number = @PONum, PO_Date = @PODt, 
+        Validity_StartDate = @VStart, Validity_EndDate = @VEnd,
+        TCS_Amount = @TCSA, TCS_Percent = @TCSP, Freight_Amount = @FrA, Freight_VAT_Percent = @FrP, 
+        OtherCharge_Name = @OthName, OtherCharge_Amount = @OthAmnt,
+        ModifiedById = @ModBy, ModifiedOn = GETDATE() 
+        WHERE Quotation_no = @QNo";
+
+            SqlParameter[] headParams = {
+        new SqlParameter("@Gross", new_Gross_amount),
+        new SqlParameter("@STax", new_total_Service),
+        new SqlParameter("@Net", finalNet),
+        new SqlParameter("@STax1", new_total_Service),
+        new SqlParameter("@SubT", new_sub_total),
+        new SqlParameter("@VDays", txt_valdays.Text),
+        new SqlParameter("@DTenure", DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text : DDL_DeliveryTerms.SelectedItem.Text),
+        new SqlParameter("@PCharge", DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text : DDL_pkgfrwd.SelectedItem.Text),
+        new SqlParameter("@CGST", RadioButtonGst.SelectedValue == "1" ? "YES" : ""),
+        new SqlParameter("@IGST", RadioButtonGst.SelectedValue == "0" ? "YES" : ""),
+        new SqlParameter("@POS", ddlPlaceOfSupply.SelectedItem.Text),
+        new SqlParameter("@RefD", rbYes.Checked ? "Yes" : "No"),
+        new SqlParameter("@RefN", rbYes.Checked ? txt_clientrefname.Text : "N/A"),
+        new SqlParameter("@RefI", rbYes.Checked ? txt_clientrefid.Text : "N/A"),
+        new SqlParameter("@RefDt", rbYes.Checked ? GetSafeDate(txt_clientrefdate.Text) : "1900-01-01"),
+        new SqlParameter("@Remarks", txt_remarks.Text),
+        new SqlParameter("@DView", DDL_ItemViewType.SelectedItem.Text),
+        new SqlParameter("@DiscView", DDL_DiscountView.SelectedItem.Text),
+        new SqlParameter("@RType", rbPo.Checked ? "Purchase Order" : "Quotation"),
+        new SqlParameter("@DONum", rbPo.Checked ? txb_donumber.Text : "N/A"),
+        new SqlParameter("@PONum", rbPo.Checked ? txb_ponumber.Text : "N/A"),
+        new SqlParameter("@PODt", rbPo.Checked ? GetSafeDate(txb_podate.Text) : "1900-01-01"),
+        new SqlParameter("@VStart", rbPo.Checked ? GetSafeDate(txb_strtdt.Text) : "1900-01-01"),
+        new SqlParameter("@VEnd", rbPo.Checked ? GetSafeDate(txb_enddt.Text) : "1900-01-01"),
+        new SqlParameter("@TCSA", tcsAmount),
+        new SqlParameter("@TCSP", tcsPercent),
+        new SqlParameter("@FrA", deliveryAmount),
+        new SqlParameter("@FrP", freightPercent),
+        new SqlParameter("@OthName", otherChargeName),
+        new SqlParameter("@OthAmnt", otherAmount),
+        new SqlParameter("@ModBy", userId),
+        new SqlParameter("@QNo", qno)
+    };
+
+            DbCL.ExecuteNonQuery(updateHeader, headParams);
+
+            updatedueamountdetails(Convert.ToDouble(finalNet));
+            lblOk.Text = "Data Updated Successfully (Version " + newVersion + ")";
+            PanelOK.Visible = true;
+            btnSabe.Visible = false;
         }
 
         private void updatedueamountdetails(double netamount)
@@ -1880,8 +1604,11 @@ namespace Bill_Software.corporate.business.app
                 dtPCat.Columns.Add("ItemRemarks");
                 dtPCat.Columns.Add("Sl_no");
                 dtPCat.Columns.Add("discount_rate");
-                dtPCat.Columns.Add("DeliveryDate");
-                dtPCat.Columns.Add("Department");
+                if (dtPCat.Columns.Contains("DeliveryDate") == false)
+                {
+                    dtPCat.Columns.Add("DeliveryDate", typeof(string));
+                    dtPCat.Columns.Add("Department", typeof(string));
+                }
             }
 
             DataRow dr = dtPCat.NewRow();
@@ -1902,8 +1629,9 @@ namespace Bill_Software.corporate.business.app
             dr["ItemRemarks"] = ItemRemarks;
             dr["Sl_no"] = Slno;
             dr["discount_rate"] = DiscountRate;
-            dr["DeliveryDate"] = DeliveryDate;
-            dr["Department"] = Department;
+            // When adding the row, ensure these are mapped:
+            dr["DeliveryDate"] = DeliveryDate; // from parameter
+            dr["Department"] = Department;     // from parameter
 
             dtPCat.Rows.Add(dr);
 
@@ -2150,26 +1878,66 @@ namespace Bill_Software.corporate.business.app
             return lastNumber;
         }
 
+        //private void Bindquotationno_OLD()
+        //{
+        //    string prefix = "QTN/FE/";
+        //    if (rbPo.Checked)
+        //    {
+        //        prefix = "PO/FE/";
+        //    }
+
+        //    string ss = findmonth();  // e.g., "24-25/"
+        //    int j = idreturn_New(prefix + ss);  // Get last used number for that prefix
+
+        //    string quotationNo;
+        //    do
+        //    {
+        //        j += 1;
+        //        quotationNo = prefix + ss + j.ToString();
+        //    }
+        //    while (QuotationNoExists(quotationNo));  // Keep looping if already exists
+
+        //    lblqno.Text = quotationNo;
+        //}
+
         private void Bindquotationno()
         {
-            string prefix = "QTN/FE/";
-            if (rbPo.Checked)
+            // 1. Get the record number currently being edited from the label
+            string currentNo = lbl_recordno.Text.Trim(); // e.g., "PO/FE/25-26/68" or "PO/FE/25-26/68A"
+
+            string newQuotationNo = "";
+
+            // 2. Identify the last character
+            char lastChar = currentNo[currentNo.Length - 1];
+
+            // 3. Logic: If the last character is NOT a digit, it's already a version (A, B, C...)
+            if (!char.IsDigit(lastChar))
             {
-                prefix = "PO/FE/";
+                // Increment the letter (A -> B, B -> C)
+                char nextLetter = (char)(lastChar + 1);
+                newQuotationNo = currentNo.Substring(0, currentNo.Length - 1) + nextLetter;
+            }
+            else
+            {
+                // It's the original base record (ends in a number), so start with 'A'
+                newQuotationNo = currentNo + "A";
             }
 
-            string ss = findmonth();  // e.g., "24-25/"
-            int j = idreturn_New(prefix + ss);  // Get last used number for that prefix
-
-            string quotationNo;
-            do
+            // 4. Final Safety: Check if this generated number somehow already exists in DB
+            while (QuotationNoExists(newQuotationNo))
             {
-                j += 1;
-                quotationNo = prefix + ss + j.ToString();
+                lastChar = newQuotationNo[newQuotationNo.Length - 1];
+                newQuotationNo = newQuotationNo.Substring(0, newQuotationNo.Length - 1) + (char)(lastChar + 1);
             }
-            while (QuotationNoExists(quotationNo));  // Keep looping if already exists
 
-            lblqno.Text = quotationNo;
+            lblqno.Text = newQuotationNo;
+        }
+
+        private bool QuotationNoExists_New(string qno)
+        {
+            string query = "SELECT COUNT(*) FROM tbl_Quotation WHERE Quotation_no = @QNo";
+            SqlParameter[] p = { new SqlParameter("@QNo", qno) };
+            return Convert.ToInt32(DbCL.ExecuteScalar(query, p)) > 0;
         }
 
         private bool QuotationNoExists(string quotationNo)
@@ -2230,273 +1998,170 @@ namespace Bill_Software.corporate.business.app
 
         private void MagicianNew()
         {
+            // 1. Generate the new ID (e.g., QT/68A)
             Bindquotationno();
+            string newRecordID = lblqno.Text; // Use this variable for consistency
 
-            string CGSTSGSTSTATUS = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
-            string IGSTSTATUS = RadioButtonGst.SelectedIndex != 0 ? "YES" : "";
-
+            // 2. Setup Variables
+            string CGSTSGSTSTATUS = RadioButtonGst.SelectedValue == "1" ? "YES" : "";
+            string IGSTSTATUS = RadioButtonGst.SelectedValue == "0" ? "YES" : "";
             int slNo = idreturn() + 1;
-            //int h = 0;
-
             string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
-            DataTable dt1 = (DataTable)ViewState["PhaseProductData"];
 
-            decimal new_sub_total = 0, new_total_Service = 0, new_Gross_amount = 0, total_sail_rate_details = 0;
-
+            decimal new_sub_total = 0, new_total_Service = 0, new_Gross_amount = 0;
             string cnnString = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString();
 
             using (SqlConnection conn = new SqlConnection(cnnString))
             {
                 conn.Open();
-
-                using (SqlCommand lockCmd = new SqlCommand("sp_getapplock", conn))
-                {
-                    lockCmd.CommandType = CommandType.StoredProcedure;
-                    lockCmd.Parameters.AddWithValue("@Resource", "Lock_Quotation_" + lblqno.Text);
-                    lockCmd.Parameters.AddWithValue("@LockMode", "Exclusive");
-                    lockCmd.Parameters.AddWithValue("@LockOwner", "Session");
-                    lockCmd.Parameters.AddWithValue("@DbPrincipal", "public");
-
-                    SqlParameter returnCode = new SqlParameter("@return_value", SqlDbType.Int) { Direction = ParameterDirection.ReturnValue };
-                    lockCmd.Parameters.Add(returnCode);
-
-                    lockCmd.ExecuteNonQuery();
-
-                    int result = (int)returnCode.Value;
-                    if (result < 0)
-                    {
-                        throw new Exception("Unable to acquire lock. Another user may be editing this quotation.");
-                    }
-                }
-
                 SqlTransaction trans = conn.BeginTransaction();
 
                 try
                 {
-                    if (dt1 != null)
+                    // PART A: Insert Item Details from GridView
+                    for (int i = 0; i < gd_Service_Product.Rows.Count; i++)
                     {
-                        for (int i = 0; i < dt1.Rows.Count; i++)
+                        CheckBox chk = (CheckBox)gd_Service_Product.Rows[i].FindControl("chk");
+                        if (chk != null && chk.Checked)
                         {
-                            CheckBox chk = (CheckBox)(gd_Service_Product.Rows[i].FindControl("chk"));
-                            if (chk.Checked)
+                            // Data Extraction
+                            string ProductId = ((Label)gd_Service_Product.Rows[i].FindControl("ProductID"))?.Text ?? "";
+                            string Product_code = ((Label)gd_Service_Product.Rows[i].FindControl("Product_code"))?.Text ?? "";
+                            string ProductName = ((Label)gd_Service_Product.Rows[i].FindControl("ProductName"))?.Text ?? "";
+                            string Brand = ((Label)gd_Service_Product.Rows[i].FindControl("Brand"))?.Text ?? "";
+                            string ProductOrServiceCat = ((Label)gd_Service_Product.Rows[i].FindControl("ProductOrServiceCat"))?.Text ?? "";
+                            string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type"))?.Text ?? "";
+                            string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit"))?.Text ?? "";
+                            string Specification = ((TextBox)gd_Service_Product.Rows[i].FindControl("Specification"))?.Text ?? "~";
+                            string ItemNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemNo"))?.Text ?? "";
+                            string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo"))?.Text ?? "";
+                            string PackSize = ((TextBox)gd_Service_Product.Rows[i].FindControl("PackSize"))?.Text ?? "";
+                            string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks"))?.Text ?? "";
+                            string DeliveryDate = ((TextBox)gd_Service_Product.Rows[i].FindControl("DeliveryDate"))?.Text ?? "";
+                            string Department = ((TextBox)gd_Service_Product.Rows[i].FindControl("Department"))?.Text ?? "";
+                            string sortOrder = ((TextBox)gd_Service_Product.Rows[i].FindControl("txtOrder"))?.Text ?? "0";
+
+                            decimal Quantity = ParseDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity")).Text);
+                            decimal Sail_Rate = ParseDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate")).Text);
+                            decimal Tax_Rate = ParseDecimal(((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate")).Text);
+                            decimal Discount_Rate = ParseDecimal(((TextBox)gd_Service_Product.Rows[i].FindControl("Discount_Rate")).Text);
+
+                            // Calculations
+                            decimal discounted_rate = Sail_Rate - (Sail_Rate * Discount_Rate / 100);
+                            decimal rowTaxAmt = (Tax_Rate * discounted_rate) / 100;
+                            decimal rateIncl = discounted_rate + rowTaxAmt;
+
+                            new_sub_total += (discounted_rate * Quantity);
+                            new_total_Service += (rowTaxAmt * Quantity);
+                            new_Gross_amount += (rateIncl * Quantity);
+
+                            string itemInsert = @"INSERT INTO tbl_Quotaion_details 
+                        (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, Version, IsLatest, IsDeleted) 
+                        VALUES (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, 'No', @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, 1, 1, 0)";
+
+                            using (SqlCommand cmd = new SqlCommand(itemInsert, conn, trans))
                             {
-                                //h++;
-
-                                // Get GridView controls safely
-                                string ProductId = ((Label)gd_Service_Product.Rows[i].FindControl("ProductID"))?.Text?.Trim() ?? "";
-                                string Product_code = ((Label)gd_Service_Product.Rows[i].FindControl("Product_code"))?.Text?.Trim() ?? "";
-                                string ProductName = ((Label)gd_Service_Product.Rows[i].FindControl("ProductName"))?.Text?.Trim() ?? "";
-                                string Brand = ((Label)gd_Service_Product.Rows[i].FindControl("Brand"))?.Text?.Trim() ?? "";
-                                string ProductOrServiceCat = ((Label)gd_Service_Product.Rows[i].FindControl("ProductOrServiceCat"))?.Text?.Trim() ?? "";
-                                string Type = ((Label)gd_Service_Product.Rows[i].FindControl("Type"))?.Text?.Trim() ?? "";
-                                string Unit = ((Label)gd_Service_Product.Rows[i].FindControl("Unit"))?.Text?.Trim() ?? "";
-                                string InvStatus = "No";
-                                string Specification = ((TextBox)gd_Service_Product.Rows[i].FindControl("Specification"))?.Text?.Trim() ?? "~";
-                                string ItemNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemNo"))?.Text?.Trim() ?? "";
-                                string MaterialNo = ((TextBox)gd_Service_Product.Rows[i].FindControl("MaterialNo"))?.Text?.Trim() ?? "";
-                                string PackSize = ((TextBox)gd_Service_Product.Rows[i].FindControl("PackSize"))?.Text?.Trim() ?? "";
-                                string ItemRemarks = ((TextBox)gd_Service_Product.Rows[i].FindControl("ItemRemarks"))?.Text?.Trim() ?? "";
-                                string DeliveryDate = ((TextBox)gd_Service_Product.Rows[i].FindControl("DeliveryDate"))?.Text?.Trim() ?? "";
-                                string Department = ((TextBox)gd_Service_Product.Rows[i].FindControl("Department"))?.Text?.Trim() ?? "";
-                                string h = ((TextBox)gd_Service_Product.Rows[i].FindControl("txtOrder")).Text;
-                                decimal qty;
-                                if (!decimal.TryParse(((TextBox)gd_Service_Product.Rows[i].FindControl("Quantity"))?.Text?.Trim(), out qty))
-                                    throw new ArgumentException("Invalid Quantity");
-                                decimal Quantity = qty;
-
-                                decimal rate;
-                                if (!decimal.TryParse(((TextBox)gd_Service_Product.Rows[i].FindControl("Sail_Rate"))?.Text?.Trim(), out rate))
-                                    throw new ArgumentException("Invalid Sail Rate");
-                                decimal Sail_Rate = rate;
-
-                                decimal tax;
-                                if (!decimal.TryParse(((Label)gd_Service_Product.Rows[i].FindControl("Tax_Rate"))?.Text?.Trim(), out tax))
-                                    throw new ArgumentException("Invalid Tax Rate");
-                                decimal Tax_Rate = tax;
-
-                                decimal disc;
-                                decimal Discount_Rate = decimal.TryParse(((TextBox)gd_Service_Product.Rows[i].FindControl("Discount_Rate"))?.Text?.Trim(), out disc) ? disc : 0;
-
-                                // Calculations
-                                decimal discounted_rate = Sail_Rate - (Sail_Rate * Discount_Rate / 100);
-                                decimal taxMultiplier = (Tax_Rate + 100) / 100;
-                                decimal Total_sail_rate = taxMultiplier * discounted_rate;
-                                decimal Total_sail_rate1 = Total_sail_rate * Quantity;
-                                decimal Total_sail_rate2 = discounted_rate * Quantity;
-                                decimal Service_tax = (Tax_Rate * Quantity * discounted_rate) / 100;
-
-                                new_sub_total += Total_sail_rate2;
-                                new_total_Service += Service_tax;
-                                new_Gross_amount = Math.Round(new_Gross_amount + Total_sail_rate1, 2);
-
-                                using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotaion_details (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById) VALUES (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById)", conn, trans))
-                                {
-                                    cmd.Parameters.AddWithValue("@Sl_no", h);
-                                    cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
-                                    cmd.Parameters.AddWithValue("@Product_id", ProductId);
-                                    cmd.Parameters.AddWithValue("@Product_Code", Product_code);
-                                    cmd.Parameters.AddWithValue("@Product_name", ProductName);
-                                    cmd.Parameters.AddWithValue("@Quantity", Quantity);
-                                    cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
-                                    cmd.Parameters.AddWithValue("@Service_tax_rate", Tax_Rate);
-                                    cmd.Parameters.AddWithValue("@Total_sail_rate", Total_sail_rate);
-                                    cmd.Parameters.AddWithValue("@Total_sail_rate1", Total_sail_rate1);
-                                    cmd.Parameters.AddWithValue("@Total_sail_rate2", Total_sail_rate2);
-                                    cmd.Parameters.AddWithValue("@specification", Brand);
-                                    cmd.Parameters.AddWithValue("@Misc", Specification);
-                                    cmd.Parameters.AddWithValue("@InvStatus", InvStatus);
-                                    cmd.Parameters.AddWithValue("@Type", Type);
-                                    cmd.Parameters.AddWithValue("@Unit", Unit);
-                                    cmd.Parameters.AddWithValue("@ProductOrServiceCat", ProductOrServiceCat);
-                                    cmd.Parameters.AddWithValue("@discount_rate", Discount_Rate);
-                                    cmd.Parameters.AddWithValue("@new_sailrate", discounted_rate);
-                                    cmd.Parameters.AddWithValue("@ItemRemarks", ItemRemarks);
-                                    cmd.Parameters.AddWithValue("@ItemNo", ItemNo);
-                                    cmd.Parameters.AddWithValue("@MaterialNo", MaterialNo);
-                                    cmd.Parameters.AddWithValue("@PackSize", PackSize);
-                                    cmd.Parameters.AddWithValue("@DeliveryDate", DeliveryDate);
-                                    cmd.Parameters.AddWithValue("@Department", Department);
-                                    cmd.Parameters.AddWithValue("@AddedById", userId);
-                                    cmd.ExecuteNonQuery();
-                                }
+                                cmd.Parameters.AddWithValue("@Sl_no", sortOrder);
+                                cmd.Parameters.AddWithValue("@Quotation_no", newRecordID);
+                                cmd.Parameters.AddWithValue("@Product_id", ProductId);
+                                cmd.Parameters.AddWithValue("@Product_Code", Product_code);
+                                cmd.Parameters.AddWithValue("@Product_name", ProductName);
+                                cmd.Parameters.AddWithValue("@Quantity", Quantity);
+                                cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
+                                cmd.Parameters.AddWithValue("@Service_tax_rate", Tax_Rate);
+                                cmd.Parameters.AddWithValue("@Total_sail_rate", rateIncl);
+                                cmd.Parameters.AddWithValue("@Total_sail_rate1", rateIncl * Quantity);
+                                cmd.Parameters.AddWithValue("@Total_sail_rate2", discounted_rate * Quantity);
+                                cmd.Parameters.AddWithValue("@specification", Brand);
+                                cmd.Parameters.AddWithValue("@Misc", Specification);
+                                cmd.Parameters.AddWithValue("@Type", Type);
+                                cmd.Parameters.AddWithValue("@Unit", Unit);
+                                cmd.Parameters.AddWithValue("@ProductOrServiceCat", ProductOrServiceCat);
+                                cmd.Parameters.AddWithValue("@discount_rate", Discount_Rate);
+                                cmd.Parameters.AddWithValue("@new_sailrate", discounted_rate);
+                                cmd.Parameters.AddWithValue("@ItemRemarks", ItemRemarks);
+                                cmd.Parameters.AddWithValue("@ItemNo", ItemNo);
+                                cmd.Parameters.AddWithValue("@MaterialNo", MaterialNo);
+                                cmd.Parameters.AddWithValue("@PackSize", PackSize);
+                                cmd.Parameters.AddWithValue("@DeliveryDate", DeliveryDate);
+                                cmd.Parameters.AddWithValue("@Department", Department);
+                                cmd.Parameters.AddWithValue("@AddedById", userId);
+                                cmd.ExecuteNonQuery();
                             }
                         }
                     }
 
-                    // Capture quotation metadata
-                    int vDays;
-                    if (!int.TryParse(txt_valdays.Text?.Trim(), out vDays))
-                    {
-                        throw new ArgumentException("Invalid Validity Days");
-                    }
-                    int validDays = vDays;
-
-                    //string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text?.Trim() : DDL_DeliveryTerms.SelectedItem.Text;
-                    //string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text?.Trim() : DDL_pkgfrwd.SelectedItem.Text;
-
-                    string deliveryTenure = "";
-                    string packageForwarding = "";
-
-                    if (DDL_DeliveryTerms.SelectedValue == "4") // Manual Input
-                    {
-                        deliveryTenure = txt_deltrms.Text.Trim();
-                    }
-                    else if (DDL_DeliveryTerms.SelectedValue != "0") // Not --SELECT--
-                    {
-                        deliveryTenure = DDL_DeliveryTerms.SelectedItem.Text;
-                    }
-                    if (DDL_pkgfrwd.SelectedValue == "3") // Manual Input
-                    {
-                        packageForwarding = txt_pkgfrwd.Text.Trim();
-                    }
-                    else if (DDL_pkgfrwd.SelectedValue != "0") // Not --SELECT--
-                    {
-                        packageForwarding = DDL_pkgfrwd.SelectedItem.Text;
-                    }
-
-                    string remarks = txt_remarks.Text?.Trim();
-                    string itemview = DDL_ItemViewType.SelectedItem.Text?.Trim();
-                    string referenceOption = rbYes.Checked ? "Yes" : "No";
-                    string referenceName = referenceOption == "No" ? "N/A" : txt_clientrefname.Text?.Trim();
-                    string referenceId = referenceOption == "No" ? "N/A" : txt_clientrefid.Text?.Trim();
-                    string referenceDate = referenceOption == "No" ? "1900-01-01" : txt_clientrefdate.Text?.Trim();
-
-                    string recordtyp = rbPo.Checked ? "Purchase Order" : "Quotation";
-                    string DO_number = recordtyp == "Quotation" ? "N/A" : txb_donumber.Text?.Trim();
-                    string PO_number = recordtyp == "Quotation" ? "N/A" : txb_ponumber.Text?.Trim();
-                    string PO_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_podate.Text?.Trim();
-                    string ValStart_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_strtdt.Text?.Trim();
-                    string ValEnd_Date = recordtyp == "Quotation" ? "1900-01-01" : txb_enddt.Text?.Trim();
-
+                    // PART B: Calculate Header Totals
                     decimal tcsAmount = ParseDecimal(txt_tcs_amnt.Text);
                     decimal tcsPercent = ParseDecimal(txt_tcs_percent.Text);
                     decimal deliveryAmount = ParseDecimal(txt_delivery_amnt.Text);
+                    decimal freightPercent = ParseDecimal(txt_freight_percent.Text);
                     decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
-                    decimal freightPercent = 0;
-                    decimal.TryParse(txt_freight_percent.Text, out freightPercent);
 
-                    total_sail_rate_details = Math.Round(new_Gross_amount, 2);
-                    new_total_Service = Math.Round(new_total_Service, 2);
+                    decimal finalNet = Math.Round(new_Gross_amount + tcsAmount + deliveryAmount + otherAmount, 2);
 
-                    using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotation 
-                (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView)
-                VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView)", conn, trans))
+                    // PART C: Insert Header
+                    string headerInsert = @"INSERT INTO tbl_Quotation 
+                (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount, IsLatest, Version)
+                VALUES (@QNo, @QDate, @CId, @Gross, @STax, @Net, 'No', 'No', @Sl, 'No', @STax1, @Sub, @CGST, @IGST, @POS, 'No', @RefD, @RefN, @RefI, @RefDt, @VDays, @DTenure, @PCharge, @Rem, @DView, @RType, @DO, @PO, @PODate, @VStart, @VEnd, @UserId, @DiscView, @TCSA, @TCSP, @FrA, @FrP, @OthN, @OthA, 1, 1)";
+
+                    using (SqlCommand cmd = new SqlCommand(headerInsert, conn, trans))
                     {
-                        cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text?.Trim());
-                        cmd.Parameters.AddWithValue("@Quotation_date", txtquotationDate.Text?.Trim());
-                        cmd.Parameters.AddWithValue("@Client_Id", cmbClient.SelectedValue.ToString());
+                        cmd.Parameters.AddWithValue("@QNo", newRecordID);
+                        cmd.Parameters.AddWithValue("@QDate", GetSafeDate(txtquotationDate.Text));
+                        cmd.Parameters.AddWithValue("@CId", cmbClient.SelectedValue);
                         cmd.Parameters.AddWithValue("@Gross", new_Gross_amount);
-                        cmd.Parameters.AddWithValue("@Service_tax", new_total_Service);
-                        cmd.Parameters.AddWithValue("@Net_amount", total_sail_rate_details);
-                        cmd.Parameters.AddWithValue("@Sl_no", slNo);
-                        cmd.Parameters.AddWithValue("@service_tax1", new_total_Service);
-                        cmd.Parameters.AddWithValue("@sub_total", new_sub_total);
-                        cmd.Parameters.AddWithValue("@cgstOrsgst", CGSTSGSTSTATUS);
-                        cmd.Parameters.AddWithValue("@igst", IGSTSTATUS);
-                        cmd.Parameters.AddWithValue("@PlaceofSupply", ddlPlaceOfSupply.Text?.Trim());
-                        cmd.Parameters.AddWithValue("@ReferenceData", referenceOption);
-                        cmd.Parameters.AddWithValue("@ReferenceName", referenceName);
-                        cmd.Parameters.AddWithValue("@ReferenceId", referenceId);
-                        cmd.Parameters.AddWithValue("@ReferenceDate", referenceDate);
-                        cmd.Parameters.AddWithValue("@ValidityDays", validDays);
-                        cmd.Parameters.AddWithValue("@DeliveryTenure", deliveryTenure);
-                        cmd.Parameters.AddWithValue("@PackingCharges", packageForwarding);
-                        cmd.Parameters.AddWithValue("@Remarks", remarks);
-                        cmd.Parameters.AddWithValue("@DetailedView", itemview);
-                        cmd.Parameters.AddWithValue("@RecordType", recordtyp);
-                        cmd.Parameters.AddWithValue("@DO_Number", DO_number);
-                        cmd.Parameters.AddWithValue("@PO_Number", PO_number);
-                        cmd.Parameters.AddWithValue("@PO_Date", PO_Date);
-                        cmd.Parameters.AddWithValue("@Validity_StartDate", ValStart_Date);
-                        cmd.Parameters.AddWithValue("@Validity_EndDate", ValEnd_Date);
-                        cmd.Parameters.AddWithValue("@AddedById", userId);
-                        cmd.Parameters.AddWithValue("@DiscountView", DDL_DiscountView.SelectedItem.Text?.Trim());
-
-                        cmd.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
-                        cmd.Parameters.AddWithValue("@TCS_Percent", tcsPercent);
-                        cmd.Parameters.AddWithValue("@Freight_Amount", deliveryAmount);
-                        cmd.Parameters.AddWithValue("@Freight_VAT_Percent", freightPercent);
-                        cmd.Parameters.AddWithValue("@OtherCharge_Name", otherAmount);
-                        cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
+                        cmd.Parameters.AddWithValue("@STax", new_total_Service);
+                        cmd.Parameters.AddWithValue("@Net", finalNet);
+                        cmd.Parameters.AddWithValue("@Sl", slNo);
+                        cmd.Parameters.AddWithValue("@STax1", new_total_Service);
+                        cmd.Parameters.AddWithValue("@Sub", new_sub_total);
+                        cmd.Parameters.AddWithValue("@CGST", CGSTSGSTSTATUS);
+                        cmd.Parameters.AddWithValue("@IGST", IGSTSTATUS);
+                        cmd.Parameters.AddWithValue("@POS", ddlPlaceOfSupply.SelectedItem.Text);
+                        cmd.Parameters.AddWithValue("@RefD", rbYes.Checked ? "Yes" : "No");
+                        cmd.Parameters.AddWithValue("@RefN", rbYes.Checked ? txt_clientrefname.Text : "N/A");
+                        cmd.Parameters.AddWithValue("@RefI", rbYes.Checked ? txt_clientrefid.Text : "N/A");
+                        cmd.Parameters.AddWithValue("@RefDt", rbYes.Checked ? GetSafeDate(txt_clientrefdate.Text) : "1900-01-01");
+                        cmd.Parameters.AddWithValue("@VDays", txt_valdays.Text);
+                        cmd.Parameters.AddWithValue("@DTenure", DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text : DDL_DeliveryTerms.SelectedItem.Text);
+                        cmd.Parameters.AddWithValue("@PCharge", DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text : DDL_pkgfrwd.SelectedItem.Text);
+                        cmd.Parameters.AddWithValue("@Rem", txt_remarks.Text);
+                        cmd.Parameters.AddWithValue("@DView", DDL_ItemViewType.SelectedItem.Text);
+                        cmd.Parameters.AddWithValue("@RType", rbPo.Checked ? "Purchase Order" : "Quotation");
+                        cmd.Parameters.AddWithValue("@DO", rbPo.Checked ? txb_donumber.Text : "N/A");
+                        cmd.Parameters.AddWithValue("@PO", rbPo.Checked ? txb_ponumber.Text : "N/A");
+                        cmd.Parameters.AddWithValue("@PODate", rbPo.Checked ? GetSafeDate(txb_podate.Text) : "1900-01-01");
+                        cmd.Parameters.AddWithValue("@VStart", rbPo.Checked ? GetSafeDate(txb_strtdt.Text) : "1900-01-01");
+                        cmd.Parameters.AddWithValue("@VEnd", rbPo.Checked ? GetSafeDate(txb_enddt.Text) : "1900-01-01");
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@DiscView", DDL_DiscountView.SelectedItem.Text);
+                        cmd.Parameters.AddWithValue("@TCSA", tcsAmount);
+                        cmd.Parameters.AddWithValue("@TCSP", tcsPercent);
+                        cmd.Parameters.AddWithValue("@FrA", deliveryAmount);
+                        cmd.Parameters.AddWithValue("@FrP", freightPercent);
+                        cmd.Parameters.AddWithValue("@OthN", TextBox1.Text.Trim());
+                        cmd.Parameters.AddWithValue("@OthA", otherAmount);
                         cmd.ExecuteNonQuery();
                     }
 
-
-                    insertPaymentPhaseNew(lblqno.Text, conn, trans);
-                    insertprimaryServiceNew(lblqno.Text, conn, trans);
+                    // PART D: Auxiliary Data
+                    insertPaymentPhaseNew(newRecordID, conn, trans);
+                    insertprimaryServiceNew(newRecordID, conn, trans);
 
                     trans.Commit();
 
-                    lblOk.Text = "Data Saved Successfully.....!  Agianst Record No :" + lblqno.Text.ToString();
-                    PanelOK.Visible = true;
-                    //Button3.Visible = false;
-                }
-                //catch (Exception ex)
-                //{
-                //    try { trans?.Rollback(); } catch { }
-                //    lblErrorMsg.Text = "Error occurred: " + ex.Message;
-                //    PanelError.Visible = true;
-                //}
+                    // Sync labels
+                    lbl_recordno.Text = newRecordID;
 
+                    lblOk.Text = "New Record Created: " + newRecordID;
+                    PanelOK.Visible = true;
+                    btnSabe.Visible = btnNew.Visible = false;
+                }
                 catch (Exception ex)
                 {
-                    try { trans?.Rollback(); } catch { }
-
-                    // Build a more complete error message
-                    StringBuilder errorMsg = new StringBuilder();
-                    errorMsg.AppendLine("An error occurred:");
-                    errorMsg.AppendLine(ex.Message);
-
-                    if (ex.InnerException != null)
-                    {
-                        errorMsg.AppendLine("Inner Exception:");
-                        errorMsg.AppendLine(ex.InnerException.ToString());
-                    }
-
-                    errorMsg.AppendLine("Stack Trace:");
-                    errorMsg.AppendLine(ex.StackTrace);
-
-                    lblErrorMsg.Text = errorMsg.ToString().Replace(Environment.NewLine, "<br/>");
+                    if (trans != null) trans.Rollback();
+                    lblErrorMsg.Text = "Error: " + ex.Message;
                     PanelError.Visible = true;
                 }
             }
@@ -2505,8 +2170,11 @@ namespace Bill_Software.corporate.business.app
         private decimal ParseDecimal(string text)
         {
             decimal value;
-            if (decimal.TryParse(text, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out value))
+            // Changed to NumberStyles.Any to accept Leading/Trailing spaces and Negative numbers
+            if (decimal.TryParse(text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out value))
+            {
                 return value;
+            }
             // fallback to 0
             return 0m;
         }
@@ -2620,5 +2288,10 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
+        protected void RadioButtonGst_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // If the user changes GST type, we re-run the column toggle or calculations if necessary
+            ToggleGridColumns();
+        }
     }
 }
