@@ -216,6 +216,7 @@
                             <li id="proforma" runat="server">Proforma Invoice
 									<ul class="nav first">
                                         <li id="Add_proforma" runat="server"><a href="Add_proforma.aspx">Create Proforma Invoice</a></li>
+                                        <li id="Manual_proforma" runat="server"><a href="Direct_Proforma.aspx">Manual Proforma Invoice</a></li>
                                         <li id="View_proforma" runat="server"><a href="View_proforma.aspx">View Proforma Invoice</a></li>
                                         <li id="Seartch_proforma" runat="server"><a href="Seartch_proforma.aspx">Search Proforma Invoice</a></li>
                                         <li id="Delete_proforma" runat="server"><a href="Delete_proforma.aspx">Delete Proforma Invoice</a></li>

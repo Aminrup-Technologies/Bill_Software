@@ -679,6 +679,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl Add_proforma;
         
         /// <summary>
+        /// Manual_proforma control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl Manual_proforma;
+        
+        /// <summary>
         /// View_proforma control.
         /// </summary>
         /// <remarks>
