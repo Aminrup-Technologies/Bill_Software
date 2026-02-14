@@ -635,112 +635,115 @@
             </tr>
         </table>
 
-        <table border="0" width="100%" class="DELIVERY pagebrake" id="tbl_VALIDITYOFTHEOFFER" runat="server" visible="true">
+
+
+        <table id="tbl_Financials" runat="server" border="0" width="100%" style="border-collapse: collapse; font-family: Arial, sans-serif; font-size: 13px; margin-top: 10px;">
+
             <tr>
-                <td class="" style="text-align: left; font-weight: bold; width: 30%;">VALIDITYOF THE OFFER</td>
-                <td class="" style="text-align: left; font-weight: 100; width: 70%;">This Offer is valid for
-                    <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Days from the Date of Submission.<br />
+                <td style="width: 70%;"></td>
+                <td style="width: 17%; font-weight: bold; text-align: right; padding: 4px;">Total Amount:</td>
+                <td style="width: 13%; text-align: right; padding: 4px; font-weight: bold;">
+                    <asp:Label ID="lbl_SubTotal" runat="server"></asp:Label>
                 </td>
             </tr>
-            <%--<tr>
-                <td class="" style="text-align: justify; font-weight: 100">This Offer is valid for
-                    <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Days from the Date of Submission.<br />
+
+            <tr id="tr_freight" runat="server">
+                <td></td>
+                <td style="font-weight: bold; text-align: right; padding: 4px; color: #333; font-style: italic;">Add: Freight Charges (<asp:Label ID="lbl_freightPercent" runat="server"></asp:Label>%):
                 </td>
-            </tr>--%>
+                <td style="text-align: right; padding: 4px; font-style: italic;">
+                    <asp:Label ID="lbl_freightAmnt" runat="server"></asp:Label>
+                </td>
+            </tr>
+
+            <tr id="tr_tcs" runat="server">
+                <td></td>
+                <td style="font-weight: bold; text-align: right; padding: 4px; color: #333; font-style: italic;">Add: TCS Amount:
+                </td>
+                <td style="text-align: right; padding: 4px; font-style: italic;">
+                    <asp:Label ID="lbl_tcsAmnt" runat="server"></asp:Label>
+                </td>
+            </tr>
+
+            <tr id="tr_other" runat="server">
+                <td></td>
+                <td style="font-weight: bold; text-align: right; padding: 4px; color: #333; font-style: italic;">Add: Other Charges:
+                </td>
+                <td style="text-align: right; padding: 4px; font-style: italic;">
+                    <asp:Label ID="lbl_otherAmnt" runat="server"></asp:Label>
+                </td>
+            </tr>
+
+        </table>
+
+        <br />
+
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="tbl_VALIDITYOFTHEOFFER" runat="server">
             <tr>
-                <td colspan="2" class="gap" style="">&nbsp</td>
+                <td style="text-align: left; font-weight: bold; width: 28%; vertical-align: top; font-size: 13px;">VALIDITY OF OFFER</td>
+                <td style="text-align: left; font-weight: normal; width: 72%; font-size: 13px;">This Offer is valid for <b>
+                    <asp:Label ID="lbl_valdays" runat="server"></asp:Label></b> Days from the Date of Submission.
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="height: 8px;"></td>
             </tr>
         </table>
 
-        <table border="0" width="100%" class="DELIVERY pagebrake" id="tbl_tx" runat="server" visible="true">
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="tbl_tx" runat="server">
             <tr>
-                <td class="" style="text-align: left; font-weight: bold; width: 30%;">GST APPLICABILITY</td>
-                <td class="" style="text-align: left; font-weight: 100; width: 70%;"><span>GST will be <asp:Label ID="Label1" runat="server" Font-Bold="true" Text="charged extra"></asp:Label>&nbsp;item-wise as applicable under the prevailing GST laws based on HSN/SAC classification.</span><br />
+                <td style="text-align: left; font-weight: bold; width: 28%; vertical-align: top; font-size: 13px;">GST APPLICABILITY</td>
+                <td style="text-align: left; font-weight: normal; width: 72%; font-size: 13px;">GST will be <b>charged extra</b> item-wise as applicable under the prevailing GST laws based on HSN/SAC classification.
                 </td>
             </tr>
-            <%--<tr>
-                <td class="" style="text-align: justify; font-weight: 100">This Offer is valid for
-                    <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Days from the Date of Submission.<br />
-                </td>
-            </tr>--%>
             <tr>
-                <td colspan="2" class="gap" style="">&nbsp</td>
+                <td colspan="2" style="height: 8px;"></td>
             </tr>
         </table>
 
-        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table1" runat="server" visible="true">
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table1" runat="server">
             <tr>
-                <td class="" style="text-align: left; font-weight: bold; width: 30%;">DELIVERY TERMS</td>
-                <td class="" style="text-align: left; font-weight: 100; width: 70%;">Within 
-                    <asp:Label ID="lbl_deliverytrms" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;from the Date of Receipt of all Technical Clearance.<br />
+                <td style="text-align: left; font-weight: bold; width: 28%; vertical-align: top; font-size: 13px;">DELIVERY TERMS</td>
+                <td style="text-align: left; font-weight: normal; width: 72%; font-size: 13px;">Within <b>
+                    <asp:Label ID="lbl_deliverytrms" runat="server"></asp:Label></b> from the Date of Receipt of all Technical Clearance.
                 </td>
             </tr>
-            <%--<tr>
-                <td class="" style="text-align: justify; font-weight: 100">Within 
-                    <asp:Label ID="lbl_deliverytrms" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Weeks from the Date of Receipt of all Technical Clearance.<br />
-                </td>
-            </tr>--%>
             <tr>
-                <td colspan="2" class="gap" style="">&nbsp</td>
+                <td colspan="2" style="height: 8px;"></td>
             </tr>
         </table>
 
-        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table2" runat="server" visible="false">
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table3" runat="server">
             <tr>
-                <td class="" style="text-align: left; font-weight: bold; width: 30%;">MATERIAL ACCEPTANCE</td>
-                <td class="" style="text-align: left; font-weight: 100; width: 70%;">Material once invoiced cannot be returned back
+                <td style="text-align: left; font-weight: bold; width: 28%; vertical-align: top; font-size: 13px;">PACKING & FORWARDING</td>
+                <td style="text-align: left; font-weight: normal; width: 72%; font-size: 13px;">Charges will be <b>
+                    <asp:Label ID="lbl_pkging" runat="server"></asp:Label></b>
                 </td>
             </tr>
-            <%--<tr>
-                <td class="" style="text-align: justify; font-weight: 100">Material once invoiced cannot be returned back
-                </td>
-            </tr>--%>
             <tr>
-                <td colspan="2" class="gap" style="">&nbsp</td>
+                <td colspan="2" style="height: 8px;"></td>
             </tr>
         </table>
 
-        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table3" runat="server" visible="true">
+        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table4" runat="server">
             <tr>
-                <td class="" style="text-align: left; font-weight: bold; width: 30%;">PACKING & FORWARDING</td>
-                <td class="" style="text-align: left; font-weight: 100; width: 70%;">Charges will be 
-                    <asp:Label ID="lbl_pkging" runat="server" Text="15" Font-Bold="true"></asp:Label><br />
+                <td style="text-align: left; font-weight: bold; width: 28%; vertical-align: top; font-size: 13px;">SPECIAL NOTE / INSTRUCTIONS</td>
+                <td style="text-align: left; font-weight: normal; width: 72%; font-size: 13px; line-height: 1.5;">
+                    <asp:Label ID="lbl_remarks" runat="server"></asp:Label>
                 </td>
             </tr>
-            <%--<tr>
-                <td class="" style="text-align: justify; font-weight: 100">Charges will be 
-                    <asp:Label ID="lbl_pkging" runat="server" Text="15" Font-Bold="true"></asp:Label><br />
-                </td>
-            </tr>--%>
             <tr>
-                <td colspan="2" class="gap" style="">&nbsp</td>
+                <td colspan="2" style="height: 15px;"></td>
             </tr>
-        </table>
 
-        <table border="0" width="100%" class="DELIVERY pagebrake" id="Table4" runat="server" visible="true">
             <tr>
-                <td class="" style="text-align: left; font-weight: bold;">SPECIAL NOTE / INSTRUCTIONS</td>
-                <td class="" style="text-align: left; font-weight: 100; width: 70%;">
-                    <asp:Label ID="lbl_remarks" runat="server" Text="N/A"></asp:Label>&nbsp;<br />
+                <td colspan="2" style="text-align: justify; font-weight: normal; font-size: 13px; line-height: 1.6;">We trust the above offer is in line with your requirement and we are looking forward to receive your valued order at the earliest.<br />
+                    Please feel free to contact us for any further clarifications in this regard.
+                    <br />
+                    Thanking you and assuring you of our best and prompt services always.
+                    <br />
+                    <b>Thanks & Regards,</b>
                 </td>
-            </tr>
-            <tr>
-                <td colspan="2" class="gap" style="">&nbsp</td>
-            </tr>
-            <tr>
-                <td colspan="2" class="" style="text-align: justify; font-weight: 100">We trust the above offer is in line with your requirement and we are looking forward to receive your valued order at the earliest.<br />
-                    Please feel free to contact us for any further clarifications in this regard.<br />
-                    <br />
-                    Thanking you and assuring you of our best and prompt services always.<br />
-                    <br />
-                    <br />
-                    <br />
-                    Thanks & Regards,
-                    <br />
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" class="gap" style="">&nbsp</td>
             </tr>
         </table>
 

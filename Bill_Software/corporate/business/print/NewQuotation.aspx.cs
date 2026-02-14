@@ -59,7 +59,7 @@ namespace Bill_Software.corporate.business.print
             }
         }
 
-        private void buindalldata(string id)
+        private void buindalldata_OLD(string id)
         {
             string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst,PlaceofSupply,ReferenceName,ReferenceId,ReferenceDate,ValidityDays,DeliveryTenure,PackingCharges,Remarks,DetailedView,ReferenceData, DiscountView from tbl_Quotation where ID=@ID";
             SqlParameter[] pram = {
@@ -175,6 +175,186 @@ namespace Bill_Software.corporate.business.print
                 lblplaceofsup1.Text = "Place Of Supply";
                 lblplaceofsup2.Text = ":";
                 lblplaceofsup3.Text = placeofsupply;
+            }
+        }
+
+        private void buindalldata(string id)
+        {
+            // 1. DATA RETRIEVAL (Enhanced Query)
+            string query = @"SELECT Quotation_no, Quotation_date, Client_Id, sub_total, Service_tax, 
+                     Net_amount, cgstOrsgst, igst, PlaceofSupply, ReferenceName, ReferenceId, 
+                     ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, 
+                     DetailedView, ReferenceData, DiscountView, 
+                     TCS_Amount, Freight_Amount, Freight_VAT_Percent, 
+                     OtherCharge_Amount 
+                     FROM tbl_Quotation WHERE ID = @ID";
+
+            SqlParameter[] pram = { new SqlParameter("@id", id) };
+            dtmain = DbCL.SPreturn_dt(query, pram);
+
+            if (dtmain.Rows.Count > 0)
+            {
+                DataRow dr = dtmain.Rows[0];
+
+                // --- HEADER DETAILS ---
+                lblqnumber.Text = dr["Quotation_no"].ToString();
+
+                DateTime qDate;
+                if (DateTime.TryParse(dr["Quotation_date"].ToString(), out qDate))
+                {
+                    lbldate.Text = qDate.ToString("dd-MMM-yyyy");
+                    Session["Quotation_date"] = lbldate.Text;
+                }
+
+                string clientid = dr["Client_Id"].ToString();
+                lblClientCode.Text = clientid;
+
+                // --- TERMS & CONDITIONS (Smart Formatting) ---
+
+                // A. Validity
+                string valDays = dr["ValidityDays"]?.ToString().Trim();
+                lbl_valdays.Text = string.IsNullOrEmpty(valDays) ? "30" : valDays;
+
+                // B. Delivery Terms (Smart "Weeks" Appending)
+                string deliverytrms = dr["DeliveryTenure"]?.ToString().Trim();
+                if (!string.IsNullOrEmpty(deliverytrms))
+                {
+                    // Logic: If it doesn't say "week" already, add it.
+                    lbl_deliverytrms.Text = deliverytrms.ToLower().Contains("week")
+                                            ? deliverytrms
+                                            : deliverytrms + " week(s)";
+                }
+                else
+                {
+                    lbl_deliverytrms.Text = "N/A";
+                }
+
+                // C. Packing
+                string packChrg = dr["PackingCharges"]?.ToString().Trim();
+                lbl_pkging.Text = string.IsNullOrEmpty(packChrg) ? "NILL" : packChrg;
+
+                // D. Remarks (Preserves Line Breaks from DB)
+                string rmrks = dr["Remarks"]?.ToString();
+                if (string.IsNullOrWhiteSpace(rmrks) || rmrks == "N/A")
+                {
+                    Table4.Visible = false;
+                }
+                else
+                {
+                    Table4.Visible = true;
+                    lbl_remarks.Text = rmrks.Replace(Environment.NewLine, "<br />").Replace("\n", "<br />");
+                }
+
+                // ---------------------------------------------------------
+                // 4. FINANCIALS (Smart Visibility)
+                // ---------------------------------------------------------
+
+                // 1. Get Values
+                decimal subTotal = dr["sub_total"] != DBNull.Value ? Convert.ToDecimal(dr["sub_total"]) : 0;
+                decimal freightAmnt = dr["Freight_Amount"] != DBNull.Value ? Convert.ToDecimal(dr["Freight_Amount"]) : 0;
+                decimal freightPerc = dr["Freight_VAT_Percent"] != DBNull.Value ? Convert.ToDecimal(dr["Freight_VAT_Percent"]) : 0;
+                decimal tcsAmnt = dr["TCS_Amount"] != DBNull.Value ? Convert.ToDecimal(dr["TCS_Amount"]) : 0;
+                decimal otherAmnt = dr["OtherCharge_Amount"] != DBNull.Value ? Convert.ToDecimal(dr["OtherCharge_Amount"]) : 0;
+
+                // 2. Determine if we need to show the Financial Block at all
+                // We only show it if there is at least ONE extra charge.
+                bool hasAdditionalCharges = (freightAmnt > 0 || tcsAmnt > 0 || otherAmnt > 0);
+
+                if (hasAdditionalCharges)
+                {
+                    // Show the Table
+                    tbl_Financials.Visible = true;
+                    lbl_SubTotal.Text = subTotal.ToString("N2");
+
+                    // Toggle Individual Rows
+
+                    // Freight
+                    if (freightAmnt > 0)
+                    {
+                        tr_freight.Visible = true;
+                        lbl_freightAmnt.Text = freightAmnt.ToString("N2");
+                        lbl_freightPercent.Text = freightPerc.ToString("0.##");
+                    }
+                    else
+                    {
+                        tr_freight.Visible = false;
+                    }
+
+                    // TCS
+                    if (tcsAmnt > 0)
+                    {
+                        tr_tcs.Visible = true;
+                        lbl_tcsAmnt.Text = tcsAmnt.ToString("N2");
+                    }
+                    else
+                    {
+                        tr_tcs.Visible = false;
+                    }
+
+                    // Other
+                    if (tr_other != null)
+                    {
+                        if (otherAmnt > 0)
+                        {
+                            tr_other.Visible = true;
+                            lbl_otherAmnt.Text = otherAmnt.ToString("N2");
+                        }
+                        else
+                        {
+                            tr_other.Visible = false;
+                        }
+                    }
+                }
+                else
+                {
+                    // Clean Look: Hide the entire block if no extras exist
+                    // The user will see "Payment Terms" followed immediately by "Validity/Terms"
+                    tbl_Financials.Visible = false;
+                }
+
+                // --- STANDARD BINDINGS (Legacy Support) ---
+
+                // Reference Logic (Cleaned up)
+                string refname = dr["ReferenceName"].ToString();
+                string refid = dr["ReferenceId"].ToString();
+                string refdate = dr["ReferenceDate"].ToString();
+
+                lbl_refname.Text = refname;
+                lbl_refid.Text = refid;
+
+                DateTime rDate;
+                if (DateTime.TryParse(refdate, out rDate) && refdate != "1900-01-01")
+                    lbl_refdate.Text = rDate.ToString("dd-MMM-yyyy");
+                else
+                    lbl_refdate.Text = "N/A";
+
+                // Reference Visibility
+                lbl_refname.Visible = !(string.IsNullOrEmpty(refname) || refname == "N/A");
+                Tr2.Visible = !(string.IsNullOrEmpty(refid) || refid == "N/A");
+                Tr3.Visible = !(string.IsNullOrEmpty(refdate) || refdate == "1900-01-01");
+
+                // Global Variables & Sessions (Preserved from OLD code)
+                amount = subTotal.ToString("N2");
+                netamount = dr["Net_amount"].ToString(); // Kept for MoneyConvFn if needed later
+
+                Session["cgstOrsgst"] = dr["cgstOrsgst"].ToString();
+                Session["igst"] = dr["igst"].ToString();
+
+                viewtype = dr["DetailedView"].ToString();
+                discviewtype = dr["DiscountView"].ToString();
+
+                // Place of Supply
+                lblplaceofsup1.Text = "Place Of Supply";
+                lblplaceofsup2.Text = ":";
+                lblplaceofsup3.Text = dr["PlaceofSupply"].ToString();
+
+                // Sub-Methods
+                Bindclientdetails(clientid);
+                BindRepresentative(clientid);
+                BindService(dr["Quotation_no"].ToString());
+                Buindamount(dr["Quotation_no"].ToString());
+                bindpayment(dr["Quotation_no"].ToString());
+                bindPrimaryServiceTerms(dr["Quotation_no"].ToString());
             }
         }
 
