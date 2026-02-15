@@ -223,28 +223,34 @@
                                     <asp:DropDownList ID="cmbClient" runat="server" CssClass="dropdown_style" Width="300px" AutoPostBack="true" OnSelectedIndexChanged="cmbClient_SelectedIndexChanged"></asp:DropDownList>
 
                                     <asp:Panel ID="pnlClientInfo" runat="server" Visible="false" Style="margin-top: 15px; background-color: #f8faff; border: 1px solid #b3d7ff; border-left: 4px solid #19658A; padding: 15px; border-radius: 4px; width: 90%;">
-                                        <div style="font-weight: bold; color: #19658A; margin-bottom: 5px;">Client Details:</div>
-                                        <table style="width: 100%; font-size: 11px; color: #444;">
+                                        <div style="font-weight: bold; color: #19658A; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                                            Client Information
+                                        </div>
+                                        <table style="width: 100%; font-size: 11px; color: #444; border-spacing: 5px;">
                                             <tr>
-                                                <td style="width: 15%; color: #777;">ID:</td>
-                                                <td>
+                                                <td style="width: 15%; color: #777; font-weight: bold;">Client ID:</td>
+                                                <td style="width: 35%">
                                                     <asp:Label ID="lblclientID" runat="server" Font-Bold="true"></asp:Label></td>
-                                                <td style="width: 15%; color: #777;">GST No:</td>
-                                                <td>
-                                                    <asp:Label ID="lblClientGST" runat="server" Font-Bold="true"></asp:Label></td>
+                                                <td style="width: 15%; color: #777; font-weight: bold;">GST No:</td>
+                                                <td style="width: 35%">
+                                                    <asp:Label ID="lblClientGST" runat="server" Font-Bold="true" ForeColor="#e31e24"></asp:Label></td>
                                             </tr>
                                             <tr>
-                                                <td style="vertical-align: top; color: #777;">Address:</td>
+                                                <td style="color: #777; font-weight: bold;">Address:</td>
                                                 <td colspan="3">
                                                     <asp:Label ID="lblClientAddress" runat="server"></asp:Label></td>
                                             </tr>
-                                            <tr>
-                                                <td style="color: #777;">State:</td>
-                                                <td>
-                                                    <asp:Label ID="lblClientState" runat="server"></asp:Label></td>
-                                                <td style="color: #777;">Place of Supply:</td>
-                                                <td>
-                                                    <asp:Label ID="lblPlaceOfSupply" runat="server"></asp:Label></td>
+
+                                            <tr style="background-color: #eef; border-radius: 3px;">
+                                                <td style="color: #777; font-weight: bold; padding: 5px;">State:</td>
+                                                <td style="padding: 5px;">
+                                                    <asp:Label ID="lblClientState" runat="server" Font-Bold="true" ForeColor="#006600"></asp:Label>
+                                                </td>
+                                                <td style="color: #777; font-weight: bold; padding: 5px;">Place of Supply:</td>
+                                                <td style="padding: 5px;">
+                                                    <asp:Label ID="lblPlaceOfSupply" runat="server" Font-Bold="true" ForeColor="#006600"></asp:Label>
+                                                    <span style="font-size: 9px; color: #888;">(City)</span>
+                                                </td>
                                             </tr>
                                         </table>
                                     </asp:Panel>
@@ -261,7 +267,7 @@
                                 <td><strong>Tax Type:</strong></td>
                                 <td>
                                     <asp:RadioButtonList ID="RadioButtonGst" runat="server" RepeatDirection="Horizontal" CellSpacing="10">
-                                        <asp:ListItem Value="1" Selected="True"> Intra-State (CGST/SGST) </asp:ListItem>
+                                        <asp:ListItem Value="1"> Intra-State (CGST/SGST) </asp:ListItem>
                                         <asp:ListItem Value="0"> Inter-State (IGST) </asp:ListItem>
                                     </asp:RadioButtonList>
                                 </td>

@@ -35,11 +35,21 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnNextToProd_Click(object sender, EventArgs e)
         {
+            // 1. Validate Client Selection
             if (cmbClient.SelectedIndex == 0)
             {
                 lblStep1Error.Text = "Please select a client to proceed.";
                 return;
             }
+
+            // 2. Validate Tax Type Selection (New)
+            if (RadioButtonGst.SelectedIndex == -1)
+            {
+                lblStep1Error.Text = "Please select a Tax Type (Intra-State or Inter-State).";
+                return;
+            }
+
+            // 3. Clear errors and proceed
             lblStep1Error.Text = "";
             mvInvoice.ActiveViewIndex = 1;
             UpdateStepIndicator(2);
@@ -192,45 +202,38 @@ namespace Bill_Software.corporate.business.app
                 DbCL.Sqlconnection();
                 DbCL.ConnectDb();
 
-                // Fetch all necessary columns from tbl_Client
-                string query = @"SELECT Client_Id, Address1, Address2, City, State, pin, 
-                                Service_tax_no, PlaceofSupply 
+                // Fetch Client Details
+                string query = @"SELECT Client_Id, Address1, Address2, City, State, pin, Service_tax_no 
                          FROM tbl_Client 
                          WHERE Client_Name=@Name";
 
                 SqlParameter[] pram = { new SqlParameter("@Name", cmbClient.Text) };
-                SqlDataReader rdr = DbCL.SPReturnRdr(query, pram); // Assuming SPReturnRdr returns a SqlDataReader
 
-                // If you don't have SPReturnRdr helper, standard SqlCommand execution works too:
-                // SqlCommand cmd = new SqlCommand(query, DbCL.Conn);
-                // cmd.Parameters.AddWithValue("@Name", cmbClient.Text);
-                // SqlDataReader rdr = cmd.ExecuteReader();
+                // Use a DataReader or Adapter to get the row
+                // Note: Assuming DbCL.SPreturn_dt or standard ADO.NET
+                DataTable dt = DbCL.SPreturn_dt(query, pram);
 
-                if (rdr.Read())
+                if (dt.Rows.Count > 0)
                 {
-                    lblclientID.Text = rdr["Client_Id"].ToString();
+                    DataRow dr = dt.Rows[0];
+                    lblclientID.Text = dr["Client_Id"].ToString();
 
-                    // Format Address nicely
-                    string addr = rdr["Address1"].ToString();
-                    if (!string.IsNullOrEmpty(rdr["Address2"].ToString()))
-                        addr += ", " + rdr["Address2"].ToString();
-                    if (!string.IsNullOrEmpty(rdr["City"].ToString()))
-                        addr += ", " + rdr["City"].ToString();
-                    if (!string.IsNullOrEmpty(rdr["pin"].ToString()))
-                        addr += " - " + rdr["pin"].ToString();
+                    // Format Address
+                    string addr = dr["Address1"].ToString();
+                    if (!string.IsNullOrEmpty(dr["Address2"].ToString())) addr += ", " + dr["Address2"].ToString();
+                    if (!string.IsNullOrEmpty(dr["pin"].ToString())) addr += " - " + dr["pin"].ToString();
 
+                    // Populate Labels for Display
                     lblClientAddress.Text = addr;
-                    lblClientState.Text = rdr["State"].ToString();
-                    lblClientGST.Text = rdr["Service_tax_no"].ToString();
-                    lblPlaceOfSupply.Text = rdr["PlaceofSupply"].ToString();
+                    lblClientGST.Text = dr["Service_tax_no"].ToString();
 
-                    // Auto-select Tax Type based on State Logic (Optional Bonus)
-                    // Example: If PlaceOfSupply != CompanyState -> IGST
-                    // (You can implement this logic if you have your company state stored)
+                    // Display State & Place of Supply (City)
+                    lblClientState.Text = dr["State"].ToString();
+                    lblPlaceOfSupply.Text = dr["City"].ToString(); // As per your requirement
 
+                    // Show the info panel
                     pnlClientInfo.Visible = true;
                 }
-                rdr.Close();
                 DbCL.Conn.Close();
             }
             else
@@ -408,11 +411,14 @@ namespace Bill_Software.corporate.business.app
                     new SqlParameter("@SubTotal", totalBeforeTax),
                     new SqlParameter("@CGST", (object)cgstFlag ?? DBNull.Value),
                     new SqlParameter("@IGST", (object)igstFlag ?? DBNull.Value),
-                    new SqlParameter("@Place", "Direct Supply")
+                    new SqlParameter("@Place", lblPlaceOfSupply.Text.ToString())
                 };
                 DbCL.SPExecDB(queryHeader, headerParams.ToArray());
 
                 // 3. Insert Details (tbl_Proforma_Details)
+
+                int detailSlNo = 1; // <--- FIX START: Initialize Counter
+
                 foreach (GridViewRow row in gd_Service_Product.Rows)
                 {
                     // Retrieve existing controls
@@ -439,12 +445,13 @@ namespace Bill_Software.corporate.business.app
                          Quantity, Rate, Tax_Rate, Tax_Amount, Total_Amount, Net_Amount,
                          Unit, ProductOrServiceCat, AddedById)
                         VALUES 
-                        (@InvNo, 1, @Pid, @Pcode, @Pname, 
+                        (@InvNo, @Sl, @Pid, @Pcode, @Pname, 
                          @Qty, @Rate, @TaxPer, @TaxAmt, @Total, @Net,
                          @Unit, @Cat, @UserId)";
 
                     List<SqlParameter> detParams = new List<SqlParameter> {
                         new SqlParameter("@InvNo", invoiceNo),
+                        new SqlParameter("@Sl", detailSlNo), // <--- FIX: Use Variable
                         new SqlParameter("@Pid", pid),
                         new SqlParameter("@Pcode", pcode),
                         new SqlParameter("@Pname", pname),
@@ -454,12 +461,12 @@ namespace Bill_Software.corporate.business.app
                         new SqlParameter("@TaxAmt", taxAmt),
                         new SqlParameter("@Total", amountBeforeTax),
                         new SqlParameter("@Net", netAmt),
-                        // New Parameters
                         new SqlParameter("@Unit", unit),
                         new SqlParameter("@Cat", cat),
                         new SqlParameter("@UserId", Session["USERID"].ToString())
                     };
                     DbCL.SPExecDB(queryDet, detParams.ToArray());
+                    detailSlNo++; // <--- FIX END: Increment Counter
                 }
 
                 WriteLog(logBuilder.ToString());
