@@ -1,677 +1,452 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Data;
-using System.Data.SqlClient;
-using System.Text;
-using System.IO;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class Manual_Invoice : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        DataTable dtPCat = new DataTable();
-        DataTable dtPservice = new DataTable();
-
-        DataTable dtPCat1 = new DataTable();
-
-
-        private List<string> vatRates;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (HttpContext.Current.Session["USERID"] == null)
+            if (Session["USERID"] == null)
             {
                 Response.Redirect("~/index.aspx");
             }
+
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
+                LoadClients();
+                LoadCategories();
+                txtInvoiceDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                ViewState["PhaseProductData"] = CreateCartTable();
             }
         }
 
-        private void LoadTaxRates()
+        #region STEP 1: SETUP
+        private void LoadClients()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string vatQuery = "Select Vat_Rate from tbl_Vat_Master";
-            SqlCommand vatCmd = new SqlCommand(vatQuery, DbCL.Conn);
-            SqlDataReader vatRdr = vatCmd.ExecuteReader();
-            vatRates = new List<string> { "NA" };
-            while (vatRdr.Read())
-            {
-                vatRates.Add(vatRdr[0].ToString());
-            }
-            vatRdr.Close();
-            DbCL.Conn.Close();
-        }
-
-        private void bindFactoryAddress(string clientcode)
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Address1+', '+City+', '+pin+', '+State from tbl_Client where Client_Id='" + clientcode + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            SqlDataReader DR1 = cmd.ExecuteReader();
-            while (DR1.Read())
-            {
-                FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
-            }
-            DbCL.Conn.Close();
-            bindRegAddress(clientcode);
-            bindAddress(clientcode);
-        }
-
-        private void bindRegAddress(string clientcode)
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Address+', '+State+', '+City+', '+pin as regadd from tbl_ClientRegAddress where Client_Id='" + clientcode + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            SqlDataReader DR1 = cmd.ExecuteReader();
-            while (DR1.Read())
-            {
-                FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
-            }
-            DbCL.Conn.Close();
-        }
-
-        private void bindAddress(string clientcode)
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select [Address1] +', '+ [Address2]+', '+[city]+', '+[State]+', '+[pin] as address from tbl_Factory where Client_id='" + clientcode + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            SqlDataReader DR1 = cmd.ExecuteReader();
-            while (DR1.Read())
-            {
-                FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
-            }
-            DbCL.Conn.Close();
-        }
-
-        protected void Button1_Click(object sender, EventArgs e)
-        {
-            AddLoader();
-        }
-
-        private void AddLoader()
-        {
-            if (cmbClient.SelectedIndex != 0)
-            {
-                BindclientID();
-            }
-            else
-            {
-                cmbClient.Focus();
-            }
-        }
-
-        private void BindclientID()
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Client_Id from tbl_Client where Client_Name='" + cmbClient.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
-            {
-                string clientid = re["Client_Id"].ToString();
-                lblclientID.Text = clientid;
-
-                bindFactoryAddress(clientid);
-            }
-            DbCL.Conn.Close();
-
-        }
-
-        private void BindListitemNew()
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select ProductOrServiceCat from tbl_NewparentProduct order by ProductOrServiceCat";
-            cmbproduct_service.Items.Clear();
-            cmbproduct_service.Items.Add("--Select--");
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            while (re.Read())
-            {
-                cmbproduct_service.Items.Add(re.GetValue(0).ToString());
-            }
-            DbCL.Conn.Close();
-
-        }
-
-        protected void Button2_Click(object sender, EventArgs e)
-        {
-            BindListitemNew();
-        }
-
-        protected void Button3_Click(object sender, EventArgs e)
-        {
-            BindProducts();
-            LoadTaxRates();
-            DDL_vat_parsentage.Items.AddRange(vatRates.Select(rate => new ListItem(rate)).ToArray());
-        }
-
-        private void BindProducts()
-        {
-            DataTable dtproductWithCat = new DataTable();
-            string cmdstring = "select * from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Type,ProductName";
-
-            SqlParameter[] pram = {
-                new SqlParameter("@ProductOrServiceCat",cmbproduct_service.Text)
-            };
-            dtproductWithCat = DbCL.SPreturn_dt(cmdstring, pram);
-            if (dtproductWithCat.Rows.Count > 0)
-            {
-                gridProdWithCat.DataSource = dtproductWithCat;
-                gridProdWithCat.DataBind();
-                ViewState["dtprocat"] = dtproductWithCat;
-            }
-        }
-
-        protected void btnAddProduct_Click(object sender, EventArgs e)
-        {
-            ProductsBinderforTaxInv();
+            DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
+            cmbClient.Items.Insert(0, new ListItem("-- Select Client --", "0"));
         }
 
         protected void cmbClient_SelectedIndexChanged(object sender, EventArgs e)
         {
-            AddLoader();
-            BindProducts();
-        }
-
-        protected void cmbproduct_service_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            BindProducts();
-        }
-
-
-        private void ProductsBinderforTaxInv()
-        {
-            gridProdWithCat.Visible = true;
-            if (ViewState["dtprocat"] != null)
+            if (cmbClient.SelectedIndex > 0)
             {
-                DataTable dtpro = new DataTable();
-                dtpro = ViewState["dtprocat"] as DataTable;
-
-                string HSN = ""; //HSN Code
-                string ProductId = ""; // Product ID
-                string ProductName = "";
-                string Brandspecification = "";
-                string Type = "";
-                string Sail_Rate = "";
-                string Tax_Rate = "";
-                string Unit = "";
-                string Quantity = "";
-                //string IQuantity = "";
-                string ProductOrServiceCat = "";
-
-
-                for (int i = 0; i < dtpro.Rows.Count; i++)
-                {
-                    CheckBox chkdtp = (CheckBox)(gridProdWithCat.Rows[i].FindControl("chkdtp"));
-                    if (chkdtp.Checked == true)
-                    {
-                        ProductId = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text; // ProductID
-                        HSN = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text; // HSN
-                        ProductName = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName")).Text;
-                        Brandspecification = ((Label)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
-                        Quantity = ((Label)gridProdWithCat.Rows[i].FindControl("Quantity")).Text;
-                        //IQuantity = ((Label)gridProdWithCat.Rows[i].FindControl("IQuantity")).Text;
-                        Sail_Rate = ((Label)gridProdWithCat.Rows[i].FindControl("Sail_Rate")).Text;
-                        Tax_Rate = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate")).Text;
-                        Type = ((Label)gridProdWithCat.Rows[i].FindControl("Type")).Text;
-                        Unit = ((Label)gridProdWithCat.Rows[i].FindControl("Unit")).Text;
-                        ProductOrServiceCat = ((Label)gridProdWithCat.Rows[i].FindControl("ProductOrServiceCat")).Text;
-
-                        if (ViewState["PhaseProductData"] != null)
-                        {
-                            dtPCat = (DataTable)ViewState["PhaseProductData"];
-                            int count = dtPCat.Rows.Count + 1;
-
-                            SearchProductCatwise(count, HSN, ProductId, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
-
-                        }
-                        else
-                        {
-                            SearchProductCatwise(1, HSN, ProductId, ProductName, Brandspecification, Quantity, Sail_Rate, Tax_Rate, Type, Unit, ProductOrServiceCat);
-                        }
-                    }
-                }
-            }
-            //gridProdWithCat.Visible = false;
-            //btnAddProduct.Enabled = false;
-        }
-
-
-        private void SearchProductCatwise(int count, string HSN, string ProductId, string ProductName,
-                                  string Brandspecification, string Quantity,
-                                  string Sail_Rate, string Tax_Rate, string Type, string Unit,
-                                  string ProductOrServiceCat)
-        {
-            DataTable dtPCat = ViewState["PhaseProductData"] as DataTable;
-
-            if (dtPCat == null || count == 1)
-            {
-                dtPCat = new DataTable();
-                dtPCat.Columns.Add("ProductId", typeof(string));
-                dtPCat.Columns.Add("Product_code", typeof(string));
-                dtPCat.Columns.Add("ProductName", typeof(string));
-                dtPCat.Columns.Add("Sail_Rate", typeof(string));
-                dtPCat.Columns.Add("Tax_Rate", typeof(string));
-                dtPCat.Columns.Add("SQuantity", typeof(string)); // Matches GridView: "Quantity"
-                dtPCat.Columns.Add("IQuantity", typeof(string));
-                dtPCat.Columns.Add("Brand", typeof(string));
-                dtPCat.Columns.Add("Type", typeof(string));
-                dtPCat.Columns.Add("Unit", typeof(string));
-                dtPCat.Columns.Add("ProductOrServiceCat", typeof(string));
-                dtPCat.Columns.Add("ItemNo", typeof(string));   // Added for "Item No"
-                dtPCat.Columns.Add("MaterialNo", typeof(string)); // Added for "Material No"
-                dtPCat.Columns.Add("PackSize", typeof(string)); // Added for "Pack Size"
-                dtPCat.Columns.Add("Discount_Rate", typeof(string)); // Added for "Discount (%)"
-                dtPCat.Columns.Add("ItemRemarks", typeof(string)); // Added for "Remarks"
-            }
-
-            // Prevent duplicate ProductId
-            bool exists = dtPCat.AsEnumerable().Any(row => row["ProductId"].ToString() == ProductId);
-
-            if (!exists)
-            {
-                DataRow dr = dtPCat.NewRow();
-                dr["ProductId"] = ProductId;
-                dr["Product_code"] = HSN;
-                dr["ProductName"] = ProductName;
-                dr["Sail_Rate"] = Sail_Rate;
-                dr["Tax_Rate"] = Tax_Rate;
-                dr["SQuantity"] = Quantity;
-                dr["IQuantity"] = "";
-                dr["Brand"] = Brandspecification;
-                dr["Type"] = Type;
-                dr["Unit"] = Unit;
-                dr["ProductOrServiceCat"] = ProductOrServiceCat;
-                dr["ItemNo"] = "";  // Initialize to empty; can be updated later
-                dr["MaterialNo"] = "";
-                dr["PackSize"] = "";
-                dr["Discount_Rate"] = "0"; // Default value
-                dr["ItemRemarks"] = "";
-
-                dtPCat.Rows.Add(dr);
-            }
-
-            // Bind updated DataTable to GridView
-            gd_Service_Product.DataSource = dtPCat;
-            gd_Service_Product.DataBind();
-
-            // Store updated DataTable in ViewState
-            ViewState["PhaseProductData"] = dtPCat;
-        }
-
-        protected void btn_finalsave_Click(object sender, EventArgs e)
-        {
-            FetchSelectedProductsWithCalculations();
-        }
-
-        private void FetchSelectedProductsWithCalculations()
-        {
-            StringBuilder logBuilder = new StringBuilder();
-            logBuilder.AppendLine("Invoice Processing Log");
-            logBuilder.AppendLine("===================================");
-            logBuilder.AppendLine($"Timestamp: {DateTime.Now}");
-
-            List<string> errorMessages = new List<string>();
-            List<string> successLogs = new List<string>();
-            string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
-            DataTable dtSelectedProducts = new DataTable();
-
-            // Define columns for DataTable
-            dtSelectedProducts.Columns.Add("ItemNo", typeof(string));
-            dtSelectedProducts.Columns.Add("ProductID", typeof(string));
-            dtSelectedProducts.Columns.Add("Product_code", typeof(string));
-            dtSelectedProducts.Columns.Add("ProductName", typeof(string));
-            dtSelectedProducts.Columns.Add("Brand", typeof(string));
-            dtSelectedProducts.Columns.Add("IQuantity", typeof(decimal));
-            dtSelectedProducts.Columns.Add("Sail_Rate", typeof(decimal));
-            dtSelectedProducts.Columns.Add("Tax_Rate", typeof(decimal));
-            dtSelectedProducts.Columns.Add("Discount_Rate", typeof(decimal));
-            dtSelectedProducts.Columns.Add("AmountBeforeTax", typeof(decimal));
-            dtSelectedProducts.Columns.Add("TaxAmount", typeof(decimal));
-            dtSelectedProducts.Columns.Add("DiscountAmount", typeof(decimal));
-            dtSelectedProducts.Columns.Add("AmountAfterTax", typeof(decimal));
-            dtSelectedProducts.Columns.Add("Remarks", typeof(string));
-
-            string invoiceNo = BindInvoiceNo();
-            int serialNo = idreturn() + 1;
-
-            if (string.IsNullOrWhiteSpace(invoiceNo))
-            {
-                logBuilder.AppendLine("ERROR-0: Invoice number is null or empty.");
-                WriteLog(logBuilder.ToString());
-                return;
-            }
-
-            decimal totalAmountBeforeTax = 0, totalTaxAmount = 0, totalDiscountAmount = 0, totalAmountAfterTax = 0;
-
-            foreach (GridViewRow row in gd_Service_Product.Rows)
-            {
+                DbCL.Sqlconnection();
+                DbCL.ConnectDb();
                 try
                 {
-                    CheckBox chk = (CheckBox)row.FindControl("chk");
-                    if (chk != null && chk.Checked)
+                    SqlCommand cmd = new SqlCommand("select Client_Id from tbl_Client where Client_Name=@Name", DbCL.Conn);
+                    cmd.Parameters.AddWithValue("@Name", cmbClient.SelectedItem.Text);
+                    object res = cmd.ExecuteScalar();
+                    if (res != null)
                     {
-                        string productId = ((Label)row.FindControl("ProductID")).Text;
-                        string HSN = ((Label)row.FindControl("Product_code")).Text;
-                        string productName = ((Label)row.FindControl("ProductName")).Text;
-                        string brand = ((Label)row.FindControl("Brand")).Text;
-                        string remarks = ((TextBox)row.FindControl("ItemRemarks")).Text;
-
-                        decimal iQuantity = Convert.ToDecimal(((TextBox)row.FindControl("IQuantity")).Text);
-                        decimal sailRate = Convert.ToDecimal(((TextBox)row.FindControl("Sail_Rate")).Text);
-                        decimal taxRate = Convert.ToDecimal(((Label)row.FindControl("Tax_Rate")).Text);
-                        decimal discountRate = Convert.ToDecimal(((TextBox)row.FindControl("Discount_Rate")).Text);
-
-                        // Ensure valid values to avoid division errors
-                        sailRate = sailRate > 0 ? sailRate : 0;
-                        taxRate = taxRate > 0 ? taxRate : 0;
-                        discountRate = discountRate > 0 ? discountRate : 0;
-
-                        // Calculate values with rounding for better accuracy
-                        decimal amountBeforeTax = Math.Round(iQuantity * sailRate, 2);
-                        decimal discountAmount = Math.Round((amountBeforeTax * discountRate) / 100, 2);
-                        decimal amountAfterDiscount = Math.Round(amountBeforeTax - discountAmount, 2);
-                        decimal taxAmount = Math.Round((amountAfterDiscount * taxRate) / 100, 2);
-                        decimal amountAfterTax = Math.Round(amountAfterDiscount + taxAmount, 2);
-
-                        //decimal amountBeforeTax = iQuantity * sailRate;
-                        //decimal discountAmount = (amountBeforeTax * discountRate) / 100;
-                        //decimal amountAfterDiscount = amountBeforeTax - discountAmount;
-                        //decimal taxAmount = (amountAfterDiscount * taxRate) / 100;
-                        //decimal amountAfterTax = amountAfterDiscount + taxAmount;
-
-                        DataRow dr = dtSelectedProducts.NewRow();
-                        dr["ProductID"] = productId;
-                        dr["Product_code"] = HSN;
-                        dr["ProductName"] = productName;
-                        dr["Brand"] = brand;
-                        dr["IQuantity"] = iQuantity;
-                        dr["Sail_Rate"] = sailRate;
-                        dr["Tax_Rate"] = taxRate;
-                        dr["Discount_Rate"] = discountRate;
-                        dr["AmountBeforeTax"] = amountBeforeTax;
-                        dr["DiscountAmount"] = discountAmount;
-                        dr["TaxAmount"] = taxAmount;
-                        dr["AmountAfterTax"] = amountAfterTax;
-                        dr["Remarks"] = remarks;
-                        dtSelectedProducts.Rows.Add(dr);
-
-                        totalAmountBeforeTax += amountBeforeTax;
-                        totalDiscountAmount += discountAmount;
-                        totalTaxAmount += taxAmount;
-                        totalAmountAfterTax += amountAfterTax;
-
-                        Session["InvTotalAmountWithGst"] = totalAmountAfterTax;
-                        Session["InvTotalAmountWithOutGst"] = totalAmountBeforeTax;
-                        Session["invTotalGstAmount"] = totalTaxAmount;
-
-                        string queryDetails = @"INSERT INTO tbl_Invoice_details (Invoice_No, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discountRate, Total_sail_rate1, Total_sail_rate2, specification, AddedById) 
-                                        VALUES (@Invoice_No, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discountRate, @Total_sail_rate1, @Total_sail_rate2, @specification, @AddedById)";
-
-                        List<SqlParameter> pram = new List<SqlParameter>
-                        {
-                            new SqlParameter("@Invoice_No", invoiceNo),
-                            new SqlParameter("@Quotation_no", "N/A"),
-                            new SqlParameter("@Product_id", productId),
-                            new SqlParameter("@Product_Code", HSN),
-                            new SqlParameter("@Product_name", productName),
-                            new SqlParameter("@Quantity", iQuantity),
-                            new SqlParameter("@sail_rate", sailRate),
-                            new SqlParameter("@Service_tax_rate", taxRate),
-                            new SqlParameter("@discountRate", discountRate),
-                            new SqlParameter("@Total_sail_rate1", amountAfterTax),
-                            new SqlParameter("@Total_sail_rate2", amountBeforeTax),
-                            new SqlParameter("@specification", brand),
-                            new SqlParameter("@AddedById", userId),
-                        };
-
-                        DbCL.SPExecDB(queryDetails, pram.ToArray());
-                        logBuilder.AppendLine($"Product {productName}, ProductId {productId}  added to invoice {invoiceNo} successfully.");
-                        WriteLog(logBuilder.ToString());
+                        lblClientID.Text = res.ToString();
+                        LoadAddresses(lblClientID.Text);
                     }
                 }
-                catch (Exception ex)
+                catch { }
+                finally { DbCL.Conn.Close(); }
+            }
+        }
+
+        private void LoadAddresses(string cid)
+        {
+            lstAddresses.Items.Clear();
+            DataTable dt1 = DbCL.ReturnDataTable("select Address1+', '+City+', '+pin+', '+State from tbl_Client where Client_Id='" + cid + "'");
+            foreach (DataRow dr in dt1.Rows) lstAddresses.Items.Add(dr[0].ToString());
+
+            DataTable dt2 = DbCL.ReturnDataTable("select Address+', '+State+', '+City+', '+pin from tbl_ClientRegAddress where Client_Id='" + cid + "'");
+            foreach (DataRow dr in dt2.Rows) lstAddresses.Items.Add(dr[0].ToString());
+
+            if (lstAddresses.Items.Count > 0) lstAddresses.Items[0].Selected = true;
+        }
+
+        protected void btnNext_Click(object sender, EventArgs e)
+        {
+            if (cmbClient.SelectedIndex == 0) { ShowMsg("Select Client", false); return; }
+            if (lstAddresses.SelectedIndex == -1) { ShowMsg("Select Address", false); return; }
+
+            ShowMsg("", true);
+            mvInvoice.ActiveViewIndex = 1;
+        }
+        #endregion
+
+        #region STEP 2: PRODUCTS
+        private void LoadCategories()
+        {
+            DbCL.FillCombo(cmbCategory, "select distinct ProductOrServiceCat from tbl_NewparentProduct order by ProductOrServiceCat");
+            cmbCategory.Items.Insert(0, new ListItem("All Categories", "All"));
+        }
+
+        protected void cmbCategory_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            BindProductGrid();
+        }
+
+        private void BindProductGrid()
+        {
+            string qry = "select ProductID, Product_code, ProductName, Brand, Unit, Sail_Rate, Tax_Rate, Quantity from tbl_NewProduct";
+            if (cmbCategory.SelectedIndex > 0)
+            {
+                qry += " WHERE ProductOrServiceCat = '" + cmbCategory.SelectedItem.Text + "'";
+            }
+            qry += " ORDER BY ProductName";
+
+            gridProdWithCat.DataSource = DbCL.ReturnDataTable(qry);
+            gridProdWithCat.DataBind();
+        }
+
+        protected void btnAddToCart_Click(object sender, EventArgs e)
+        {
+            DataTable dt = (DataTable)ViewState["PhaseProductData"];
+            bool added = false;
+
+            foreach (GridViewRow row in gridProdWithCat.Rows)
+            {
+                CheckBox chk = (CheckBox)row.FindControl("chkSelect");
+                if (chk != null && chk.Checked)
                 {
-                    logBuilder.AppendLine($"ERROR-1: Processing product row failed - {ex.Message}");
-                    WriteLog(logBuilder.ToString());
+                    string pid = gridProdWithCat.DataKeys[row.RowIndex].Value.ToString();
+                    DataRow[] exist = dt.Select("ProductID='" + pid + "'");
+
+                    if (exist.Length == 0)
+                    {
+                        DataRow dr = dt.NewRow();
+                        dr["ProductID"] = pid;
+
+                        // FIX: Correct Column Indexing & HTML Decoding
+                        dr["Product_code"] = HttpUtility.HtmlDecode(row.Cells[2].Text);
+                        dr["ProductName"] = HttpUtility.HtmlDecode(row.Cells[3].Text);
+                        dr["Brand"] = HttpUtility.HtmlDecode(row.Cells[4].Text);
+
+                        // Extract Rate & Tax from TemplateFields
+                        Label lblRate = (Label)row.FindControl("lblBaseRate");
+                        Label lblTax = (Label)row.FindControl("lblGstRate");
+
+                        dr["Sail_Rate"] = lblRate != null ? lblRate.Text : "0";
+                        dr["Tax_Rate"] = lblTax != null ? lblTax.Text : "0";
+
+                        dr["IQuantity"] = 1;
+                        dr["Discount_Rate"] = 0;
+                        dt.Rows.Add(dr);
+                        added = true;
+                    }
+                    chk.Checked = false;
                 }
             }
 
+            if (added)
+            {
+                ViewState["PhaseProductData"] = dt;
+                BindCartGrid();
+                lblClientDisplay.Text = cmbClient.SelectedItem.Text;
+                lblTaxModeDisplay.Text = rbTaxType.SelectedItem.Text;
+                mvInvoice.ActiveViewIndex = 2;
+
+                ScriptManager.RegisterStartupScript(this, GetType(), "calc", "setTimeout(function(){ var rows=document.getElementById('" + gd_Cart.ClientID + "').getElementsByTagName('tr'); for(var i=1;i<rows.length;i++){ var t=rows[i].querySelector(\"input[id*='txtQty']\"); if(t) CalculateRow(t,'MAIN'); } }, 500);", true);
+            }
+            else
+            {
+                ShowMsg("No new items selected.", false);
+            }
+        }
+
+        protected void btnBackSetup_Click(object sender, EventArgs e)
+        {
+            mvInvoice.ActiveViewIndex = 0;
+        }
+        #endregion
+
+        #region STEP 3: REVIEW
+        private DataTable CreateCartTable()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ProductID");
+            dt.Columns.Add("Product_code");
+            dt.Columns.Add("ProductName");
+            dt.Columns.Add("Brand");
+            dt.Columns.Add("IQuantity", typeof(decimal));
+            dt.Columns.Add("Sail_Rate", typeof(decimal));
+            dt.Columns.Add("Tax_Rate", typeof(decimal));
+            dt.Columns.Add("Discount_Rate", typeof(decimal));
+            return dt;
+        }
+
+        private void BindCartGrid()
+        {
+            gd_Cart.DataSource = (DataTable)ViewState["PhaseProductData"];
+            gd_Cart.DataBind();
+        }
+
+        protected void gd_Cart_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "MoveUp" || e.CommandName == "MoveDown" || e.CommandName == "Remove")
+            {
+                int idx = Convert.ToInt32(e.CommandArgument);
+                DataTable dt = (DataTable)ViewState["PhaseProductData"];
+                UpdateCartFromGrid(dt);
+
+                if (e.CommandName == "Remove") dt.Rows[idx].Delete();
+                else if (e.CommandName == "MoveUp" && idx > 0)
+                {
+                    DataRow r = dt.NewRow(); r.ItemArray = dt.Rows[idx].ItemArray;
+                    dt.Rows.RemoveAt(idx); dt.Rows.InsertAt(r, idx - 1);
+                }
+                else if (e.CommandName == "MoveDown" && idx < dt.Rows.Count - 1)
+                {
+                    DataRow r = dt.NewRow(); r.ItemArray = dt.Rows[idx].ItemArray;
+                    dt.Rows.RemoveAt(idx); dt.Rows.InsertAt(r, idx + 1);
+                }
+                dt.AcceptChanges();
+                ViewState["PhaseProductData"] = dt;
+                BindCartGrid();
+
+                ScriptManager.RegisterStartupScript(this, GetType(), "recalc", "setTimeout(function(){ var rows=document.getElementById('" + gd_Cart.ClientID + "').getElementsByTagName('tr'); for(var i=1;i<rows.length;i++){ var t=rows[i].querySelector(\"input[id*='txtQty']\"); if(t) CalculateRow(t,'MAIN'); } }, 500);", true);
+            }
+        }
+
+        private void UpdateCartFromGrid(DataTable dt)
+        {
+            for (int i = 0; i < gd_Cart.Rows.Count; i++)
+            {
+                GridViewRow row = gd_Cart.Rows[i];
+                TextBox tQty = (TextBox)row.FindControl("txtQty");
+                TextBox tRate = (TextBox)row.FindControl("txtRate");
+                TextBox tDisc = (TextBox)row.FindControl("txtDiscPer");
+
+                if (tQty == null) continue;
+
+                decimal q = 0, r = 0, d = 0;
+                if (decimal.TryParse(tQty.Text, out q)) dt.Rows[i]["IQuantity"] = q;
+                if (decimal.TryParse(tRate.Text, out r)) dt.Rows[i]["Sail_Rate"] = r;
+                if (decimal.TryParse(tDisc.Text, out d)) dt.Rows[i]["Discount_Rate"] = d;
+            }
+        }
+
+        protected void btnBackProd_Click(object sender, EventArgs e)
+        {
+            UpdateCartFromGrid((DataTable)ViewState["PhaseProductData"]);
+            mvInvoice.ActiveViewIndex = 1;
+        }
+        #endregion
+
+        #region SAVE LOGIC
+        protected void btnSave_Click(object sender, EventArgs e)
+        {
             try
             {
-                //double invTotalWithGst = Session["InvTotalAmountWithGst"] != null ? Convert.ToDouble(Session["InvTotalAmountWithGst"]) : 0;
-                //double invTotalWithoutGst = Session["InvTotalAmountWithOutGst"] != null ? Convert.ToDouble(Session["InvTotalAmountWithOutGst"]) : 0;
-                //double totalGstAmount = Session["invTotalGstAmount"] != null ? Convert.ToDouble(Session["invTotalGstAmount"]) : 0;
-                //double totalNetAmount = Session["NetAmount"] != null ? Convert.ToDouble(Session["NetAmount"]) : 0;
-                //double discount = 0;
-                //string selectedValue = RadioButtonGst.SelectedValue;
-                //totalNetAmount = Math.Round(invTotalWithGst) - discount;
+                if (ViewState["PhaseProductData"] == null) { ShowMsg("Session Timeout", false); return; }
 
-                string selectedValue = RadioButtonGst.SelectedValue;
-                // Declare variables before using TryParse
-                double invTotalWithGst = 0;
-                double invTotalWithoutGst = 0;
-                double totalGstAmount = 0;
-                double totalNetAmount = 0;
-                double discount = 0;
+                UpdateCartFromGrid((DataTable)ViewState["PhaseProductData"]);
+                DataTable dt = (DataTable)ViewState["PhaseProductData"];
+                if (dt.Rows.Count == 0) { ShowMsg("Cart is empty", false); return; }
 
-                // Safely retrieve session values and parse them
-                double.TryParse(Session["InvTotalAmountWithGst"]?.ToString(), out invTotalWithGst);
-                double.TryParse(Session["InvTotalAmountWithOutGst"]?.ToString(), out invTotalWithoutGst);
-                double.TryParse(Session["invTotalGstAmount"]?.ToString(), out totalGstAmount);
-                double.TryParse(Session["NetAmount"]?.ToString(), out totalNetAmount);
-                double.TryParse(Session["DiscountAmount"]?.ToString(), out discount);
+                string invNo = GenerateInvoiceNo();
+                string uid = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+                int slNo = GetSlNo();
 
-                // Calculate net amount correctly
-                totalNetAmount = Math.Round(invTotalWithGst - discount, 2);
+                decimal gGross = 0, gDisc = 0, gTax = 0, gNet = 0;
 
-
-                decimal tcsAmount = 0.00m, tcsrate = 0.00m, deliveryAmount = 0.00m, otherAmount1 = 0.00m;
-                decimal.TryParse(txt_tcs_amnt.Text.Trim(), out tcsAmount);
-                decimal.TryParse(txt_tcs_percent.Text.Trim(), out tcsrate);
-                decimal.TryParse(txt_delivery_amnt.Text.Trim(), out deliveryAmount);
-                decimal.TryParse(txt_othr_amnt.Text.Trim(), out otherAmount1);
-                
-
-                if (invTotalWithGst > 0)
+                foreach (DataRow dr in dt.Rows)
                 {
-                    string query = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Quotation_Date, Client_ID, Gross, Net_Amount, Sl_no, Service_Tax1, sub_total, discount, addressfor, status1, status2, TCS_Amount, TCS_Rate, Delivery_Amount, Delivery_Rate, otherAmount1_name, otherAmount1, AddedById, cgstOrsgst, igst, PServiceName) " +
-                                   "VALUES (@Invoice_No, @Invoice_Date, @Quotation_No, @Quotation_Date, @Client_ID, @Gross, @Net_Amount, @Sl_no, @Service_Tax1, @sub_total, @discount, @addressfor, 'No', 'Active', @TCS_Amount, @TCS_Rate, @Delivery_Amount, @Delivery_Rate, @otherAmount1_name, @otherAmount1, @AddedById, @cgstOrsgst, @igst, @PServiceName)";
+                    decimal q = Convert.ToDecimal(dr["IQuantity"]);
+                    decimal r = Convert.ToDecimal(dr["Sail_Rate"]);
+                    decimal dPer = Convert.ToDecimal(dr["Discount_Rate"]);
+                    decimal tPer = Convert.ToDecimal(dr["Tax_Rate"]);
 
-                    SqlParameter[] parameters = {
-                        new SqlParameter("@Invoice_No", invoiceNo),
-                        new SqlParameter("@Invoice_Date", txtinvoiceDate.Text),
-                        new SqlParameter("@Quotation_No", "N/A"),
-                        new SqlParameter("@Quotation_Date", string.Empty),
-                        new SqlParameter("@Client_ID", lblclientID.Text),
-                        new SqlParameter("@Gross", invTotalWithGst),
-                        new SqlParameter("@Net_Amount", totalNetAmount),
-                        new SqlParameter("@Sl_no", serialNo),
-                        new SqlParameter("@Service_Tax1", totalGstAmount),
-                        new SqlParameter("@sub_total", invTotalWithoutGst),
-                        new SqlParameter("@discount", discount),
-                        new SqlParameter("@addressfor", "Corporate office"),
-                        new SqlParameter("@TCS_Amount", tcsAmount),
-                        new SqlParameter("@TCS_Rate", tcsrate),
-                        new SqlParameter("@Delivery_Amount", deliveryAmount),
-                        new SqlParameter("@Delivery_Rate", DDL_vat_parsentage.SelectedValue),
-                        new SqlParameter("@otherAmount1_name", TextBox1.Text.Trim()),
-                        new SqlParameter("@otherAmount1", otherAmount1),
-                        new SqlParameter("@AddedById", userId),
-                        new SqlParameter("@cgstOrsgst", selectedValue == "1" ? "YES" : (object)DBNull.Value),
-                        new SqlParameter("@igst", selectedValue == "0" ? "YES" : (object)DBNull.Value),
-                        new SqlParameter("@PServiceName", cmbproduct_service.SelectedItem.Text.ToString())
-                    };
-                    DbCL.SPExecDB(query, parameters);
-                    logBuilder.AppendLine($"Invoice {invoiceNo} inserted successfully.");
+                    // FORCE ROUNDING TO 2 DECIMAL PLACES
+                    decimal rowGross = Math.Round(q * r, 2);
+                    decimal rowDisc = Math.Round((rowGross * dPer) / 100, 2);
+                    decimal taxable = Math.Round(rowGross - rowDisc, 2);
+                    decimal rowTax = Math.Round((taxable * tPer) / 100, 2);
 
-                    insertCorRegFacAddress(invoiceNo);
+                    gGross += rowGross;
+                    gDisc += rowDisc;
+                    gTax += rowTax;
+                    gNet += (taxable + rowTax);
+                }
+
+                decimal frt = 0, oth = 0;
+                decimal.TryParse(txtFreight.Text, out frt);
+                decimal.TryParse(txtOtherCharge.Text, out oth);
+
+                // Round extras too
+                frt = Math.Round(frt, 2);
+                oth = Math.Round(oth, 2);
+                gNet += frt + oth;
+                gNet = Math.Round(gNet, 2);
+
+                // FIX: Fallback Connection String
+                string connStr = "";
+                if (DbCL.Conn != null && !string.IsNullOrEmpty(DbCL.Conn.ConnectionString))
+                    connStr = DbCL.Conn.ConnectionString;
+                else if (System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"] != null)
+                    connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                else
+                    throw new Exception("Connection string not found.");
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    SqlTransaction tran = conn.BeginTransaction();
+                    try
+                    {
+                        // 1. Header
+                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, ExtInvoiceNo, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, PServiceName, addressfor) VALUES (@Inv, @Date, @PO, @ERP, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @Oth, 'No', 'Active', @Intra, @Inter, @User, @primarycat, @addressfor)";
+                        SqlCommand cmdH = new SqlCommand(sqlH, conn, tran);
+                        cmdH.Parameters.AddWithValue("@Inv", invNo);
+                        cmdH.Parameters.AddWithValue("@Date", txtInvoiceDate.Text);
+                        cmdH.Parameters.AddWithValue("@PO", txtPONo.Text.Trim());
+                        cmdH.Parameters.AddWithValue("@ERP", txtERPRef.Text.Trim());
+                        cmdH.Parameters.AddWithValue("@CID", lblClientID.Text);
+
+                        // Explicit Types for Money
+                        cmdH.Parameters.Add("@Gr", SqlDbType.Decimal).Value = gGross;
+                        cmdH.Parameters.Add("@Di", SqlDbType.Decimal).Value = gDisc;
+                        cmdH.Parameters.Add("@Sub", SqlDbType.Decimal).Value = Math.Round(gGross - gDisc, 2);
+                        cmdH.Parameters.Add("@Tax", SqlDbType.Decimal).Value = gTax;
+                        cmdH.Parameters.Add("@Net", SqlDbType.Decimal).Value = gNet;
+
+                        cmdH.Parameters.AddWithValue("@Sl", slNo);
+                        cmdH.Parameters.Add("@Frt", SqlDbType.Decimal).Value = frt;
+                        cmdH.Parameters.Add("@Oth", SqlDbType.Decimal).Value = oth;
+                        cmdH.Parameters.AddWithValue("@Intra", rbTaxType.SelectedValue == "1" ? "YES" : (object)DBNull.Value);
+                        cmdH.Parameters.AddWithValue("@Inter", rbTaxType.SelectedValue == "0" ? "YES" : (object)DBNull.Value);
+                        cmdH.Parameters.AddWithValue("@User", uid); //PServiceName, addressfor
+                        cmdH.Parameters.AddWithValue("@primarycat", cmbCategory.SelectedItem.Text.ToString());
+                        cmdH.Parameters.AddWithValue("@addressfor", "Corporate office");
+                        cmdH.ExecuteNonQuery();
+
+                        // 2. Details & Stock Update
+                        foreach (DataRow dr in dt.Rows)
+                        {
+                            decimal q = Convert.ToDecimal(dr["IQuantity"]);
+                            decimal r = Convert.ToDecimal(dr["Sail_Rate"]);
+                            decimal dPer = Convert.ToDecimal(dr["Discount_Rate"]);
+                            decimal tPer = Convert.ToDecimal(dr["Tax_Rate"]);
+
+                            decimal rowGross = Math.Round(q * r, 2);
+                            decimal rowDisc = Math.Round((rowGross * dPer) / 100, 2);
+                            decimal taxable = Math.Round(rowGross - rowDisc, 2);
+                            decimal rowTax = Math.Round((taxable * tPer) / 100, 2);
+                            decimal rowNet = Math.Round(taxable + rowTax, 2);
+
+                            string sqlD = "INSERT INTO tbl_Invoice_details (Invoice_No, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, discountRate, Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification, AddedById) VALUES (@Inv, @PO, @PID, @HSN, @Name, @Qty, @Rate, @DPer, @TPer, @Net, @Base, @Brand, @User)";
+                            SqlCommand cmdD = new SqlCommand(sqlD, conn, tran);
+                            cmdD.Parameters.AddWithValue("@Inv", invNo);
+                            cmdD.Parameters.AddWithValue("@PO", txtPONo.Text.Trim());
+                            cmdD.Parameters.AddWithValue("@PID", dr["ProductID"]);
+                            cmdD.Parameters.AddWithValue("@HSN", dr["Product_code"]);
+                            cmdD.Parameters.AddWithValue("@Name", dr["ProductName"]);
+
+                            cmdD.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
+                            cmdD.Parameters.Add("@Rate", SqlDbType.Decimal).Value = r;
+                            cmdD.Parameters.Add("@DPer", SqlDbType.Decimal).Value = dPer;
+                            cmdD.Parameters.Add("@TPer", SqlDbType.Decimal).Value = tPer;
+                            cmdD.Parameters.Add("@Net", SqlDbType.Decimal).Value = rowNet;
+                            cmdD.Parameters.Add("@Base", SqlDbType.Decimal).Value = taxable;
+
+                            cmdD.Parameters.AddWithValue("@Brand", dr["Brand"]);
+                            cmdD.Parameters.AddWithValue("@User", uid);
+                            cmdD.ExecuteNonQuery();
+
+                            // Stock Deduct
+                            // Fix: Safe cast of Quantity column (in case it is nvarchar) and explicit parameter types
+                            string sqlStock = "UPDATE tbl_NewProduct SET Quantity = CAST(ISNULL(Quantity, '0') AS DECIMAL(18,2)) - @Qty WHERE ProductID = @PID";
+                            SqlCommand cmdS = new SqlCommand(sqlStock, conn, tran);
+
+                            // 1. Handle Decimal Quantity safely with explicit precision
+                            SqlParameter paramQty = new SqlParameter("@Qty", SqlDbType.Decimal);
+                            paramQty.Precision = 18;
+                            paramQty.Scale = 3;
+                            paramQty.Value = q;
+                            cmdS.Parameters.Add(paramQty);
+
+                            // 2. Handle Alphanumeric ProductID (PRD0599) as VarChar, not implicit NVarChar
+                            cmdS.Parameters.Add("@PID", SqlDbType.VarChar).Value = dr["ProductID"].ToString();
+
+                            cmdS.ExecuteNonQuery();
+                        }
+
+                        // 3. Address
+                        foreach (ListItem itm in lstAddresses.Items)
+                        {
+                            if (itm.Selected)
+                            {
+                                SqlCommand cmdA = new SqlCommand("INSERT INTO tbl_InvSiteAddress (invoice_no, SiteAddress) VALUES (@Inv, @Addr)", conn, tran);
+                                cmdA.Parameters.AddWithValue("@Inv", invNo);
+                                cmdA.Parameters.AddWithValue("@Addr", itm.Text);
+                                cmdA.ExecuteNonQuery();
+                            }
+                        }
+
+                        tran.Commit();
+                        ShowMsg("Success! Invoice Generated: " + invNo, true);
+                        WriteLog("Invoice: " + invNo);
+
+                        ViewState["PhaseProductData"] = CreateCartTable();
+                        mvInvoice.ActiveViewIndex = 0;
+                        txtPONo.Text = ""; txtERPRef.Text = "";
+                    }
+                    catch (Exception ex)
+                    {
+                        tran.Rollback();
+                        throw ex;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                logBuilder.AppendLine($"ERROR-2: Failed to insert invoice - {ex.Message}");
-            }
-            finally
-            {
-                WriteLog(logBuilder.ToString());
+                ShowMsg("Error: " + ex.Message, false);
+                WriteLog(ex.ToString());
             }
         }
+        #endregion
 
+        #region HELPERS
+        private void ShowMsg(string msg, bool ok)
+        {
+            PanelMsg.Visible = !string.IsNullOrEmpty(msg);
+            lblMsg.Text = msg;
+            lblMsg.ForeColor = ok ? System.Drawing.Color.Green : System.Drawing.Color.Red;
+        }
 
-        private void WriteLog(string logContent)
+        private string GenerateInvoiceNo()
+        {
+            DateTime dt = DateTime.Parse(txtInvoiceDate.Text);
+            string yy = "";
+            if (dt.Month >= 4) yy = dt.Year.ToString().Substring(2) + "-" + (dt.Year + 1).ToString().Substring(2);
+            else yy = (dt.Year - 1).ToString().Substring(2) + "-" + dt.Year.ToString().Substring(2);
+            return "INV/C/" + yy + "/" + GetSlNo();
+        }
+
+        private int GetSlNo()
+        {
+            DataTable dt = DbCL.ReturnDataTable("SELECT ISNULL(MAX(CAST(Sl_no AS INT)), 0) + 1 FROM tbl_Invoice");
+            if (dt.Rows.Count > 0) return Convert.ToInt32(dt.Rows[0][0]);
+            return 1;
+        }
+
+        private void WriteLog(string txt)
         {
             try
             {
-                // Define the log directory inside Uploads/Logs
-                string logDir = HttpContext.Current.Server.MapPath("~/Uploads/InvoiceLogs");
-
-                // Ensure the directory exists
-                if (!Directory.Exists(logDir))
-                {
-                    Directory.CreateDirectory(logDir);
-                }
-
-                // Generate a unique log file name using invoice number and timestamp
-                string logFileName = $"InvoiceLog_{DateTime.Now:yyyyMMddHHmmss}.txt";
-                string logFilePath = Path.Combine(logDir, logFileName);
-
-                // Write log content to the file
-                File.WriteAllText(logFilePath, logContent);
-
-                // Optional: Debugging Console Log
-                System.Diagnostics.Debug.WriteLine($"Log file created: {logFilePath}");
+                string p = Server.MapPath("~/Uploads/InvoiceLogs/Log.txt");
+                if (!Directory.Exists(Path.GetDirectoryName(p))) Directory.CreateDirectory(Path.GetDirectoryName(p));
+                File.AppendAllText(p, DateTime.Now + ": " + txt + Environment.NewLine);
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error writing log: {ex.Message}");
-            }
+            catch { }
         }
-
-        private string BindInvoiceNo()
-        {
-            string c = cmbClient.Text.Trim();
-            string f = c.Substring(0, 1);
-            f = "INV/" + f + "/";
-            string ss = findmonth();
-            f = f + ss;
-            int j = idreturn();
-            j = j + 1;
-            f = f + j.ToString();
-            return f;
-        }
-
-        private int idreturn()
-        {
-            string a = null;
-            int b = 0;
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string date1 = txtinvoiceDate.Text;
-            string date2 = date1.Substring(3, 3);
-            string date3 = date1.Substring(7, 4);
-            string date4, date5, date6;
-            if (date2 == "Jan" || date2 == "Feb" || date2 == "Mar")
-            {
-                date4 = ((Convert.ToInt32(date3) - 1)).ToString();
-                date5 = "31-Mar-" + date4;
-                date6 = "31-Mar-" + date3;
-            }
-            else
-            {
-                date4 = ((Convert.ToInt32(date3) + 1)).ToString();
-                date5 = "31-Mar-" + date3;
-                date6 = "31-Mar-" + date4;
-            }
-            string cmdstring = "select Sl_no from tbl_Invoice where ID=(select max(ID) from tbl_Invoice where cast(Invoice_Date as datetime) between '" + date5.ToString() + "' and '" + date6.ToString() + "')";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
-            {
-                a = re["Sl_no"].ToString();
-                b = Convert.ToInt32(a);
-            }
-            else
-            {
-                b = 0;
-            }
-            DbCL.Conn.Close();
-            return b;
-
-        }
-
-        private string findmonth()
-        {
-            string MonthName = "-";
-            string a = txtinvoiceDate.Text.Substring(3, 3);
-            string b = txtinvoiceDate.Text.Substring(9, 2);
-            if (a == "Jan" || a == "Feb" || a == "Mar")
-            {
-                MonthName = (Convert.ToInt32(b) - 1).ToString() + "-" + b + "/";
-            }
-            else
-            {
-                MonthName = b + "-" + (Convert.ToInt32(b) + 1).ToString() + "/";
-            }
-            return MonthName;
-        }
-
-
-        private void insertCorRegFacAddress(string invoice_no)
-        {
-            int selectedSite = 0;
-
-            string listsite_details = null;
-            int slno22 = 1;
-            for (int i = 0; i < FactoryAddress.Items.Count; i++)
-            {
-                if (FactoryAddress.Items[i].Selected)
-                {
-                    selectedSite = selectedSite + 1;
-                    listsite_details = FactoryAddress.Items[i].Text;
-
-                    string query = "insert into tbl_InvSiteAddress(invoice_no,SiteAddress) values (@invoice_no,@SiteAddress)";
-                    SqlParameter[] pram = {
-                         new SqlParameter("@invoice_no",invoice_no),
-                         new SqlParameter("@SiteAddress",listsite_details)
-                    };
-
-                    DbCL.SPExecDB(query, pram);
-                    slno22 = slno22 + 1;
-                }
-            }
-        }
-
-        private string bindpaymentDetails(string quno)
-        {
-            string due = "";
-            string query = "select Due_amount from tbl_invoice_payment where Quotation_No=@Quotation_No";
-            SqlParameter[] pram = {
-                new SqlParameter("@Quotation_No",quno)
-            };
-            SqlDataReader rdr = DbCL.SPReturnRdr(query, pram);
-            while (rdr.Read())
-            {
-                due = rdr["Due_amount"].ToString();
-            }
-            return due;
-        }
-
+        #endregion
     }
 }

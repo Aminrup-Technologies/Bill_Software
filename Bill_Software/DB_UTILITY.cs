@@ -48,6 +48,44 @@ namespace Bill_Software
             }
         }
 
+        public DataTable ReturnDataTable(string cmdstring)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                // Ensure connection object is initialized (Method from your DB_UTILITY class)
+                Sqlconnection();
+
+                // Open the connection (Method from your DB_UTILITY class)
+                ConnectDb();
+
+                using (SqlCommand cmd = new SqlCommand(cmdstring, Conn))
+                {
+                    // Optional: Increase timeout for heavy queries
+                    cmd.CommandTimeout = 180;
+
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // It is good practice to log the error here if you have a logging mechanism
+                throw ex;
+            }
+            finally
+            {
+                // Ensure connection is closed even if an error occurs
+                if (Conn.State == System.Data.ConnectionState.Open)
+                {
+                    Conn.Close();
+                }
+            }
+            return dt;
+        }
+
         public void ExecuteNonQuery(string sql, SqlParameter[] parameters)
         {
             try

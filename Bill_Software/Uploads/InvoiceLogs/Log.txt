@@ -1,0 +1,33 @@
+16-02-2026 15:35:41: System.NullReferenceException: Object reference not set to an instance of an object.
+   at Bill_Software.corporate.business.app.Manual_Invoice.btnSave_Click(Object sender, EventArgs e) in D:\PersonalRnD\AminrupERP\BillSoftware\Bill_Software\Bill_Software\corporate\business\app\Manual_Invoice.aspx.cs:line 273
+16-02-2026 17:05:49: System.Data.SqlClient.SqlException (0x80131904): Arithmetic overflow error converting nvarchar to data type numeric.
+The statement has been terminated.
+   at Bill_Software.corporate.business.app.Manual_Invoice.btnSave_Click(Object sender, EventArgs e) in D:\PersonalRnD\AminrupERP\BillSoftware\Bill_Software\Bill_Software\corporate\business\app\Manual_Invoice.aspx.cs:line 386
+ClientConnectionId:4e4c50c8-fbe5-4744-bb37-dfa8a79da71d
+Error Number:8115,State:8,Class:16
+16-02-2026 17:47:24: System.Data.SqlClient.SqlException (0x80131904): Arithmetic overflow error converting nvarchar to data type numeric.
+The statement has been terminated.
+   at Bill_Software.corporate.business.app.Manual_Invoice.btnSave_Click(Object sender, EventArgs e) in D:\PersonalRnD\AminrupERP\BillSoftware\Bill_Software\Bill_Software\corporate\business\app\Manual_Invoice.aspx.cs:line 391
+ClientConnectionId:e87145e8-80a3-4e21-8d45-1b50667ba74a
+Error Number:8115,State:8,Class:16
+16-02-2026 17:48:36: System.Data.SqlClient.SqlException (0x80131904): Arithmetic overflow error converting nvarchar to data type numeric.
+The statement has been terminated.
+   at Bill_Software.corporate.business.app.Manual_Invoice.btnSave_Click(Object sender, EventArgs e) in D:\PersonalRnD\AminrupERP\BillSoftware\Bill_Software\Bill_Software\corporate\business\app\Manual_Invoice.aspx.cs:line 391
+ClientConnectionId:e87145e8-80a3-4e21-8d45-1b50667ba74a
+Error Number:8115,State:8,Class:16
+16-02-2026 17:55:00: System.Data.SqlClient.SqlException (0x80131904): Arithmetic overflow error converting nvarchar to data type numeric.
+The statement has been terminated.
+   at Bill_Software.corporate.business.app.Manual_Invoice.btnSave_Click(Object sender, EventArgs e) in D:\PersonalRnD\AminrupERP\BillSoftware\Bill_Software\Bill_Software\corporate\business\app\Manual_Invoice.aspx.cs:line 391
+ClientConnectionId:cca0a6fd-20dc-4bac-9b92-8c5232accec9
+Error Number:8115,State:8,Class:16
+16-02-2026 17:56:10: System.Data.SqlClient.SqlException (0x80131904): Arithmetic overflow error converting nvarchar to data type numeric.
+The statement has been terminated.
+   at Bill_Software.corporate.business.app.Manual_Invoice.btnSave_Click(Object sender, EventArgs e) in D:\PersonalRnD\AminrupERP\BillSoftware\Bill_Software\Bill_Software\corporate\business\app\Manual_Invoice.aspx.cs:line 391
+ClientConnectionId:cca0a6fd-20dc-4bac-9b92-8c5232accec9
+Error Number:8115,State:8,Class:16
+16-02-2026 17:58:19: System.Data.SqlClient.SqlException (0x80131904): Arithmetic overflow error converting nvarchar to data type numeric.
+The statement has been terminated.
+   at Bill_Software.corporate.business.app.Manual_Invoice.btnSave_Click(Object sender, EventArgs e) in D:\PersonalRnD\AminrupERP\BillSoftware\Bill_Software\Bill_Software\corporate\business\app\Manual_Invoice.aspx.cs:line 391
+ClientConnectionId:cca0a6fd-20dc-4bac-9b92-8c5232accec9
+Error Number:8115,State:8,Class:16
+16-02-2026 18:23:54: Invoice: INV/C/25-26/3
