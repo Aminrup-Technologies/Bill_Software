@@ -107,6 +107,29 @@
             font-weight: bold;
             color: green;
         }
+
+        /* 1. Force text color to black in the dropdown list */
+        .select2-results__option {
+            color: #333 !important;
+            background-color: #fff !important;
+        }
+
+        /* 2. Highlight color on hover (matches your blue theme) */
+        .select2-results__option--highlighted {
+            background-color: #007bff !important; /* Blue background */
+            color: #fff !important; /* White text on hover */
+        }
+
+        /* 3. Text color for the box that shows the selected item */
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #333 !important;
+            line-height: 28px; /* Vertical centering adjustment */
+        }
+
+        /* 4. Fix the search input box text color */
+        .select2-search__field {
+            color: #333 !important;
+        }
     </style>
 
     <script src="calender/jquery-1.7.1.js" type="text/javascript"></script>
@@ -114,12 +137,45 @@
     <script src="calender/jquery.ui.widget.js" type="text/javascript"></script>
     <script src="calender/jquery.ui.datepicker.js" type="text/javascript"></script>
     <link href="calender/jquery.ui.all.css" rel="stylesheet" type="text/css" />
-
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script type="text/javascript">
         var prm = Sys.WebForms.PageRequestManager.getInstance();
         prm.add_pageLoaded(function () {
             $(".datepicker").datepicker({ dateFormat: 'dd-M-yy', changeMonth: true, changeYear: true });
         });
+
+        function initSelect2() {
+            var $ddl = $('#cmbClient');
+
+            // Check if Select2 is already applied to prevent duplicates
+            if ($ddl.hasClass("select2-hidden-accessible")) {
+                $ddl.select2('destroy');
+            }
+
+            $ddl.select2({
+                placeholder: "Select a Client",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        // Run on initial load
+        $(document).ready(function () {
+            initSelect2();
+        });
+
+        // Run on UpdatePanel Postback (Partial Page Updates)
+        var prm = Sys.WebForms.PageRequestManager.getInstance();
+        prm.add_endRequest(function () {
+            initSelect2();
+        });
+
+        // This handles both initial load and UpdatePanel partial postbacks
+        function pageLoad() {
+            initSelect2();
+        }
 
         // --- STEP 2: SEARCH & FILTER LOGIC ---
         function FilterGrid() {
@@ -262,7 +318,10 @@
                     <tr>
                         <td width="15%"><strong>Client Name:</strong><span style="color: red">*</span></td>
                         <td width="35%">
-                            <asp:DropDownList ID="cmbClient" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="cmbClient_SelectedIndexChanged"></asp:DropDownList>
+                            <asp:DropDownList ID="cmbClient" runat="server" CssClass="form-control select-search"
+                                AutoPostBack="true" OnSelectedIndexChanged="cmbClient_SelectedIndexChanged"
+                                ClientIDMode="Static">
+                            </asp:DropDownList>
                             <asp:Label ID="lblClientID" runat="server" Visible="false"></asp:Label>
                         </td>
                         <td width="15%"><strong>Invoice Date:</strong><span style="color: red">*</span></td>
@@ -324,7 +383,8 @@
                         <Columns>
                             <asp:TemplateField HeaderText="Select" ItemStyle-Width="40px">
                                 <ItemTemplate>
-                                    <asp:CheckBox ID="chkSelect" runat="server" /></ItemTemplate>
+                                    <asp:CheckBox ID="chkSelect" runat="server" />
+                                </ItemTemplate>
                             </asp:TemplateField>
                             <asp:BoundField DataField="ProductID" HeaderText="ID" Visible="true" />
                             <asp:BoundField DataField="Product_code" HeaderText="HSN Code" ItemStyle-Width="90px" />
