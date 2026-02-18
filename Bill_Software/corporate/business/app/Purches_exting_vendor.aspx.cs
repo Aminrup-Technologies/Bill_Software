@@ -15,7 +15,7 @@ namespace Bill_Software.corporate.business.app
         string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ToString();
         DB_UTILITY DbCL = new DB_UTILITY();
 
-        // 1. GRID STATE PROPERTY
+        // --- GRID STATE HOLDER ---
         private DataTable GridData
         {
             get
@@ -43,6 +43,7 @@ namespace Bill_Software.corporate.business.app
 
         private List<string> vatRates;
 
+        // --- PAGE LOAD ---
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Session["USERID"] == null)
@@ -51,11 +52,11 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            LoadTaxRates(); // Always load for dropdowns
+            LoadTaxRates(); // Load rates for dropdowns
 
             if (!IsPostBack)
             {
-                GridData = null;
+                GridData = null; // Reset Grid
                 LoadInitialData();
             }
         }
@@ -80,7 +81,7 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        // --- LOAD DROPDOWNS ---
+        // --- DROPDOWN LOADERS ---
         private void LoadCategories()
         {
             ddlCategory.Items.Clear();
@@ -94,9 +95,7 @@ namespace Bill_Software.corporate.business.app
                 while (rdr.Read())
                 {
                     if (rdr["ProductOrServiceCat"] != DBNull.Value)
-                    {
                         ddlCategory.Items.Add(rdr["ProductOrServiceCat"].ToString());
-                    }
                 }
             }
         }
@@ -137,7 +136,7 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        // --- EVENT HANDLERS ---
+        // --- VENDOR & PRODUCT SELECTION ---
         protected void cmbvendor_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cmbvendor.SelectedIndex == 0) return;
@@ -209,7 +208,7 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        // --- CORE: ADD ITEM BUTTON ---
+        // --- ADD ITEM BUTTON (With Validation & Reset) ---
         protected void Button2_Click(object sender, EventArgs e)
         {
             try
@@ -220,7 +219,7 @@ namespace Bill_Software.corporate.business.app
                     return;
                 }
 
-                // 1. SAVE EXISTING DATA
+                // 1. Save inputs first
                 UpdateStateFromGrid();
 
                 string itemName = cmbproduct_service.SelectedItem.Text;
@@ -250,7 +249,7 @@ namespace Bill_Software.corporate.business.app
                     newRow["Ser_pro_Name"] = dtItem.Rows[0]["Name"];
                     newRow["Order"] = currentGrid.Rows.Count + 1;
 
-                    // Defaults
+                    // Set Defaults
                     newRow["Quantity"] = "1";
                     newRow["Vendor_rate"] = "0";
                     newRow["DiscountPercent"] = "0";
@@ -261,10 +260,11 @@ namespace Bill_Software.corporate.business.app
                     newRow["sepecification"] = "";
 
                     currentGrid.Rows.Add(newRow);
+
                     GridData = currentGrid;
                     BindGrid();
 
-                    // Reset UI & Search Box
+                    // Reset UI
                     cmbproduct_service.SelectedIndex = 0;
                     string script = string.Format("document.getElementById('txtItemFilter').value=''; filterDropdown('txtItemFilter', '{0}');", cmbproduct_service.ClientID);
                     ScriptManager.RegisterStartupScript(this, GetType(), "resetSearch", script, true);
@@ -282,26 +282,16 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private void BindGrid()
-        {
-            gd_Service_Product.DataSource = GridData;
-            gd_Service_Product.DataBind();
-        }
-
-        // --- CORE: STATE MANAGEMENT ---
+        // --- GRID STATE MANAGEMENT (Prevents Data Loss) ---
         private void UpdateStateFromGrid()
         {
-            DataTable dt = GridData; // Get current DataTable
-
-            // Loop through every visible row in the grid
+            DataTable dt = GridData;
             for (int i = 0; i < gd_Service_Product.Rows.Count; i++)
             {
-                // Safety check to prevent index errors
                 if (i >= dt.Rows.Count) break;
 
                 GridViewRow row = gd_Service_Product.Rows[i];
 
-                // 1. Find Controls
                 TextBox txtSpec = (TextBox)row.FindControl("sepecification");
                 TextBox txtQty = (TextBox)row.FindControl("Quantity");
                 TextBox txtRate = (TextBox)row.FindControl("Vendor_rate");
@@ -312,10 +302,7 @@ namespace Bill_Software.corporate.business.app
                 DropDownList ddlVat = (DropDownList)row.FindControl("vat_parsentage");
                 TextBox txtOrder = (TextBox)row.FindControl("txtOrder");
 
-                // 2. Save Values to DataTable (Handle Nulls & Empty Strings)
                 if (txtSpec != null) dt.Rows[i]["sepecification"] = txtSpec.Text;
-
-                // Use "0" if empty to avoid math errors later
                 if (txtQty != null) dt.Rows[i]["Quantity"] = string.IsNullOrEmpty(txtQty.Text) ? "0" : txtQty.Text;
                 if (txtRate != null) dt.Rows[i]["Vendor_rate"] = string.IsNullOrEmpty(txtRate.Text) ? "0" : txtRate.Text;
                 if (txtDiscP != null) dt.Rows[i]["DiscountPercent"] = string.IsNullOrEmpty(txtDiscP.Text) ? "0" : txtDiscP.Text;
@@ -325,100 +312,106 @@ namespace Bill_Software.corporate.business.app
                 if (rblTax != null) dt.Rows[i]["TaxApplicable"] = rblTax.SelectedValue;
                 if (ddlVat != null) dt.Rows[i]["VatRate"] = ddlVat.SelectedValue;
 
-                // Preserve Order
-                if (txtOrder != null) dt.Rows[i]["Order"] = string.IsNullOrEmpty(txtOrder.Text) ? (i + 1) : Convert.ToInt32(txtOrder.Text);
+                if (txtOrder != null)
+                    dt.Rows[i]["Order"] = string.IsNullOrEmpty(txtOrder.Text) ? (i + 1) : Convert.ToInt32(txtOrder.Text);
             }
-
-            // 3. Save updated table back to ViewState
             GridData = dt;
         }
 
-        // --- GRID ROW ACTIONS ---
+        // --- GRID ROW ACTIONS (Move/Remove) ---
         protected void gd_Service_Product_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             try
             {
                 if (e.CommandName == "MoveUp" || e.CommandName == "MoveDown" || e.CommandName == "RemoveItem")
                 {
-                    // 1. CRITICAL: Save what the user typed BEFORE moving rows
-                    UpdateStateFromGrid();
+                    UpdateStateFromGrid(); // Save inputs first
 
                     DataTable dt = GridData;
                     int index = Convert.ToInt32(e.CommandArgument);
 
-                    // 2. Perform the Move/Remove Action
                     if (e.CommandName == "MoveUp" && index > 0)
                     {
-                        DataRow tempRow = dt.NewRow();
-                        tempRow.ItemArray = dt.Rows[index].ItemArray;
+                        DataRow temp = dt.NewRow();
+                        temp.ItemArray = dt.Rows[index].ItemArray;
                         dt.Rows.RemoveAt(index);
-                        dt.Rows.InsertAt(tempRow, index - 1);
+                        dt.Rows.InsertAt(temp, index - 1);
                     }
                     else if (e.CommandName == "MoveDown" && index < dt.Rows.Count - 1)
                     {
-                        DataRow tempRow = dt.NewRow();
-                        tempRow.ItemArray = dt.Rows[index].ItemArray;
+                        DataRow temp = dt.NewRow();
+                        temp.ItemArray = dt.Rows[index].ItemArray;
                         dt.Rows.RemoveAt(index);
-                        dt.Rows.InsertAt(tempRow, index + 1);
+                        dt.Rows.InsertAt(temp, index + 1);
                     }
                     else if (e.CommandName == "RemoveItem")
                     {
                         dt.Rows.RemoveAt(index);
                     }
 
-                    // 3. Reset Order Numbers (1, 2, 3...)
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        dt.Rows[i]["Order"] = i + 1;
-                    }
+                    // Re-index Order
+                    for (int i = 0; i < dt.Rows.Count; i++) dt.Rows[i]["Order"] = i + 1;
 
-                    // 4. Save & Rebind
                     GridData = dt;
                     BindGrid();
-
-                    // 5. Force Client-Side Recalculation
                     ScriptManager.RegisterStartupScript(this, GetType(), "recalc", "calculateGrandTotal();", true);
                 }
             }
             catch (Exception ex)
             {
-                ShowError("Action Error: " + ex.Message);
+                ShowError("Grid Action Error: " + ex.Message);
             }
+        }
+
+        private void BindGrid()
+        {
+            gd_Service_Product.DataSource = GridData;
+            gd_Service_Product.DataBind();
         }
 
         protected void gd_Service_Product_RowDataBound(object sender, GridViewRowEventArgs e)
         {
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                // ... (Keep existing Dropdown binding logic) ...
                 DropDownList ddlTax = (DropDownList)e.Row.FindControl("vat_parsentage");
                 if (ddlTax != null)
                 {
                     ddlTax.Items.Clear();
-                    // Add your tax rates here...
-                    if (vatRates != null) foreach (string rate in vatRates) ddlTax.Items.Add(new ListItem(rate, rate));
+                    foreach (string rate in vatRates) ddlTax.Items.Add(new ListItem(rate, rate));
                 }
 
                 DataRowView drv = (DataRowView)e.Row.DataItem;
                 if (drv != null)
                 {
-                    // ... (Keep existing textbox restoration) ...
+                    ((TextBox)e.Row.FindControl("sepecification")).Text = drv["sepecification"].ToString();
                     ((TextBox)e.Row.FindControl("Quantity")).Text = drv["Quantity"].ToString();
                     ((TextBox)e.Row.FindControl("Vendor_rate")).Text = drv["Vendor_rate"].ToString();
-                    // ... etc ...
+                    ((TextBox)e.Row.FindControl("DiscountPercent")).Text = drv["DiscountPercent"].ToString();
+                    ((TextBox)e.Row.FindControl("DiscountAmount")).Text = drv["DiscountAmount"].ToString();
+                    ((TextBox)e.Row.FindControl("TaxableAmount")).Text = drv["TaxableAmount"].ToString();
+                    ((TextBox)e.Row.FindControl("txtOrder")).Text = drv["Order"].ToString();
 
-                    // FIX: Restore the Order Number
-                    TextBox txtOrder = (TextBox)e.Row.FindControl("txtOrder");
-                    if (txtOrder != null) txtOrder.Text = drv["Order"].ToString();
+                    RadioButtonList rbl = (RadioButtonList)e.Row.FindControl("RadioButtonList1");
+                    if (rbl != null && drv["TaxApplicable"] != DBNull.Value && !string.IsNullOrEmpty(drv["TaxApplicable"].ToString()))
+                    {
+                        rbl.SelectedValue = drv["TaxApplicable"].ToString();
+                    }
 
-                    // Restore Dropdowns
-                    if (ddlTax != null && drv["VatRate"] != DBNull.Value)
+                    if (ddlTax != null && drv["VatRate"] != DBNull.Value && !string.IsNullOrEmpty(drv["VatRate"].ToString()))
                     {
                         if (ddlTax.Items.FindByValue(drv["VatRate"].ToString()) != null)
                             ddlTax.SelectedValue = drv["VatRate"].ToString();
                     }
                 }
             }
+        }
+
+        // --- BUTTON: UPDATE & RECALCULATE ---
+        protected void btnRecalculate_Click(object sender, EventArgs e)
+        {
+            UpdateStateFromGrid();
+            BindGrid();
+            ScriptManager.RegisterStartupScript(this, GetType(), "recalc", "calculateGrandTotal();", true);
         }
 
         protected void Button4_Click(object sender, EventArgs e)
@@ -463,7 +456,7 @@ namespace Bill_Software.corporate.business.app
         // --- SAVE TRANSACTION ---
         protected void Button3_Click(object sender, EventArgs e)
         {
-            UpdateStateFromGrid();
+            UpdateStateFromGrid(); // Capture latest inputs
 
             if (GridData.Rows.Count == 0)
             {
@@ -617,8 +610,11 @@ namespace Bill_Software.corporate.business.app
                     cmdDue.ExecuteNonQuery();
 
                     trans.Commit();
-                    lblOk.Text = string.Format("Purchase Saved! ID: {0}", purchesId);
-                    PanelOK.Visible = true; PanelError.Visible = false; Button3.Enabled = false;
+
+                    lblOk.Text = string.Format("Purchase Saved Successfully! ID: {0}", purchesId);
+                    PanelOK.Visible = true;
+                    PanelError.Visible = false;
+                    Button3.Enabled = false;
                 }
                 catch (Exception ex)
                 {
@@ -630,31 +626,60 @@ namespace Bill_Software.corporate.business.app
 
         private void UpdateStock(string pid, string name, double qty, double rate, double tax, string sid, string sname, string date, SqlConnection c, SqlTransaction t)
         {
-            string sqlS = @"UPDATE tbl_stock SET Quantity_Num = ISNULL(Quantity_Num, 0) + @q, Quantity = CAST(ISNULL(Quantity_Num, 0) + @q AS NVARCHAR(50)), Sail_Rate = @r, Service_tax_rate = @t, ShippedDate = @d, ModifiedOn = GETDATE(), ModifiedByUserId = @u WHERE Product_id = @p AND ShippedToStoreId = @s";
+            string sqlS = @"UPDATE tbl_stock 
+                            SET Quantity_Num = ISNULL(Quantity_Num, 0) + @q,
+                                Quantity = CAST(ISNULL(Quantity_Num, 0) + @q AS NVARCHAR(50)),
+                                Sail_Rate = @r,
+                                Service_tax_rate = @t,
+                                ShippedDate = @d,
+                                ModifiedOn = GETDATE(),
+                                ModifiedByUserId = @u
+                            WHERE Product_id = @p AND ShippedToStoreId = @s";
 
             string uid = "admin";
             if (Session["USERID"] != null) uid = Session["USERID"].ToString();
 
             SqlCommand cmdS = new SqlCommand(sqlS, c, t);
-            cmdS.Parameters.AddWithValue("@q", qty); cmdS.Parameters.AddWithValue("@r", rate); cmdS.Parameters.AddWithValue("@t", tax);
-            cmdS.Parameters.AddWithValue("@d", date); cmdS.Parameters.AddWithValue("@u", uid);
-            cmdS.Parameters.AddWithValue("@p", pid); cmdS.Parameters.AddWithValue("@s", sid);
+            cmdS.Parameters.AddWithValue("@q", qty);
+            cmdS.Parameters.AddWithValue("@r", rate);
+            cmdS.Parameters.AddWithValue("@t", tax);
+            cmdS.Parameters.AddWithValue("@d", date);
+            cmdS.Parameters.AddWithValue("@u", uid);
+            cmdS.Parameters.AddWithValue("@p", pid);
+            cmdS.Parameters.AddWithValue("@s", sid);
             int rows = cmdS.ExecuteNonQuery();
 
             if (rows == 0)
             {
-                string sqlI = @"INSERT INTO tbl_stock (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate, ShippedToStoreId, ShippedToStoreName, ShippedDate, Quantity_Num, AddedOn, ModifiedByUserId) VALUES (@p, @n, CAST(@q AS NVARCHAR(50)), @r, @t, @s, @sn, @d, @q, GETDATE(), @u)";
+                string sqlI = @"INSERT INTO tbl_stock (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate, ShippedToStoreId, ShippedToStoreName, ShippedDate, Quantity_Num, AddedOn, ModifiedByUserId) 
+                                VALUES (@p, @n, CAST(@q AS NVARCHAR(50)), @r, @t, @s, @sn, @d, @q, GETDATE(), @u)";
                 SqlCommand cmdI = new SqlCommand(sqlI, c, t);
-                cmdI.Parameters.AddWithValue("@p", pid); cmdI.Parameters.AddWithValue("@n", name); cmdI.Parameters.AddWithValue("@q", qty);
-                cmdI.Parameters.AddWithValue("@r", rate); cmdI.Parameters.AddWithValue("@t", tax); cmdI.Parameters.AddWithValue("@s", sid);
-                cmdI.Parameters.AddWithValue("@sn", sname); cmdI.Parameters.AddWithValue("@d", date); cmdI.Parameters.AddWithValue("@u", uid);
+                cmdI.Parameters.AddWithValue("@p", pid);
+                cmdI.Parameters.AddWithValue("@n", name);
+                cmdI.Parameters.AddWithValue("@q", qty);
+                cmdI.Parameters.AddWithValue("@r", rate);
+                cmdI.Parameters.AddWithValue("@t", tax);
+                cmdI.Parameters.AddWithValue("@s", sid);
+                cmdI.Parameters.AddWithValue("@sn", sname);
+                cmdI.Parameters.AddWithValue("@d", date);
+                cmdI.Parameters.AddWithValue("@u", uid);
                 cmdI.ExecuteNonQuery();
             }
 
-            string sqlM = @"UPDATE tbl_NewProduct SET Quantity_Num = ISNULL(Quantity_Num, 0) + @q, Quantity = CAST(ISNULL(Quantity_Num, 0) + @q AS NVARCHAR(100)), Sail_Rate = @r, Tax_Rate = @t, ModifiedOn = GETDATE(), ModifiedByUserId = @u WHERE ProductID = @p";
+            string sqlM = @"UPDATE tbl_NewProduct 
+                            SET Quantity_Num = ISNULL(Quantity_Num, 0) + @q,
+                                Quantity = CAST(ISNULL(Quantity_Num, 0) + @q AS NVARCHAR(100)),
+                                Sail_Rate = @r,
+                                Tax_Rate = @t,
+                                ModifiedOn = GETDATE(),
+                                ModifiedByUserId = @u
+                            WHERE ProductID = @p";
             SqlCommand cmdM = new SqlCommand(sqlM, c, t);
-            cmdM.Parameters.AddWithValue("@q", qty); cmdM.Parameters.AddWithValue("@r", rate);
-            cmdM.Parameters.AddWithValue("@t", tax); cmdM.Parameters.AddWithValue("@u", uid); cmdM.Parameters.AddWithValue("@p", pid);
+            cmdM.Parameters.AddWithValue("@q", qty);
+            cmdM.Parameters.AddWithValue("@r", rate);
+            cmdM.Parameters.AddWithValue("@t", tax);
+            cmdM.Parameters.AddWithValue("@u", uid);
+            cmdM.Parameters.AddWithValue("@p", pid);
             cmdM.ExecuteNonQuery();
         }
 
@@ -685,18 +710,6 @@ namespace Bill_Software.corporate.business.app
             lblErrorMsg.Text = msg;
             PanelError.Visible = true;
             PanelOK.Visible = false;
-        }
-
-        protected void btnRecalculate_Click(object sender, EventArgs e)
-        {
-            // 1. Save inputs
-            UpdateStateFromGrid();
-
-            // 2. Rebind Grid (Refreshes the view)
-            BindGrid();
-
-            // 3. Trigger JS to update totals visuals
-            ScriptManager.RegisterStartupScript(this, GetType(), "recalc", "calculateGrandTotal();", true);
         }
     }
 }
