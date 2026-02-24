@@ -13,13 +13,15 @@
             border-radius: 4px;
         }
 
+        /* Update your existing .form-control */
         .form-control {
             width: 95%;
-            padding: 4px;
+            padding: 6px 8px; /* Increased padding for better click area */
             border: 1px solid #ccc;
-            border-radius: 3px;
+            border-radius: 4px; /* Slightly rounder */
             font-family: Arial, sans-serif;
-            font-size: 11px;
+            font-size: 13px; /* Bumped up from 11px */
+            box-sizing: border-box; /* Ensures padding doesn't break widths */
         }
 
         .btn-nav {
@@ -37,36 +39,50 @@
                 background-color: #004d73;
             }
 
-        /* --- Filter Buttons --- */
+       /* Update your existing .btn-filter styles */
         .btn-filter {
-            padding: 5px 10px;
+            padding: 6px 12px;
             border: 1px solid #ccc;
-            background-color: #f0f0f0;
+            background-color: #e9ecef;
             cursor: pointer;
-            font-size: 11px;
-            margin-right: 2px;
+            font-size: 12px;
+            margin-right: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease; /* Smooth color fading on hover */
         }
 
+            .btn-filter:hover {
+                background-color: #dde2e6;
+            }
+
             .btn-filter.active {
-                background-color: #006699;
+                background-color: #19658A; /* Match the header color exactly */
                 color: white;
-                border-color: #004d73;
+                border-color: #19658A;
+                box-shadow: inset 0 3px 5px rgba(0,0,0,0.12); /* Gives a "pressed in" look */
             }
 
         /* --- Grid Styles --- */
+        /* Update your existing .Grid */
         .Grid {
             width: 100%;
             border-collapse: collapse;
             font-family: Arial, sans-serif;
-            font-size: 11px;
+            font-size: 12px; /* Bumped up from 11px for better data readability */
         }
 
+            /* Add this to your existing .Grid th rules */
             .Grid th {
                 background-color: #006699;
                 color: white;
-                padding: 6px;
+                padding: 8px; /* Slightly taller headers */
                 border: 1px solid #333;
                 text-align: center;
+                /* NEW: Sticky Header Magic */
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                box-shadow: 0 2px 2px rgba(0,0,0,0.1); /* Adds a nice shadow when scrolling */
             }
 
             .Grid td {
@@ -94,18 +110,23 @@
             color: red;
         }
 
-        /* --- Summary Footer --- */
+        /* Update your existing .total-box */
         .total-box {
             margin-top: 20px;
-            padding: 15px;
-            background-color: #f5f5f5;
+            padding: 20px;
+            background-color: #fcfcfc; /* Lighter, cleaner background */
             border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Soft depth */
+            float: right; /* Aligns the box to the right side of the screen */
+            width: 400px; /* Gives it a neat, compact receipt-like feel */
         }
 
+        /* Update your existing .lbl-grand */
         .lbl-grand {
-            font-size: 16px;
+            font-size: 18px; /* Slightly larger */
             font-weight: bold;
-            color: green;
+            color: #28a745; /* Modern, standard success green */
         }
 
         /* 1. Force text color to black in the dropdown list */
@@ -129,6 +150,13 @@
         /* 4. Fix the search input box text color */
         .select2-search__field {
             color: #333 !important;
+        }
+
+        /* Clear the float so buttons below don't overlap */
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
         }
     </style>
 
@@ -222,9 +250,11 @@
         }
 
         // --- STEP 3: INSTANT CALCULATION (DUAL DISCOUNT) ---
+        // --- STEP 3: INSTANT CALCULATION (DUAL DISCOUNT & SAFE MATH) ---
         function CalculateRow(input, trigger) {
             var row = input.parentNode.parentNode;
 
+            // 1. Safely grab all elements
             var txtQty = row.querySelector("input[id*='txtQty']");
             var txtRate = row.querySelector("input[id*='txtRate']");
             var txtDiscPer = row.querySelector("input[id*='txtDiscPer']");
@@ -236,43 +266,55 @@
             var lblTaxAmt = row.querySelector("span[id*='lblTaxAmt']");
             var lblNet = row.querySelector("span[id*='lblNet']");
 
-            var qty = parseFloat(txtQty.value) || 0;
-            var rate = parseFloat(txtRate.value) || 0;
-            var gst = parseFloat(lblGst.innerText) || 0;
+            // SAFEGUARD: If the main elements are missing, stop to prevent crashes
+            if (!txtQty || !txtRate || !lblGross) return;
 
-            // 1. Gross
+            // 2. Parse values, prevent NaN, and prevent Negative numbers using Math.max()
+            var qty = Math.max(0, parseFloat(txtQty.value) || 0);
+            var rate = Math.max(0, parseFloat(txtRate.value) || 0);
+            var gst = Math.max(0, parseFloat(lblGst ? lblGst.innerText : 0) || 0);
+
+            // Gross
             var gross = qty * rate;
             lblGross.innerText = gross.toFixed(2);
 
-            // 2. Discount Logic
+            // 3. Discount Logic
             var discAmt = 0;
             var discPer = 0;
 
             if (trigger === 'AMT') {
-                // User typed Amount -> Calculate %
-                discAmt = parseFloat(txtDiscAmt.value) || 0;
+                // User typed Amount
+                discAmt = Math.max(0, parseFloat(txtDiscAmt.value) || 0);
+
+                // SAFEGUARD: Do not allow discount to be higher than the gross amount
+                if (discAmt > gross) discAmt = gross;
+
                 if (gross > 0) discPer = (discAmt / gross) * 100;
-                txtDiscPer.value = discPer.toFixed(2);
+                if (txtDiscPer) txtDiscPer.value = discPer.toFixed(2);
             }
             else {
-                // User typed % -> Calculate Amount
-                discPer = parseFloat(txtDiscPer.value) || 0;
+                // User typed % (or triggered by Qty/Rate change)
+                if (txtDiscPer) discPer = Math.max(0, parseFloat(txtDiscPer.value) || 0);
+
+                // SAFEGUARD: Do not allow discount percentage to exceed 100%
+                if (discPer > 100) discPer = 100;
+
                 discAmt = (gross * discPer) / 100;
-                txtDiscAmt.value = discAmt.toFixed(2);
+                if (txtDiscAmt) txtDiscAmt.value = discAmt.toFixed(2);
             }
 
-            // 3. Taxable
+            // Taxable
             var taxable = gross - discAmt;
-            if (taxable < 0) taxable = 0;
-            lblTaxable.innerText = taxable.toFixed(2);
+            if (taxable < 0) taxable = 0; // Final safety net
+            if (lblTaxable) lblTaxable.innerText = taxable.toFixed(2);
 
-            // 4. Tax Amount
+            // Tax Amount
             var taxVal = (taxable * gst) / 100;
-            lblTaxAmt.innerText = taxVal.toFixed(2);
+            if (lblTaxAmt) lblTaxAmt.innerText = taxVal.toFixed(2);
 
-            // 5. Net Total
+            // Net Total
             var net = taxable + taxVal;
-            lblNet.innerText = net.toFixed(2);
+            if (lblNet) lblNet.innerText = net.toFixed(2);
 
             RecalculateFooter();
         }
@@ -287,17 +329,58 @@
                 for (var i = 1; i < rows.length; i++) {
                     var lTax = rows[i].querySelector("span[id*='lblTaxAmt']");
                     var lNet = rows[i].querySelector("span[id*='lblNet']");
+
+                    // Safely add to totals
                     if (lTax) totalTax += parseFloat(lTax.innerText) || 0;
                     if (lNet) totalGrand += parseFloat(lNet.innerText) || 0;
                 }
             }
 
-            var frt = parseFloat(document.getElementById("<%= txtFreight.ClientID %>").value) || 0;
-            var oth = parseFloat(document.getElementById("<%= txtOtherCharge.ClientID %>").value) || 0;
+            // Safely get footer inputs
+            var inputFrt = document.getElementById("<%= txtFreight.ClientID %>");
+            var inputOth = document.getElementById("<%= txtOtherCharge.ClientID %>");
 
-            document.getElementById("<%= lblFooterTax.ClientID %>").innerText = totalTax.toFixed(2);
-            document.getElementById("<%= lblFooterGrand.ClientID %>").innerText = (totalGrand + frt + oth).toFixed(2);
+            var frt = inputFrt ? Math.max(0, parseFloat(inputFrt.value) || 0) : 0;
+            var oth = inputOth ? Math.max(0, parseFloat(inputOth.value) || 0) : 0;
+
+            // Output to labels securely
+            var outTax = document.getElementById("<%= lblFooterTax.ClientID %>");
+            var outGrand = document.getElementById("<%= lblFooterGrand.ClientID %>");
+
+            if (outTax) outTax.innerText = totalTax.toFixed(2);
+            if (outGrand) outGrand.innerText = (totalGrand + frt + oth).toFixed(2);
         }
+
+        // 1. Catch standard JavaScript runtime errors (e.g., calculation glitches)
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            var softMsg = "A minor display glitch occurred. The page will still work, but some calculations might be delayed.";
+            console.error("JS Error: " + msg + " at line " + lineNo);
+
+            // Show a soft alert to the user
+            alert(softMsg);
+
+            // Return true to prevent the browser's default error handling
+            return true;
+        };
+
+        // 2. Catch ASP.NET AJAX UpdatePanel Errors (e.g., server timeouts or C# crashes during partial postbacks)
+        var prm = Sys.WebForms.PageRequestManager.getInstance();
+        prm.add_endRequest(function (sender, args) {
+            if (args.get_error() != undefined) {
+                // Extract the error message for the console
+                var errorMsg = args.get_error().message;
+
+                // Suppress the default ugly ASP.NET popup
+                args.set_errorHandled(true);
+
+                // Show a friendly, soft alert
+                alert("We had trouble communicating with the server. Please check your connection or try clicking again.");
+                console.error("AJAX Error: ", errorMsg);
+            } else {
+                // If there's no error, make sure our dropdowns re-initialize properly
+                initSelect2();
+            }
+        });
     </script>
 </asp:Content>
 

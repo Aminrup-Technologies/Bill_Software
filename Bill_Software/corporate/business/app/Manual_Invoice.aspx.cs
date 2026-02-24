@@ -19,6 +19,8 @@ namespace Bill_Software.corporate.business.app
             if (Session["USERID"] == null)
             {
                 Response.Redirect("~/index.aspx");
+                Context.ApplicationInstance.CompleteRequest(); // The modern, safe way to stop execution
+                return; // Exit the method immediately
             }
 
             if (!IsPostBack)
@@ -41,10 +43,10 @@ namespace Bill_Software.corporate.business.app
         {
             if (cmbClient.SelectedIndex > 0)
             {
-                DbCL.Sqlconnection();
-                DbCL.ConnectDb();
                 try
                 {
+                    DbCL.Sqlconnection();
+                    DbCL.ConnectDb();
                     SqlCommand cmd = new SqlCommand("select Client_Id from tbl_Client where Client_Name=@Name", DbCL.Conn);
                     cmd.Parameters.AddWithValue("@Name", cmbClient.SelectedItem.Text);
                     object res = cmd.ExecuteScalar();
@@ -54,8 +56,15 @@ namespace Bill_Software.corporate.business.app
                         LoadAddresses(lblClientID.Text);
                     }
                 }
-                catch { }
-                finally { DbCL.Conn.Close(); }
+                catch (Exception ex)
+                {
+                    WriteLog("CLIENT SELECT ERROR: " + ex.ToString());
+                    ShowMsg("We couldn't load the details for this client. Please refresh and try again.", false);
+                }
+                finally
+                {
+                    if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                }
             }
         }
 
@@ -96,14 +105,40 @@ namespace Bill_Software.corporate.business.app
         private void BindProductGrid()
         {
             string qry = "select ProductID, Product_code, ProductName, Brand, Unit, Sail_Rate, Tax_Rate, Quantity from tbl_NewProduct";
+
+            // Use parameterized query instead of direct concatenation
             if (cmbCategory.SelectedIndex > 0)
             {
-                qry += " WHERE ProductOrServiceCat = '" + cmbCategory.SelectedItem.Text + "'";
+                qry += " WHERE ProductOrServiceCat = @Cat";
             }
             qry += " ORDER BY ProductName";
 
-            gridProdWithCat.DataSource = DbCL.ReturnDataTable(qry);
-            gridProdWithCat.DataBind();
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            try
+            {
+                SqlCommand cmd = new SqlCommand(qry, DbCL.Conn);
+                if (cmbCategory.SelectedIndex > 0)
+                {
+                    cmd.Parameters.AddWithValue("@Cat", cmbCategory.SelectedItem.Text);
+                }
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                gridProdWithCat.DataSource = dt;
+                gridProdWithCat.DataBind();
+            }
+            catch (Exception ex)
+            {
+                WriteLog("BindProductGrid Error: " + ex.ToString());
+                ShowMsg("Could not load products. Please try again.", false);
+            }
+            finally
+            {
+                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+            }
         }
 
         protected void btnAddToCart_Click(object sender, EventArgs e)
@@ -249,8 +284,19 @@ namespace Bill_Software.corporate.business.app
 
                 UpdateCartFromGrid((DataTable)ViewState["PhaseProductData"]);
                 DataTable dt = (DataTable)ViewState["PhaseProductData"];
-                if (dt.Rows.Count == 0) { ShowMsg("Cart is empty", false); return; }
+                //if (dt.Rows.Count == 0) { ShowMsg("Cart is empty", false); return; }
+                // NEW: Prevent saving invoices with 0 quantity
+                decimal totalCartQty = 0;
+                foreach (DataRow dr in dt.Rows)
+                {
+                    totalCartQty += Convert.ToDecimal(dr["IQuantity"]);
+                }
 
+                if (totalCartQty <= 0)
+                {
+                    ShowMsg("Please enter a valid quantity greater than 0 for your items.", false);
+                    return;
+                }
                 string invNo = GenerateInvoiceNo();
                 string uid = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
                 int slNo = GetSlNo();
@@ -314,10 +360,10 @@ namespace Bill_Software.corporate.business.app
                         cmdH.Parameters.Add("@Gr", SqlDbType.Decimal).Value = gGross;
                         cmdH.Parameters.Add("@Di", SqlDbType.Decimal).Value = gDisc;
                         cmdH.Parameters.Add("@Sub", SqlDbType.Decimal).Value = Math.Round(gGross - gDisc, 2);
-                        cmdH.Parameters.Add("@Tax", SqlDbType.Decimal).Value = gTax;
+                        cmdH.Parameters.AddWithValue("@Tax", gTax.ToString("0.00"));
                         cmdH.Parameters.Add("@Net", SqlDbType.Decimal).Value = gNet;
 
-                        cmdH.Parameters.AddWithValue("@Sl", slNo);
+                        cmdH.Parameters.AddWithValue("@Sl", slNo.ToString());
                         cmdH.Parameters.Add("@Frt", SqlDbType.Decimal).Value = frt;
                         cmdH.Parameters.Add("@Oth", SqlDbType.Decimal).Value = oth;
                         cmdH.Parameters.AddWithValue("@Intra", rbTaxType.SelectedValue == "1" ? "YES" : (object)DBNull.Value);
@@ -349,10 +395,12 @@ namespace Bill_Software.corporate.business.app
                             cmdD.Parameters.AddWithValue("@HSN", dr["Product_code"]);
                             cmdD.Parameters.AddWithValue("@Name", dr["ProductName"]);
 
-                            cmdD.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
+                            //cmdD.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
+                            cmdD.Parameters.AddWithValue("@Qty", q.ToString("0.####")); // Preserves up to 4 decimals as string
                             cmdD.Parameters.Add("@Rate", SqlDbType.Decimal).Value = r;
                             cmdD.Parameters.Add("@DPer", SqlDbType.Decimal).Value = dPer;
-                            cmdD.Parameters.Add("@TPer", SqlDbType.Decimal).Value = tPer;
+                            //cmdD.Parameters.Add("@TPer", SqlDbType.Decimal).Value = tPer;                           
+                            cmdD.Parameters.AddWithValue("@TPer", tPer.ToString("0.00")); // Pass as string
                             cmdD.Parameters.Add("@Net", SqlDbType.Decimal).Value = rowNet;
                             cmdD.Parameters.Add("@Base", SqlDbType.Decimal).Value = taxable;
 
@@ -361,20 +409,21 @@ namespace Bill_Software.corporate.business.app
                             cmdD.ExecuteNonQuery();
 
                             // Stock Deduct
-                            // Fix: Safe cast of Quantity column (in case it is nvarchar) and explicit parameter types
-                            string sqlStock = "UPDATE tbl_NewProduct SET Quantity = CAST(ISNULL(Quantity, '0') AS DECIMAL(18,2)) - @Qty WHERE ProductID = @PID";
+                            string sqlStock = @"UPDATE tbl_NewProduct 
+                                SET Quantity = CAST((CAST(ISNULL(Quantity, '0') AS DECIMAL(18,4)) - @Qty) AS NVARCHAR(100)), 
+                                    Quantity_Num = ISNULL(Quantity_Num, 0) - @Qty 
+                                WHERE ProductID = @PID";
+
                             SqlCommand cmdS = new SqlCommand(sqlStock, conn, tran);
 
-                            // 1. Handle Decimal Quantity safely with explicit precision
+                            // Safe decimal parameter with precision mapping to your database
                             SqlParameter paramQty = new SqlParameter("@Qty", SqlDbType.Decimal);
                             paramQty.Precision = 18;
-                            paramQty.Scale = 3;
+                            paramQty.Scale = 4; // Matches the database decimal(18,4)
                             paramQty.Value = q;
                             cmdS.Parameters.Add(paramQty);
 
-                            // 2. Handle Alphanumeric ProductID (PRD0599) as VarChar, not implicit NVarChar
                             cmdS.Parameters.Add("@PID", SqlDbType.VarChar).Value = dr["ProductID"].ToString();
-
                             cmdS.ExecuteNonQuery();
                         }
 
@@ -401,14 +450,18 @@ namespace Bill_Software.corporate.business.app
                     catch (Exception ex)
                     {
                         tran.Rollback();
-                        throw ex;
+                        throw; // FIX: Use 'throw;' instead of 'throw ex;' to preserve the exact line number of the error
                     }
                 }
             }
             catch (Exception ex)
             {
-                ShowMsg("Error: " + ex.Message, false);
-                WriteLog(ex.ToString());
+                // FIX: Log the actual technical error to your file
+                WriteLog("Invoice Save Error: " + ex.ToString());
+
+                // FIX: Show a soft, non-technical message to the user
+                // 2. Show a soft, friendly message to the user
+                ShowMsg("Oops! We encountered a slight issue while generating the invoice. Please try again or contact support if the issue persists.", false);
             }
         }
         #endregion
@@ -416,9 +469,12 @@ namespace Bill_Software.corporate.business.app
         #region HELPERS
         private void ShowMsg(string msg, bool ok)
         {
-            PanelMsg.Visible = !string.IsNullOrEmpty(msg);
+            PanelMsg.Visible = true;
             lblMsg.Text = msg;
-            lblMsg.ForeColor = ok ? System.Drawing.Color.Green : System.Drawing.Color.Red;
+            // Soften the colors slightly for better UI/UX
+            PanelMsg.Style["border-color"] = ok ? "#d6e9c6" : "#ebccd1";
+            PanelMsg.Style["background-color"] = ok ? "#dff0d8" : "#f2dede";
+            lblMsg.ForeColor = ok ? System.Drawing.Color.DarkGreen : System.Drawing.Color.DarkRed;
         }
 
         private string GenerateInvoiceNo()
@@ -432,9 +488,24 @@ namespace Bill_Software.corporate.business.app
 
         private int GetSlNo()
         {
-            DataTable dt = DbCL.ReturnDataTable("SELECT ISNULL(MAX(CAST(Sl_no AS INT)), 0) + 1 FROM tbl_Invoice");
-            if (dt.Rows.Count > 0) return Convert.ToInt32(dt.Rows[0][0]);
-            return 1;
+            try
+            {
+                // TRY_CAST safely ignores text values (like "INV-ABC") and only finds the max of actual numbers
+                string query = "SELECT ISNULL(MAX(TRY_CAST(Sl_no AS INT)), 0) + 1 FROM tbl_Invoice";
+                DataTable dt = DbCL.ReturnDataTable(query);
+
+                if (dt.Rows.Count > 0 && dt.Rows[0][0] != DBNull.Value)
+                {
+                    return Convert.ToInt32(dt.Rows[0][0]);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error silently and let the system fallback to 1
+                WriteLog("Error generating Serial Number (GetSlNo): " + ex.ToString());
+            }
+
+            return 1; // Fallback serial number
         }
 
         private void WriteLog(string txt)
