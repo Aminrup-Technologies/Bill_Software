@@ -1,265 +1,159 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="View_Invoice.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm27" %>
+﻿<%@ Page Title="View Tax Invoices" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="View_Invoice.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm27" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
+    <script src="calender/jquery-1.7.1.js" type="text/javascript"></script>
+    <script src="calender/jquery.ui.core.js" type="text/javascript"></script>
+    <script src="calender/jquery.ui.widget.js" type="text/javascript"></script>
+    <script src="calender/jquery.ui.datepicker.js" type="text/javascript"></script>
+    <link href="calender/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+
     <style type="text/css">
-        .auto-style1 {
-            width: 100%;
-        }
+        /* --- Modern Layout & Search Panel --- */
+        .page-header { background-color: #19658A; color: #FFFFFF; padding: 12px 15px; font-weight: bold; font-size: 16px; border-radius: 4px; margin-bottom: 15px; }
+        
+        .search-panel { background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .search-panel label { font-size: 12px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
+        .search-panel input[type="text"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 160px; }
+        
+        .btn-action { padding: 7px 15px; background-color: #006699; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 13px; border-radius: 4px; transition: background 0.2s; margin-top: 18px; }
+        .btn-action:hover { background-color: #004d73; }
+        .btn-clear { background-color: #6c757d; margin-left: 5px; }
+        .btn-clear:hover { background-color: #5a6268; }
 
-        .style2 {
-            color: #FFFFFF;
-            font-weight: bold;
-        }
+        /* --- Modern Table Design --- */
+        .styled-table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); }
+        .styled-table thead tr { background-color: #006699; color: #ffffff; text-align: center; }
+        .styled-table th { padding: 10px; border: 1px solid #004d73; position: sticky; top: 0; z-index: 5; }
+        .styled-table td { padding: 8px 10px; border: 1px solid #ddd; text-align: center; vertical-align: middle; }
+        .styled-table tbody tr { background-color: #ffffff; transition: background-color 0.15s ease; }
+        .styled-table tbody tr:nth-of-type(even) { background-color: #f3f8fb; }
+        .styled-table tbody tr:hover { background-color: #e2eef4; }
 
-        .table1 {
-            border-collapse: collapse;
-        }
-
-            .table1 td {
-                text-align: left;
-                border: 1px solid #666666;
-                width: 100%;
-            }
-
-        .table2 {
-            border-collapse: collapse;
-        }
-
-            .table2 td {
-                text-align: left;
-                border: 1px solid #666666;
-                width: 100%;
-                border-top: none;
-            }
+        .text-left { text-align: left !important; }
+        .text-right { text-align: right !important; }
+        .badge { background: #eee; padding: 2px 5px; border-radius: 3px; font-size: 10px; color: #555; display: inline-block; min-width: 30px; text-align: center; }
+        .badge-blue { background-color: #19658A; color: white; }
     </style>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Initialize Datepickers
+            $(".datepicker").datepicker({ dateFormat: 'dd-M-yy', changeMonth: true, changeYear: true });
+        });
+    </script>
 </asp:Content>
+
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <table cellpadding="0" cellspacing="0" class="auto-style1">
-        <tr>
-            <td colspan="4" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;View Invoice</span></td>
-        </tr>
-        <tr>
-            <td width="15%">&nbsp;</td>
-            <td width="35%">&nbsp;</td>
-            <td width="35%">&nbsp;</td>
-            <td width="15%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td colspan="4">
-                <%--<asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%">
-                    <FooterStyle BackColor="White" ForeColor="#000066" />
-                    <AlternatingItemStyle BackColor="#94B8FF" />
-                    <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
-                    <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
-                    <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
-                    <HeaderTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
+    <div style="width: 98%; margin: auto; padding-top: 10px;">
+        
+        <div class="page-header">View Tax Invoices</div>
+
+        <asp:Panel ID="PanelMsg" runat="server" Visible="false" Style="padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+            <asp:Label ID="lblMsg" runat="server" Font-Bold="true"></asp:Label>
+        </asp:Panel>
+
+        <div class="search-panel">
+            <div>
+                <label>Invoice No:</label>
+                <asp:TextBox ID="txtSearchInv" runat="server" placeholder="e.g. INV/C/..."></asp:TextBox>
+            </div>
+            <div>
+                <label>Ext Ref (ERP):</label>
+                <asp:TextBox ID="txtSearchExt" runat="server" placeholder="e.g. FE/25-26..."></asp:TextBox>
+            </div>
+            <div>
+                <label>Client Name:</label>
+                <asp:TextBox ID="txtSearchClient" runat="server" placeholder="Search Client"></asp:TextBox>
+            </div>
+            <div>
+                <label>From Date:</label>
+                <asp:TextBox ID="txtFromDate" runat="server" CssClass="datepicker"></asp:TextBox>
+            </div>
+            <div>
+                <label>To Date:</label>
+                <asp:TextBox ID="txtToDate" runat="server" CssClass="datepicker"></asp:TextBox>
+            </div>
+            <div>
+                <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn-action" OnClick="btnSearch_Click" />
+                <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn-action btn-clear" OnClick="btnClear_Click" />
+            </div>
+        </div>
+
+        <div style="max-height: 600px; overflow-y: auto; border: 1px solid #ccc;">
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th style="width: 3%;">Sl</th>
+                        <th style="width: 14%;">Customer Name</th>
+                        <th style="width: 9%;">Inv Date</th>
+                        <th style="width: 16%;">Invoice / Quotation Info</th>
+                        <th style="width: 12%;">ARC / PO / DO</th>
+                        <th style="width: 16%;">Amount Summary</th>
+                        <th style="width: 11%;">Validity</th>
+                        <th style="width: 11%;">Created By</th>
+                        <th style="width: 4%;">Buyer</th>
+                        <th style="width: 4%;">Seller</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <asp:Repeater ID="rptInvoices" runat="server">
+                        <ItemTemplate>
                             <tr>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label2" runat="server" Text="CLIENT NAME"></asp:Label>
+                                <td><%# Container.ItemIndex + 1 %></td>
+                                <td class="text-left"><strong><%# Eval("Client_Name") %></strong></td>
+                                <td><%# Eval("Invoice_Date") %></td>
+                                <td class="text-left">
+                                    <span class="badge badge-blue">Inv</span> <strong><%# Eval("Invoice_No") %></strong><br />
+                                    
+                                    <%# string.IsNullOrWhiteSpace(Convert.ToString(Eval("ExtInvoiceNo"))) ? "" : "<span class='badge'>Ext</span> " + Eval("ExtInvoiceNo") + "<br />" %>
+                                    
+                                    <span class="badge">Quo</span> 
+                                    <span style='<%# Eval("Quotation_No").ToString().ToUpper() == "VERBAL" ? "color:#d39e00; font-weight:bold;" : "" %>'>
+                                        <%# Eval("Quotation_No") %>
+                                    </span><br />
+                                    
+                                    <span style="font-size:10px; color:#666;"><%# Eval("PServiceName") %></span>
                                 </td>
-                                <td style="text-align:center; width:10%;"> 
-                                    <asp:Label ID="Label6" runat="server" Text="TAX INVOICE NUMBER"></asp:Label>
+                                <td class="text-left">
+                                    <span class="badge">ARC</span> <%# Eval("PO_Number") %><br />
+                                    <span class="badge">PO/DO</span> <%# Eval("DO_Number") %>
                                 </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label3" runat="server" Text="TAX INVOICE DATE"></asp:Label>
+                                <td class="text-right" style="line-height: 1.4;">
+                                    <span style="color:#666;">Gross:</span> ₹<%# Eval("Gross") %><br /><%# Convert.ToDecimal(Eval("discount") == DBNull.Value ? 0 : Eval("discount")) > 0 ? "<span style='color:red;'>Disc: -₹" + Eval("discount") + "</span><br />" : "" %><span style="color:#666;">Taxable:</span> ₹<%# Eval("sub_total") %><br /><span class="badge" style="background:#e8f4fd; color:#006699;"><%# Eval("cgstOrsgst").ToString() == "YES" ? "CGST/SGST" : (Eval("igst").ToString() == "YES" ? "IGST" : "TAX") %></span>₹<%# Eval("Gst") %><br /><%# Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1")) > 0 ? "<span style='color:#666;'>Frt/Oth:</span> ₹" + (Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1"))) + "<br />" : "" %><strong style="color:#28a745; font-size:13px;">Total: ₹<%# Eval("Net_Amount") %></strong></td>
+                                <td>
+                                    <%# Eval("Validity_StartDate") %> <br />to<br /> <%# Eval("Validity_EndDate") %>
                                 </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="showid" runat="server" Text="QUOTATION NUMBER"></asp:Label>
+                                <td>
+                                    <span style="color:#333; font-weight:bold;">
+                                        <%# Convert.ToString(Eval("AddedByName")) %>
+                                    </span><br />
+                                    <span style="font-size:10px; color:#666;">
+                                        <%# Convert.ToDateTime(Eval("TimeStamp")).ToString("dd-MMM-yyyy hh:mm tt") %>
+                                    </span>
                                 </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="showrm" runat="server" Text="QUOTATION DATE"></asp:Label>
-                                </td>
-
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label11" runat="server" Text="PRODUCT CATEGORY"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label12" runat="server" Text="AMOUNT BEFORE GST (INR)"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:8%;">
-                                    <asp:Label ID="Label13" runat="server" Text="GST (INR)"></asp:Label>
-                                </td>
-                                                              
-                                <td style="text-align:center; width:8%;"> 
-                                    <asp:Label ID="Label1" runat="server" Text="AMOUNT INCLUSIVE OF GST (INR)"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:4%;">
-                                    <asp:Label ID="edit" runat="server" Text="Buyers View"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:4%;">
-                                    <asp:Label ID="Label9" runat="server" Text="Sellers View"></asp:Label>
-                                </td>
-                            </tr>
-                        </table>
-                    </HeaderTemplate>
-                    <ItemTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
-                            <tr>
-                                 <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label4" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;"> 
-                                    <asp:Label ID="Label7" runat="server" Text='<%# Eval("Invoice_No") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;"> 
-                                    <asp:Label ID="Label5" runat="server" Text='<%# Eval("Invoice_Date") %>'></asp:Label>
-                                </td>
-
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="ID" runat="server" Text='<%# Eval("Quotation_No") %>'></asp:Label>
-                                </td>
-
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="addshowname" runat="server" Text='<%# Eval("Quotation_Date") %>'></asp:Label>
-                                </td>
-
-                                <td style="text-align:center; width:10%;"> 
-                                    <asp:Label ID="Label14" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="Label15" runat="server" Text='<%# Eval("sub_total") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:8%;">
-                                    <asp:Label ID="Label16" runat="server" Text='<%# Eval("Gst") %>'></asp:Label>
-                                </td>
-                                                          
-                                <td style="text-align:center; width:8%;"> 
-                                    <asp:Label ID="Label8" runat="server" Text='<%# Eval("Net_Amount") %>'></asp:Label>
-                                </td>
-                                                                
-                                <td style="text-align:center; width:4%;">
-                                    <a href = "#" title="Print Invoice..." onclick="window.open('/corporate/business/print/NewInvoice.aspx?ID=<%# DataBinder.Eval (Container.DataItem,"ID")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
-                                                <img alt="" height="25px" src="../WebImages/viewicon.png" />
-                                </td>
-                                <td style="text-align:center; width:4%;">
-                                    <a href = "#" title="Print Invoice..." onclick="window.open('/corporate/business/print/NewInvoiceDuplicate.aspx?ID=<%# DataBinder.Eval (Container.DataItem,"ID")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
-                                                <img alt="" height="25px" src="../WebImages/viewicon.png" />
-                                </td>
-                            </tr>
-                        </table>
-                    </ItemTemplate>
-                </asp:DataList>--%>
-
-                <asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemDataBound="DataList1_ItemDataBound">
-                    <FooterStyle BackColor="White" ForeColor="#000066" />
-                    <AlternatingItemStyle BackColor="#94B8FF" />
-                    <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
-                    <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
-                    <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
-                    <HeaderTemplate>
-                        <table class="table1" width="100%" cellpadding="0" cellspacing="0">
-                            <tr>
-                                <th style="text-align: center; width: 3%;">Sl</th>
-                                <th style="text-align: center; width: 14%;">Customer Name</th>
-                                <th style="text-align: center; width: 10%;">Invoice Date</th>
-                                <th style="text-align: center; width: 16%;">Invoice / Quotation Info</th>
-                                <th style="text-align: center; width: 12%;">ARC / PO / DO</th>
-                                <th style="text-align: center; width: 12%;">Amount Summary</th>
-                                <th style="text-align: center; width: 10%;">Validity Period</th>
-                                <th style="text-align: center; width: 10%;">Created By</th>
-                                <th style="text-align: center; width: 4%;">Buyer View</th>
-                                <th style="text-align: center; width: 4%;">Seller View</th>
-                            </tr>
-                        </table>
-                    </HeaderTemplate>
-                    <ItemTemplate>
-                        <table class="table2" width="100%" cellpadding="0" cellspacing="0">
-                            <tr>
-                                <td style="text-align: center; width: 3%;">
-                                    <asp:Label ID="lblSlNo" runat="server"></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 14%;">
-                                    <asp:Label ID="LabelClient" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="LabelInvoiceDate" runat="server" Text='<%# Eval("Invoice_Date") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 16%;">
-                                    <strong>Inv:</strong>
-                                    <asp:Label ID="LabelInvoiceNo" runat="server" Text='<%# Eval("Invoice_No") %>'></asp:Label><br />
-                                    <strong>Quot:</strong>
-                                    <asp:Label ID="LabelQuotationNo" runat="server" Text='<%# Eval("Quotation_No") %>'></asp:Label><br />
-                                    <asp:Label ID="LabelServiceName" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 12%;">ARC:
-                                    <asp:Label ID="LabelPO" runat="server" Text='<%# Eval("PO_Number") %>'></asp:Label><br />
-                                    PO/DO:
-                                    <asp:Label ID="LabelDO" runat="server" Text='<%# Eval("DO_Number") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 12%;">
-                                    <span>Taxable:</span> Rs.<asp:Label ID="LabelSubtotal" runat="server" Text='<%# Eval("sub_total") %>'></asp:Label><br />
-                                    <span>Tax:</span> Rs.<asp:Label ID="LabelGST" runat="server" Text='<%# Eval("Gst") %>'></asp:Label><br />
-                                    <span>Total:</span> Rs.<asp:Label ID="LabelNet" runat="server" Text='<%# Eval("Net_Amount") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="LabelValidityStart" runat="server" Text='<%# Eval("Validity_StartDate") %>'></asp:Label><br />
-                                    to<br />
-                                    <asp:Label ID="LabelValidityEnd" runat="server" Text='<%# Eval("Validity_EndDate") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="LabelAddedBy" runat="server" Text='<%# Eval("AddedByName") %>'></asp:Label><br />
-                                    on<br />
-                                    <asp:Label ID="LabelTimestamp" runat="server" Text='<%# Convert.ToDateTime(Eval("TimeStamp")).ToString("dd-MMM-yyyy hh:mm tt") %>' />
-                                </td>
-                                <td style="text-align: center; width: 4%;">
-                                    <a href="#" title="Buyer View" onclick="window.open('/corporate/business/print/NewInvoice.aspx?ID=<%# DataBinder.Eval(Container.DataItem,"ID") %>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
-                                        <img alt="Buyer View" height="25px" src="../WebImages/viewicon.png" />
+                                <td>
+                                    <a href="#" onclick="window.open('/corporate/business/print/NewInvoice.aspx?ID=<%# Eval("ID") %>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
+                                        <img alt="Buyer View" height="22px" src="../WebImages/viewicon.png" />
                                     </a>
                                 </td>
-                                <td style="text-align: center; width: 4%;">
-                                    <a href="#" title="Seller View" onclick="window.open('/corporate/business/print/NewInvoiceDuplicate.aspx?ID=<%# DataBinder.Eval(Container.DataItem,"ID") %>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
-                                        <img alt="Seller View" height="25px" src="../WebImages/viewicon.png" />
+                                <td>
+                                    <a href="#" onclick="window.open('/corporate/business/print/NewInvoiceDuplicate.aspx?ID=<%# Eval("ID") %>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
+                                        <img alt="Seller View" height="22px" src="../WebImages/viewicon.png" />
                                     </a>
                                 </td>
                             </tr>
-                        </table>
-                    </ItemTemplate>
-                </asp:DataList>
+                        </ItemTemplate>
+                        <FooterTemplate>
+                            <asp:PlaceHolder ID="phNoData" runat="server" Visible='<%# ((Repeater)Container.NamingContainer).Items.Count == 0 %>'>
+                                <tr>
+                                    <td colspan="10" style="padding: 20px; color: red; font-weight: bold;">No Invoices Found for the selected filters.</td>
+                                </tr>
+                            </asp:PlaceHolder>
+                        </FooterTemplate>
+                    </asp:Repeater>
+                </tbody>
+            </table>
+        </div>
 
-            </td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-    </table>
+    </div>
 </asp:Content>
