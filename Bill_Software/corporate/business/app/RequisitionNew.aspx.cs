@@ -291,6 +291,19 @@ namespace Bill_Software.corporate.business.app
                         lblReqNo.Text = reqNo;
                         lblStatus.Text = dr["Status"].ToString();
 
+                        // --- NEW LOGIC: Load External PR No and Remarks ---
+                        // We check if the column exists to prevent crashing just in case the DB script hasn't run yet
+                        if (dr.GetSchemaTable().Columns.Contains("ExternalERPNo") && dr["ExternalERPNo"] != DBNull.Value)
+                        {
+                            txtExternalPRNo.Text = dr["ExternalERPNo"].ToString();
+                        }
+
+                        if (dr.GetSchemaTable().Columns.Contains("Remarks") && dr["Remarks"] != DBNull.Value)
+                        {
+                            txtRemarks.Text = dr["Remarks"].ToString();
+                        }
+                        // --------------------------------------------------
+
                         DbCL.FillCombo(cmbvendor, "select Vendor_Name from tbl_Vendor order by Vendor_Name");
                         if (cmbvendor.Items.FindByText(dr["Vendor"].ToString()) != null)
                         {
@@ -330,6 +343,7 @@ namespace Bill_Software.corporate.business.app
                 SqlTransaction tran = con.BeginTransaction();
                 try
                 {
+                    // 1. Create the PR Header if it doesn't exist
                     if (string.IsNullOrEmpty(CurrentReqNo))
                     {
                         SqlCommand cmdHdr = new SqlCommand("sp_Requisition_CreateDraft", con, tran);
@@ -344,6 +358,18 @@ namespace Bill_Software.corporate.business.app
                         CurrentReqNo = outReq.Value.ToString();
                         lblReqNo.Text = CurrentReqNo;
                     }
+
+                    // --- NEW LOGIC: Update Header with External PR No and Remarks ---
+                    SqlCommand cmdUpdateHdr = new SqlCommand(@"
+                        UPDATE tbl_RequisitionMain 
+                        SET ExternalERPNo = @ExtERP, 
+                            Remarks = @Remarks 
+                        WHERE ReqNo = @ReqNo", con, tran);
+
+                    cmdUpdateHdr.Parameters.AddWithValue("@ExtERP", txtExternalPRNo.Text.Trim());
+                    cmdUpdateHdr.Parameters.AddWithValue("@Remarks", txtRemarks.Text.Trim());
+                    cmdUpdateHdr.Parameters.AddWithValue("@ReqNo", CurrentReqNo);
+                    cmdUpdateHdr.ExecuteNonQuery();
 
                     DataTable tvpDt = new DataTable();
                     tvpDt.Columns.Add("ProductId", typeof(string));

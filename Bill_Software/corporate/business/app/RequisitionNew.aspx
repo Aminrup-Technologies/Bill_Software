@@ -330,14 +330,14 @@
                     <div id="tab3" class="wizard-step" onclick="showStep(3)">3. Review & Submit</div>
                 </div>
 
-                <div id="step1" class="step-content active">
+                <div id="step1" class="step-content active" ClientIDMode="Static" runat="server">
                     <table class="style1" cellpadding="6">
                         <tr>
                             <td width="20%"><span class="style3">*</span>Vendor Name</td>
                             <td width="30%">
                                 <asp:DropDownList ID="cmbvendor" runat="server" AutoPostBack="True" CssClass="dropdown_style select2-enable" OnSelectedIndexChanged="cmbvendor_SelectedIndexChanged"></asp:DropDownList>
+                                <asp:Label ID="lblvendor_id" runat="server" Visible="false"></asp:Label>
                                 <asp:Label ID="lbl_vendordbid" runat="server" Visible="false"></asp:Label>
-                                <asp:Label ID="lblvendor_id" runat="server" Visible="False"></asp:Label>
                             </td>
                             <td width="20%">City</td>
                             <td width="30%"><asp:TextBox ID="cmbcity" runat="server" CssClass="textbox_style" Enabled="False"></asp:TextBox></td>
@@ -354,7 +354,18 @@
                             <td>Email ID</td>
                             <td><asp:TextBox ID="txtEmail" runat="server" CssClass="textbox_style" Enabled="False"></asp:TextBox></td>
                         </tr>
-                    </table>
+                        
+                        <tr>
+                            <td><strong>External ERP PR No</strong></td>
+                            <td>
+                                <asp:TextBox ID="txtExternalPRNo" runat="server" CssClass="textbox_style" Width="250px" placeholder="e.g. ERP-987654"></asp:TextBox>
+                            </td>
+                            <td><strong>Remarks / Comments</strong></td>
+                            <td>
+                                <asp:TextBox ID="txtRemarks" runat="server" CssClass="textbox_style" TextMode="MultiLine" Rows="2" Width="250px" placeholder="Add custom comments here..."></asp:TextBox>
+                            </td>
+                        </tr>
+                        </table>
                     <div class="wizard-footer">
                         <button type="button" class="btn_style" style="padding:8px 20px;" onclick="showStep(2)">Next: Add Items &raquo;</button>
                     </div>
