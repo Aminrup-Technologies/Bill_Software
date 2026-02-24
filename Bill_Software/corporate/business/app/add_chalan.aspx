@@ -42,12 +42,12 @@
             }
     </style>
 </asp:Content>
+
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <script src="calender/jquery-1.7.1.js" type="text/javascript" language="javascript"></script>
     <script src="calender/jquery.ui.core.js" type="text/javascript" language="javascript"></script>
     <script src="calender/jquery.ui.widget.js" type="text/javascript" language="javascript"></script>
     <script src="calender/jquery.ui.datepicker.js" type="text/javascript" language="javascript"></script>
-
     <link href="calender/jquery.ui.all.css" rel="stylesheet" type="text/css" />
 
     <script type="text/javascript" language="javascript">
@@ -55,7 +55,6 @@
         prm.add_pageLoaded(function () {
             $(".datepicker").datepicker({
                 dateFormat: 'dd-M-yy',
-
                 changeMonth: true,
                 changeYear: true
             });
@@ -63,81 +62,151 @@
     </script>
 
     <script type="text/javascript">
-        //Function to allow only numbers to textbox
         function validate(key) {
-            //getting key code of pressed key
             var keycode = (key.which) ? key.which : key.keyCode;
             var phn = document.getElementById('txtfillrequar');
-            //comparing pressed keycodes
             if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
                 return false;
-            }
-            else {
-                //Condition to check textbox contains ten numbers or not
-                if (phn.value.length < 50) {
-                    return true;
-                }
-                else {
-                    return false;
-                }
+            } else {
+                if (phn && phn.value.length < 50) return true;
+                else return false;
             }
         }
-    </script>
 
-    <script type="text/javascript">
-        function ValidateField() {
-        }
-    </script>
-
-    <script type="text/javascript">
         function checkAll(objRef) {
             var GridView = objRef.parentNode.parentNode.parentNode;
             var inputList = GridView.getElementsByTagName("input");
             for (var i = 0; i < inputList.length; i++) {
-                //Get the Cell To find out ColumnIndex
                 var row = inputList[i].parentNode.parentNode;
                 if (inputList[i].type == "checkbox" && objRef != inputList[i]) {
                     if (objRef.checked) {
-                        //If the header checkbox is checked
-                        //check all checkboxes
-                        //and highlight all rows
                         row.style.backgroundColor = "#FFFF99";
                         inputList[i].checked = true;
-                    }
-                    else {
-                        //If the header checkbox is checked
-                        //uncheck all checkboxes
-                        //and change rowcolor back to original
-                        if (row.rowIndex % 2 == 0) {
-                            //Alternating Row Color
-                            row.style.backgroundColor = "#D5D5BF";
-                        }
-                        else {
-                            row.style.backgroundColor = "white";
-                        }
+                    } else {
+                        if (row.rowIndex % 2 == 0) row.style.backgroundColor = "#D5D5BF";
+                        else row.style.backgroundColor = "white";
                         inputList[i].checked = false;
                     }
                 }
             }
         }
-    </script>
 
-    <script type="text/javascript">
-        function ValidateDataField10() {
-            if (document.getElementById('<%=FactoryAddress.ClientID%>').SelectedIndex == -1) {
-                alert("Provide Delivery Address ");
-                document.getElementById('<%=FactoryAddress.ClientID%>').focus();
-                return false;
+        function fetchSuggestions(term) {
+            // Trigger the search only if the user has typed 3 or more characters
+            if (term.length >= 3) {
+                $.ajax({
+                    // Adjust the URL if your page name is slightly different
+                    url: "add_chalan.aspx/GetDocumentNumbers",
+                    data: JSON.stringify({ prefixText: term }),
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        var datalist = $("#docNumbersList");
+                        datalist.empty(); // Clear old suggestions
+
+                        // Loop through the results and add them as options to the datalist
+                        $.each(data.d, function (index, item) {
+                            datalist.append("<option value='" + item + "'>");
+                        });
+                    },
+                    error: function (response) {
+                        console.log("Error fetching suggestions: " + response.responseText);
+                    }
+                });
             }
         }
 
+        function fetchClientSuggestions(term) {
+            // Trigger the search after 2 characters for client names
+            if (term.length >= 2) {
+                $.ajax({
+                    url: "add_chalan.aspx/GetClientNames",
+                    data: JSON.stringify({ prefixText: term }),
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        var datalist = $("#clientList");
+                        datalist.empty(); // Clear old suggestions
+
+                        // Add new suggestions
+                        $.each(data.d, function (index, item) {
+                            datalist.append("<option value='" + item + "'>");
+                        });
+                    },
+                    error: function (response) {
+                        console.log("Error fetching clients: " + response.responseText);
+                    }
+                });
+            }
+        }
+
+        function checkPartialQuantity(textBox) {
+            // Get the typed amount and the max allowed amount
+            var enteredValue = parseFloat(textBox.value) || 0;
+            var maxValue = parseFloat(textBox.getAttribute("data-max")) || 0;
+
+            // If they typed more than what is left, warn them and reset it to the max
+            if (enteredValue > maxValue) {
+                alert("You cannot deliver more than the remaining quantity (" + maxValue + ").");
+                textBox.value = maxValue; // Auto-correct back to the max allowed
+            }
+                // If they delete everything, default it to 0
+            else if (textBox.value.trim() === "") {
+                textBox.value = 0;
+            }
+        }
+
+        // Function to allow only numbers and decimals to textbox
+        function validate(key) {
+            var keycode = (key.which) ? key.which : key.keyCode;
+
+            // Allow Backspace (8), Delete/Decimal point (46), and Numbers (48 to 57)
+            if ((keycode == 8 || keycode == 46) || (keycode >= 48 && keycode <= 57)) {
+                return true;
+            }
+
+            // Reject everything else (letters, symbols, etc.)
+            return false;
+        }
+
+        function recalculateTotalDue() {
+            var total = 0;
+
+            // Find all the Due Qty textboxes using the specific class we added
+            var textboxes = document.querySelectorAll('.calc-due-qty');
+
+            // Loop through them and add up the numbers
+            for (var i = 0; i < textboxes.length; i++) {
+                // Parse the number, or treat it as 0 if the box is empty/invalid
+                var val = parseFloat(textboxes[i].value) || 0;
+                total += val;
+            }
+
+            // Find the footer label and update its text
+            var footerLabel = document.querySelector('.total-due-label');
+            if (footerLabel) {
+                footerLabel.innerHTML = total;
+            }
+        }
     </script>
 
-
     <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
+
+    <asp:UpdateProgress ID="UpdateProgress1" runat="server" AssociatedUpdatePanelID="UpdatePanel1">
+        <ProgressTemplate>
+            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+                <div style="background: white; padding: 20px; border-radius: 5px; text-align: center; font-family: Arial; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                    <img src="../WebImages/aagrouplogo.png" alt="Loading..." style="width: 32px; height: 32px;" /><br />
+                    <strong style="color: #19658A; margin-top: 10px; display: block;">Processing... Please wait.</strong>
+                </div>
+            </div>
+        </ProgressTemplate>
+    </asp:UpdateProgress>
+
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
-
             <table cellpadding="0" cellspacing="0" class="auto-style1">
                 <tr>
                     <td colspan="6" bgcolor="#19658A"><span class="style2">&nbsp;Add DPCC (Delivery planning cum Challan)</span>>&nbsp;</td>
@@ -145,16 +214,9 @@
                 <tr>
                     <td width="10%">&nbsp;</td>
                     <td width="40%" colspan="2">
-                        <asp:Label ID="lblclientId" runat="server" Visible="False"></asp:Label>
-                    </td>
+                        <asp:Label ID="lblclientId" runat="server" Visible="False"></asp:Label></td>
                     <td width="40%" colspan="2">&nbsp;</td>
                     <td width="10%">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
@@ -163,78 +225,64 @@
                             &nbsp;<asp:Image ID="imageTick" runat="server" ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
                             &nbsp;<asp:Label ID="lblOk" runat="server"></asp:Label>
                         </asp:Panel>
-                    </td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="4">
-                        <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                        <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False" BackColor="#FFE6E6">
                             &nbsp;<asp:Image ID="Image1" runat="server" Height="16px" ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png" Width="16px" />
-                            &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
+                            &nbsp;<asp:Label ID="lblErrorMsg" runat="server" ForeColor="Red"></asp:Label>
                         </asp:Panel>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
+
                 <tr>
                     <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">Client Name</td>
-                    <td colspan="2">
-                        <asp:DropDownList ID="cmbvendor" runat="server" CssClass="dropdown_style">
+                    <td>Client Name</td>
+                    <td>
+                        <asp:TextBox ID="txtClientName" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="200px" placeholder="Type client name..." list="clientList" autocomplete="off" onkeyup="fetchClientSuggestions(this.value)"></asp:TextBox>
+                        <datalist id="clientList"></datalist>
+                    </td>
+                    <td>Record Type</td>
+                    <td>
+                        <asp:DropDownList ID="cmbRecordType" runat="server" CssClass="dropdown_style">
+                            <asp:ListItem Text="-- All Types --" Value=""></asp:ListItem>
+                            <asp:ListItem Text="Quotation" Value="Quotation"></asp:ListItem>
+                            <asp:ListItem Text="Purchase Order" Value="Purchase Order"></asp:ListItem>
                         </asp:DropDownList>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
-                    <td>From Date(Quotation)</td>
+                    <td>From Date</td>
                     <td>
-                        <asp:TextBox ID="txttodate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                        <asp:TextBox ID="txtfromDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="130px"></asp:TextBox>
                     </td>
-                    <td>To Date(Quotation)</td>
+                    <td>To Date</td>
                     <td>
-                        <asp:TextBox ID="txtfromDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                        <asp:TextBox ID="txttodate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="130px"></asp:TextBox>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
-                    <td colspan="2">Search Type</td>
-                    <td colspan="2">
-                        <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal">
-                            <asp:ListItem>Only Client</asp:ListItem>
-                            <asp:ListItem Selected="True">Only Date</asp:ListItem>
-                            <asp:ListItem>Client &amp; Date</asp:ListItem>
-                        </asp:RadioButtonList>
+                    <td>Doc / PO / DO No.</td>
+                    <td colspan="3">
+                        <asp:TextBox ID="txtDocNumber" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="300px" placeholder="Search QTN, PO, or DO No..." list="docNumbersList" autocomplete="off" onkeyup="fetchSuggestions(this.value)"></asp:TextBox>
+                        <datalist id="docNumbersList"></datalist>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="4" style="text-align: center">
-                        <asp:Button ID="btnSertch" runat="server" CssClass="btn_style" OnClick="btnSertch_Click" Text="Search" />
-                        &nbsp;<asp:Button ID="btnreset" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="Reset" />
+                    <td colspan="4" style="text-align: center; padding-top: 15px;">
+                        <asp:Button ID="btnSertch" runat="server" CssClass="btn_style" OnClick="btnSertch_Click" Text="Search Records" />
+                        &nbsp;<asp:Button ID="btnreset" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="Reset Filters" />
                     </td>
                     <td>&nbsp;</td>
                 </tr>
                 <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
+                    <td colspan="6">&nbsp;</td>
                 </tr>
+
                 <tr>
                     <td colspan="6">
                         <asp:Panel ID="Panel2" runat="server" Visible="true">
@@ -244,88 +292,35 @@
                                 <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
                                 <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
                                 <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
-                                <%--<HeaderTemplate>
-                                <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
-                                    <tr>
-                                        <td style="text-align: center; width: 20%;">
-                                            <asp:Label ID="showid0" runat="server" Text="Quotation no"></asp:Label>
-                                        </td>
-                                        <td style="text-align: center; width: 15%;">
-                                            <asp:Label ID="showrm0" runat="server" Text="Quotation Date"></asp:Label>
-                                        </td>
-                                        <td style="text-align: center; width: 20%;">
-                                            <asp:Label ID="Label9" runat="server" Text="Client Name"></asp:Label>
-                                        </td>
-
-                                        <td style="text-align: center; width: 10%;">
-                                            <asp:Label ID="Label1" runat="server" Text="Product Catagory"></asp:Label>
-                                        </td>
-
-                                        <td style="text-align: center; width: 20%;">
-                                            <asp:Label ID="Label12" runat="server" Text="Net Amount"></asp:Label>
-                                        </td>
-                                        <td style="text-align: center; width: 15%;">
-                                            <asp:Label ID="edit0" runat="server" Text="Select"></asp:Label>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </HeaderTemplate>
-                            <ItemTemplate>
-                                <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
-                                    <tr>
-                                        <td style="text-align: center; width: 20%;"><asp:Label ID="ID0" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label></td>
-                                        <td style="text-align: center; width: 15%;"><asp:Label ID="addshowname0" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label></td>
-                                        <td style="text-align: center; width: 20%;"><asp:Label ID="Label13" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label></td>
-                                        <td style="text-align: center; width: 10%;"><asp:Label ID="Label3" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label></td>
-                                        <td style="text-align: center; width: 20%;">Rs.<asp:Label ID="Label16" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label> /- </td>
-                                        <td style="text-align: center; width: 15%;">
-                                            <asp:ImageButton ID="ImageButton1" runat="server" CommandArgument='<%# Eval("Quotation_no") %>' CommandName="Select" ImageUrl="~/corporate/business/WebImages/tick-icon.png" ToolTip="Select" />
-                                        </td>
-                                    </tr>
-                                </table>
-                            </ItemTemplate>--%>
-
                                 <HeaderTemplate>
                                     <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
                                         <tr>
                                             <td style="text-align: center; width: 6%;">
-                                                <asp:Label ID="LabelSL0" runat="server" Text="SL No"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="LabelSL0" runat="server" Text="SL No"></asp:Label></td>
                                             <td style="text-align: center; width: 16%;">
-                                                <asp:Label ID="showid0" runat="server" Text="Quotation no"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="showid0" runat="server" Text="Quotation/PO no"></asp:Label></td>
                                             <td style="text-align: center; width: 10%;">
-                                                <asp:Label ID="showrm0" runat="server" Text="Quotation Date"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="showrm0" runat="server" Text="Date"></asp:Label></td>
                                             <td style="text-align: center; width: 10%;">
-                                                <asp:Label ID="Label17" runat="server" Text="DO Number"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="Label17" runat="server" Text="DO Number"></asp:Label></td>
                                             <td style="text-align: center; width: 10%;">
-                                                <asp:Label ID="Label18" runat="server" Text="PO Number"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="Label18" runat="server" Text="PO Number"></asp:Label></td>
                                             <td style="text-align: center; width: 16%;">
-                                                <asp:Label ID="Label9" runat="server" Text="Client Name"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="Label9" runat="server" Text="Client Name"></asp:Label></td>
                                             <td style="text-align: center; width: 15%;">
-                                                <asp:Label ID="Label1" runat="server" Text="Product Catagory"></asp:Label>
-                                            </td>
-
+                                                <asp:Label ID="Label1" runat="server" Text="Product Catagory"></asp:Label></td>
                                             <td style="text-align: center; width: 13%;">
-                                                <asp:Label ID="Label12" runat="server" Text="Net Amount"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="Label12" runat="server" Text="Net Amount"></asp:Label></td>
                                             <td style="text-align: center; width: 4%;">
-                                                <asp:Label ID="edit0" runat="server" Text="Select"></asp:Label>
-                                            </td>
+                                                <asp:Label ID="edit0" runat="server" Text="Select"></asp:Label></td>
                                         </tr>
                                     </table>
                                 </HeaderTemplate>
-
                                 <ItemTemplate>
                                     <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
                                         <tr>
                                             <td style="text-align: center; width: 6%;">
-                                                <asp:Label ID="LabelSL" runat="server" Text='<%# Container.ItemIndex + 1 %>'></asp:Label>
-                                            </td>
+                                                <asp:Label ID="LabelSL" runat="server" Text='<%# Container.ItemIndex + 1 %>'></asp:Label></td>
                                             <td style="text-align: center; width: 16%;">
                                                 <asp:Label ID="ID0" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label></td>
                                             <td style="text-align: center; width: 10%;">
@@ -338,7 +333,6 @@
                                                 <asp:Label ID="Label13" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label></td>
                                             <td style="text-align: center; width: 15%;">
                                                 <asp:Label ID="Label3" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label></td>
-
                                             <td style="text-align: center; width: 13%;">Rs.<asp:Label ID="Label16" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label>
                                                 /- </td>
                                             <td style="text-align: center; width: 4%;">
@@ -347,16 +341,12 @@
                                         </tr>
                                     </table>
                                 </ItemTemplate>
-
                             </asp:DataList>
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
+                    <td colspan="6">&nbsp;</td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
@@ -366,14 +356,11 @@
                                 <tr>
                                     <td>Client Name</td>
                                     <td>
-                                        <asp:Label ID="lblClientName" ForeColor="#0000cc" Font-Bold="true" runat="server"></asp:Label>&nbsp;[<asp:Label ID="lblClient_Id" runat="server"></asp:Label>]
-                                    </td>
+                                        <asp:Label ID="lblClientName" ForeColor="#0000cc" Font-Bold="true" runat="server"></asp:Label>&nbsp;[<asp:Label ID="lblClient_Id" runat="server"></asp:Label>]</td>
                                     <td>P.O. No</td>
                                     <td>
-                                        <asp:Label ID="lbl_ponumber" runat="server"></asp:Label>
-                                    </td>
+                                        <asp:Label ID="lbl_ponumber" runat="server"></asp:Label></td>
                                 </tr>
-
                                 <tr>
                                     <td width="13%">ERP Record No</td>
                                     <td width="37%">
@@ -381,10 +368,8 @@
                                     </td>
                                     <td width="13%">&nbsp;D.O. Number</td>
                                     <td width="37%">
-                                        <asp:Label ID="lbl_donumber" runat="server"></asp:Label>
-                                    </td>
+                                        <asp:Label ID="lbl_donumber" runat="server"></asp:Label></td>
                                 </tr>
-
                                 <tr>
                                     <td>Quotation Amount</td>
                                     <td>
@@ -397,230 +382,131 @@
                                         <asp:Label ID="lblservicetax" runat="server" Visible="False"></asp:Label>
                                     </td>
                                 </tr>
-                                <%--<tr>
-                        <td>Address For</td>
-                        <td>
-                            <asp:DropDownList ID="cmbaddressfor" runat="server" CssClass="dropdown_style">
-                            </asp:DropDownList>
-                        </td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                    </tr>--%>
                                 <tr>
                                     <td style="">Delivery Address:</td>
                                     <td colspan="2">
                                         <asp:ListBox ID="FactoryAddress" runat="server" AutoPostBack="True" BorderStyle="Solid" BorderWidth="1px" Font-Bold="true" Font-Size="10px" multiple="true" Rows="3" SelectionMode="Multiple" Width="550px"></asp:ListBox>
                                     </td>
-                                    <td>&nbsp;<asp:Label ID="Label2" runat="server" Text="<--- | Select Delivery Address" Font-Italic="true"></asp:Label></td>
+                                    <td>&nbsp;<asp:Label ID="Label2" runat="server" Text="<--- Select Delivery Address" Font-Italic="true"></asp:Label></td>
                                 </tr>
                                 <tr>
                                     <td colspan="4">
                                         <asp:GridView ID="gd_Quotation" runat="server" AutoGenerateColumns="False" BackColor="White" BorderColor="#E8F3FF" BorderStyle="Solid" BorderWidth="1px" CellPadding="4" CssClass="Grid" ForeColor="Black" Style="margin-left: 0px; font-size: 12px; font-family: Arial, Helvetica, sans-serif; text-align: center;" Width="100%" OnRowDataBound="gd_Quotation_RowDataBound" ShowFooter="true">
-                                            <%--<RowStyle BackColor="#94B8FF" />--%>
                                             <Columns>
-
                                                 <asp:TemplateField HeaderText="SL No" HeaderStyle-Width="5%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="lblSL" runat="server" Text='<%# Container.DataItemIndex + 1 %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="5%" />
-                                                    <ItemStyle Width="5%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Product ID" HeaderStyle-Width="10%" Visible="false">
+                                                <asp:TemplateField HeaderText="Product ID" Visible="false">
                                                     <ItemTemplate>
                                                         <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="10%" />
-                                                    <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="HSN Code" HeaderStyle-Width="10%" Visible="false">
+                                                <asp:TemplateField HeaderText="HSN Code" Visible="false">
                                                     <ItemTemplate>
                                                         <asp:Label ID="product_id" runat="server" Text='<%# Bind("product_id") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="10%" />
-                                                    <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Product Name" HeaderStyle-Width="25%">
+                                                <asp:TemplateField HeaderText="Product Name" HeaderStyle-Width="20%">
+                                                    <ItemStyle HorizontalAlign="Left" />
                                                     <ItemTemplate>
                                                         <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="20%" />
-                                                    <ItemStyle Width="20%" HorizontalAlign="Left" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="7%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="ItemNo" runat="server" Text='<%# Bind("ItemNo") %>' Font-Bold="true" ForeColor="#0033cc"></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="7%" />
-                                                    <ItemStyle Width="7%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Material No" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Material No" HeaderStyle-Width="7%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="MaterialNo" runat="server" Text='<%# Bind("MaterialNo") %>' Font-Bold="true" ForeColor="#800000"></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="7%" />
-                                                    <ItemStyle Width="7%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Pack Size" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Pack Size" HeaderStyle-Width="6%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="PackSize" runat="server" Text='<%# Bind("PackSize") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="6%" />
-                                                    <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Department" HeaderStyle-Width="10%" Visible="true">
+                                                <asp:TemplateField HeaderText="Department" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="Department" runat="server" Text='<%# Bind("Department") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="10%" />
-                                                    <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="DeliveryDate" HeaderStyle-Width="10%" Visible="true">
+                                                <asp:TemplateField HeaderText="DeliveryDate" HeaderStyle-Width="10%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="DeliveryDate" runat="server" Text='<%# Bind("DeliveryDate") %>'></asp:Label>
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="10%" />
-                                                    <ItemStyle Width="10%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Quoted Quantity" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Quoted Qty" HeaderStyle-Width="6%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>' Font-Bold="true" ForeColor="#990000"></asp:Label>
                                                     </ItemTemplate>
                                                     <FooterTemplate>
                                                         <asp:Label ID="lblTotalQuoted" runat="server" Font-Bold="true" ForeColor="Black" />
                                                     </FooterTemplate>
-                                                    <HeaderStyle Width="6%" />
-                                                    <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Delivered Quantity" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Delivered Qty" HeaderStyle-Width="6%">
                                                     <ItemTemplate>
                                                         <asp:Label ID="DeliveredQnt" runat="server" Text='<%# Bind("DeliveredQnt") %>' Font-Bold="true" ForeColor="#006600"></asp:Label>
                                                     </ItemTemplate>
                                                     <FooterTemplate>
                                                         <asp:Label ID="lblTotalDelivered" runat="server" Font-Bold="true" ForeColor="Black" />
                                                     </FooterTemplate>
-                                                    <HeaderStyle Width="6%" />
-                                                    <ItemStyle Width="6%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Quantity Due for Delivery" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Due Qty" HeaderStyle-Width="5%">
                                                     <ItemTemplate>
-                                                        <asp:TextBox ID="Qty" runat="server" Text='<%# Bind("RemainQny") %>' BorderColor="#CCCCCC" Style="text-align: center;" CssClass="textbox_U_Datalist_style" Width="95%" BorderStyle="Solid" BorderWidth="1px" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" onkeypress="return validate(event)"></asp:TextBox>
+                                                        <asp:TextBox ID="Qty" runat="server"
+                                                            Text='<%# Bind("RemainQny") %>'
+                                                            data-max='<%# Eval("RemainQny") %>'
+                                                            BorderColor="#CCCCCC"
+                                                            Style="text-align: center;"
+                                                            CssClass="textbox_U_Datalist_style calc-due-qty"
+                                                            Width="95%"
+                                                            BorderStyle="Solid"
+                                                            BorderWidth="1px"
+                                                            Font-Names="Tahoma, Geneva, sans-serif"
+                                                            Font-Size="11px"
+                                                            Height="22px"
+                                                            onkeypress="return validate(event)"
+                                                            onkeyup="recalculateTotalDue()"
+                                                            onblur="checkPartialQuantity(this); recalculateTotalDue();">
+                                                        </asp:TextBox>
                                                     </ItemTemplate>
                                                     <FooterTemplate>
-                                                        <asp:Label ID="lblTotalDue" runat="server" Font-Bold="true" ForeColor="Black" />
+                                                        <asp:Label ID="lblTotalDue" runat="server" Font-Bold="true" ForeColor="Black" CssClass="total-due-label" />
                                                     </FooterTemplate>
-                                                    <HeaderStyle Width="5%" />
-                                                    <ItemStyle Width="5%" />
                                                 </asp:TemplateField>
-
-                                                <asp:TemplateField HeaderText="Create" HeaderStyle-Width="10%">
+                                                <asp:TemplateField HeaderText="Create" HeaderStyle-Width="5%">
                                                     <HeaderTemplate>
                                                         <asp:CheckBox ID="checkAll" runat="server" onclick="checkAll(this);" />
                                                     </HeaderTemplate>
                                                     <ItemTemplate>
                                                         <asp:CheckBox ID="chk" runat="server" />
                                                     </ItemTemplate>
-                                                    <HeaderStyle Width="5%" />
-                                                    <ItemStyle Width="5%" />
                                                 </asp:TemplateField>
-
                                             </Columns>
                                             <FooterStyle BackColor="#CCCC99" />
-                                            <PagerStyle BackColor="White" ForeColor="Black" HorizontalAlign="Right" />
-                                            <SelectedRowStyle BackColor="HighlightText" Font-Bold="True" ForeColor="White" />
                                             <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
-                                            <%--<AlternatingRowStyle BackColor="White" BorderStyle="Solid" BorderWidth="1px" />--%>
                                         </asp:GridView>
-
-
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="4">&nbsp;</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4">&nbsp;</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4" style="text-align: center">
-                                        <%--<asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Create Challan" OnClick="Button1_Click" />--%>
-                                        <asp:Button
-                                            ID="Button1"
-                                            runat="server"
-                                            CssClass="btn_style"
-                                            Text="Create Challan"
-                                            OnClick="Button1_Click"
-                                            UseSubmitBehavior="false"
-                                            OnClientClick="this.disabled=true; this.value='Processing...';" />
-
+                                    <td colspan="4" style="text-align: center; padding: 20px;">
+                                        <asp:Button ID="Button1" runat="server" CssClass="btn_style" Text="Create Challan" OnClick="Button1_Click" UseSubmitBehavior="false" OnClientClick="this.disabled=true; this.value='Processing...';" />
                                         &nbsp;<asp:Button ID="Button2" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="Cancel" />
                                     </td>
-                                </tr>
-                                <tr>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;</td>
                                 </tr>
                             </table>
                         </asp:Panel>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
             </table>
         </ContentTemplate>
         <Triggers>
-
             <asp:PostBackTrigger ControlID="Button1" />
-
-
         </Triggers>
     </asp:UpdatePanel>
 </asp:Content>
