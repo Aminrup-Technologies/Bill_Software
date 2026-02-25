@@ -121,6 +121,15 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.WebControls.Label lblpincode;
         
         /// <summary>
+        /// lblContact control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblContact;
+        
+        /// <summary>
         /// Tr1 control.
         /// </summary>
         /// <remarks>
@@ -364,6 +373,15 @@ namespace Bill_Software.corporate.business.print {
         protected global::System.Web.UI.HtmlControls.HtmlTable tbl_VALIDITYOFTHEOFFER;
         
         /// <summary>
+        /// lbl_val_default_text control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_val_default_text;
+        
+        /// <summary>
         /// lbl_valdays control.
         /// </summary>
         /// <remarks>
@@ -371,6 +389,24 @@ namespace Bill_Software.corporate.business.print {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lbl_valdays;
+        
+        /// <summary>
+        /// lbl_val_days_text control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_val_days_text;
+        
+        /// <summary>
+        /// lbl_val_dates control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lbl_val_dates;
         
         /// <summary>
         /// tbl_tx control.

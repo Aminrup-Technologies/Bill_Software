@@ -182,7 +182,8 @@
                                 <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>:</td>
                                 <td class='' style='width: 68%; vertical-align: top; padding: 1px 5px;'>
                                     <asp:Label ID="txtaddres" runat="server"></asp:Label><br />
-                                    <asp:Label ID="lblcity" runat="server"></asp:Label>-<asp:Label ID="lblpincode" runat="server"></asp:Label>
+        <asp:Label ID="lblcity" runat="server"></asp:Label>-<asp:Label ID="lblpincode" runat="server"></asp:Label><br />
+        <asp:Label ID="lblContact" runat="server" Font-Size="10px" ForeColor="Gray"></asp:Label>
                                 </td>
                             </tr>
                         </table>
@@ -384,7 +385,10 @@
             <tr>
                 <td class="" style="text-align: left; font-weight: bold; width: 30%;">VALIDITYOF THE OFFER</td>
                 <td class="" style="text-align: left; font-weight: 100; width: 70%;">This Offer is valid for
-                    <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>&nbsp;Days from the Date of Submission.<br />
+                    <asp:Label ID="lbl_val_default_text" runat="server" Text="This Offer is valid for "></asp:Label>
+                    <asp:Label ID="lbl_valdays" runat="server" Text="15" Font-Bold="true"></asp:Label>
+                    <asp:Label ID="lbl_val_days_text" runat="server" Text=" Days from the Date of Submission."></asp:Label>
+                    <asp:Label ID="lbl_val_dates" runat="server" Visible="false" Font-Bold="true"></asp:Label><br />
                 </td>
             </tr>
             <%--<tr>
