@@ -549,9 +549,10 @@ namespace Bill_Software.corporate.business.app
                     string sqlHead = @"INSERT INTO tbl_Purches 
                         (Purches_Id, Client_Id, Total_purches_rate, Total_Tax_rate, Purches_date, Purches_Type, 
                          Invoice_No, Stock_Add_Date, Narration, InvoiceAmnt, TCS_Amount, TCS_Rate, Delivery_Amount, 
-                         Delivery_Rate, otherAmount1, otherAmount2, AddedById, CreatedDate, ShippedToStoreId, ShippedToStoreName) 
+                         Delivery_Rate, otherAmount1_name, otherAmount1, otherAmount2_name, otherAmount2, 
+                         AddedById, CreatedDate, ShippedToStoreId, ShippedToStoreName, BuyerOrderNo, OrderDate) 
                         VALUES (@pid, @clid, @tot, @tax, @pdate, @ptype, @inv, @sdate, @narr, @invAmt, @tcs, @tcsR, @del, 
-                         @delR, @oth1, @oth2, @uid, GETDATE(), @store, @storeName)";
+                         @delR, @oth1n, @oth1, @oth2n, @oth2, @uid, GETDATE(), @store, @storeName, @bno, @bdate)";
 
                     SqlCommand cmdHead = new SqlCommand(sqlHead, conn, trans);
                     cmdHead.Parameters.AddWithValue("@pid", purchesId);
@@ -570,7 +571,10 @@ namespace Bill_Software.corporate.business.app
                     cmdHead.Parameters.AddWithValue("@delR", DDL_vat_parsentage.SelectedValue);
                     cmdHead.Parameters.AddWithValue("@oth1", oth1);
                     cmdHead.Parameters.AddWithValue("@oth2", oth2);
-
+                    cmdHead.Parameters.AddWithValue("@oth1n", TextBox1.Text.Trim()); // description for otherAmount1
+                    cmdHead.Parameters.AddWithValue("@oth2n", TextBox2.Text.Trim()); // description for otherAmount2
+                    cmdHead.Parameters.AddWithValue("@bno", txt_reforder.Text.Trim()); // BuyerOrderNo
+                    cmdHead.Parameters.AddWithValue("@bdate", txt_refordrdate.Text.Trim()); // OrderDate
                     string uid = "admin";
                     if (Session["USERID"] != null) uid = Session["USERID"].ToString();
                     cmdHead.Parameters.AddWithValue("@uid", uid);

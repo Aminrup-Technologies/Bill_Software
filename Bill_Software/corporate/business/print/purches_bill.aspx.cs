@@ -100,82 +100,125 @@ namespace Bill_Software.corporate.business.print
 
         private void buindalldata()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select * from tbl_Purches where Purches_Id='" + lblpurches_id.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            try
             {
-                lbl_invoicedate.Text = re["Purches_date"].ToString();
-                Label15.Text = re["BuyerOrderNo"].ToString();
-                Label16.Text = re["OrderDate"] != DBNull.Value ? Convert.ToDateTime(re["OrderDate"]).ToString("dd-MM-yyyy") : "N/A";
-                lblpurches_date.Text = re["TimeStamp"] != DBNull.Value ? Convert.ToDateTime(re["TimeStamp"]).ToString("dd-MMM-yyyy hh:mm:ss tt") : "N/A";
-                Label10.Text = lblcompanyNameTo.Text = re["ShippedToStoreName"].ToString();
-                lbl_invoiceno.Text = re["Invoice_No"].ToString();
-                lbl_stockaddedon.Text = re["Stock_Add_Date"].ToString();
-                lbl_narration.Text = re["Narration"].ToString();
+                DbCL.Sqlconnection();
+                DbCL.ConnectDb();
 
-                decimal dtcsAmount = 0; decimal.TryParse(re["TCS_Amount"]?.ToString(), out dtcsAmount);
-                string tcsRateStr = re["TCS_Rate"]?.ToString()?.Trim();
-                lbl_tcsrate.Text = tcsRateStr;
+                // Re-aligned query joining with Stores to get the 'To' address
+                string cmdstring = @"SELECT p.*, s.StoreAddress, s.StoreCity, s.StorePin 
+                            FROM tbl_Purches p 
+                            LEFT JOIN Stores s ON p.ShippedToStoreId = s.StoreId 
+                            WHERE p.Purches_Id = @pid";
 
-                decimal dfreightCharges = 0; decimal.TryParse(re["Delivery_Amount"]?.ToString(), out dfreightCharges);
-                string frtRateStr = re["Delivery_Rate"]?.ToString()?.Trim();
-                decimal frtRate = 0;
-                if (!string.IsNullOrEmpty(frtRateStr) && !frtRateStr.Equals("NA", StringComparison.OrdinalIgnoreCase))
-                    decimal.TryParse(frtRateStr, out frtRate);
+                SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+                cmd.Parameters.AddWithValue("@pid", lblpurches_id.Text.Trim());
+                SqlDataReader re = cmd.ExecuteReader();
 
-                lbl_frtrate.Text = frtRate.ToString("0.##");
+                if (re.Read())
+                {
+                    // --- 1. INVOICE & REFERENCE DETAILS ---
+                    lbl_invoicedate.Text = re["Purches_date"].ToString();
+                    lbl_invoiceno.Text = re["Invoice_No"].ToString();
+                    lbl_stockaddedon.Text = re["Stock_Add_Date"].ToString();
+                    lbl_narration.Text = re["Narration"].ToString();
 
-                decimal ftax = (dfreightCharges * frtRate) / 100;
-                lblfttax.Text = ftax.ToString("N2");
+                    // Buyer Order Info
+                    Label15.Text = re["BuyerOrderNo"]?.ToString() ?? "N/A";
+                    Label16.Text = re["OrderDate"] != DBNull.Value ? re["OrderDate"].ToString() : "N/A";
+                    lblpurches_date.Text = re["TimeStamp"] != DBNull.Value ?
+                        Convert.ToDateTime(re["TimeStamp"]).ToString("dd-MMM-yyyy hh:mm tt") : "N/A";
 
-                // Other Charges 1
-                lblOtherCharges1name.Text = re["otherAmount1_name"]?.ToString()?.Trim();
-                decimal dotherCharges1 = 0; decimal.TryParse(re["otherAmount1"]?.ToString(), out dotherCharges1);
-                if (string.IsNullOrEmpty(lblOtherCharges1name.Text) || dotherCharges1 == 0) { lblOtherCharges1name.Text = ""; dotherCharges1 = 0; }
-                lblOtherCharges1.Text = dotherCharges1.ToString("N2");
-                decimal dotherCharges1_tax = dotherCharges1 * 18 / 100;
-                lbl_othr1_tax.Text = dotherCharges1_tax.ToString("N2");
+                    // --- 2. 'TO' ADDRESS (Your Store) ---
+                    lblcompanyNameTo.Text = re["ShippedToStoreName"].ToString();
+                    Label10.Text = re["ShippedToStoreName"].ToString(); // Secondary label in tableOne
+                    lbladdress1To.Text = re["StoreAddress"]?.ToString() ?? "";
+                    lblcityTo.Text = re["StoreCity"]?.ToString() ?? "";
+                    lblPinTo.Text = re["StorePin"]?.ToString() ?? "";
+                    // If you have a state column in Stores table, map it here:
+                    // lblstateTo.Text = re["StoreState"]?.ToString() ?? "";
 
-                // Other Charges 2
-                lblOtherCharges2name.Text = re["otherAmount2_name"]?.ToString()?.Trim();
-                decimal dotherCharges2 = 0; decimal.TryParse(re["otherAmount2"]?.ToString(), out dotherCharges2);
-                if (string.IsNullOrEmpty(lblOtherCharges2name.Text) || dotherCharges2 == 0) { lblOtherCharges2name.Text = ""; dotherCharges2 = 0; }
-                lblOtherCharges2.Text = dotherCharges2.ToString("N2");
+                    // --- 3. FREIGHT / DELIVERY ---
+                    decimal dfreightCharges = 0;
+                    decimal.TryParse(re["Delivery_Amount"]?.ToString(), out dfreightCharges);
+                    lblFreightCharges.Text = dfreightCharges.ToString("N2");
 
-                // Calc
-                decimal ttltax = ProdcutTaxes + ftax + dotherCharges1_tax;
-                lbl_ttltax.Text = ttltax.ToString("N2");
+                    string frtRateStr = re["Delivery_Rate"]?.ToString()?.Trim();
+                    decimal frtRate = 0;
+                    if (!string.IsNullOrEmpty(frtRateStr) && !frtRateStr.Equals("NA", StringComparison.OrdinalIgnoreCase))
+                        decimal.TryParse(frtRateStr, out frtRate);
 
-                NewTaxable = dfreightCharges + ProdcutTaxable + dotherCharges1;
-                lblTaxableValue.Text = NewTaxable.ToString("N2");
+                    lbl_frtrate.Text = frtRate.ToString("0.##");
+                    decimal ftax = (dfreightCharges * frtRate) / 100;
+                    lblfttax.Text = ftax.ToString("N2");
 
-                decimal ttl_purchase = NewTaxable + ttltax;
-                lblnetamount.Text = ttl_purchase.ToString("N2");
+                    // --- 4. OTHER CHARGE 1 (Taxable) ---
+                    lblOtherCharges1name.Text = re["otherAmount1_name"]?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(lblOtherCharges1name.Text)) lblOtherCharges1name.Text = "Other Charge 1";
 
-                lbl_ttl1word.Text = ConvertAmountToWords(ttl_purchase) + " Only";
+                    decimal dotherCharges1 = 0;
+                    decimal.TryParse(re["otherAmount1"]?.ToString(), out dotherCharges1);
+                    lblOtherCharges1.Text = dotherCharges1.ToString("N2");
 
-                // Recalc TCS logic if stored is 0 but rate exists
-                decimal tcsRate = 0; decimal.TryParse(tcsRateStr, out tcsRate);
-                decimal cal_tcs = Math.Round((ttl_purchase * tcsRate) / 100, 2);
-                if (dtcsAmount == 0 && cal_tcs > 0) dtcsAmount = cal_tcs;
-                lblTCSAmount.Text = dtcsAmount.ToString("N2");
+                    // Assuming 18% GST for taxable other charges
+                    decimal dotherCharges1_tax = dotherCharges1 * 18 / 100;
+                    lbl_othr1_tax.Text = dotherCharges1_tax.ToString("N2");
 
-                decimal total2 = dtcsAmount + dotherCharges2;
-                lbl_ttl2amnt.Text = total2.ToString("N2");
-                lbl_ttl2word.Text = ConvertAmountToWords(total2) + " Only";
+                    // --- 5. OTHER CHARGE 2 (Non-Taxable) ---
+                    lblOtherCharges2name.Text = re["otherAmount2_name"]?.ToString()?.Trim();
+                    if (string.IsNullOrEmpty(lblOtherCharges2name.Text)) lblOtherCharges2name.Text = "Other Charge 2";
 
-                lblFreightCharges.Text = dfreightCharges.ToString("N2");
+                    decimal dotherCharges2 = 0;
+                    decimal.TryParse(re["otherAmount2"]?.ToString(), out dotherCharges2);
+                    lblOtherCharges2.Text = dotherCharges2.ToString("N2");
 
-                decimal grandttl = ttl_purchase + total2;
-                lblGrandTotalMain.Text = grandttl.ToString("N2");
-                lblGrandTotalWord.Text = ConvertAmountToWords(grandttl) + " Only";
+                    // --- 6. TOTAL CALCULATIONS ---
+                    // Sum of Tax: Product Tax + Freight Tax + Other1 Tax
+                    decimal ttltax = ProdcutTaxes + ftax + dotherCharges1_tax;
+                    lbl_ttltax.Text = ttltax.ToString("N2");
 
-                Bindclientdetails(re["Client_Id"].ToString());
+                    // Taxable Value: Product Taxable + Freight Amt + Other1 Amt
+                    NewTaxable = ProdcutTaxable + dfreightCharges + dotherCharges1;
+                    lblTaxableValue.Text = NewTaxable.ToString("N2");
+
+                    // Net Amount (Total Purchase)
+                    decimal ttl_purchase = NewTaxable + ttltax;
+                    lblnetamount.Text = ttl_purchase.ToString("N2");
+                    lbl_ttl1word.Text = ConvertAmountToWords(ttl_purchase) + " Only";
+
+                    // --- 7. TCS & FINAL GRAND TOTAL ---
+                    string tcsRateStr = re["TCS_Rate"]?.ToString()?.Trim();
+                    decimal tcsRate = 0; decimal.TryParse(tcsRateStr, out tcsRate);
+                    lbl_tcsrate.Text = tcsRate.ToString("0.##");
+
+                    decimal dtcsAmount = 0;
+                    decimal.TryParse(re["TCS_Amount"]?.ToString(), out dtcsAmount);
+                    // Fallback: Recalculate if amount is 0 but rate exists
+                    if (dtcsAmount == 0 && tcsRate > 0) dtcsAmount = Math.Round((ttl_purchase * tcsRate) / 100, 2);
+                    lblTCSAmount.Text = dtcsAmount.ToString("N2");
+
+                    decimal total2 = dtcsAmount + dotherCharges2;
+                    lbl_ttl2amnt.Text = total2.ToString("N2");
+                    lbl_ttl2word.Text = ConvertAmountToWords(total2) + " Only";
+
+                    decimal grandttl = ttl_purchase + total2;
+                    lblGrandTotalMain.Text = grandttl.ToString("N2");
+                    lblGrandTotalWord.Text = ConvertAmountToWords(grandttl) + " Only";
+
+                    // --- 8. VENDOR DETAILS ---
+                    Bindclientdetails(re["Client_Id"].ToString());
+                }
             }
-            DbCL.Conn.Close();
+            catch (Exception ex)
+            {
+                // Handle error (e.g., Log it)
+                throw ex;
+            }
+            finally
+            {
+                if (DbCL.Conn.State == System.Data.ConnectionState.Open)
+                    DbCL.Conn.Close();
+            }
         }
 
         private void Bindclientdetails(string clientid)
@@ -202,25 +245,68 @@ namespace Bill_Software.corporate.business.print
         {
             if (number == 0) return "Zero";
             if (number < 0) return "Minus " + ConvertNumberToWords(Math.Abs(number));
+
             string words = "";
-            string[] unitsMap = { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
-            string[] tensMap = { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
 
-            if ((number / 10000000) > 0) { words += ConvertNumberToWords(number / 10000000) + " Crore "; number %= 10000000; }
-            if ((number / 100000) > 0) { words += ConvertNumberToWords(number / 100000) + " Lakh "; number %= 100000; }
-            if ((number / 1000) > 0) { words += ConvertNumberToWords(number / 1000) + " Thousand "; number %= 1000; }
-            if ((number / 100) > 0) { words += ConvertNumberToWords(number / 100) + " Hundred "; number %= 100; }
+            // Indian Numbering System: Crore (1,00,00,000)
+            if ((number / 10000000) > 0)
+            {
+                words += ConvertNumberToWords(number / 10000000) + " Crore ";
+                number %= 10000000;
+            }
 
-            if (number > 0) { if (words != "") words += "and "; if (number < 20) words += unitsMap[number]; else { words += tensMap[number / 10]; if ((number % 10) > 0) words += "-" + unitsMap[number % 10]; } }
-            return words;
+            // Lakh (1,00,000)
+            if ((number / 100000) > 0)
+            {
+                words += ConvertNumberToWords(number / 100000) + " Lakh ";
+                number %= 100000;
+            }
+
+            // Thousand (1,000)
+            if ((number / 1000) > 0)
+            {
+                words += ConvertNumberToWords(number / 1000) + " Thousand ";
+                number %= 1000;
+            }
+
+            // Hundred (100)
+            if ((number / 100) > 0)
+            {
+                words += ConvertNumberToWords(number / 100) + " Hundred ";
+                number %= 100;
+            }
+
+            if (number > 0)
+            {
+                if (words != "") words += "and ";
+
+                string[] unitsMap = { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+                string[] tensMap = { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+
+                if (number < 20)
+                    words += unitsMap[number];
+                else
+                {
+                    words += tensMap[number / 10];
+                    if ((number % 10) > 0)
+                        words += " " + unitsMap[number % 10]; // Changed '-' to space for cleaner look
+                }
+            }
+
+            return words.Trim();
         }
 
         public string ConvertAmountToWords(decimal amount)
         {
-            long integerPart = (long)amount;
-            int decimalPart = (int)((amount - integerPart) * 100);
+            long integerPart = (long)Math.Floor(amount);
+            int decimalPart = (int)Math.Round((amount - integerPart) * 100);
+
             string words = ConvertNumberToWords(integerPart) + " Rupees";
-            if (decimalPart > 0) words += " and " + ConvertNumberToWords(decimalPart) + " Paise";
+
+            if (decimalPart > 0)
+            {
+                words += " and " + ConvertNumberToWords(decimalPart) + " Paise";
+            }
             return words;
         }
 
