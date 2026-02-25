@@ -270,6 +270,8 @@
 
                             <li id="SalesTeam" runat="server">Sales Team
 									<ul class="nav first">
+                                        <li id="visit_planner" runat="server"><a href="visit_planner.aspx">Visit Planner</a></li>
+                                        <li id="daily_attendance" runat="server"><a href="attendance.aspx">Daily Attendance</a></li>
                                         <li id="daily_reporting" runat="server"><a href="daily_rpt.aspx">Daily Reporting</a></li>
                                         <li id="vw_dailyrpts" runat="server"><a href="vw_dailyrpts.aspx">View Daily Reporting</a></li>
                                         <li id="srch_dailyrpts" runat="server"><a href="srch_dailyrpts.aspx">Search Daily Reports</a></li>
