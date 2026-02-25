@@ -1,23 +1,11 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="daily_rpt.aspx.cs" Inherits="Bill_Software.corporate.business.app.daily_rpt" %>
+﻿<%@ Page Title="Plan Sales Visit" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="daily_rpt.aspx.cs" Inherits="Bill_Software.corporate.business.app.daily_rpt" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
-        .style1 {
-            width: 100%;
-        }
-
-        .style2 {
-            color: #FFFFFF;
-            font-weight: bold;
-        }
-
-        .style3 {
-            color: #FF3300;
-        }
-
-        .style4 {
-            text-align: center;
-        }
+        .style1 { width: 100%; }
+        .style2 { color: #FFFFFF; font-weight: bold; }
+        .style3 { color: #FF3300; }
+        .style4 { text-align: center; }
     </style>
 
     <script type="text/javascript">
@@ -28,14 +16,10 @@
         function limitVisitDate() {
             const dateInput = document.getElementById('<%= txtVisitDate.ClientID %>');
             const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            const lastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-
-            const minDate = firstDay.toISOString().split('T')[0];
-            const maxDate = lastDay.toISOString().split('T')[0];
-
+            
+            // For planning, restrict selection to today or future dates
+            const minDate = today.toISOString().split('T')[0];
             dateInput.setAttribute('min', minDate);
-            dateInput.setAttribute('max', maxDate);
         }
 
         function validateSalesVisitForm() {
@@ -45,33 +29,27 @@
             const department = document.getElementById('<%= txtDepartment.ClientID %>').value.trim();
             const contactPerson = document.getElementById('<%= txtContactPerson.ClientID %>').value.trim();
             const visitType = document.getElementById('<%= ddlVisitType.ClientID %>').value;
-            const Discussion = document.getElementById('<%= txtDiscussion.ClientID %>').value.trim();
-            const followUp = document.getElementById('<%= ddlFollowUp.ClientID %>').value;
-            const status = document.getElementById('<%= ddlStatus.ClientID %>').value;
+            const discussion = document.getElementById('<%= txtDiscussion.ClientID %>').value.trim();
 
             let errorMsg = '';
 
-            if (visitDate === '') errorMsg += '• Visit Date is required.\n';
+            if (visitDate === '') errorMsg += '• Planned Visit Date is required.\n';
             if (salesperson === '') errorMsg += '• Salesperson Name is required.\n';
             if (customerName === '') errorMsg += '• Customer Name is required.\n';
-            if (department === '') errorMsg += '• Please select a Department.\n';
+            if (department === '') errorMsg += '• Please enter a Department.\n';
             if (contactPerson === '') errorMsg += '• Contact Person is required.\n';
             if (visitType === '') errorMsg += '• Please select a Visit Type.\n';
-            if (Discussion === '') errorMsg += '• Discussion Summary is required.\n';
-            if (followUp === '') errorMsg += '• Please select Follow-Up.\n';
-            if (status === '') errorMsg += '• Please select Status.\n';
+            if (discussion === '') errorMsg += '• Agenda / Purpose is required.\n';
 
             if (errorMsg !== '') {
                 alert('Please fix the following errors:\n\n' + errorMsg);
                 return false;
             }
-
             return true;
         }
     </script>
-
-
 </asp:Content>
+
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <script src="calender/jquery-1.7.1.js" type="text/javascript" language="javascript"></script>
     <script src="calender/jquery.ui.core.js" type="text/javascript" language="javascript"></script>
@@ -84,7 +62,7 @@
         prm.add_pageLoaded(function () {
             $(".datepicker").datepicker({
                 dateFormat: 'dd-M-yy',
-
+                minDate: 0, // 0 means today. Disables past dates.
                 changeMonth: true,
                 changeYear: true
             });
@@ -98,20 +76,9 @@
 
             <table class="style1">
                 <tr>
-                    <td bgcolor="#19658A" colspan="7">&nbsp;<span class="style2">Sales Visit Report</span>&nbsp;</td>
+                    <td bgcolor="#19658A" colspan="7">&nbsp;<span class="style2">Plan Sales Visit</span>&nbsp;</td>
                 </tr>
-
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-
-                <tr>
-                    <td colspan="7">&nbsp;</td>
-                </tr>
+                <tr><td colspan="7">&nbsp;</td></tr>
 
                 <tr>
                     <td>&nbsp;</td>
@@ -133,14 +100,11 @@
                     </td>
                     <td>&nbsp;</td>
                 </tr>
-
-                <tr>
-                    <td colspan="7">&nbsp;</td>
-                </tr>
+                <tr><td colspan="7">&nbsp;</td></tr>
 
                 <tr>
                     <td>&nbsp;</td>
-                    <td width="15%"><span class="style3">*</span>Date of Visit</td>
+                    <td width="15%"><span class="style3">*</span>Planned Date</td>
                     <td width="25%">
                         <asp:TextBox ID="txtVisitDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
                     </td>
@@ -187,63 +151,20 @@
 
                 <tr>
                     <td>&nbsp;</td>
-                    <td><span class="style3">*</span>Discussion Points</td>
+                    <td><span class="style3">*</span>Agenda / Purpose</td>
                     <td colspan="4">
-                        <asp:TextBox ID="txtDiscussion" runat="server" CssClass="textbox_style" TextMode="MultiLine" Columns="2" Rows="4" Height="44px" Width="90%"></asp:TextBox>
-                    </td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-
-                <tr>
-                    <td>&nbsp;</td>
-                    <td><span class="style3">*</span>Follow-Up Required</td>
-                    <td>
-                        <asp:DropDownList ID="ddlFollowUp" runat="server" CssClass="dropdown_style">
-                            <asp:ListItem Text="-- Select Follow-Up --" Value="" />
-                            <asp:ListItem>Yes</asp:ListItem>
-                            <asp:ListItem>No</asp:ListItem>
-                        </asp:DropDownList>
-                    </td>
-                    <td>&nbsp;</td>
-                    <td>Next Follow-Up Date</td>
-                    <td>
-                        <asp:TextBox ID="txtNextFollowUp" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+                        <asp:TextBox ID="txtDiscussion" runat="server" CssClass="textbox_style" TextMode="MultiLine" Columns="2" Rows="4" Height="44px" Width="90%" Placeholder="What is the objective of this visit?"></asp:TextBox>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
 
-                <tr>
-                    <td>&nbsp;</td>
-                    <td>Status</td>
-                    <td>
-                        <asp:DropDownList ID="ddlStatus" runat="server" CssClass="dropdown_style">
-                            <asp:ListItem Text="-- Select Status --" Value="" />
-                            <asp:ListItem>Completed</asp:ListItem>
-                            <asp:ListItem>Pending</asp:ListItem>
-                            <asp:ListItem>Escalated</asp:ListItem>
-                        </asp:DropDownList>
-                    </td>
-                    <td>&nbsp;</td>
-                    <td>Attachment</td>
-                    <td>
-                        <asp:FileUpload ID="fileAttachment" runat="server" />
-                    </td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td colspan="2">&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
+                <tr><td colspan="7">&nbsp;</td></tr>
                 <tr>
                     <td>&nbsp;</td>
                     <td colspan="4" class="style4">
-                        <asp:Button ID="btnSubmit" runat="server" Text="Submit Report" CssClass="btn_style" OnClientClick="return validateSalesVisitForm();" OnClick="btnSubmit_Click" />
+                        <asp:Button ID="btnSubmit" runat="server" Text="Save Visit Plan" CssClass="btn_style" OnClientClick="return validateSalesVisitForm();" OnClick="btnSubmit_Click" />
                         &nbsp;
-                <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn_style" OnClick="btnReset_Click" />
+                        <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn_style" OnClick="btnReset_Click" />
                     </td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
@@ -251,10 +172,7 @@
             </table>
         </ContentTemplate>
         <Triggers>
-
             <asp:PostBackTrigger ControlID="btnSubmit" />
-
-
         </Triggers>
     </asp:UpdatePanel>
 </asp:Content>

@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Web;
 using System.Web.UI;
-using System.Data;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -21,7 +20,15 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                txtVisitDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                // Auto-fill the date if they clicked it on the calendar!
+                if (Request.QueryString["date"] != null)
+                {
+                    txtVisitDate.Text = Convert.ToDateTime(Request.QueryString["date"]).ToString("dd-MMM-yyyy");
+                }
+                else
+                {
+                    txtVisitDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                }
                 GetAdminName();
             }
         }
@@ -53,7 +60,13 @@ namespace Bill_Software.corporate.business.app
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    string query = @"INSERT INTO tbl_SalesVisitReport (VisitDate, Salesperson, CustomerName, Department, ContactPerson, VisitType, DiscussionPoints, FollowUpRequired, NextFollowUpDate, Status, AttachmentName, CreatedDate, CreatedByCode) VALUES (@VisitDate, @Salesperson, @CustomerName, @Department, @ContactPerson, @VisitType, @DiscussionPoints, @FollowUpRequired, @NextFollowUpDate, @Status, @AttachmentName, @CreatedDate, @CreatedByCode)";
+                    // Updated Query: Setting VisitPhase to 'Planned' and safely inserting NULLs for execution fields
+                    string query = @"INSERT INTO tbl_SalesVisitReport 
+                        (VisitDate, Salesperson, CustomerName, Department, ContactPerson, VisitType, DiscussionPoints, 
+                         VisitPhase, Status, FollowUpRequired, NextFollowUpDate, AttachmentName, CreatedDate, CreatedByCode) 
+                        VALUES 
+                        (@VisitDate, @Salesperson, @CustomerName, @Department, @ContactPerson, @VisitType, @DiscussionPoints, 
+                         'Planned', 'Pending Execution', '', NULL, NULL, @CreatedDate, @CreatedByCode)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
@@ -63,51 +76,9 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Department", txtDepartment.Text.Trim());
                         cmd.Parameters.AddWithValue("@ContactPerson", txtContactPerson.Text.Trim());
                         cmd.Parameters.AddWithValue("@VisitType", ddlVisitType.SelectedValue);
-                        cmd.Parameters.AddWithValue("@DiscussionPoints", txtDiscussion.Text.Trim());
-                        cmd.Parameters.AddWithValue("@FollowUpRequired", ddlFollowUp.SelectedValue);
-
-                        if (!string.IsNullOrEmpty(txtNextFollowUp.Text))
-                            cmd.Parameters.AddWithValue("@NextFollowUpDate", txtNextFollowUp.Text.Trim());
-                        else
-                            cmd.Parameters.AddWithValue("@NextFollowUpDate", DBNull.Value);
-
-                        cmd.Parameters.AddWithValue("@Status", ddlStatus.SelectedValue);
-
-                        //string fileName = null;
-                        //if (fileAttachment.HasFile)
-                        //{
-                        //    fileName = Path.GetFileName(fileAttachment.FileName);
-                        //    string uploadPath = Server.MapPath("~/Uploads/");
-                        //    if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
-                        //    fileAttachment.SaveAs(Path.Combine(uploadPath, fileName));
-                        //}
-                        //cmd.Parameters.AddWithValue("@AttachmentName", (object)fileName ?? DBNull.Value);
-
-                        string fileName = null;
-
-                        if (fileAttachment.HasFile)
-                        {
-                            string originalFileName = Path.GetFileName(fileAttachment.FileName);
-
-                            // Add yyyymmdd date prefix
-                            string datePrefix = DateTime.Now.ToString("yyyyMMdd");
-                            fileName = datePrefix + "_" + originalFileName;
-
-                            // Define upload path
-                            string uploadPath = Server.MapPath("~/Uploads/");
-                            if (!Directory.Exists(uploadPath))
-                                Directory.CreateDirectory(uploadPath);
-
-                            // Save file with new name
-                            fileAttachment.SaveAs(Path.Combine(uploadPath, fileName));
-                        }
-
-                        // Pass to DB
-                        cmd.Parameters.AddWithValue("@AttachmentName", (object)fileName ?? DBNull.Value);
-
+                        cmd.Parameters.AddWithValue("@DiscussionPoints", txtDiscussion.Text.Trim()); // This is now Agenda
 
                         cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Today);
-
                         string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
                         cmd.Parameters.AddWithValue("@CreatedByCode", userId);
 
@@ -116,10 +87,13 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
-                lblOk.Text = "Sales visit report submitted successfully!";
-                PanelOK.Visible = true;
+                //lblOk.Text = "Sales visit planned successfully!";
+                //PanelOK.Visible = true;
+                //ClearForm();
 
                 ClearForm();
+                ScriptManager.RegisterStartupScript(this, GetType(), "redirect",
+                    "alert('Sales visit planned successfully!'); window.location='visit_planner.aspx';", true);
             }
             catch (Exception ex)
             {
@@ -134,11 +108,7 @@ namespace Bill_Software.corporate.business.app
             try
             {
                 string logPath = Server.MapPath("~/Logs/");
-                if (!Directory.Exists(logPath))
-                {
-                    Directory.CreateDirectory(logPath);
-                }
-
+                if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
                 string logFile = Path.Combine(logPath, "ErrorLog.txt");
 
                 using (StreamWriter writer = new StreamWriter(logFile, true))
@@ -149,9 +119,9 @@ namespace Bill_Software.corporate.business.app
                     writer.WriteLine("----------------------------------------");
                 }
             }
-            catch (Exception )
+            catch (Exception)
             {
-                lblErrorMsg.Text = "An error occurred :" + ex.Message;
+                lblErrorMsg.Text = "An error occurred: " + ex.Message;
                 PanelError.Visible = true;
             }
         }
@@ -159,54 +129,19 @@ namespace Bill_Software.corporate.business.app
         private void ClearForm()
         {
             txtVisitDate.Text = string.Empty;
-            txtSalesperson.Text = string.Empty;
+            // Kept Salesperson intact as it is read-only
             txtCustomerName.Text = string.Empty;
             txtDepartment.Text = string.Empty;
             txtContactPerson.Text = string.Empty;
             ddlVisitType.SelectedIndex = 0;
             txtDiscussion.Text = string.Empty;
-            ddlFollowUp.SelectedIndex = 0;
-            txtNextFollowUp.Text = string.Empty;
-            ddlStatus.SelectedIndex = 0;
-
-            // Reset file upload by clearing file input (can't be done directly from server-side)
-            // Suggest using JS for clearing file upload if needed visually
-
-            // Hide success/error panels
-            //PanelOK.Visible = false;
-            //PanelError.Visible = false;
-
-            //lblOk.Text = "";
-            //lblErrorMsg.Text = "";
-        }
-
-        private void ClearFormNew()
-        {
-            txtVisitDate.Text = string.Empty;
-            txtSalesperson.Text = string.Empty;
-            txtCustomerName.Text = string.Empty;
-            txtDepartment.Text = string.Empty;
-            txtContactPerson.Text = string.Empty;
-            ddlVisitType.SelectedIndex = 0;
-            txtDiscussion.Text = string.Empty;
-            ddlFollowUp.SelectedIndex = 0;
-            txtNextFollowUp.Text = string.Empty;
-            ddlStatus.SelectedIndex = 0;
-
-            // Reset file upload by clearing file input (can't be done directly from server-side)
-            // Suggest using JS for clearing file upload if needed visually
-
-            // Hide success/error panels
-            PanelOK.Visible = false;
-            PanelError.Visible = false;
-
-            lblOk.Text = "";
-            lblErrorMsg.Text = "";
         }
 
         protected void btnReset_Click(object sender, EventArgs e)
         {
-            ClearFormNew();
+            ClearForm();
+            PanelOK.Visible = false;
+            PanelError.Visible = false;
         }
     }
 }

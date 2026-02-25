@@ -236,6 +236,7 @@
     <Content Include="Content\themes\base\theme.css" />
     <Content Include="Content\themes\base\tooltip.css" />
     <Content Include="corporate\business\app\Approve_PR.aspx" />
+    <Content Include="corporate\business\app\attendance.aspx" />
     <Content Include="corporate\business\app\calender\jquery-1.7.1.js" />
     <Content Include="corporate\business\app\calender\jquery.ui.all.css" />
     <Content Include="corporate\business\app\calender\jquery.ui.core.js" />
@@ -249,6 +250,7 @@
     <Content Include="corporate\business\app\Direct_Proforma.aspx" />
     <Content Include="corporate\business\app\EditPurchase.aspx" />
     <Content Include="corporate\business\app\edit_purchaseorder.aspx" />
+    <Content Include="corporate\business\app\expense_entry.aspx" />
     <Content Include="corporate\business\app\Generate_PO_From_PR.aspx" />
     <Content Include="corporate\business\app\Generate_PO_Preview.aspx" />
     <Content Include="corporate\business\app\GlobalNotification.ascx" />
@@ -363,6 +365,7 @@
     <Content Include="corporate\business\app\FinalPaymentInvoice.aspx" />
     <Content Include="corporate\business\app\PaymentsReceived.aspx" />
     <Content Include="corporate\business\app\PaymentsDue.aspx" />
+    <Content Include="corporate\business\app\visit_planner.aspx" />
     <Content Include="corporate\business\app\vw_dailyrpts.aspx" />
     <Content Include="corporate\business\print\bill.aspx" />
     <Content Include="corporate\business\print\billduplicate.aspx" />
@@ -668,6 +671,13 @@
     <Compile Include="corporate\business\app\Approve_PR.aspx.designer.cs">
       <DependentUpon>Approve_PR.aspx</DependentUpon>
     </Compile>
+    <Compile Include="corporate\business\app\attendance.aspx.cs">
+      <DependentUpon>attendance.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\attendance.aspx.designer.cs">
+      <DependentUpon>attendance.aspx</DependentUpon>
+    </Compile>
     <Compile Include="corporate\business\app\Bill.Master.cs">
       <DependentUpon>Bill.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -733,6 +743,13 @@
     </Compile>
     <Compile Include="corporate\business\app\edit_purchaseorder.aspx.designer.cs">
       <DependentUpon>edit_purchaseorder.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\expense_entry.aspx.cs">
+      <DependentUpon>expense_entry.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\expense_entry.aspx.designer.cs">
+      <DependentUpon>expense_entry.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\Generate_PO_From_PR.aspx.cs">
       <DependentUpon>Generate_PO_From_PR.aspx</DependentUpon>
@@ -1531,6 +1548,13 @@
     </Compile>
     <Compile Include="corporate\business\app\PaymentsDue.aspx.designer.cs">
       <DependentUpon>PaymentsDue.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\visit_planner.aspx.cs">
+      <DependentUpon>visit_planner.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\visit_planner.aspx.designer.cs">
+      <DependentUpon>visit_planner.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\vw_dailyrpts.aspx.cs">
       <DependentUpon>vw_dailyrpts.aspx</DependentUpon>
