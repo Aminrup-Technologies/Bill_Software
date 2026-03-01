@@ -17,6 +17,39 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // 1. Memory Check: MUST be the very first thing!
+            if (Session["USERID"] == null || Session["SessionToken"] == null)
+            {
+                Response.Redirect("~/index.aspx", false);
+                return;
+            }
+
+            // 2. Database Validation Check: Protects against hard page refreshes (F5)
+            using (var cn = new SqlConnection(ConnString))
+            {
+                cn.Open();
+                using (var cmd = new SqlCommand("SELECT IsActive FROM dbo.ActiveSessions WHERE SessionToken = @Token", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Token", Session["SessionToken"].ToString());
+                    object result = cmd.ExecuteScalar();
+
+                    // If the token doesn't exist or IsActive is 0, kick them out immediately
+                    if (result == null || Convert.ToBoolean(result) == false)
+                    {
+                        Session.Clear();
+                        Session.Abandon();
+                        Response.Redirect("~/index.aspx", false);
+                        return;
+                    }
+                }
+            }
+
+            // 3. Prevent Caching
+            HttpContext.Current.Response.Cache.SetAllowResponseInBrowserHistory(false);
+            HttpContext.Current.Response.Cache.SetCacheability(HttpCacheability.NoCache);
+            HttpContext.Current.Response.Cache.SetNoStore();
+
+            // 4. Load UI Elements
             if (!IsPostBack)
             {
                 // Dynamic year display
@@ -26,14 +59,6 @@ namespace Bill_Software.corporate.business.app
                 GetMenuControl();
             }
 
-            HttpContext.Current.Response.Cache.SetAllowResponseInBrowserHistory(false);
-            HttpContext.Current.Response.Cache.SetCacheability(HttpCacheability.NoCache);
-            HttpContext.Current.Response.Cache.SetNoStore();
-
-            if (HttpContext.Current.Session["USERID"] == null)
-            {
-                Response.Redirect("~/index.aspx", false);
-            }
             GetAdminName();
         }
 
@@ -142,6 +167,25 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnLogOut_Click(object sender, EventArgs e)
         {
+            // 1. Mark session as dead in the database immediately
+            if (Session["SessionToken"] != null)
+            {
+                try
+                {
+                    using (var cn = new SqlConnection(ConnString))
+                    {
+                        cn.Open();
+                        using (var cmd = new SqlCommand("UPDATE dbo.ActiveSessions SET IsActive = 0 WHERE SessionToken = @Token", cn))
+                        {
+                            cmd.Parameters.AddWithValue("@Token", Session["SessionToken"].ToString());
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch { /* Ignore DB errors on logout */ }
+            }
+
+            // 2. Clear local memory
             Session.Clear();
             Session.Abandon();
             Response.Redirect("~/index.aspx", false);

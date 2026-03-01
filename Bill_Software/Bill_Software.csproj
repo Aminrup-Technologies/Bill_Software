@@ -510,6 +510,7 @@
     <Content Include="jquery-ui.css" />
     <Content Include="jquery-ui.js" />
     <Content Include="Print\id_card1.aspx" />
+    <Content Include="corporate\business\app\Heartbeat.ashx" />
     <None Include="Properties\PublishProfiles\exc.aagroupindia.com - Web Deploy.pubxml" />
     <None Include="Properties\PublishProfiles\flamexuat.aminruptechnologies.co.in - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
@@ -780,6 +781,9 @@
     </Compile>
     <Compile Include="corporate\business\app\GlobalNotification.ascx.designer.cs">
       <DependentUpon>GlobalNotification.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Heartbeat.ashx.cs">
+      <DependentUpon>Heartbeat.ashx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\home.aspx.cs">
       <DependentUpon>home.aspx</DependentUpon>

@@ -37,7 +37,31 @@
         })();
     </script>
     <!-- End Matomo Code -->
+    <script type="text/javascript">
+        function pingServerHeartbeat() {
+            fetch('/corporate/business/app/Heartbeat.ashx', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'logout') {
+                    let msg = "You have been logged out.";
+                    if (data.reason === 'superseded') {
+                        msg = "You have been logged out because your account was signed in from another device.";
+                    } else if (data.reason === 'timeout') {
+                        msg = "Your session has expired due to inactivity.";
+                    }
+                    alert(msg);
+                    window.location.href = '/index.aspx';
+                }
+            })
+            .catch(error => console.error('Heartbeat failed:', error));
+        }
 
+        // Ping the server every 2 minutes (120,000 milliseconds)
+        setInterval(pingServerHeartbeat, 120000);
+    </script>
 </head>
 
 <body onload="startTime()">
@@ -60,10 +84,10 @@
                                     Hi,
                                     <asp:Label ID="lblName" runat="server"></asp:Label>&nbsp;
                                 </div>
-                                <div style="visibility: hidden;">
+                                <%--<div style="visibility: hidden;">
                                     <iframe height="20" src="../../../SessionKeepAlive.aspx" width="225"></iframe>
                                     <span lang="en-us">&nbsp;</span>
-                                </div>
+                                </div>--%>
                             </td>
                             <td width="8%">
                                 <asp:LinkButton ID="btnLogOut" runat="server" class="logout" OnClick="btnLogOut_Click" OnClientClick="return confirm('Are you sure you want to Logout ...?')">Logout</asp:LinkButton>

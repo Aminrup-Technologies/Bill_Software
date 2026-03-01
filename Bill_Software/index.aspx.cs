@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Web;
@@ -56,6 +57,139 @@ namespace Bill_Software
         }
 
         protected void btnLogin_Click(object sender, EventArgs e)
+        {
+            if (chkRememberMe.Checked)
+            {
+                HttpCookie myCookie = new HttpCookie("myCookie");
+                myCookie.Values.Add("username", txtUserName.Text);
+                myCookie.Expires = DateTime.Now.AddDays(30);
+                Response.Cookies.Add(myCookie);
+            }
+
+            if (cmbLoginAs.SelectedIndex == 0 || cmbLoginAs.SelectedIndex == 1)
+            {
+                const string cmdString = "SELECT TOP 1 Id, User_Id, Password, PasswordHash, PasswordSalt, MustChangePassword, EmailVerified, Email FROM tbl_login WHERE User_Id = @UserId AND IsActive = 1";
+
+                try
+                {
+                    DbCL.Sqlconnection();
+                    DbCL.ConnectDb();
+
+                    using (SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", txtUserName.Text.Trim());
+
+                        using (SqlDataReader rdr = cmd.ExecuteReader())
+                        {
+                            if (!rdr.Read())
+                            {
+                                ShowError("Invalid Username or User is Inactive...");
+                                txtUserName.Focus();
+                                return;
+                            }
+
+                            var user = new UserModel
+                            {
+                                Id = rdr["Id"] != DBNull.Value ? Convert.ToInt32(rdr["Id"]) : 0,
+                                UserId = rdr["User_Id"]?.ToString() ?? string.Empty,
+                                PasswordPlain = rdr["Password"]?.ToString() ?? string.Empty,
+                                MustChangePassword = rdr["MustChangePassword"] != DBNull.Value && Convert.ToBoolean(rdr["MustChangePassword"]),
+                                EmailVerified = rdr["EmailVerified"] != DBNull.Value && Convert.ToBoolean(rdr["EmailVerified"]),
+                                Email = rdr["Email"]?.ToString() ?? string.Empty
+                            };
+
+                            // Safe reading for Hash/Salt
+                            if (rdr["PasswordHash"] is byte[]) { user.PasswordHash = (byte[])rdr["PasswordHash"]; }
+                            else if (rdr["PasswordHash"] != DBNull.Value) { user.PasswordHash = SafeBase64Decode(rdr["PasswordHash"].ToString()); }
+
+                            if (rdr["PasswordSalt"] is byte[]) { user.PasswordSalt = (byte[])rdr["PasswordSalt"]; }
+                            else if (rdr["PasswordSalt"] != DBNull.Value) { user.PasswordSalt = SafeBase64Decode(rdr["PasswordSalt"].ToString()); }
+
+                            bool isPasswordValid = false;
+
+                            if (user.PasswordHash != null && user.PasswordSalt != null)
+                            {
+                                try { isPasswordValid = VerifyPasswordPBKDF2(txtPassword.Text.Trim(), user.PasswordHash, user.PasswordSalt); }
+                                catch { isPasswordValid = false; }
+                            }
+
+                            // Fallback to plain text
+                            if (!isPasswordValid && !string.IsNullOrEmpty(user.PasswordPlain) && user.PasswordPlain == txtPassword.Text.Trim())
+                            {
+                                isPasswordValid = true;
+                            }
+
+                            if (!isPasswordValid)
+                            {
+                                ShowError("Wrong Password..");
+                                txtPassword.Focus();
+                                return;
+                            }
+
+                            // ====== SUCCESSFUL LOGIN ======
+                            Session["USERID"] = user.UserId;
+                            Session["USERTYPE"] = cmbLoginAs.SelectedValue;
+                            Session["UserDbId"] = user.Id;
+
+                            // ====== START: NEW SINGLE SESSION LOGIC ======
+                            string newToken = Guid.NewGuid().ToString();
+                            string ipAddr = Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
+                            if (string.IsNullOrEmpty(ipAddr)) ipAddr = Request.ServerVariables["REMOTE_ADDR"];
+                            string userAgent = Request.UserAgent ?? "Unknown";
+
+                            using (var cn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+                            {
+                                cn.Open();
+
+                                // 1. Invalidate all previous sessions for this user (Forces logout on other devices)
+                                using (var cmdKill = new SqlCommand("UPDATE dbo.ActiveSessions SET IsActive = 0 WHERE UserId = @UserId", cn))
+                                {
+                                    cmdKill.Parameters.AddWithValue("@UserId", user.Id);
+                                    cmdKill.ExecuteNonQuery();
+                                }
+
+                                // 2. Create the new session
+                                string sqlInsert = @"INSERT INTO dbo.ActiveSessions (SessionToken, UserId, IPAddress, UserAgent, IsActive) 
+                                             VALUES (@Token, @UserId, @IP, @UA, 1)";
+                                using (var cmdIns = new SqlCommand(sqlInsert, cn))
+                                {
+                                    cmdIns.Parameters.AddWithValue("@Token", newToken);
+                                    cmdIns.Parameters.AddWithValue("@UserId", user.Id);
+                                    cmdIns.Parameters.AddWithValue("@IP", ipAddr);
+                                    cmdIns.Parameters.AddWithValue("@UA", userAgent);
+                                    cmdIns.ExecuteNonQuery();
+                                }
+                            }
+
+                            Session["SessionToken"] = newToken;
+                            // ====== END: NEW SINGLE SESSION LOGIC ======
+
+
+                            if (user.MustChangePassword || !user.EmailVerified || string.IsNullOrEmpty(user.Email))
+                            {
+                                Session["MustUpdateUserId"] = user.Id;
+                                Session["MustUpdateUser_UserId"] = user.UserId;
+                                Session["MustUpdateUser_Email"] = user.Email;
+                                Response.Redirect("~/corporate/business/app/settings.aspx", false);
+                                return;
+                            }
+
+                            Response.Redirect("~/corporate/business/app/home.aspx", false);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    ShowError("An error occurred during login. Please contact admin.");
+                }
+                finally
+                {
+                    DbCL.DisconnectDb();
+                }
+            }
+        }
+
+        protected void btnLogin_Click_OLD(object sender, EventArgs e)
         {
             if (chkRememberMe.Checked)
             {
