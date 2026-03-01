@@ -166,6 +166,9 @@
         function confirmReset() {
             return confirm("Reset user's password and force change on next login?");
         }
+        function confirmSendCredentials() {
+            return confirm("Are you sure you want to generate a new temporary password and email it to this user?");
+        }
         function confirmToggle(active) {
             if (active) return confirm("Deactivate this user?");
             return confirm("Activate this user?");
@@ -264,8 +267,9 @@
                                     runat="server"
                                     CommandName="ResetPassword"
                                     CommandArgument='<%# Eval("Id") %>'
+                                    OnClientClick="return confirmSendCredentials();"
                                     CssClass="action-btn btn-reset">
-                    Reset
+                                    Email Access
                                 </asp:LinkButton>
 
                                 <asp:LinkButton ID="lnkLock"

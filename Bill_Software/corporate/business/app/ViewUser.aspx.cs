@@ -19,6 +19,13 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Single Active Session Check
+            if (Session["USERID"] == null || Session["SessionToken"] == null)
+            {
+                Response.Redirect("~/index.aspx", false);
+                return;
+            }
+
             if (!IsPostBack)
             {
                 LoadEmployeeDropdown();
@@ -297,15 +304,15 @@ namespace Bill_Software.corporate.business.app
 
         private void ResetPassword(int id)
         {
-            // Generate a temp password and store its hash+sault. Force MustChangePassword = 1
+            // Generate a temp password and store its hash+salt. Force MustChangePassword = 1
             string tempPassword = GenerateTempPassword(10);
             byte[] salt = GenerateSalt(16);
             byte[] hash = HashPassword(tempPassword, salt);
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(@"UPDATE dbo.tbl_login 
-                                         SET PasswordHash = @Hash, PasswordSalt = @Salt, MustChangePassword = 1
-                                         WHERE Id = @Id", cn))
+                                      SET PasswordHash = @Hash, PasswordSalt = @Salt, MustChangePassword = 1
+                                      WHERE Id = @Id", cn))
             {
                 cmd.Parameters.AddWithValue("@Hash", hash);
                 cmd.Parameters.AddWithValue("@Salt", salt);
@@ -314,34 +321,35 @@ namespace Bill_Software.corporate.business.app
                 cmd.ExecuteNonQuery();
             }
 
-            // Optionally: send temp password to user's email - implement SendTempPasswordEmail
             string userId, email;
-            GetUserRecordById(id, out userId, out email);
+            bool isFirstTime;
+            GetUserRecordById(id, out userId, out email, out isFirstTime);
 
             if (!string.IsNullOrEmpty(email))
             {
                 try
                 {
-                    SendTempPasswordEmail(email, userId, tempPassword);
-                    ShowOk("Password reset; temp password emailed.");
+                    SendTempPasswordEmail(email, userId, tempPassword, isFirstTime);
+                    ShowOk("Credentials generated and successfully emailed to user.");
                 }
-                catch
+                catch (Exception ex)
                 {
-                    ShowOk("Password reset, but failed to send email.");
+                    ShowError("Credentials reset, but failed to send email: " + ex.Message);
                 }
             }
             else
             {
-                ShowOk("Password reset. User has no email.");
+                ShowOk("Credentials reset. Note: User has no email address configured.");
             }
         }
 
-        private void GetUserRecordById(int id, out string userId, out string email)
+        private void GetUserRecordById(int id, out string userId, out string email, out bool isFirstTime)
         {
             userId = string.Empty;
             email = string.Empty;
+            isFirstTime = true; // Default to true
 
-            const string sql = "SELECT User_Id, Email FROM dbo.tbl_login WHERE Id = @Id";
+            const string sql = "SELECT User_Id, Email, LastLogin FROM dbo.tbl_login WHERE Id = @Id";
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(sql, cn))
@@ -354,14 +362,105 @@ namespace Bill_Software.corporate.business.app
                     {
                         int idxUser = rdr.GetOrdinal("User_Id");
                         int idxEmail = rdr.GetOrdinal("Email");
+                        int idxLastLogin = rdr.GetOrdinal("LastLogin");
 
                         userId = rdr.IsDBNull(idxUser) ? string.Empty : rdr.GetString(idxUser);
                         email = rdr.IsDBNull(idxEmail) ? string.Empty : rdr.GetString(idxEmail);
+                        isFirstTime = rdr.IsDBNull(idxLastLogin); // If LastLogin is null, it's their first time
                     }
                 }
             }
         }
 
+        private void SendTempPasswordEmail(string toEmail, string userId, string tempPassword, bool isFirstTime)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail))
+            {
+                throw new Exception("Cannot send email: user has no email.");
+            }
+
+            // Read SMTP settings from web.config
+            string fromApp = ConfigurationManager.AppSettings["SmtpFrom"] ?? "Flame-Ex ERP Mailer | Aminrup Technologies";
+            string smtpUserApp = ConfigurationManager.AppSettings["SmtpUser"] ?? "it.support@aminruptechnologies.co.in";
+            string smtpPassApp = ConfigurationManager.AppSettings["SmtpPass"] ?? "TPw800QrVMU2";
+            string smtpHostApp = ConfigurationManager.AppSettings["SmtpHost"] ?? "smtp.zoho.in";
+            int smtpPortApp = 587; // default port
+            int p;
+            if (int.TryParse(ConfigurationManager.AppSettings["SmtpPort"], out p))
+            {
+                smtpPortApp = p;
+            }
+
+            bool smtpEnableSsl = true; // default ssl
+            bool s;
+            if (bool.TryParse(ConfigurationManager.AppSettings["SmtpEnableSsl"], out s))
+            {
+                smtpEnableSsl = s;
+            }
+
+            string fromAddress = !string.IsNullOrWhiteSpace(fromApp) ? fromApp : smtpUserApp;
+
+            // Dynamic Subject and Content
+            string subject = isFirstTime ? "Welcome to Flame-Ex ERP - Your Login Credentials" : "Password Reset for your Flame-Ex ERP Account";
+            string contextMessage = isFirstTime
+                ? "An account has been created for you. Use the temporary credentials below to sign in for the first time."
+                : "An administrator has reset your password. Use the temporary credentials below to regain access.";
+
+            string plainTextBody = string.Format(
+                "Hello {0},\r\n\r\n" +
+                "{1}\r\n\r\n" +
+                "User Id: {2}\r\n" +
+                "Temporary Password: {3}\r\n\r\n" +
+                "For security, you will be required to change your password immediately upon login.\r\n\r\n" +
+                "--\r\nThis is an automated message. Do not reply.", userId, contextMessage, userId, tempPassword);
+
+            string htmlBody = string.Format(
+                "<html><body style='font-family: Arial, sans-serif; color: #333;'>" +
+                "<div style='border:1px solid #ddd; padding:20px; border-radius:5px; max-width:600px;'>" +
+                "<h2 style='color:#006699;'>Flame-Ex ERP Access</h2>" +
+                "<p>Hello <strong>{0}</strong>,</p>" +
+                "<p>{1}</p>" +
+                "<div style='background:#f9f9f9; padding:15px; border-left:4px solid #006699; margin:20px 0;'>" +
+                "<strong>User Id:</strong> {2}<br/><strong>Temporary Password:</strong> <span style='color:#d9534f; font-weight:bold;'>{3}</span>" +
+                "</div>" +
+                "<p>For security, you will be required to configure a new password immediately upon login.</p>" +
+                "<hr style='border:none; border-top:1px solid #eee; margin-top:20px;'/>" +
+                "<p style='font-size:11px;color:#999'>This is an automated message from Aminrup Technologies. Please do not reply.</p>" +
+                "</div></body></html>", userId, contextMessage, userId, tempPassword);
+
+            try
+            {
+                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+            }
+            catch { /* ignore if runtime doesn't support */ }
+
+            using (var message = new MailMessage())
+            {
+                message.From = new MailAddress(fromAddress);
+                message.To.Add(toEmail);
+                message.Subject = subject;
+                message.SubjectEncoding = Encoding.UTF8;
+
+                message.Body = plainTextBody;
+                message.BodyEncoding = Encoding.UTF8;
+                message.IsBodyHtml = false;
+
+                var plainView = AlternateView.CreateAlternateViewFromString(plainTextBody, Encoding.UTF8, MediaTypeNames.Text.Plain);
+                var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, Encoding.UTF8, MediaTypeNames.Text.Html);
+                message.AlternateViews.Add(plainView);
+                message.AlternateViews.Add(htmlView);
+
+                using (var smtp = new SmtpClient(smtpHostApp, smtpPortApp))
+                {
+                    smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+                    smtp.EnableSsl = smtpEnableSsl;
+                    smtp.Timeout = 20000;
+                    smtp.UseDefaultCredentials = false;
+                    smtp.Credentials = new NetworkCredential(smtpUserApp, smtpPassApp);
+                    smtp.Send(message);
+                }
+            }
+        }
 
 
         #region Helpers - UI

@@ -191,7 +191,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <table cellpadding="0" cellspacing="1" class="style1">
         <tr>
-            <td bgcolor="#19658A" colspan="6">&nbsp;<span style="color:white;" class="style2">Add User</span></td>
+            <td bgcolor="#19658A" colspan="6">&nbsp;<span style="color: white;" class="style2">Add User</span></td>
         </tr>
         <tr>
             <td width="10%">&nbsp;</td>
@@ -298,7 +298,6 @@
                                 <td class="col-name">Employee Name</td>
                                 <td class="col-email">Email</td>
                                 <td class="col-ph">Phno</td>
-                                <td class="col-pass">Password</td>
                                 <td class="col-action">Delete</td>
                             </tr>
                         </table>
@@ -311,14 +310,6 @@
                                 <td class="col-name"><%# Eval("Name") %></td>
                                 <td class="col-email"><%# Eval("Email") %></td>
                                 <td class="col-ph"><%# Eval("Phone_no") %></td>
-                                <td class="col-pass">
-                                    <span data-visible="false">••••••</span>
-                                    <button type="button"
-                                        onclick="return togglePassword(this, '<%# Eval("Password") %>');"
-                                        style="margin-left:5px; padding:2px 6px; font-size:11px;">
-                                        Show
-                                    </button>
-                                </td>
                                 <td class="col-action">
                                     <asp:ImageButton ID="ImageButton1" runat="server"
                                         CommandName="Inactivate" CommandArgument='<%# Eval("id") %>'
