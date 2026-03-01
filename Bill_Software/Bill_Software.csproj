@@ -259,6 +259,7 @@
     <Content Include="corporate\business\app\HydrantProduct.aspx" />
     <Content Include="corporate\business\app\hydrent_invoice.aspx" />
     <Content Include="corporate\business\app\ImportProducts.aspx" />
+    <Content Include="corporate\business\app\ManagePermissions.aspx" />
     <Content Include="corporate\business\app\ManageRoles.aspx" />
     <Content Include="corporate\business\app\Manual_Invoice.aspx" />
     <Content Include="corporate\business\app\PaymentMail.aspx" />
@@ -812,6 +813,13 @@
     </Compile>
     <Compile Include="corporate\business\app\ImportProducts.aspx.designer.cs">
       <DependentUpon>ImportProducts.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\ManagePermissions.aspx.cs">
+      <DependentUpon>ManagePermissions.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\ManagePermissions.aspx.designer.cs">
+      <DependentUpon>ManagePermissions.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\ManageRoles.aspx.cs">
       <DependentUpon>ManageRoles.aspx</DependentUpon>

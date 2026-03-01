@@ -4,20 +4,26 @@
     <style type="text/css">
         .style1 { width: 100%; }
         .style2 { color: #FFFFFF; font-weight: bold; }
-        .form-control { padding: 5px; width: 250px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn_style { background: #19658A; color: white; border: none; padding: 6px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .form-control { padding: 6px; width: 250px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn_style { background: #19658A; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .btn_style:hover { background: #134e6a; }
-        .grid-style { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .grid-style th { background-color: #f1f1f1; padding: 8px; border: 1px solid #ccc; text-align: left; }
-        .grid-style td { padding: 8px; border: 1px solid #ccc; }
         .section-box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; background: #fafafa; border-radius: 5px; }
+        
+        /* Hierarchy Styles */
+        .module-card { border: 1px solid #006699; margin-bottom: 15px; background: #fff; border-radius: 5px; overflow: hidden; }
+        .module-header { background: #006699; color: #fff; padding: 10px 15px; margin: 0; font-size: 16px; }
+        .sub-module-section { padding: 15px; border-bottom: 1px dashed #eee; }
+        .sub-module-section:last-child { border-bottom: none; }
+        .sub-module-title { color: #d9534f; margin-top: 0; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .feature-chklist label { margin-left: 5px; margin-right: 20px; font-weight: normal; color: #333; cursor: pointer; }
+        .feature-chklist td { padding: 5px 0; }
     </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <table cellpadding="0" cellspacing="1" class="style1">
         <tr>
-            <td bgcolor="#19658A" colspan="3">&nbsp;<span class="style2">Manage Roles & Permissions</span></td>
+            <td bgcolor="#19658A" colspan="3" style="padding:8px;">&nbsp;<span class="style2">Manage Roles & Permissions</span></td>
         </tr>
         <tr>
             <td colspan="3">
@@ -33,34 +39,42 @@
             <td style="padding: 20px;" colspan="3">
                 
                 <div class="section-box">
-                    <h3>1. Create a New Role</h3>
+                    <h3 style="margin-top:0; color:#333;">1. Create a New Role</h3>
                     Role Name: <asp:TextBox ID="txtRoleName" runat="server" CssClass="form-control" placeholder="e.g., Sales Manager"></asp:TextBox>
                     &nbsp; Description: <asp:TextBox ID="txtRoleDesc" runat="server" CssClass="form-control" placeholder="Brief description"></asp:TextBox>
                     &nbsp; <asp:Button ID="btnCreateRole" runat="server" Text="Create Role" CssClass="btn_style" OnClick="btnCreateRole_Click" />
                 </div>
 
-                <div class="section-box">
-                    <h3>2. Assign Permissions</h3>
-                    Select Role to Edit: 
-                    <asp:DropDownList ID="ddlRoles" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="ddlRoles_SelectedIndexChanged">
-                    </asp:DropDownList>
-                    
-                    <asp:GridView ID="gvPermissions" runat="server" AutoGenerateColumns="False" CssClass="grid-style" DataKeyNames="PermissionId">
-                        <Columns>
-                            <asp:TemplateField HeaderText="Grant Access">
-                                <ItemTemplate>
-                                    <asp:CheckBox ID="chkSelect" runat="server" />
-                                </ItemTemplate>
-                                <ItemStyle HorizontalAlign="Center" Width="100px" />
-                            </asp:TemplateField>
-                            <asp:BoundField DataField="PermissionKey" HeaderText="Module / Page Name" />
-                            <asp:BoundField DataField="Description" HeaderText="Description" />
-                        </Columns>
-                    </asp:GridView>
-                    <br />
-                    <asp:Button ID="btnSavePermissions" runat="server" Text="Save Permissions for Selected Role" CssClass="btn_style" OnClick="btnSavePermissions_Click" />
-                </div>
+                <div class="section-box" style="background: #f4f9ff;">
+                    <h3 style="margin-top:0; color:#333;">2. Assign Permissions to Role</h3>
+                    <div style="margin-bottom: 20px;">
+                        <strong>Select Role to Edit:</strong> 
+                        <asp:DropDownList ID="ddlRoles" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="ddlRoles_SelectedIndexChanged">
+                        </asp:DropDownList>
+                        &nbsp;
+                        <asp:Button ID="btnSavePermissions" runat="server" Text="Save Permissions" CssClass="btn_style" OnClick="btnSavePermissions_Click" style="background:#28a745;" />
+                    </div>
 
+                    <asp:Repeater ID="rptModules" runat="server" OnItemDataBound="rptModules_ItemDataBound">
+                        <ItemTemplate>
+                            <div class="module-card">
+                                <h4 class="module-header"><%# Container.DataItem %></h4>
+                                
+                                <asp:Repeater ID="rptSubModules" runat="server" OnItemDataBound="rptSubModules_ItemDataBound">
+                                    <ItemTemplate>
+                                        <div class="sub-module-section">
+                                            <h5 class="sub-module-title"><%# Container.DataItem %></h5>
+                                            
+                                            <asp:CheckBoxList ID="chkFeatures" runat="server" CssClass="feature-chklist" RepeatDirection="Horizontal" RepeatColumns="5" DataTextField="FeatureName" DataValueField="PermissionId">
+                                            </asp:CheckBoxList>
+                                        </div>
+                                    </ItemTemplate>
+                                </asp:Repeater>
+                            </div>
+                        </ItemTemplate>
+                    </asp:Repeater>
+                    
+                </div>
             </td>
         </tr>
     </table>

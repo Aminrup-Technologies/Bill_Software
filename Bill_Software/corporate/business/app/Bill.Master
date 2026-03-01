@@ -324,6 +324,8 @@
 									<ul class="nav first">
                                         <li id="AddUser" runat="server"><a href="AddUser.aspx">Create</a></li>
                                         <li id="ViewUser" runat="server"><a href="ViewUser.aspx">View</a></li>
+                                        <li id="ManageRoles" runat="server"><a href="ManageRoles.aspx">Manage Roles</a></li>
+                                        <li id="ManagePermissions" runat="server"><a href="ManagePermissions.aspx">Manage Permissions</a></li>
                                     </ul>
                             </li>
 
