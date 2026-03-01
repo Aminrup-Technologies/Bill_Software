@@ -250,6 +250,7 @@
     <Content Include="corporate\business\app\Direct_Proforma.aspx" />
     <Content Include="corporate\business\app\EditPurchase.aspx" />
     <Content Include="corporate\business\app\edit_purchaseorder.aspx" />
+    <Content Include="corporate\business\app\Edit_quatation_v2.aspx" />
     <Content Include="corporate\business\app\expense_entry.aspx" />
     <Content Include="corporate\business\app\Generate_PO_From_PR.aspx" />
     <Content Include="corporate\business\app\Generate_PO_Preview.aspx" />
@@ -743,6 +744,13 @@
     </Compile>
     <Compile Include="corporate\business\app\edit_purchaseorder.aspx.designer.cs">
       <DependentUpon>edit_purchaseorder.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\Edit_quatation_v2.aspx.cs">
+      <DependentUpon>Edit_quatation_v2.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\Edit_quatation_v2.aspx.designer.cs">
+      <DependentUpon>Edit_quatation_v2.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\expense_entry.aspx.cs">
       <DependentUpon>expense_entry.aspx</DependentUpon>
