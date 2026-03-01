@@ -231,7 +231,7 @@ namespace Bill_Software.corporate.business.print
                 else
                 {
                     // *** REVISION 6: Standard Quotation Query (tbl_Quotaion_details) ***
-                    cmdstring = "select Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate1,Total_sail_rate2 from tbl_Quotaion_details where Quotation_no=@Quotation_no order by Product_name";
+                    cmdstring = "select Product_id as HSN,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate1,Total_sail_rate2 from tbl_Quotaion_details where Quotation_no=@Quotation_no AND IsDeleted=0 AND IsLatest=1 order by Product_name";
                     pram = new SqlParameter[] { new SqlParameter("@Quotation_no", qno) };
                 }
 

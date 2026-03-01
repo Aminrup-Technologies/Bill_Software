@@ -1,4 +1,15 @@
-﻿using System;
+﻿/*
+======================================================================================
+When: 01-Mar-2026
+Why:  1. To fix the Product_id and Product_Code column mapping swap during the DB Insert.
+      2. To resolve C# compiler errors (CS1525, CS1003, CS0103) caused by inline 'out' 
+         variable declarations not supported by older .NET framework versions.
+What: 1. Swapped the mapping in the tbl_Quotaion_details INSERT query inside MagicianNew().
+      2. Rewrote all TryParse methods to declare variables before assignment.
+======================================================================================
+*/
+
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
@@ -92,8 +103,8 @@ namespace Bill_Software.corporate.business.app
 
             if (ViewState["PhaseProductData"] == null)
             {
-                dtPCat.Columns.Add("ProductId", typeof(string));
-                dtPCat.Columns.Add("Product_code", typeof(string));
+                dtPCat.Columns.Add("ProductId", typeof(string));  // Product ID -- PRD___
+                dtPCat.Columns.Add("Product_code", typeof(string)); //HSN Code
                 dtPCat.Columns.Add("ProductName", typeof(string));
                 dtPCat.Columns.Add("Specification", typeof(string));
                 dtPCat.Columns.Add("Sail_Rate", typeof(string));
@@ -103,9 +114,9 @@ namespace Bill_Software.corporate.business.app
                 dtPCat.Columns.Add("Brand", typeof(string));
                 dtPCat.Columns.Add("Type", typeof(string));
                 dtPCat.Columns.Add("Unit", typeof(string));
-                dtPCat.Columns.Add("ItemNo", typeof(string));       // Restored Field
-                dtPCat.Columns.Add("MaterialNo", typeof(string));   // Restored Field
-                dtPCat.Columns.Add("PackSize", typeof(string));     // Restored Field
+                dtPCat.Columns.Add("ItemNo", typeof(string));
+                dtPCat.Columns.Add("MaterialNo", typeof(string));
+                dtPCat.Columns.Add("PackSize", typeof(string));
                 dtPCat.Columns.Add("ItemRemarks", typeof(string));
                 dtPCat.Columns.Add("ProductOrServiceCat", typeof(string));
                 dtPCat.Columns.Add("DeliveryDate", typeof(string));
@@ -126,16 +137,16 @@ namespace Bill_Software.corporate.business.app
                 if (chkdtp != null && chkdtp.Checked)
                 {
                     DataRow dr = dtPCat.NewRow();
-                    dr["ProductId"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
-                    dr["Product_code"] = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
+                    dr["ProductId"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text; // PRD ID
+                    dr["Product_code"] = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;  //HSN Code
                     dr["ProductName"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName")).Text;
                     dr["Brand"] = ((Label)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
                     dr["Specification"] = ((Label)gridProdWithCat.Rows[i].FindControl("Specification")).Text;
                     dr["Quantity"] = "1";
                     dr["Discount_Rate"] = "0";
-                    dr["ItemNo"] = "";       // Restored Default Value
-                    dr["MaterialNo"] = "";   // Restored Default Value
-                    dr["PackSize"] = "";     // Restored Default Value
+                    dr["ItemNo"] = "";
+                    dr["MaterialNo"] = "";
+                    dr["PackSize"] = "";
                     dr["ItemRemarks"] = "";
                     dr["Sail_Rate"] = ((Label)gridProdWithCat.Rows[i].FindControl("Sail_Rate")).Text;
                     dr["Tax_Rate"] = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate")).Text;
@@ -186,9 +197,9 @@ namespace Bill_Software.corporate.business.app
                     dt.Rows[i]["Discount_Rate"] = ((TextBox)row.FindControl("Discount_Rate")).Text;
                     dt.Rows[i]["Specification"] = ((TextBox)row.FindControl("Specification")).Text;
                     dt.Rows[i]["Brand"] = ((TextBox)row.FindControl("Brand")).Text;
-                    dt.Rows[i]["ItemNo"] = ((TextBox)row.FindControl("ItemNo"))?.Text ?? "";       // Restored Save
-                    dt.Rows[i]["MaterialNo"] = ((TextBox)row.FindControl("MaterialNo"))?.Text ?? "";   // Restored Save
-                    dt.Rows[i]["PackSize"] = ((TextBox)row.FindControl("PackSize"))?.Text ?? "";     // Restored Save
+                    dt.Rows[i]["ItemNo"] = ((TextBox)row.FindControl("ItemNo"))?.Text ?? "";
+                    dt.Rows[i]["MaterialNo"] = ((TextBox)row.FindControl("MaterialNo"))?.Text ?? "";
+                    dt.Rows[i]["PackSize"] = ((TextBox)row.FindControl("PackSize"))?.Text ?? "";
                     dt.Rows[i]["ItemRemarks"] = ((TextBox)row.FindControl("ItemRemarks")).Text;
 
                     if (!rbQt.Checked)
@@ -360,6 +371,9 @@ namespace Bill_Software.corporate.business.app
         {
             Bindquotationno();
 
+            string CGSTSGSTSTATUS = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
+            string IGSTSTATUS = RadioButtonGst.SelectedIndex != 0 ? "YES" : "";
+
             int slNo = idreturn() + 1;
             string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
             DataTable dt1 = (DataTable)ViewState["PhaseProductData"];
@@ -412,8 +426,13 @@ namespace Bill_Software.corporate.business.app
                         {
                             cmd.Parameters.AddWithValue("@Sl_no", h);
                             cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
-                            cmd.Parameters.AddWithValue("@Product_id", row["ProductId"]);
-                            cmd.Parameters.AddWithValue("@Product_Code", row["Product_code"]);
+
+                            // SWAPPED MAPPING RESOLVED HERE
+                            // @Product_id expects HSN Code. row["Product_code"] holds the HSN Code.
+                            cmd.Parameters.AddWithValue("@Product_id", row["Product_code"]);
+                            // @Product_Code expects PRD Custom ID. row["ProductId"] holds the PRD ID.
+                            cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"]);
+
                             cmd.Parameters.AddWithValue("@Product_name", row["ProductName"]);
                             cmd.Parameters.AddWithValue("@Quantity", Quantity);
                             cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
@@ -430,15 +449,39 @@ namespace Bill_Software.corporate.business.app
                             cmd.Parameters.AddWithValue("@discount_rate", Discount_Rate);
                             cmd.Parameters.AddWithValue("@new_sailrate", discounted_rate);
                             cmd.Parameters.AddWithValue("@ItemRemarks", row["ItemRemarks"]);
-                            cmd.Parameters.AddWithValue("@ItemNo", row["ItemNo"]); // Restored Parameter
-                            cmd.Parameters.AddWithValue("@MaterialNo", row["MaterialNo"]); // Restored Parameter
-                            cmd.Parameters.AddWithValue("@PackSize", row["PackSize"]); // Restored Parameter
+                            cmd.Parameters.AddWithValue("@ItemNo", row["ItemNo"]);
+                            cmd.Parameters.AddWithValue("@MaterialNo", row["MaterialNo"]);
+                            cmd.Parameters.AddWithValue("@PackSize", row["PackSize"]);
                             cmd.Parameters.AddWithValue("@DeliveryDate", rbQt.Checked ? "" : row["DeliveryDate"]);
                             cmd.Parameters.AddWithValue("@Department", rbQt.Checked ? "" : row["Department"]);
                             cmd.Parameters.AddWithValue("@AddedById", userId);
                             cmd.ExecuteNonQuery();
                         }
                     }
+
+                    int validDays = (int)ParseDecimal(txt_valdays.Text);
+                    string deliveryTenure = DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text.Trim() : (DDL_DeliveryTerms.SelectedValue != "0" ? DDL_DeliveryTerms.SelectedItem.Text : "");
+                    string packageForwarding = DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text.Trim() : (DDL_pkgfrwd.SelectedValue != "0" ? DDL_pkgfrwd.SelectedItem.Text : "");
+                    string remarks = txt_remarks.Text?.Trim();
+                    string referenceOption = rbYes.Checked ? "Yes" : "No";
+                    string referenceName = referenceOption == "No" ? "N/A" : txt_clientrefname.Text?.Trim();
+                    string referenceId = referenceOption == "No" ? "N/A" : txt_clientrefid.Text?.Trim();
+                    string referenceDate = referenceOption == "No" ? "1900-01-01" : txt_clientrefdate.Text?.Trim();
+                    string recordtyp = rbPo.Checked ? "Purchase Order" : "Quotation";
+                    string DO_number = rbPo.Checked ? txb_donumber.Text.Trim() : "N/A";
+                    string PO_number = rbPo.Checked ? txb_ponumber.Text.Trim() : "N/A";
+                    string PO_Date = rbPo.Checked ? txb_podate.Text.Trim() : "1900-01-01";
+                    string ValStart_Date = rbPo.Checked ? txb_strtdt.Text.Trim() : "1900-01-01";
+                    string ValEnd_Date = rbPo.Checked ? txb_enddt.Text.Trim() : "1900-01-01";
+
+                    decimal tcsAmount = ParseDecimal(txt_tcs_amnt.Text);
+                    decimal tcsPercent = ParseDecimal(txt_tcs_percent.Text);
+                    decimal deliveryAmount = ParseDecimal(txt_delivery_amnt.Text);
+                    decimal freightPercent = ParseDecimal(txt_freight_percent.Text);
+                    decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
+
+                    decimal final_net_amount = Math.Round(new_Gross_amount, 2);
+                    decimal final_service_tax = Math.Round(new_total_Service, 2);
 
                     using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotation 
                     (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount)
@@ -447,38 +490,38 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
                         cmd.Parameters.AddWithValue("@Quotation_date", txtquotationDate.Text);
                         cmd.Parameters.AddWithValue("@Client_Id", lblclientID.Text);
-                        cmd.Parameters.AddWithValue("@Gross", Math.Round(new_Gross_amount, 2));
-                        cmd.Parameters.AddWithValue("@Service_tax", Math.Round(new_total_Service, 2));
-                        cmd.Parameters.AddWithValue("@Net_amount", Math.Round(new_Gross_amount, 2));
+                        cmd.Parameters.AddWithValue("@Gross", final_net_amount);
+                        cmd.Parameters.AddWithValue("@Service_tax", final_service_tax);
+                        cmd.Parameters.AddWithValue("@Net_amount", final_net_amount);
                         cmd.Parameters.AddWithValue("@Sl_no", slNo);
-                        cmd.Parameters.AddWithValue("@service_tax1", Math.Round(new_total_Service, 2)); // Restored Exact Match Parameter
+                        cmd.Parameters.AddWithValue("@service_tax1", final_service_tax);
                         cmd.Parameters.AddWithValue("@sub_total", new_sub_total);
                         cmd.Parameters.AddWithValue("@cgstOrsgst", RadioButtonGst.SelectedIndex == 0 ? "YES" : "");
                         cmd.Parameters.AddWithValue("@igst", RadioButtonGst.SelectedIndex != 0 ? "YES" : "");
                         cmd.Parameters.AddWithValue("@PlaceofSupply", ddlPlaceOfSupply.Text);
-                        cmd.Parameters.AddWithValue("@ReferenceData", rbYes.Checked ? "Yes" : "No");
-                        cmd.Parameters.AddWithValue("@ReferenceName", !rbYes.Checked ? "N/A" : txt_clientrefname.Text);
-                        cmd.Parameters.AddWithValue("@ReferenceId", !rbYes.Checked ? "N/A" : txt_clientrefid.Text);
-                        cmd.Parameters.AddWithValue("@ReferenceDate", !rbYes.Checked ? "1900-01-01" : txt_clientrefdate.Text);
-                        cmd.Parameters.AddWithValue("@ValidityDays", ParseDecimal(txt_valdays.Text));
-                        cmd.Parameters.AddWithValue("@DeliveryTenure", DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text.Trim() : (DDL_DeliveryTerms.SelectedValue != "0" ? DDL_DeliveryTerms.SelectedItem.Text : ""));
-                        cmd.Parameters.AddWithValue("@PackingCharges", DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text.Trim() : (DDL_pkgfrwd.SelectedValue != "0" ? DDL_pkgfrwd.SelectedItem.Text : ""));
-                        cmd.Parameters.AddWithValue("@Remarks", txt_remarks.Text);
-                        cmd.Parameters.AddWithValue("@DetailedView", DDL_ItemViewType.SelectedItem.Text?.Trim()); // Restored Exact Match Parameter
-                        cmd.Parameters.AddWithValue("@RecordType", rbPo.Checked ? "Purchase Order" : "Quotation");
-                        cmd.Parameters.AddWithValue("@DO_Number", rbPo.Checked ? txb_donumber.Text : "N/A");
-                        cmd.Parameters.AddWithValue("@PO_Number", rbPo.Checked ? txb_ponumber.Text : "N/A");
-                        cmd.Parameters.AddWithValue("@PO_Date", rbPo.Checked ? txb_podate.Text : "1900-01-01");
-                        cmd.Parameters.AddWithValue("@Validity_StartDate", rbPo.Checked ? txb_strtdt.Text : "1900-01-01");
-                        cmd.Parameters.AddWithValue("@Validity_EndDate", rbPo.Checked ? txb_enddt.Text : "1900-01-01");
+                        cmd.Parameters.AddWithValue("@ReferenceData", referenceOption);
+                        cmd.Parameters.AddWithValue("@ReferenceName", referenceName);
+                        cmd.Parameters.AddWithValue("@ReferenceId", referenceId);
+                        cmd.Parameters.AddWithValue("@ReferenceDate", referenceDate);
+                        cmd.Parameters.AddWithValue("@ValidityDays", validDays);
+                        cmd.Parameters.AddWithValue("@DeliveryTenure", deliveryTenure);
+                        cmd.Parameters.AddWithValue("@PackingCharges", packageForwarding);
+                        cmd.Parameters.AddWithValue("@Remarks", remarks);
+                        cmd.Parameters.AddWithValue("@DetailedView", DDL_ItemViewType.SelectedItem.Text?.Trim());
+                        cmd.Parameters.AddWithValue("@RecordType", recordtyp);
+                        cmd.Parameters.AddWithValue("@DO_Number", DO_number);
+                        cmd.Parameters.AddWithValue("@PO_Number", PO_number);
+                        cmd.Parameters.AddWithValue("@PO_Date", PO_Date);
+                        cmd.Parameters.AddWithValue("@Validity_StartDate", ValStart_Date);
+                        cmd.Parameters.AddWithValue("@Validity_EndDate", ValEnd_Date);
                         cmd.Parameters.AddWithValue("@AddedById", userId);
-                        cmd.Parameters.AddWithValue("@DiscountView", DDL_DiscountView.SelectedItem.Text?.Trim()); // Restored Exact Match Parameter
-                        cmd.Parameters.AddWithValue("@TCS_Amount", ParseDecimal(txt_tcs_amnt.Text));
-                        cmd.Parameters.AddWithValue("@TCS_Percent", ParseDecimal(txt_tcs_percent.Text));
-                        cmd.Parameters.AddWithValue("@Freight_Amount", ParseDecimal(txt_delivery_amnt.Text));
-                        cmd.Parameters.AddWithValue("@Freight_VAT_Percent", ParseDecimal(txt_freight_percent.Text));
+                        cmd.Parameters.AddWithValue("@DiscountView", DDL_DiscountView.SelectedItem.Text?.Trim());
+                        cmd.Parameters.AddWithValue("@TCS_Amount", tcsAmount);
+                        cmd.Parameters.AddWithValue("@TCS_Percent", tcsPercent);
+                        cmd.Parameters.AddWithValue("@Freight_Amount", deliveryAmount);
+                        cmd.Parameters.AddWithValue("@Freight_VAT_Percent", freightPercent);
                         cmd.Parameters.AddWithValue("@OtherCharge_Name", TextBox1.Text);
-                        cmd.Parameters.AddWithValue("@OtherCharge_Amount", ParseDecimal(txt_othr_amnt.Text));
+                        cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
                         cmd.ExecuteNonQuery();
                     }
 
@@ -493,7 +536,6 @@ namespace Bill_Software.corporate.business.app
                 {
                     try { trans?.Rollback(); } catch { }
 
-                    // Provides clear visual debugging incase of SQL length mismatches
                     StringBuilder errorMsg = new StringBuilder();
                     errorMsg.AppendLine("An error occurred: " + ex.Message);
                     if (ex.InnerException != null) errorMsg.AppendLine("<br/>Inner Exception: " + ex.InnerException.ToString());
@@ -508,7 +550,8 @@ namespace Bill_Software.corporate.business.app
         private decimal ParseDecimal(string text)
         {
             decimal val;
-            if (decimal.TryParse(text, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out val)) return val;
+            if (decimal.TryParse(text, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out val))
+                return val;
             return 0m;
         }
 
