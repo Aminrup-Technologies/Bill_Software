@@ -10,7 +10,7 @@
 namespace Bill_Software.corporate.business.app {
     
     
-    public partial class WebForm81 {
+    public partial class ManageRoles {
         
         /// <summary>
         /// PanelOK control.
@@ -49,48 +49,57 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Label lblErrorMsg;
         
         /// <summary>
-        /// lblEmpId control.
+        /// txtRoleName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblEmpId;
+        protected global::System.Web.UI.WebControls.TextBox txtRoleName;
         
         /// <summary>
-        /// lblEmpName control.
+        /// txtRoleDesc control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblEmpName;
+        protected global::System.Web.UI.WebControls.TextBox txtRoleDesc;
         
         /// <summary>
-        /// chkRoles control.
+        /// btnCreateRole control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.CheckBoxList chkRoles;
+        protected global::System.Web.UI.WebControls.Button btnCreateRole;
         
         /// <summary>
-        /// btnSave control.
+        /// ddlRoles control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnSave;
+        protected global::System.Web.UI.WebControls.DropDownList ddlRoles;
         
         /// <summary>
-        /// btnReset control.
+        /// gvPermissions control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnReset;
+        protected global::System.Web.UI.WebControls.GridView gvPermissions;
+        
+        /// <summary>
+        /// btnSavePermissions control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnSavePermissions;
     }
 }
