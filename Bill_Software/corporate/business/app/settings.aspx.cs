@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography;
-using System.Text;
 using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
@@ -14,7 +13,7 @@ namespace Bill_Software.corporate.business.app
     {
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
-        // Use properties to safely track state across postbacks
+        // Use ViewState to safely track state across postbacks
         private int CurrentUserId
         {
             get { return ViewState["CurrentUserId"] != null ? (int)ViewState["CurrentUserId"] : 0; }
@@ -29,6 +28,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Security check to ensure user is logged in
             if (Session["USERID"] == null || Session["SessionToken"] == null)
             {
                 Response.Redirect("~/index.aspx", false);
@@ -45,7 +45,8 @@ namespace Bill_Software.corporate.business.app
         {
             using (var cn = new SqlConnection(ConnString))
             {
-                string sql = "SELECT Id, Name, Phone_no, Email, EmailVerified, MustChangePassword FROM tbl_login WHERE User_Id = @UserId";
+                // ALIGNED: Added IsActive = 1 to match login logic
+                string sql = "SELECT Id, Name, Phone_no, Email, EmailVerified, MustChangePassword FROM tbl_login WHERE User_Id = @UserId AND IsActive = 1";
                 using (var cmd = new SqlCommand(sql, cn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
@@ -55,12 +56,12 @@ namespace Bill_Software.corporate.business.app
                         if (rdr.Read())
                         {
                             CurrentUserId = Convert.ToInt32(rdr["Id"]);
-                            CurrentUserEmail = rdr["Email"].ToString();
+                            CurrentUserEmail = rdr["Email"]?.ToString() ?? string.Empty;
 
                             bool emailVerified = rdr["EmailVerified"] != DBNull.Value && Convert.ToBoolean(rdr["EmailVerified"]);
                             bool mustChangePwd = rdr["MustChangePassword"] != DBNull.Value && Convert.ToBoolean(rdr["MustChangePassword"]);
 
-                            // Route the user to the correct panel
+                            // Route the user to the correct panel based on their status
                             if (!emailVerified)
                             {
                                 ShowEmailVerificationPanel();
@@ -72,7 +73,7 @@ namespace Bill_Software.corporate.business.app
                             else
                             {
                                 // All good! Show standard settings
-                                ShowStandardSettings(rdr["Name"].ToString(), rdr["Phone_no"].ToString(), CurrentUserEmail);
+                                ShowStandardSettings(rdr["Name"]?.ToString(), rdr["Phone_no"]?.ToString(), CurrentUserEmail);
                             }
                         }
                     }
@@ -120,22 +121,10 @@ namespace Bill_Software.corporate.business.app
             // Generate 6-digit OTP
             string otp = new Random().Next(100000, 999999).ToString();
 
-            byte[] otpHash;
-            byte[] otpSalt;
-            CreateHash(otp, out otpHash, out otpSalt);
-
-            DateTime expiry = DateTime.UtcNow.AddMinutes(15);
-
-            using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("UPDATE tbl_login SET OtpCodeHash = @Hash, OtpSalt = @Salt, OtpExpiry = @Expiry, OtpAttemptCount = 0 WHERE Id = @Id", cn))
-            {
-                cmd.Parameters.AddWithValue("@Hash", otpHash);
-                cmd.Parameters.AddWithValue("@Salt", otpSalt);
-                cmd.Parameters.AddWithValue("@Expiry", expiry);
-                cmd.Parameters.AddWithValue("@Id", CurrentUserId);
-                cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            // ALIGNED: Use Session to avoid missing column SQL crashes, but keep all features!
+            Session["SettingsOTP"] = otp;
+            Session["SettingsOTPExpiry"] = DateTime.UtcNow.AddMinutes(15);
+            Session["SettingsOTPAttempts"] = 0;
 
             if (SendOtpEmail(CurrentUserEmail, otp))
             {
@@ -145,7 +134,7 @@ namespace Bill_Software.corporate.business.app
             }
             else
             {
-                ShowError("Failed to send OTP email. Please try again.");
+                ShowError("Failed to send OTP email. Please check configuration and try again.");
             }
         }
 
@@ -158,72 +147,59 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            using (var cn = new SqlConnection(ConnString))
+            // Read secure Session values
+            string generatedOtp = Session["SettingsOTP"] as string;
+            DateTime? expiryDate = Session["SettingsOTPExpiry"] as DateTime?;
+            int attempts = Session["SettingsOTPAttempts"] != null ? (int)Session["SettingsOTPAttempts"] : 0;
+
+            if (string.IsNullOrEmpty(generatedOtp) || expiryDate == null)
             {
-                cn.Open();
-                string sql = "SELECT OtpCodeHash, OtpSalt, OtpExpiry, OtpAttemptCount FROM tbl_login WHERE Id = @Id";
+                ShowError("No OTP was requested or session expired. Please click 'Send OTP'.");
+                return;
+            }
 
-                byte[] dbHash = null;
-                byte[] dbSalt = null;
-                DateTime dbExpiry = DateTime.MinValue;
-                int attempts = 0;
+            if (DateTime.UtcNow > expiryDate.Value)
+            {
+                ShowError("OTP has expired. Please request a new one.");
+                Session.Remove("SettingsOTP");
+                return;
+            }
 
-                using (var cmd = new SqlCommand(sql, cn))
+            if (attempts >= 5)
+            {
+                ShowError("Too many invalid attempts. Please request a new OTP.");
+                Session.Remove("SettingsOTP");
+                PanelSendOtp.Visible = true;
+                PanelEnterOtp.Visible = false;
+                return;
+            }
+
+            if (enteredOtp == generatedOtp)
+            {
+                // Success! Mark email as verified
+                using (var cn = new SqlConnection(ConnString))
                 {
-                    cmd.Parameters.AddWithValue("@Id", CurrentUserId);
-                    using (var rdr = cmd.ExecuteReader())
-                    {
-                        if (rdr.Read())
-                        {
-                            if (rdr["OtpCodeHash"] != DBNull.Value) dbHash = (byte[])rdr["OtpCodeHash"];
-                            if (rdr["OtpSalt"] != DBNull.Value) dbSalt = (byte[])rdr["OtpSalt"];
-                            if (rdr["OtpExpiry"] != DBNull.Value) dbExpiry = Convert.ToDateTime(rdr["OtpExpiry"]);
-                            if (rdr["OtpAttemptCount"] != DBNull.Value) attempts = Convert.ToInt32(rdr["OtpAttemptCount"]);
-                        }
-                    }
-                }
-
-                if (dbHash == null || dbSalt == null)
-                {
-                    ShowError("No OTP was requested. Please click 'Send OTP'.");
-                    return;
-                }
-
-                if (DateTime.UtcNow > dbExpiry)
-                {
-                    ShowError("OTP has expired. Please request a new one.");
-                    return;
-                }
-
-                if (attempts >= 5)
-                {
-                    ShowError("Too many invalid attempts. Please request a new OTP.");
-                    return;
-                }
-
-                if (VerifyHash(enteredOtp, dbHash, dbSalt))
-                {
-                    // Success! Mark email as verified and clear OTP data
-                    using (var cmdUpd = new SqlCommand("UPDATE tbl_login SET EmailVerified = 1, OtpCodeHash = NULL, OtpSalt = NULL WHERE Id = @Id", cn))
+                    using (var cmdUpd = new SqlCommand("UPDATE tbl_login SET EmailVerified = 1 WHERE Id = @Id", cn))
                     {
                         cmdUpd.Parameters.AddWithValue("@Id", CurrentUserId);
+                        cn.Open();
                         cmdUpd.ExecuteNonQuery();
                     }
-                    ShowSuccess("Email successfully verified!");
+                }
 
-                    // Proceed to next step
-                    DeterminePageState();
-                }
-                else
-                {
-                    // Increment attempt count
-                    using (var cmdFail = new SqlCommand("UPDATE tbl_login SET OtpAttemptCount = OtpAttemptCount + 1 WHERE Id = @Id", cn))
-                    {
-                        cmdFail.Parameters.AddWithValue("@Id", CurrentUserId);
-                        cmdFail.ExecuteNonQuery();
-                    }
-                    ShowError("Invalid OTP. Please try again.");
-                }
+                ShowSuccess("Email successfully verified!");
+                Session.Remove("SettingsOTP");
+                Session.Remove("SettingsOTPExpiry");
+                Session.Remove("SettingsOTPAttempts");
+
+                // Proceed to next step
+                DeterminePageState();
+            }
+            else
+            {
+                // Increment attempt count
+                Session["SettingsOTPAttempts"] = attempts + 1;
+                ShowError($"Invalid OTP. You have {4 - attempts} attempts remaining.");
             }
         }
         #endregion
@@ -247,21 +223,26 @@ namespace Bill_Software.corporate.business.app
 
             byte[] pwdHash;
             byte[] pwdSalt;
+
+            // This perfectly aligns with our VerifyPasswordPBKDF2 logic in index.aspx!
             CreateHash(newPass, out pwdHash, out pwdSalt);
 
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("UPDATE tbl_login SET PasswordHash = @Hash, PasswordSalt = @Salt, MustChangePassword = 0, Password = NULL WHERE Id = @Id", cn))
             {
-                cmd.Parameters.AddWithValue("@Hash", pwdHash);
-                cmd.Parameters.AddWithValue("@Salt", pwdSalt);
-                cmd.Parameters.AddWithValue("@Id", CurrentUserId);
+                // Removes the plain text password from the DB and stores only the secure hash!
+                using (var cmd = new SqlCommand("UPDATE tbl_login SET PasswordHash = @Hash, PasswordSalt = @Salt, MustChangePassword = 0, Password = NULL WHERE Id = @Id", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Hash", pwdHash);
+                    cmd.Parameters.AddWithValue("@Salt", pwdSalt);
+                    cmd.Parameters.AddWithValue("@Id", CurrentUserId);
 
-                cn.Open();
-                cmd.ExecuteNonQuery();
+                    cn.Open();
+                    cmd.ExecuteNonQuery();
+                }
             }
 
             ShowSuccess("Password saved successfully! Account setup is complete.");
-            DeterminePageState(); // Will route them to the standard settings view
+            DeterminePageState(); // Routes them to the standard settings view
         }
         #endregion
 
@@ -291,38 +272,21 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private bool VerifyHash(string plainText, byte[] storedHash, byte[] storedSalt)
-        {
-            using (var derive = new Rfc2898DeriveBytes(plainText, storedSalt, 100000))
-            {
-                byte[] computed = derive.GetBytes(32);
-                if (computed.Length != storedHash.Length) return false;
-                int diff = 0;
-                for (int i = 0; i < computed.Length; i++) diff |= computed[i] ^ storedHash[i];
-                return diff == 0;
-            }
-        }
-
         private bool SendOtpEmail(string toEmail, string otp)
         {
             try
             {
-                string fromApp = ConfigurationManager.AppSettings["SmtpFrom"] ?? "Flame-Ex ERP";
-                string smtpUserApp = ConfigurationManager.AppSettings["SmtpUser"];
-                string smtpPassApp = ConfigurationManager.AppSettings["SmtpPass"];
-                string smtpHostApp = ConfigurationManager.AppSettings["SmtpHost"] ?? "smtp.zoho.in";
-
-                int smtpPortApp = 587;
-                int p;
-                if (int.TryParse(ConfigurationManager.AppSettings["SmtpPort"], out p)) smtpPortApp = p;
-
-                bool smtpEnableSsl = true;
-                bool s;
-                if (bool.TryParse(ConfigurationManager.AppSettings["SmtpEnableSsl"], out s)) smtpEnableSsl = s;
+                // ALIGNED: Read SMTP settings properly from your web.config
+                string fromAddress = ConfigurationManager.AppSettings["SmtpFrom"];
+                string smtpUser = ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = ConfigurationManager.AppSettings["SmtpPass"];
+                string smtpHost = ConfigurationManager.AppSettings["SmtpHost"];
+                int smtpPort = Convert.ToInt32(ConfigurationManager.AppSettings["SmtpPort"]);
+                bool enableSsl = Convert.ToBoolean(ConfigurationManager.AppSettings["SmtpEnableSsl"]);
 
                 using (var message = new MailMessage())
                 {
-                    message.From = new MailAddress(smtpUserApp, fromApp);
+                    message.From = new MailAddress(fromAddress, "FLAME-EX ERP");
                     message.To.Add(toEmail);
                     message.Subject = "Your Flame-Ex ERP Verification Code";
                     message.IsBodyHtml = true;
@@ -332,11 +296,12 @@ namespace Bill_Software.corporate.business.app
                                    $"<h1 style='letter-spacing:5px; color:#d9534f; background:#f9f9f9; padding:10px; text-align:center;'>{otp}</h1>" +
                                    $"<p>This code will expire in 15 minutes.</p></div>";
 
-                    using (var smtp = new SmtpClient(smtpHostApp, smtpPortApp))
+                    using (var smtp = new SmtpClient(smtpHost, smtpPort))
                     {
-                        smtp.EnableSsl = smtpEnableSsl;
-                        smtp.Credentials = new NetworkCredential(smtpUserApp, smtpPassApp);
+                        smtp.EnableSsl = enableSsl;
+                        smtp.Credentials = new NetworkCredential(smtpUser, smtpPass);
 
+                        // Force modern TLS 1.2 if needed by Zoho
                         try { System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12; } catch { }
 
                         smtp.Send(message);
@@ -344,9 +309,8 @@ namespace Bill_Software.corporate.business.app
                 }
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // In production, log the exact exception message
                 return false;
             }
         }

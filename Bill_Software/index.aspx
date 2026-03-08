@@ -216,30 +216,71 @@
                         &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
                     </asp:Panel>
 
-                    <div class="form-group">
-                        <label>Login As</label>
-                        <asp:DropDownList ID="cmbLoginAs" runat="server" CssClass="form-control">
-                            <asp:ListItem>ADMIN</asp:ListItem>
-                            <asp:ListItem Selected="True">Employee</asp:ListItem>
-                        </asp:DropDownList>
-                    </div>
+                    <asp:Panel ID="pnlLogin" runat="server">
+                        <div class="form-group">
+                            <label>Login As</label>
+                            <asp:DropDownList ID="cmbLoginAs" runat="server" CssClass="form-control">
+                                <asp:ListItem>ADMIN</asp:ListItem>
+                                <asp:ListItem Selected="True">Employee</asp:ListItem>
+                            </asp:DropDownList>
+                        </div>
 
-                    <div class="form-group">
-                        <label>User ID</label>
-                        <asp:TextBox ID="txtUserName" runat="server" CssClass="form-control"></asp:TextBox>
-                    </div>
+                        <div class="form-group">
+                            <label>User ID</label>
+                            <asp:TextBox ID="txtUserName" runat="server" CssClass="form-control"></asp:TextBox>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Password</label>
-                        <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
-                    </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                        </div>
 
-                    <div class="remember-me">
-                        <asp:CheckBox ID="chkRememberMe" runat="server" />
-                        <label style="margin: 0; cursor: pointer;">Remember Me</label>
-                    </div>
+                        <div class="remember-me">
+                            <asp:CheckBox ID="chkRememberMe" runat="server" />
+                            <label style="margin: 0; cursor: pointer;">Remember Me</label>
+                        </div>
 
-                    <asp:Button ID="btnLogin" runat="server" CssClass="btn-submit" Text="Login" OnClick="btnLogin_Click" />
+                        <asp:Button ID="btnLogin" runat="server" CssClass="btn-submit" Text="Login" OnClick="btnLogin_Click" />
+
+                        <div style="text-align: center; margin-top: 15px;">
+                            <asp:LinkButton ID="lnkForgotPassword" runat="server" OnClick="lnkForgotPassword_Click" Style="color: #153e75; text-decoration: none; font-size: 14px;">Forgot Password?</asp:LinkButton>
+                        </div>
+                    </asp:Panel>
+
+                    <asp:Panel ID="pnlForgotPassword" runat="server" Visible="false">
+                        <div class="form-group">
+                            <label>Enter your User ID to reset password</label>
+                            <asp:TextBox ID="txtForgotUserId" runat="server" CssClass="form-control" placeholder="User ID"></asp:TextBox>
+                        </div>
+    
+                        <div style="font-size: 13px; color: #666; margin-bottom: 15px; line-height: 1.4;">
+                            A temporary password will be sent to your registered email address. 
+                            <br /><br />
+                            <span style="color: #d93025; font-weight: bold;">Note:</span> If you no longer have access to your registered email, please contact your System Administrator to update your account details.
+                        </div>
+
+                        <asp:Button ID="btnSendReset" runat="server" CssClass="btn-submit" Text="Send Reset Link" OnClick="btnSendReset_Click" />
+    
+                        <div style="text-align: center; margin-top: 15px;">
+                            <asp:LinkButton ID="lnkBackToLogin" runat="server" OnClick="lnkBackToLogin_Click" Style="color: #153e75; text-decoration: none; font-size: 14px;">Back to Login</asp:LinkButton>
+                        </div>
+                    </asp:Panel>
+
+                    <asp:Panel ID="pnlEmailVerification" runat="server" Visible="false">
+                        <div class="form-group">
+                            <label>Verify or Update Your Email</label>
+                            <asp:TextBox ID="txtVerifyEmail" runat="server" CssClass="form-control"></asp:TextBox>
+                        </div>
+                        <asp:Button ID="btnSendOTP" runat="server" CssClass="btn-submit" Text="Send OTP" OnClick="btnSendOTP_Click" />
+
+                        <asp:Panel ID="pnlEnterOTP" runat="server" Visible="false" Style="margin-top: 15px;">
+                            <div class="form-group">
+                                <label>Enter OTP</label>
+                                <asp:TextBox ID="txtOTP" runat="server" CssClass="form-control"></asp:TextBox>
+                            </div>
+                            <asp:Button ID="btnVerifyOTP" runat="server" CssClass="btn-submit" Text="Verify OTP" OnClick="btnVerifyOTP_Click" />
+                        </asp:Panel>
+                    </asp:Panel>
                 </div>
 
                 <div class="extra-info">
