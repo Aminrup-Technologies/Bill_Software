@@ -1237,6 +1237,51 @@ namespace Bill_Software.corporate.business.app {
         protected global::Bill_Software.corporate.business.app.GlobalNotification GlobalNotification;
         
         /// <summary>
+        /// txtSupportMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtSupportMessage;
+        
+        /// <summary>
+        /// hfAutoScreenshot control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfAutoScreenshot;
+        
+        /// <summary>
+        /// fileScreenshot1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.FileUpload fileScreenshot1;
+        
+        /// <summary>
+        /// btnSubmitSupport control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnSubmitSupport;
+        
+        /// <summary>
+        /// lblSupportStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblSupportStatus;
+        
+        /// <summary>
         /// Image3 control.
         /// </summary>
         /// <remarks>

@@ -57,47 +57,89 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSertch_Click(object sender, EventArgs e)
         {
-            string cmdstring = "";
             string clientId = GetClientId(cmbvendor.Text);
 
-            // FIX: txtfromDate and txttodate are now in the correct chronological order for the SQL BETWEEN clause.
+            // We start with a clean, parameterized base query using OUTER APPLY to grab the newest service
+            string cmdstring = @"
+            SELECT 
+                s.PServiceName,
+                q.ID,
+                q.service_tax1,
+                q.sub_total,
+                q.Quotation_no,
+                q.Quotation_date,
+                q.Gross,
+                q.Service_tax,
+                q.Net_amount,
+                q.mailStatusDate,
+                c.Client_Name, 
+                q.RecordType 
+            FROM tbl_Quotation q
+            LEFT OUTER JOIN tbl_Client c ON q.Client_Id = c.Client_Id 
+            OUTER APPLY (
+                SELECT TOP 1 PServiceName 
+                FROM tbl_QuoPriSerTogather 
+                WHERE qutno = q.Quotation_no 
+                ORDER BY TimeStamp DESC
+            ) s
+            WHERE 1=1 "; // 1=1 makes appending conditions easier!
+
+            SqlCommand cmd = new SqlCommand();
+
+            // Safely append conditions and parameters based on the radio button selected
             if (RadioButtonList1.SelectedIndex == 0) // Only Client
             {
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name, tbl_Quotation.RecordType from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + clientId + "' order by tbl_Quotation.ID desc";
+                cmdstring += " AND q.Client_Id = @ClientId ";
+                cmd.Parameters.AddWithValue("@ClientId", clientId);
             }
             else if (RadioButtonList1.SelectedIndex == 1) // Only Date
             {
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name, tbl_Quotation.RecordType from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txtfromDate.Text + "' and '" + txttodate.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring += " AND CAST(q.Quotation_date AS DATETIME) BETWEEN @FromDate AND @ToDate ";
+                cmd.Parameters.AddWithValue("@FromDate", txtfromDate.Text);
+                cmd.Parameters.AddWithValue("@ToDate", txttodate.Text);
             }
             else // Client & Date
             {
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name, tbl_Quotation.RecordType from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + clientId + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txtfromDate.Text + "' and '" + txttodate.Text + "' order by tbl_Quotation.ID desc";
+                cmdstring += " AND q.Client_Id = @ClientId ";
+                cmdstring += " AND CAST(q.Quotation_date AS DATETIME) BETWEEN @FromDate AND @ToDate ";
+                cmd.Parameters.AddWithValue("@ClientId", clientId);
+                cmd.Parameters.AddWithValue("@FromDate", txtfromDate.Text);
+                cmd.Parameters.AddWithValue("@ToDate", txttodate.Text);
             }
 
+            // Append the final ordering logic
+            cmdstring += " ORDER BY q.ID DESC";
+
+            cmd.CommandText = cmdstring;
+
+            // Database connection and execution
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
-            {
-                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                {
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
 
-                    if (dt.Rows.Count > 0)
-                    {
-                        DataList1.DataSource = dt;
-                        DataList1.DataBind();
-                        PanelGlobalAlert.Visible = false;
-                    }
-                    else
-                    {
-                        DataList1.DataSource = null;
-                        DataList1.DataBind();
-                        ShowAlert("No records found.", true);
-                    }
+            cmd.Connection = DbCL.Conn;
+
+            using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+            {
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                if (dt.Rows.Count > 0)
+                {
+                    DataList1.DataSource = dt;
+                    DataList1.DataBind();
+                    PanelGlobalAlert.Visible = false;
+                }
+                else
+                {
+                    DataList1.DataSource = null;
+                    DataList1.DataBind();
+                    ShowAlert("No records found.", true);
                 }
             }
+
+            // Clean up
             DbCL.Conn.Close();
+            cmd.Dispose();
         }
 
         private string GetClientId(string clientName)
@@ -1083,11 +1125,12 @@ namespace Bill_Software.corporate.business.app
 
         protected void ToggleGridColumns()
         {
-            if (gd_Service_Product.Columns.Count > 10)
+            if (gd_Service_Product.Columns.Count > 20)
             {
                 bool isQuotation = rbQt.Checked;
-                gd_Service_Product.Columns[16].Visible = !isQuotation; // Del Date
-                gd_Service_Product.Columns[17].Visible = !isQuotation; // Dept 
+                // Updated Column Indexes based on the new human-readable Grid Layout
+                gd_Service_Product.Columns[22].Visible = !isQuotation; // Del Date
+                gd_Service_Product.Columns[23].Visible = !isQuotation; // Dept 
             }
         }
 

@@ -11,7 +11,7 @@
     <script type="text/javascript" src="../../WebProperty/js/clock.js"></script>
     <title>FLAME-EX</title>
     <link rel="shortcut icon" href="../WebImages/aagrouplogo.png" />
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <style type="text/css">
@@ -20,6 +20,100 @@
             height: 40px;
             font: normal 11px/22px Arial, Helvetica, sans-serif;
             color: #666;
+        }
+
+        /* Floating button style */
+        .support-btn-floating {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #2268a9;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        /* Modal overlay background */
+        .support-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 1001;
+        }
+
+        .support-btn-floating {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #2268a9;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .support-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 1001;
+        }
+
+        .support-modal-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            width: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            font-family: Arial, sans-serif;
+        }
+
+        .support-close {
+            float: right;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .support-input {
+            width: 95%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .support-submit {
+            background-color: #2268a9;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 15px;
         }
     </style>
     <!-- Matomo -->
@@ -61,6 +155,45 @@
 
         // Ping the server every 2 minutes (120,000 milliseconds)
         setInterval(pingServerHeartbeat, 120000);
+
+        // Simple JavaScript to show/hide the modal
+        function toggleSupportModal() {
+            var modal = document.getElementById('supportModal');
+            if (modal.style.display === 'block') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'block';
+            }
+        }
+
+        function takeAutoScreenshot() {
+        var captureBtn = document.getElementById('btnCaptureScreen');
+        captureBtn.innerHTML = "Capturing... Please wait.";
+        captureBtn.disabled = true;
+
+        // Temporarily hide the modal so it doesn't block the screen capture
+        var modal = document.getElementById('supportModal');
+        modal.style.display = 'none';
+
+        // Take the snapshot of the whole body
+        html2canvas(document.body).then(function(canvas) {
+            // Convert canvas to Base64 image data
+            var base64data = canvas.toDataURL('image/png');
+            
+            // Store it in the hidden field so C# can read it
+            document.getElementById('<%= hfAutoScreenshot.ClientID %>').value = base64data;
+            
+            // Show a tiny preview to the user
+            var preview = document.getElementById('imgScreenshotPreview');
+            preview.src = base64data;
+            preview.style.display = 'block';
+
+            // Bring the modal back and update button
+            modal.style.display = 'block';
+            captureBtn.innerHTML = "Screen Captured! ✓";
+            captureBtn.style.backgroundColor = "green";
+        });
+    }
     </script>
 </head>
 
@@ -362,6 +495,39 @@
                 </div>
                 <!--end of body contain-->
             </div>
+
+            <div class="support-btn-floating" onclick="toggleSupportModal()">
+                💬 Raise a Concern
+            </div>
+
+            <div id="supportModal" class="support-modal-overlay">
+                <div class="support-modal-box">
+                    <span class="support-close" onclick="toggleSupportModal()">&times;</span>
+                    <h3 style="margin-top: 0; color: #2268a9;">IT Support Request</h3>
+
+                    <p style="font-size: 12px; color: #666;">Describe your issue. The IT team will automatically receive your details and current page.</p>
+
+                    <asp:TextBox ID="txtSupportMessage" runat="server" TextMode="MultiLine" Rows="4" CssClass="support-input" placeholder="Type your issue here..."></asp:TextBox>
+                    
+                    <div style="margin-bottom: 15px; border: 1px dashed #ccc; padding: 10px; border-radius: 4px; text-align: center;">
+                        <button type="button" id="btnCaptureScreen" onclick="takeAutoScreenshot()" style="background-color:#e0a800; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:3px;">
+                            📸 Capture Current Page
+                        </button>
+                        <asp:HiddenField ID="hfAutoScreenshot" runat="server" />
+                        <img id="imgScreenshotPreview" style="display:none; max-width: 100px; max-height: 100px; margin-top: 10px; border: 1px solid #999;" />
+                    </div>
+
+                    <label style="font-size: 12px; font-weight: bold;">Screenshot (Optional):</label>
+                    <asp:FileUpload ID="fileScreenshot1" runat="server" CssClass="support-input" />
+
+                    <%--<label style="font-size: 12px; font-weight: bold;">Screenshot 2 (Optional):</label>
+                    <asp:FileUpload ID="fileScreenshot2" runat="server" CssClass="support-input" />--%>
+
+                    <asp:Button ID="btnSubmitSupport" runat="server" Text="Submit Concern" CssClass="support-submit" OnClick="btnSubmitSupport_Click" />
+                    <br />
+                    <asp:Label ID="lblSupportStatus" runat="server" ForeColor="Green" Font-Size="12px" Font-Bold="true"></asp:Label>
+                </div>
+            </div>
         </form>
         <!--end of body_contain_outer-->
 
@@ -370,7 +536,7 @@
             <table width="90%" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
                 <tr>
                     <td width="34%" height="36">&nbsp;
-                        <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />&nbsp;<sup>2024-<asp:Label ID="lbl_crntyr" runat="server" Text="2025"></asp:Label></sup></td>
+                        <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />&nbsp;<sup><asp:Label ID="lbl_crntyr" runat="server" Text="2025"></asp:Label></sup></td>
                     <td width="37%">&nbsp;</td>
                     <td width="29%" align="right"><sup>©</sup><a href="https://www.aminruptechnologies.co.in/" target="_blank" style="text-decoration: none;">Aminrup Technologies, JSR</a></td>
                 </tr>

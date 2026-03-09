@@ -79,6 +79,91 @@
             font-size: 12px;
         }
 
+        /* Horizontal Scroll & Frozen Column CSS */
+        .cart-grid-wrapper {
+            width: 100%;
+            max-height: 500px;
+            overflow-x: auto;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+        }
+
+            .cart-grid-wrapper table {
+                width: 100%;
+                min-width: 1800px; /* Forces horizontal scrolling */
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+
+            .cart-grid-wrapper th {
+                position: sticky;
+                top: 0;
+                background-color: #006699;
+                color: white;
+                z-index: 20; /* Keep headers above everything */
+                box-shadow: 0 2px 2px -1px rgba(0,0,0,0.4);
+                white-space: nowrap;
+                padding: 8px;
+            }
+
+            .cart-grid-wrapper td {
+                white-space: nowrap;
+                background-color: inherit;
+            }
+
+        /* Freeze Left Identifiers */
+        .col-frozen-action {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: #fff;
+            width: 80px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .col-frozen-sl {
+            position: sticky;
+            left: 80px;
+            z-index: 10;
+            background-color: #fff;
+            width: 40px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .col-frozen-name {
+            position: sticky;
+            left: 120px;
+            z-index: 10;
+            background-color: #fff;
+            border-right: 2px solid #444;
+            width: 220px;
+            min-width: 220px;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Ensure Header/Footer Z-index overrides for frozen columns */
+        .cart-grid-wrapper th.col-frozen-action,
+        .cart-grid-wrapper th.col-frozen-sl,
+        .cart-grid-wrapper th.col-frozen-name {
+            z-index: 30;
+        }
+
+        .grid-footer td.col-frozen-action,
+        .grid-footer td.col-frozen-sl,
+        .grid-footer td.col-frozen-name {
+            z-index: 30;
+            background-color: #e9ecef;
+        }
+
+        /* Highlight editable zone */
+        .col-editable {
+            background-color: #fbfcff;
+        }
+
         .action-btn {
             text-decoration: none;
             padding: 2px 5px;
@@ -317,18 +402,18 @@
         function togglePanel() {
             var rbQt = document.getElementById('<%= rbQt.ClientID %>');
             var panel = document.getElementById('<%= PO_DataInputs.ClientID %>');
-            
-            if (rbQt && rbQt.checked) { 
-                if (panel) panel.style.display = 'none'; 
-            } else { 
-                if (panel) panel.style.display = 'block'; 
+
+            if (rbQt && rbQt.checked) {
+                if (panel) panel.style.display = 'none';
+            } else {
+                if (panel) panel.style.display = 'block';
             }
         }
 
         function handleDeliveryTermChange(dropdown) {
             var manualInputRow = document.getElementById('<%= manualInputRow.ClientID %>');
             if (manualInputRow) {
-                if (dropdown.value == "4") { manualInputRow.style.display = "table-row"; } 
+                if (dropdown.value == "4") { manualInputRow.style.display = "table-row"; }
                 else { manualInputRow.style.display = "none"; }
             }
         }
@@ -336,7 +421,7 @@
         function handlePackageForwardingChange(dropdown) {
             var manualInputPkgRow = document.getElementById('<%= manualInputPkgRow.ClientID %>');
             if (manualInputPkgRow) {
-                if (dropdown.value == "3") { manualInputPkgRow.style.display = "table-row"; } 
+                if (dropdown.value == "3") { manualInputPkgRow.style.display = "table-row"; }
                 else { manualInputPkgRow.style.display = "none"; }
             }
         }
@@ -663,12 +748,12 @@
                         <asp:Button ID="btnAddMoreProducts" runat="server" Text="+ Add More Products" CssClass="btn_style" Width="180px" BackColor="#17a2b8" ForeColor="White" OnClick="btnAddMoreProducts_Click" />
                     </div>
 
-                    <div class="scrollable-grid" style="max-height: 500px;">
+                    <div class="cart-grid-wrapper">
                         <asp:GridView ID="gd_Service_Product" runat="server" AutoGenerateColumns="False" CssClass="Grid" Width="100%" ShowFooter="true" OnRowCommand="gd_Service_Product_RowCommand">
                             <RowStyle BackColor="White" />
                             <FooterStyle CssClass="grid-footer" />
                             <Columns>
-                                <asp:TemplateField HeaderText="Actions" HeaderStyle-Width="8%">
+                                <asp:TemplateField HeaderText="Actions" HeaderStyle-CssClass="col-frozen-action" ItemStyle-CssClass="col-frozen-action" FooterStyle-CssClass="col-frozen-action">
                                     <ItemTemplate>
                                         <asp:LinkButton ID="btnUp" runat="server" CommandName="MoveUp" CommandArgument="<%# Container.DataItemIndex %>" CssClass="action-btn" ToolTip="Move Up">↑</asp:LinkButton>
                                         <asp:LinkButton ID="btnDown" runat="server" CommandName="MoveDown" CommandArgument="<%# Container.DataItemIndex %>" CssClass="action-btn" ToolTip="Move Down">↓</asp:LinkButton>
@@ -676,99 +761,143 @@
                                     </ItemTemplate>
                                     <FooterTemplate><b>TOTAL:</b></FooterTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Select" HeaderStyle-Width="3%" Visible="false">
+
+                                <asp:TemplateField HeaderText="Sel" Visible="false">
                                     <ItemTemplate>
                                         <asp:CheckBox ID="chk" runat="server" Checked="true" />
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="SL" HeaderStyle-Width="3%">
+
+                                <asp:TemplateField HeaderText="SL" HeaderStyle-CssClass="col-frozen-sl" ItemStyle-CssClass="col-frozen-sl" FooterStyle-CssClass="col-frozen-sl">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="txtOrder" runat="server" Width="30px" CssClass="center textbox_style sl-input" ReadOnly="true" Text='<%# Bind("Sl_no") %>' />
+                                        <asp:TextBox ID="txtOrder" runat="server" Width="100%" CssClass="center textbox_style sl-input" ReadOnly="true" Text='<%# Bind("Sl_no") %>' />
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Item No" HeaderStyle-Width="4%">
-                                    <ItemTemplate>
-                                        <asp:TextBox ID="ItemNo" runat="server" CssClass="textbox_style" Width="90%" Text='<%# Bind("ItemNo") %>'></asp:TextBox>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Mat. No" HeaderStyle-Width="4%">
-                                    <ItemTemplate>
-                                        <asp:TextBox ID="MaterialNo" runat="server" CssClass="textbox_style" Width="90%" Text='<%# Bind("MaterialNo") %>'></asp:TextBox>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Name" HeaderStyle-Width="12%">
+
+                                <asp:TemplateField HeaderText="Product Name" HeaderStyle-CssClass="col-frozen-name" ItemStyle-CssClass="col-frozen-name" FooterStyle-CssClass="col-frozen-name">
                                     <ItemTemplate>
                                         <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Pack" HeaderStyle-Width="4%">
+
+                                <asp:TemplateField HeaderText="Qty" ItemStyle-CssClass="col-editable" HeaderStyle-Width="6%">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="PackSize" runat="server" CssClass="textbox_style" Width="90%" Text='<%# Bind("PackSize") %>'></asp:TextBox>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Rate" HeaderStyle-Width="7%">
-                                    <ItemTemplate>
-                                        <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="90%" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Qty" HeaderStyle-Width="6%">
-                                    <ItemTemplate>
-                                        <asp:TextBox ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>' CssClass="center textbox_style qty-input" Width="90%" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                                        <asp:TextBox ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>' CssClass="center textbox_style qty-input" Width="60px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
                                     </ItemTemplate>
                                     <FooterTemplate><span id="ftr-qty">0</span></FooterTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Disc %" HeaderStyle-Width="5%">
+
+                                <asp:TemplateField HeaderText="Unit">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="Discount_Rate" runat="server" Text='<%# Bind("Discount_Rate") %>' CssClass="center textbox_style disc-input" Width="90%" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                                        <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Taxable" HeaderStyle-Width="7%">
-                                    <ItemTemplate><span class="lbl-taxable">0.00</span></ItemTemplate>
-                                    <FooterTemplate><span id="ftr-taxable">0.00</span></FooterTemplate>
+
+                                <asp:TemplateField HeaderText="Rate" ItemStyle-CssClass="col-editable" HeaderStyle-Width="8%">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="80px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                                    </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="GST %" HeaderStyle-Width="4%">
+
+                                <asp:TemplateField HeaderText="Disc %" ItemStyle-CssClass="col-editable" HeaderStyle-Width="5%">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="Discount_Rate" runat="server" Text='<%# Bind("Discount_Rate") %>' CssClass="center textbox_style disc-input" Width="50px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="GST %">
                                     <ItemTemplate>
                                         <asp:Label ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>' CssClass="tax-lbl"></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Tax Amt" HeaderStyle-Width="7%">
+
+                                <asp:TemplateField HeaderText="Taxable Amt">
+                                    <ItemTemplate><span class="lbl-taxable">0.00</span></ItemTemplate>
+                                    <FooterTemplate><span id="ftr-taxable">0.00</span></FooterTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Tax Amt">
                                     <ItemTemplate><span class="lbl-taxamt">0.00</span></ItemTemplate>
                                     <FooterTemplate><span id="ftr-tax">0.00</span></FooterTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Net Amt" HeaderStyle-Width="8%">
+
+                                <asp:TemplateField HeaderText="Net Amt">
                                     <ItemTemplate><strong class="lbl-net">0.00</strong></ItemTemplate>
                                     <FooterTemplate><span id="ftr-net" style="font-size: 14px; color: darkgreen;">0.00</span></FooterTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Remarks" HeaderStyle-Width="10%">
+
+                                <asp:TemplateField HeaderText="Make/Brand" ItemStyle-CssClass="col-editable">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="ItemRemarks" runat="server" CssClass="textbox_style" Width="90%" Text='<%# Bind("ItemRemarks") %>'></asp:TextBox>
+                                        <asp:TextBox ID="Brand" runat="server" CssClass="textbox_style" Width="120px" Text='<%# Bind("Brand") %>'></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
-                                <asp:TemplateField Visible="false">
+                                <asp:TemplateField HeaderText="Specification" ItemStyle-CssClass="col-editable">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="Specification" runat="server" CssClass="textbox_style" Width="150px" Text='<%# Bind("Specification") %>'></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Pack" ItemStyle-CssClass="col-editable">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="PackSize" runat="server" CssClass="textbox_style" Width="60px" Text='<%# Bind("PackSize") %>'></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Item No" ItemStyle-CssClass="col-editable">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="ItemNo" runat="server" CssClass="textbox_style" Width="80px" Text='<%# Bind("ItemNo") %>'></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Material No" ItemStyle-CssClass="col-editable">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="MaterialNo" runat="server" CssClass="textbox_style" Width="80px" Text='<%# Bind("MaterialNo") %>'></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Remarks" ItemStyle-CssClass="col-editable">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="ItemRemarks" runat="server" CssClass="textbox_style" Width="150px" Text='<%# Bind("ItemRemarks") %>'></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="PRD ID">
                                     <ItemTemplate>
                                         <asp:Label ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:Label>
-                                        <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
-                                        <asp:Label ID="ProductOrServiceCat" runat="server" Text='<%# Bind("ProductOrServiceCat") %>'></asp:Label>
-                                        <asp:Label ID="Type" runat="server" Text='<%# Bind("Type") %>'></asp:Label>
-                                        <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label>
-                                        <asp:TextBox ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:TextBox>
-                                        <asp:TextBox ID="Specification" runat="server" Text='<%# Bind("Specification") %>'></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Delivery Date" Visible="false">
+                                <asp:TemplateField HeaderText="HSN Code">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker textbox_style" Text='<%# Bind("DeliveryDate") %>'></asp:TextBox>
+                                        <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Dept" Visible="false">
+
+                                <asp:TemplateField HeaderText="Category">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="Department" runat="server" CssClass="textbox_style" Text='<%# Bind("Department") %>'></asp:TextBox>
+                                        <asp:Label ID="ProductOrServiceCat" runat="server" Text='<%# Bind("ProductOrServiceCat") %>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Type">
+                                    <ItemTemplate>
+                                        <asp:Label ID="Type" runat="server" Text='<%# Bind("Type") %>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Del. Date" Visible="false" ItemStyle-CssClass="col-editable">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker textbox_style" Width="90px" Text='<%# Bind("DeliveryDate") %>'></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Dept" Visible="false" ItemStyle-CssClass="col-editable">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="Department" runat="server" CssClass="textbox_style" Width="80px" Text='<%# Bind("Department") %>'></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                             </Columns>
-                            <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
                         </asp:GridView>
                     </div>
 

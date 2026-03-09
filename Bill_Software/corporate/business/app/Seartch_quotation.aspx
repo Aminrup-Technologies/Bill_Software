@@ -95,17 +95,17 @@
                     <td>&nbsp;</td>
                 </tr>
                 <tr>
-                    <td>&nbsp;</td>
-                    <td>From Date(Quotation)</td>
-                    <td>
-                        <asp:TextBox ID="txttodate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
-                    </td>
-                    <td>To Date(Quotation)</td>
-                    <td>
-                        <asp:TextBox ID="txtfromDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
-                    </td>
-                    <td>&nbsp;</td>
-                </tr>
+    <td>&nbsp;</td>
+    <td>From Date(Quotation)</td>
+    <td>
+        <asp:TextBox ID="txtfromDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+    </td>
+    <td>To Date(Quotation)</td>
+    <td>
+        <asp:TextBox ID="txttodate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="110px"></asp:TextBox>
+    </td>
+    <td>&nbsp;</td>
+</tr>
                 <tr>
                     <td>&nbsp;</td>
                     <td colspan="2">Search Type</td>
@@ -266,8 +266,8 @@
 
 
                                         <td style="text-align: center; width: 10%;">
-                                            <asp:Label ID="Label10" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label>
-                                        </td>
+    <asp:Label ID="Label10" runat="server" Text='<%# Eval("Services") %>'></asp:Label>
+</td>
                                         <td style="text-align: center; width: 10%;">
                                             <asp:Label ID="Label11" runat="server" Text='<%# Eval("sub_total") %>'></asp:Label>
                                         </td>

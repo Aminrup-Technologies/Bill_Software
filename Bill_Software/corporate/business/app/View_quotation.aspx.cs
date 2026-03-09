@@ -1,22 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text;
-using System.Globalization;
-using System.Threading;
+using System.Web;
+using System.Web.UI.WebControls;
+using System.IO;
+using ClosedXML.Excel; // Our newly installed library!
+using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm23 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        DataTable dtmain = new DataTable();
-        CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
+        // You can keep your dtmain and cultureInfo if you plan to use them later, 
+        // but I have cleaned them up here since they weren't being used in the current flow.
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -26,65 +23,39 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                //if (Session["SelectedRecordType"] == null)
-                //{
-                //    // Fresh load — default to Quotation
-                //    rbQt.Checked = true;
-                //    rbPo.Checked = false;
-                //    Session["SelectedRecordType"] = "Quotation";  // Set default in session
-                //}
-                //else
-                //{
-                //    // Coming back from another page
-                //    string selectedType = Convert.ToString(Session["SelectedRecordType"]);
-                //    if (selectedType == "PO")
-                //    {
-                //        rbPo.Checked = true;
-                //        rbQt.Checked = false;
-                //    }
-                //    else
-                //    {
-                //        rbQt.Checked = true;
-                //        rbPo.Checked = false;
-                //    }
-                //}
+                // Query filtered for Current Month and Year
+                string cmdstring = @"
+                    SELECT 
+                        tbl_QuoPriSerTogather.PServiceName, 
+                        tbl_Quotation.ID,
+                        tbl_Quotation.service_tax1, 
+                        tbl_Quotation.sub_total, 
+                        tbl_Quotation.Quotation_no, 
+                        tbl_Quotation.Quotation_date, 
+                        tbl_Quotation.Gross, 
+                        tbl_Quotation.Service_tax, 
+                        tbl_Quotation.Net_amount,
+                        tbl_Quotation.cgstOrsgst,
+                        tbl_Client.Client_Name 
+                    FROM tbl_Quotation 
+                    LEFT OUTER JOIN tbl_Client ON tbl_Quotation.Client_Id = tbl_Client.Client_Id 
+                    LEFT OUTER JOIN tbl_QuoPriSerTogather ON tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no AND tbl_QuoPriSerTogather.TimeStamp = tbl_Quotation.TimsStamp 
+                    WHERE tbl_Quotation.RecordType = 'Quotation' 
+                      AND MONTH(CAST(tbl_Quotation.Quotation_date as date)) = MONTH(GETDATE()) 
+                      AND YEAR(CAST(tbl_Quotation.Quotation_date as date)) = YEAR(GETDATE())
+                    ORDER BY CAST(tbl_Quotation.Quotation_date as date) DESC";
 
-                //rbQt.Checked = true;
-                string cmdstring = "select tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID,tbl_Quotation.service_tax1, tbl_Quotation.sub_total, tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, tbl_Quotation.Service_tax, tbl_Quotation.Net_amount,tbl_Quotation.cgstOrsgst,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no and tbl_QuoPriSerTogather.TimeStamp = tbl_Quotation.TimsStamp where tbl_Quotation.RecordType='Quotation' order by CAST(tbl_Quotation.Quotation_date as date) desc";
                 Binddata(cmdstring);
-
-                //Binder();
             }
         }
 
-        //protected void RecordTypeChanged(object sender, EventArgs e)
-        //{
-        //    Binder();
-        //}
-
-        //private void Binder()
-        //{
-        //    if (rbPo.Checked)
-        //    {
-        //        string cmdstring = "select top(50) tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.cgstOrsgst,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.RecordType!='Quotation' order by tbl_Quotation.ID desc";
-        //        Binddata(cmdstring);
-        //    }
-        //    else if (rbQt.Checked == true)
-        //    {
-        //        string cmdstring = "select top(50) tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.cgstOrsgst,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.RecordType='Quotation' order by tbl_Quotation.ID desc";
-        //        Binddata(cmdstring);
-        //    }
-        //}
-
         private void Binddata(string query)
         {
-            // Clear existing data
             DataList1.DataSource = null;
             DataList1.DataBind();
 
-
             DbCL.Sqlconnection();
-            DbCL.ConnectDb();            
+            DbCL.ConnectDb();
             SqlCommand cmd = new SqlCommand(query, DbCL.Conn);
             DataList1.DataSource = cmd.ExecuteReader();
             DataList1.DataBind();
@@ -110,46 +81,223 @@ namespace Bill_Software.corporate.business.app
                 string ID = Convert.ToString(e.CommandArgument);
                 Response.Redirect("/corporate/business/print/NewQuotation.aspx?ID=" + ID);
             }
-
-            //string qdate = buindalldata(ID);
-            //DateTime fromdate = DateTime.Parse(Convert.ToDateTime(qdate).ToShortDateString());
-            //DateTime todate = DateTime.Parse(Convert.ToDateTime("12-Jun-2018").ToShortDateString());
-            //if (e.CommandName == "View")
-            //{
-            //    if (fromdate > todate)
-            //    {
-            //        Response.Redirect("/corporate/business/print/NewQuotation.aspx?ID=" + ID);
-            //    }
-            //    else
-            //    {
-            //        Response.Redirect("/corporate/business/print/Quotation.aspx?ID=" + ID);
-            //    }
-            //    //string url = "/corporate/business/print/NewQuotation.aspx?ID=" + ID;
-            //    //Response.Write("<script type='text/javascript'>window.open('" + url + "');</script>");
-            //}
-
-            //string url = "/corporate/business/print/Quotation.aspx?ID=" + ID;
-            //string script = $"<script type='text/javascript'>window.location.href='{url}';</script>";
-            //ClientScript.RegisterStartupScript(this.GetType(), "RedirectScript", script);
         }
 
-        private string buindalldata(string ID)
+        // --- EXCEL EXPORT METHOD ---
+        protected void btnExport_Click_OLD(object sender, EventArgs e)
         {
-            string qdate = "";
-            string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst from tbl_Quotation where ID=@ID";
-            SqlParameter[] pram = {
-            new SqlParameter("@id",ID)
-            };
-            dtmain = DbCL.SPreturn_dt(query, pram);
-            if (dtmain.Rows.Count > 0)
+            // Join Master, Header, and Detail tables for current month
+            string query = @"
+                SELECT 
+                    q.Quotation_no AS [Quotation Number], 
+                    q.Quotation_date AS [Quotation Date], 
+                    c.Client_Name AS [Client Name], 
+                    qd.Product_name AS [Product / Service Name],
+                    qd.specification AS [Specification],
+                    qd.Quantity AS [Quantity],
+                    qd.sail_rate AS [Unit Rate],
+                    qd.Total_sail_rate AS [Line Total],
+                    q.sub_total AS [Quotation Sub Total],
+                    q.service_tax1 AS [GST Amount],
+                    q.Net_amount AS [Quotation Net Amount]
+                FROM tbl_Quotation q
+                LEFT JOIN tbl_Client c ON q.Client_Id = c.Client_Id
+                LEFT JOIN tbl_Quotaion_details qd ON q.Quotation_no = qd.Quotation_no AND qd.IsDeleted = 0
+                WHERE q.RecordType = 'Quotation' 
+                  AND MONTH(CAST(q.Quotation_date as date)) = MONTH(GETDATE()) 
+                  AND YEAR(CAST(q.Quotation_date as date)) = YEAR(GETDATE())
+                ORDER BY CAST(q.Quotation_date as date) DESC";
+
+            DataTable dtExport = new DataTable();
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
             {
-                string qutno = dtmain.Rows[0]["Quotation_no"].ToString();
-
-                qdate = dtmain.Rows[0]["Quotation_date"].ToString();
-
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    da.Fill(dtExport);
+                }
             }
-            return qdate;
+            DbCL.Conn.Close();
+
+            if (dtExport.Rows.Count > 0)
+            {
+                using (XLWorkbook wb = new XLWorkbook())
+                {
+                    // Add DataTable as a worksheet
+                    var ws = wb.Worksheets.Add(dtExport, "Current_Month_Quotations");
+
+                    // Format Header Row
+                    ws.Row(1).Style.Font.Bold = true;
+                    ws.Row(1).Style.Fill.BackgroundColor = XLColor.Navy;
+                    ws.Row(1).Style.Font.FontColor = XLColor.White;
+
+                    // Auto-size all columns for better readability
+                    ws.Columns().AdjustToContents();
+
+                    // Prepare Response for download
+                    Response.Clear();
+                    Response.Buffer = true;
+                    Response.Charset = "";
+                    Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    Response.AddHeader("content-disposition", "attachment;filename=Quotations_" + DateTime.Now.ToString("MMM_yyyy") + ".xlsx");
+
+                    using (MemoryStream MyMemoryStream = new MemoryStream())
+                    {
+                        wb.SaveAs(MyMemoryStream);
+                        MyMemoryStream.WriteTo(Response.OutputStream);
+                        Response.Flush();
+                        Response.End();
+                    }
+                }
+            }
+            else
+            {
+                // Optional: Alert the user that there is no data to export
+                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "alert('No data available for the current month.');", true);
+            }
         }
 
+        // --- ENRICHED EXCEL EXPORT METHOD ---
+        protected void btnExport_Click(object sender, EventArgs e)
+        {
+            // A comprehensive query mapping all data points from your MagicianNew method
+            string query = @"
+        SELECT 
+            -- Document Header Details
+            q.RecordType AS [Record Type],
+            q.Quotation_no AS [Document Number], 
+            q.Quotation_date AS [Document Date], 
+            c.Client_Name AS [Client Name], 
+            q.PlaceofSupply AS [Place of Supply],
+            q.ReferenceName AS [Client Ref Name],
+            q.ReferenceId AS [Client Ref ID],
+            q.ReferenceDate AS [Client Ref Date],
+            
+            -- Line Item Details
+            qd.ProductOrServiceCat AS [Category],
+            qd.Product_name AS [Product/Service Name],
+            qd.Product_Code AS [Product ID],
+            qd.Product_id AS [HSN Code],
+            qd.specification AS [Brand],
+            qd.Misc AS [Specification],
+            qd.ItemNo AS [Item No],
+            qd.MaterialNo AS [Material No],
+            qd.PackSize AS [Pack Size],
+            qd.Type AS [Item Type],
+            qd.Unit AS [Unit of Measure],
+            
+            -- Rates and Quantities
+            qd.Quantity AS [Quantity],
+            qd.sail_rate AS [Base Rate],
+            qd.discount_rate AS [Discount %],
+            qd.new_sailrate AS [Discounted Rate],
+            qd.Service_tax_rate AS [Item Tax %],
+            qd.Total_sail_rate2 AS [Line Total (Before Tax)],
+            qd.Total_sail_rate1 AS [Line Total (After Tax)],
+            qd.DeliveryDate AS [Line Delivery Date],
+            qd.Department AS [Department],
+            qd.ItemRemarks AS [Item Remarks],
+
+            -- Document Level Financials
+            q.sub_total AS [Doc Sub Total],
+            q.service_tax1 AS [Doc Tax Amount],
+            CASE WHEN q.cgstOrsgst = 'YES' THEN 'Yes' ELSE 'No' END AS [Is CGST/SGST],
+            CASE WHEN q.igst = 'YES' THEN 'Yes' ELSE 'No' END AS [Is IGST],
+            q.TCS_Percent AS [TCS %],
+            q.TCS_Amount AS [TCS Amount],
+            q.Freight_VAT_Percent AS [Freight Tax %],
+            q.Freight_Amount AS [Freight Amount],
+            q.OtherCharge_Name AS [Other Charge Name],
+            q.OtherCharge_Amount AS [Other Charge Amount],
+            q.Net_amount AS [Doc Net Amount],
+
+            -- Terms and Constraints
+            q.ValidityDays AS [Validity Days],
+            q.DeliveryTenure AS [Delivery Tenure],
+            q.PackingCharges AS [Packing Charges],
+            q.Remarks AS [Doc Remarks],
+            q.DO_Number AS [DO Number],
+            q.PO_Number AS [PO Number],
+            q.PO_Date AS [PO Date],
+            q.Validity_StartDate AS [Validity Start],
+            q.Validity_EndDate AS [Validity End]
+
+        FROM tbl_Quotation q
+        LEFT JOIN tbl_Client c ON q.Client_Id = c.Client_Id
+        LEFT JOIN tbl_Quotaion_details qd ON q.Quotation_no = qd.Quotation_no AND qd.IsDeleted = 0
+        WHERE q.RecordType = 'Quotation' 
+          AND MONTH(CAST(q.Quotation_date as date)) = MONTH(GETDATE()) 
+          AND YEAR(CAST(q.Quotation_date as date)) = YEAR(GETDATE())
+        ORDER BY CAST(q.Quotation_date as date) DESC, CAST(qd.Sl_no as int) ASC";
+
+            DataTable dtExport = new DataTable();
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
+            {
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    da.Fill(dtExport);
+                }
+            }
+            DbCL.Conn.Close();
+
+            if (dtExport.Rows.Count > 0)
+            {
+                using (XLWorkbook wb = new XLWorkbook())
+                {
+                    // Adding the DataTable this way automatically creates an Excel Table with built-in filters!
+                    var ws = wb.Worksheets.Add(dtExport, "Current_Month_Data");
+
+                    // 1. Format Header Row (Overriding the default table style to match your website)
+                    var headerRow = ws.Row(1);
+                    headerRow.Style.Font.Bold = true;
+                    headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#19658A");
+                    headerRow.Style.Font.FontColor = XLColor.White;
+                    headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    // 2. Freeze the top row so it stays visible when scrolling down
+                    ws.SheetView.FreezeRows(1);
+
+                    // 3. Format Number Columns (Assuming columns 20 through 27, and 30 through 37 contain rates/totals)
+                    var numericColumns = new int[] { 20, 21, 22, 23, 24, 25, 26, 30, 31, 35, 36, 38, 40 };
+                    foreach (int col in numericColumns)
+                    {
+                        ws.Column(col).Style.NumberFormat.Format = "#,##0.00";
+                    }
+
+                    // 4. Auto-size all columns to fit the data perfectly
+                    ws.Columns().AdjustToContents();
+
+                    // 5. Ensure some specific wide text columns don't get too overwhelmingly wide
+                    ws.Column(10).Width = 30; // Product Name
+                    ws.Column(14).Width = 30; // Specifications
+                    ws.Column(44).Width = 40; // Doc Remarks
+                    ws.Style.Alignment.WrapText = true; // Wrap text for long descriptions
+
+                    // Prepare Response for download
+                    Response.Clear();
+                    Response.Buffer = true;
+                    Response.Charset = "";
+                    Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    Response.AddHeader("content-disposition", "attachment;filename=Detailed_Quotations_" + DateTime.Now.ToString("MMM_yyyy") + ".xlsx");
+
+                    using (MemoryStream MyMemoryStream = new MemoryStream())
+                    {
+                        wb.SaveAs(MyMemoryStream);
+                        MyMemoryStream.WriteTo(Response.OutputStream);
+                        Response.Flush();
+                        Response.End();
+                    }
+                }
+            }
+            else
+            {
+                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "alert('No data available for the current month.');", true);
+            }
+        }
     }
 }

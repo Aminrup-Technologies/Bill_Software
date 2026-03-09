@@ -36,34 +36,18 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <table cellpadding="0" cellspacing="0" class="auto-style1">
         <tr>
-            <td colspan="4" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;View Quotation</span></td>
-        </tr>
-        <tr>
-            <td width="10%">&nbsp;</td>
-            <td width="40%">&nbsp;</td>
-            <td width="40%">&nbsp;</td>
-            <td width="10%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <%--<tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;<asp:Label ID="lbl_recordtype" runat="server" Visible="true" Text="*" ForeColor="Red"></asp:Label>Select Record / Document Type</td>
-            <td>&nbsp;
-                <asp:RadioButton ID="rbQt" runat="server" GroupName="recordOption" Text="Quotation" Checked="true" AutoPostBack="true" OnCheckedChanged="RecordTypeChanged"/>
-                <asp:RadioButton ID="rbPo" runat="server" GroupName="recordOption" Text="Purchase Order" AutoPostBack="true" OnCheckedChanged="RecordTypeChanged"/>
+            <td colspan="3" bgcolor="#19658A" style="padding: 5px;">
+                <span class="style2">&nbsp;View Quotation (Current Month)</span>
             </td>
-            <td>&nbsp;</td>
-        </tr>--%>
+            <td bgcolor="#19658A" style="text-align: right; padding: 5px;">
+                <asp:Button ID="btnExport" runat="server" Text="Export to Excel (.xlsx)" OnClick="btnExport_Click" BackColor="#4CAF50" ForeColor="White" BorderStyle="None" Height="30px" Width="150px" Font-Bold="true" style="cursor:pointer;" />
+            </td>
+        </tr>
         <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
+            <td width="10%">&nbsp;</td>
+            <td width="40%">&nbsp;</td>
+            <td width="40%">&nbsp;</td>
+            <td width="10%">&nbsp;</td>
         </tr>
         <tr>
             <td colspan="4">
@@ -76,128 +60,39 @@
                     <HeaderTemplate>
                         <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
                             <tr>
-                                <td style="text-align: center; width: 5%;">
-                                    <asp:Label ID="lblHeaderSlNo" runat="server" Text="Sl. No."></asp:Label>
-                                </td>
-
-                                <td style="text-align: center; width: 15%;">
-                                    <asp:Label ID="Label2" runat="server" Text="Client Name"></asp:Label>
-                                </td>
-
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="showrm" runat="server" Text="Creation Date"></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="showid" runat="server" Text="Quotation Number"></asp:Label>
-                                </td>
-
-                                <td style="text-align: center; width: 15%;">
-                                    <asp:Label ID="Label6" runat="server" Text="Product Catagory"></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="Label7" runat="server" Text="AMOUNT BEFORE GST (INR)"></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="Label9" runat="server" Text="GST (INR)"></asp:Label>
-                                </td>
-
-
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="Label1" runat="server" Text="AMOUNT INCLUSIVE OF GST (INR)"></asp:Label>
-                                </td>
-
-                                <%--<td style="text-align:center; width:10%;"> 
-                                    <asp:Label ID="Label5" runat="server" Text="Last Mailer Date"></asp:Label>
-                                </td>--%>
-
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="Label5" runat="server" Text="CGST & SGST"></asp:Label>
-                                </td>
-
-                                <td style="text-align: center; width: 5%;">
-                                    <asp:Label ID="edit" runat="server" Text="View"></asp:Label>
-                                </td>
+                                <td style="text-align: center; width: 5%;"><asp:Label ID="lblHeaderSlNo" runat="server" Text="Sl. No."></asp:Label></td>
+                                <td style="text-align: center; width: 15%;"><asp:Label ID="Label2" runat="server" Text="Client Name"></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="showrm" runat="server" Text="Creation Date"></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="showid" runat="server" Text="Quotation Number"></asp:Label></td>
+                                <td style="text-align: center; width: 15%;"><asp:Label ID="Label6" runat="server" Text="Product Catagory"></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="Label7" runat="server" Text="AMOUNT BEFORE GST (INR)"></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="Label9" runat="server" Text="GST (INR)"></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="Label1" runat="server" Text="AMOUNT INCLUSIVE OF GST (INR)"></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="Label5" runat="server" Text="CGST & SGST"></asp:Label></td>
+                                <td style="text-align: center; width: 5%;"><asp:Label ID="edit" runat="server" Text="View"></asp:Label></td>
                             </tr>
                         </table>
                     </HeaderTemplate>
                     <ItemTemplate>
                         <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
                             <tr>
+                                <td style="text-align: center; width: 5%;"><asp:Label ID="lblSlNo" runat="server"></asp:Label></td>
+                                <td style="text-align: center; width: 15%;"><asp:Label ID="Label4" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="addshowname" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="ID" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label></td>
+                                <td style="text-align: center; width: 15%;"><asp:Label ID="Label10" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="Label11" runat="server" Text='<%# Eval("sub_total") %>'></asp:Label></td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="Label12" runat="server" Text='<%# Eval("service_tax1") %>'></asp:Label></td>
+                                <td style="text-align: center; width: 10%;">Rs. <asp:Label ID="Label8" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label> /-</td>
+                                <td style="text-align: center; width: 10%;"><asp:Label ID="Label3" runat="server" Text='<%# Eval("cgstOrsgst") %>'></asp:Label></td>
                                 <td style="text-align: center; width: 5%;">
-                                    <asp:Label ID="lblSlNo" runat="server"></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 15%;">
-                                    <asp:Label ID="Label4" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="addshowname" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="ID" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 15%;">
-                                    <asp:Label ID="Label10" runat="server" Text='<%# Eval("PServiceName") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="Label11" runat="server" Text='<%# Eval("sub_total") %>'></asp:Label>
-                                </td>
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="Label12" runat="server" Text='<%# Eval("service_tax1") %>'></asp:Label>
-                                </td>
-
-
-                                <td style="text-align: center; width: 10%;">Rs. 
-                                    <asp:Label ID="Label8" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label>
-                                    /-
-                                </td>
-
-                                <%--<td style="text-align:center; width:10%;"> 
-                                    <asp:Label ID="Label3" runat="server" Text='<%# Eval("mailStatusDate") %>'></asp:Label>
-                                </td>--%>
-
-                                <td style="text-align: center; width: 10%;">
-                                    <asp:Label ID="Label3" runat="server" Text='<%# Eval("cgstOrsgst") %>'></asp:Label>
-                                </td>
-
-                                <td style="text-align: center; width: 5%;">
-                                    <asp:ImageButton ID="ImageButton1" runat="server" CommandName="View" Height="20px" Width="20px" CommandArgument='<%# Eval("ID") %>'
-                                        ImageUrl="~/corporate/business/WebImages/viewicon.png" ToolTip="View" />
+                                    <asp:ImageButton ID="ImageButton1" runat="server" CommandName="View" Height="20px" Width="20px" CommandArgument='<%# Eval("ID") %>' ImageUrl="~/corporate/business/WebImages/viewicon.png" ToolTip="View" />
                                 </td>
                             </tr>
                         </table>
                     </ItemTemplate>
                 </asp:DataList>
             </td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
         </tr>
     </table>
 </asp:Content>

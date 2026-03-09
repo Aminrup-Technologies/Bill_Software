@@ -5,6 +5,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI;
+using System.Net.Mail;
+using System.IO;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -54,12 +56,86 @@ namespace Bill_Software.corporate.business.app
             {
                 // Dynamic year display
                 int currentYear = DateTime.Now.Year;
-                lbl_crntyr.Text = $"{currentYear - 1}-{currentYear}";
+                lbl_crntyr.Text = $"{currentYear - 2}-{currentYear}";
 
                 GetMenuControl();
             }
 
             GetAdminName();
+        }
+
+        // --- Add this method anywhere in your Bill.master.cs class ---
+
+        private void CreateiTopTicket_OLD(string userId, string name, string currentUrl, string userMessage, string base64Screenshot)
+        {
+            try
+            {
+                // 1. Fetch settings from web.config
+                string iTopUrl = ConfigurationManager.AppSettings["iTopUrl"];
+                string iTopUser = ConfigurationManager.AppSettings["iTopUser"];
+                string iTopPass = ConfigurationManager.AppSettings["iTopPass"];
+                string callerEmail = ConfigurationManager.AppSettings["iTopCallerEmail"];
+                string orgName = ConfigurationManager.AppSettings["iTopOrgName"];
+
+                // 2. Format the HTML Description (Injecting the base64 image directly!)
+                string descriptionHtml = $"<p><strong>Reported By:</strong> {name} (User ID: {userId})</p>";
+                descriptionHtml += $"<p><strong>Page URL:</strong> <a href='{currentUrl}'>{currentUrl}</a></p>";
+                descriptionHtml += $"<p><strong>Message:</strong><br/>{userMessage.Replace(Environment.NewLine, "<br/>")}</p>";
+
+                if (!string.IsNullOrEmpty(base64Screenshot))
+                {
+                    // By putting the base64 string directly into an img tag, iTop renders it inline!
+                    descriptionHtml += $"<br/><hr/><p><strong>Auto-Captured Screenshot:</strong><br/><img src='{base64Screenshot}' style='max-width:100%; border:1px solid #ccc;' /></p>";
+                }
+
+                // 3. Construct the JSON Payload safely using JavaScriptSerializer
+                System.Web.Script.Serialization.JavaScriptSerializer js = new System.Web.Script.Serialization.JavaScriptSerializer();
+                js.MaxJsonLength = int.MaxValue; // Required to allow large Base64 image strings
+
+                var payload = new
+                {
+                    operation = "core/create",
+                    comment = "Ticket created via FLAME-EX Portal API",
+                    @class = "UserRequest",
+                    output_fields = "id, ref",
+                    fields = new
+                    {
+                        // iTop OQL queries to dynamically link the ticket
+                        org_id = $"SELECT Organization WHERE name = '{orgName}'",
+                        caller_id = $"SELECT Person WHERE email = '{callerEmail}'",
+                        title = $"FLAME-EX Issue: {name} ({userId})",
+                        description = descriptionHtml
+                    }
+                };
+
+                
+                string jsonData = js.Serialize(payload);
+                //System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+                System.Net.ServicePointManager.SecurityProtocol = (System.Net.SecurityProtocolType)3072;
+                // 4. Send the POST request to iTop
+                using (var client = new System.Net.WebClient())
+                {
+                    var reqParm = new System.Collections.Specialized.NameValueCollection();
+                    reqParm.Add("version", "1.3");
+                    reqParm.Add("auth_user", iTopUser);
+                    reqParm.Add("auth_pwd", iTopPass);
+                    reqParm.Add("json_data", jsonData);
+
+                    // Upload the data to the iTop REST API
+                    byte[] responseBytes = client.UploadValues(iTopUrl, "POST", reqParm);
+                    string responseBody = System.Text.Encoding.UTF8.GetString(responseBytes);
+
+                    // If iTop returns an error code (not 0), throw an exception so we know what went wrong
+                    if (responseBody.Contains("\"code\":") && !responseBody.Contains("\"code\":0"))
+                    {
+                        throw new Exception("iTop API Error: " + responseBody);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to create ticket in iTop: " + ex.Message);
+            }
         }
 
         private void GetAdminName()
@@ -189,6 +265,394 @@ namespace Bill_Software.corporate.business.app
             Session.Clear();
             Session.Abandon();
             Response.Redirect("~/index.aspx", false);
+        }
+
+        private string GetUserEmailFromDatabase(string userId)
+        {
+            string email = "Not Provided";
+            string query = "SELECT Email FROM tbl_login WHERE User_Id = @UserId";
+
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                {
+                    using (var cmd = new SqlCommand(query, cn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cn.Open();
+                        object result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            email = result.ToString();
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // If there's an error fetching the email, we'll just return "Not Provided"
+                // to ensure the support ticket process doesn't completely fail.
+            }
+            return email;
+        }
+
+        private void NotifyITSupport(string userId, string name, string email, string url, string message, string file1Path, string file2Path)
+        {
+            // --- 1. Save Ticket to the Database ---
+            string insertQuery = @"
+            INSERT INTO tbl_ITSupportTickets (UserId, UserName, UserEmail, PageUrl, UserMessage, Attachment1Path, Attachment2Path, CreatedDate)
+            VALUES (@UserId, @UserName, @UserEmail, @PageUrl, @Message, @File1, @File2, GETDATE())";
+
+            using (var cn = new SqlConnection(ConnString))
+            {
+                using (var cmd = new SqlCommand(insertQuery, cn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@UserName", name);
+                    cmd.Parameters.AddWithValue("@UserEmail", email);
+                    cmd.Parameters.AddWithValue("@PageUrl", url);
+                    cmd.Parameters.AddWithValue("@Message", message);
+
+                    // Handle optional files: Insert DBNull if the path is empty
+                    cmd.Parameters.AddWithValue("@File1", string.IsNullOrEmpty(file1Path) ? (object)DBNull.Value : file1Path);
+                    cmd.Parameters.AddWithValue("@File2", string.IsNullOrEmpty(file2Path) ? (object)DBNull.Value : file2Path);
+
+                    cn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            // --- 2. Send the Email Trigger ---
+            SendSupportEmail(userId, name, email, url, message, file1Path, file2Path);
+        }
+
+        private void SendSupportEmail(string userId, string name, string email, string url, string message, string file1Path, string file2Path)
+        {
+            try
+            {
+                // 1. Read SMTP settings from web.config <appSettings>
+                string smtpFrom = ConfigurationManager.AppSettings["SmtpFrom"];
+                string smtpUser = ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = ConfigurationManager.AppSettings["SmtpPass"];
+                string smtpHost = ConfigurationManager.AppSettings["SmtpHost"];
+                int smtpPort = Convert.ToInt32(ConfigurationManager.AppSettings["SmtpPort"]);
+                bool enableSsl = Convert.ToBoolean(ConfigurationManager.AppSettings["SmtpEnableSsl"]);
+
+                // 2. Configure the Email Message
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(smtpFrom, "IT Support System");
+
+                // Change this to the email address that should RECEIVE the support tickets
+                mail.To.Add("it.support@aminruptechnologies.co.in");
+
+                mail.Subject = "New IT Support Concern Raised by " + name;
+                mail.IsBodyHtml = true;
+
+                // 3. Construct the email body
+                mail.Body = $@"
+                    <h2 style='color: #2268a9;'>New IT Support Concern</h2>
+                    <hr />
+                    <p><strong>User ID:</strong> {userId}</p>
+                    <p><strong>Name:</strong> {name}</p>
+                    <p><strong>User's Email:</strong> {email}</p>
+                    <p><strong>Reported From URL:</strong> <a href='{url}'>{url}</a></p>
+                    <br />
+                    <p><strong>User Message:</strong></p>
+                    <p style='background-color: #f9f9f9; padding: 10px; border-left: 4px solid #2268a9;'>
+                        {message.Replace(Environment.NewLine, "<br/>")}
+                    </p>
+                ";
+
+                // 4. Attach Files if they exist
+                if (!string.IsNullOrEmpty(file1Path) && File.Exists(file1Path))
+                {
+                    mail.Attachments.Add(new Attachment(file1Path));
+                }
+                if (!string.IsNullOrEmpty(file2Path) && File.Exists(file2Path))
+                {
+                    mail.Attachments.Add(new Attachment(file2Path));
+                }
+
+                // 5. Configure the SMTP Client with your specific settings
+                using (SmtpClient smtp = new SmtpClient(smtpHost, smtpPort))
+                {
+                    smtp.Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass);
+                    smtp.EnableSsl = enableSsl;
+                    smtp.Send(mail);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ticket saved, but email notification failed: " + ex.Message);
+            }
+        }
+
+        protected void btnSubmitSupport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 1. Gather Data
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "Unknown User";
+                string userName = lblName.Text;
+                string currentUrl = Request.Url.AbsoluteUri;
+                string userMessage = txtSupportMessage.Text;
+                string userEmail = GetUserEmailFromDatabase(userId);
+
+                // 2. Local File Storage
+                string saveDirectory = Server.MapPath("~/SupportUploads/");
+                if (!System.IO.Directory.Exists(saveDirectory)) System.IO.Directory.CreateDirectory(saveDirectory);
+
+                string file1Path = string.Empty; // For Auto-Screenshot
+                string file2Path = string.Empty; // For Manual Upload
+
+                // 3. Process the Auto-Screenshot
+                string rawBase64 = hfAutoScreenshot.Value;
+                if (!string.IsNullOrEmpty(rawBase64))
+                {
+                    // Strip header for physical file saving
+                    string cleanBase64 = rawBase64.Contains(",") ? rawBase64.Split(',')[1] : rawBase64;
+                    byte[] imageBytes = Convert.FromBase64String(cleanBase64);
+
+                    string autoFileName = userId + "_auto_" + DateTime.Now.Ticks + ".png";
+                    file1Path = System.IO.Path.Combine(saveDirectory, autoFileName);
+                    System.IO.File.WriteAllBytes(file1Path, imageBytes);
+                }
+
+                // 4. Handle Manual File Upload
+                if (fileScreenshot1.HasFile)
+                {
+                    string fileName1 = userId + "_manual_" + DateTime.Now.Ticks + "_" + fileScreenshot1.FileName;
+                    file2Path = System.IO.Path.Combine(saveDirectory, fileName1);
+                    fileScreenshot1.SaveAs(file2Path);
+                }
+
+                // --- THE INTEGRATIONS ---
+
+                // A. iTop Integration (Uses modern TLS 1.2)
+                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+                CreateiTopTicket(userId, userName, currentUrl, userMessage, rawBase64);
+
+                // B. SQL & Email Integration
+                NotifyITSupport(userId, userName, userEmail, currentUrl, userMessage, file1Path, file2Path);
+
+                // 5. Final Cleanup
+                txtSupportMessage.Text = "";
+                hfAutoScreenshot.Value = "";
+
+                string successScript = "alert('Success! Your ticket is logged in iTop and Support has been notified.'); document.getElementById('supportModal').style.display = 'none'; document.getElementById('imgScreenshotPreview').style.display = 'none';";
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "FinalSuccess", successScript, true);
+            }
+            catch (Exception ex)
+            {
+                lblSupportStatus.Text = "Error: " + ex.Message;
+                lblSupportStatus.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
+        private void CreateiTopTicket(string userId, string name, string currentUrl, string userMessage, string base64Screenshot)
+        {
+            try
+            {
+                // 1. Fetch settings from web.config
+                string iTopUrl = ConfigurationManager.AppSettings["iTopUrl"];
+                string iTopUser = ConfigurationManager.AppSettings["iTopUser"];
+                string iTopPass = ConfigurationManager.AppSettings["iTopPass"];
+                string callerEmail = ConfigurationManager.AppSettings["iTopCallerEmail"];
+                string orgName = ConfigurationManager.AppSettings["iTopOrgName"];
+
+                // 2. Format the HTML Description (WITHOUT the image string)
+                string descriptionHtml = $"<p><strong>Reported By:</strong> {name} (User ID: {userId})</p>";
+                descriptionHtml += $"<p><strong>Page URL:</strong> <a href='{currentUrl}'>{currentUrl}</a></p>";
+                descriptionHtml += $"<p><strong>Message:</strong><br/>{userMessage.Replace(Environment.NewLine, "<br/>")}</p>";
+
+                // 3. Construct the Ticket JSON Payload
+                System.Web.Script.Serialization.JavaScriptSerializer js = new System.Web.Script.Serialization.JavaScriptSerializer();
+                js.MaxJsonLength = int.MaxValue;
+
+                var ticketPayload = new
+                {
+                    operation = "core/create",
+                    comment = "Ticket created via FLAME-EX Portal API",
+                    @class = "UserRequest",
+                    output_fields = "id",
+                    fields = new
+                    {
+                        org_id = $"SELECT Organization WHERE name = '{orgName}'",
+                        caller_id = $"SELECT Person WHERE email = '{callerEmail}'",
+                        title = $"FLAME-EX Issue: {name} ({userId})",
+                        description = descriptionHtml,
+
+                        //// --- THE FIX: Using the exact names from your database export ---
+                        //service_id = "SELECT Service WHERE name = 'AS-Application Support'",
+                        //servicesubcategory_id = "SELECT ServiceSubcategory WHERE name = 'Application Support'"
+
+                        // --- THE FIX: Passing the direct integer IDs! ---
+                        //service_id = "SELECT Service WHERE id = 2",
+                        //servicesubcategory_id = "SELECT ServiceSubcategory WHERE id = 2"
+                    }
+                };
+
+                string ticketJsonData = js.Serialize(ticketPayload);
+                string newTicketId = "";
+
+                // 4. Send the POST request to create the TICKET
+                using (var client = new System.Net.WebClient())
+                {
+                    var reqParm = new System.Collections.Specialized.NameValueCollection();
+                    reqParm.Add("version", "1.3");
+                    reqParm.Add("auth_user", iTopUser);
+                    reqParm.Add("auth_pwd", iTopPass);
+                    reqParm.Add("json_data", ticketJsonData);
+
+                    byte[] responseBytes = client.UploadValues(iTopUrl, "POST", reqParm);
+                    string responseBody = System.Text.Encoding.UTF8.GetString(responseBytes);
+
+                    // Catch actual iTop rejection errors
+                    if (responseBody.Contains("\"code\":") && !responseBody.Contains("\"code\":0"))
+                    {
+                        throw new Exception("iTop Ticket Creation Error: " + responseBody);
+                    }
+
+                    // --- THE BULLETPROOF FIX: Use Regex to find the Ticket ID safely ---
+                    // iTop returns something like "key":"1234" in its JSON response. 
+                    // This regex safely extracts just the number.
+                    System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(responseBody, "\"key\"\\s*:\\s*\"?(\\d+)\"?");
+                    if (match.Success)
+                    {
+                        newTicketId = match.Groups[1].Value;
+                    }
+                    else
+                    {
+                        throw new Exception("Ticket created, but could not extract ID to attach image.");
+                    }
+                }
+
+                // 5. If we have a screenshot AND a successful Ticket ID, send the ATTACHMENT
+                if (!string.IsNullOrEmpty(base64Screenshot) && !string.IsNullOrEmpty(newTicketId))
+                {
+                    // Clean the base64 string to remove the web prefix
+                    string cleanBase64 = base64Screenshot.Contains(",") ? base64Screenshot.Split(',')[1] : base64Screenshot;
+
+                    var attachmentPayload = new
+                    {
+                        operation = "core/create",
+                        comment = "Auto-captured screenshot from FLAME-EX",
+                        @class = "Attachment",
+                        output_fields = "id",
+                        fields = new
+                        {
+                            item_class = "UserRequest",
+                            item_id = newTicketId,      // Link exactly to the ticket we just made!
+                            contents = new
+                            {
+                                data = cleanBase64,
+                                mimetype = "image/png",
+                                filename = "Auto_Screenshot.png"
+                            }
+                        }
+                    };
+
+                    string attachmentJsonData = js.Serialize(attachmentPayload);
+
+                    using (var client = new System.Net.WebClient())
+                    {
+                        var reqParm = new System.Collections.Specialized.NameValueCollection();
+                        reqParm.Add("version", "1.3");
+                        reqParm.Add("auth_user", iTopUser);
+                        reqParm.Add("auth_pwd", iTopPass);
+                        reqParm.Add("json_data", attachmentJsonData);
+
+                        // Upload the attachment!
+                        client.UploadValues(iTopUrl, "POST", reqParm);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        protected void btnSubmitSupport_Click_OLD(object sender, EventArgs e)
+        {
+            try
+            {
+                // 1. Gather Information
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "Unknown User";
+                string userName = lblName.Text;
+                string currentUrl = Request.Url.AbsoluteUri;
+                string userMessage = txtSupportMessage.Text;
+
+                // This is used for your SQL/Email backup
+                string userEmail = "support@yourdomain.com";
+
+                // 2. Prepare paths for local file saving
+                string saveDirectory = Server.MapPath("~/SupportUploads/");
+                if (!System.IO.Directory.Exists(saveDirectory)) System.IO.Directory.CreateDirectory(saveDirectory);
+
+                string file1Path = string.Empty; // For Auto-Screenshot
+                string file2Path = string.Empty; // For Manual Upload
+
+                // 3. Handle the Auto-Screenshot
+                string rawBase64 = hfAutoScreenshot.Value; // The full string for iTop
+                if (!string.IsNullOrEmpty(rawBase64))
+                {
+                    // For saving as a physical file, we strip the header
+                    string cleanBase64 = rawBase64.Contains(",") ? rawBase64.Split(',')[1] : rawBase64;
+                    byte[] imageBytes = Convert.FromBase64String(cleanBase64);
+
+                    string autoFileName = userId + "_auto_" + DateTime.Now.Ticks + ".png";
+                    file1Path = System.IO.Path.Combine(saveDirectory, autoFileName);
+                    System.IO.File.WriteAllBytes(file1Path, imageBytes);
+                }
+
+                // 4. Handle Manual File Upload
+                if (fileScreenshot1.HasFile)
+                {
+                    string fileName1 = userId + "_manual_" + DateTime.Now.Ticks + "_" + fileScreenshot1.FileName;
+                    file2Path = System.IO.Path.Combine(saveDirectory, fileName1);
+                    fileScreenshot1.SaveAs(file2Path);
+                }
+
+                // 5. THE INTEGRATIONS
+
+                // A. Create Ticket in iTop (Uses rawBase64 for the inline image)
+                CreateiTopTicket(userId, userName, currentUrl, userMessage, rawBase64);
+
+                // B. Send Email and Log to SQL (Uses the saved file paths)
+                NotifyITSupport(userId, userName, userEmail, currentUrl, userMessage, file1Path, file2Path);
+
+                //// 6. Final Cleanup and Success Message
+                //txtSupportMessage.Text = "";
+                //hfAutoScreenshot.Value = "";
+
+                //string successScript = "alert('Success! Ticket logged in iTop and Support Email sent.'); document.getElementById('supportModal').style.display = 'none'; document.getElementById('imgScreenshotPreview').style.display = 'none';";
+                //ScriptManager.RegisterStartupScript(this, this.GetType(), "CloseModal", successScript, true);
+
+                // 5. Final Cleanup and In-Modal Success Message
+                txtSupportMessage.Text = "";
+                hfAutoScreenshot.Value = "";
+
+                // Show the success message directly inside the modal's label
+                lblSupportStatus.Text = "Success! Your concern has been logged in iTop and emailed to the IT Team.";
+                lblSupportStatus.ForeColor = System.Drawing.Color.Green;
+
+                // Update the JavaScript to KEEP the modal open (display = 'block') 
+                // but reset the camera preview so it's ready for next time.
+                string successScript = @"
+                    document.getElementById('supportModal').style.display = 'block'; 
+                    document.getElementById('imgScreenshotPreview').style.display = 'none';
+                    document.getElementById('btnCaptureScreen').innerHTML = '📸 Capture Current Page';
+                    document.getElementById('btnCaptureScreen').disabled = false;
+                ";
+
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "KeepModalOpenSuccess", successScript, true);
+            }
+            catch (Exception ex)
+            {
+                lblSupportStatus.Text = "Error: " + ex.Message;
+                lblSupportStatus.ForeColor = System.Drawing.Color.Red;
+            }
         }
     }
 }

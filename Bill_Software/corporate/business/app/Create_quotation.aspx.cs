@@ -338,11 +338,12 @@ namespace Bill_Software.corporate.business.app
 
         protected void ToggleGridColumns()
         {
-            if (gd_Service_Product.Columns.Count > 10)
+            if (gd_Service_Product.Columns.Count > 20)
             {
                 bool isQuotation = rbQt.Checked;
-                gd_Service_Product.Columns[15].Visible = !isQuotation; // Del Date index adjusted due to added columns
-                gd_Service_Product.Columns[16].Visible = !isQuotation; // Dept index adjusted due to added columns
+                // Updated Column Indexes based on the new human-readable Grid Layout
+                gd_Service_Product.Columns[22].Visible = !isQuotation; // Del Date
+                gd_Service_Product.Columns[23].Visible = !isQuotation; // Dept 
             }
         }
 
