@@ -23,27 +23,32 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                // Query filtered for Current Month and Year
+                // Updated query using OUTER APPLY to fix the empty Product Category issue
                 string cmdstring = @"
                     SELECT 
-                        tbl_QuoPriSerTogather.PServiceName, 
-                        tbl_Quotation.ID,
-                        tbl_Quotation.service_tax1, 
-                        tbl_Quotation.sub_total, 
-                        tbl_Quotation.Quotation_no, 
-                        tbl_Quotation.Quotation_date, 
-                        tbl_Quotation.Gross, 
-                        tbl_Quotation.Service_tax, 
-                        tbl_Quotation.Net_amount,
-                        tbl_Quotation.cgstOrsgst,
-                        tbl_Client.Client_Name 
-                    FROM tbl_Quotation 
-                    LEFT OUTER JOIN tbl_Client ON tbl_Quotation.Client_Id = tbl_Client.Client_Id 
-                    LEFT OUTER JOIN tbl_QuoPriSerTogather ON tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no AND tbl_QuoPriSerTogather.TimeStamp = tbl_Quotation.TimsStamp 
-                    WHERE tbl_Quotation.RecordType = 'Quotation' 
-                      AND MONTH(CAST(tbl_Quotation.Quotation_date as date)) = MONTH(GETDATE()) 
-                      AND YEAR(CAST(tbl_Quotation.Quotation_date as date)) = YEAR(GETDATE())
-                    ORDER BY CAST(tbl_Quotation.Quotation_date as date) DESC";
+                        s.PServiceName, 
+                        q.ID,
+                        q.service_tax1, 
+                        q.sub_total, 
+                        q.Quotation_no, 
+                        q.Quotation_date, 
+                        q.Gross, 
+                        q.Service_tax, 
+                        q.Net_amount,
+                        q.cgstOrsgst,
+                        c.Client_Name 
+                    FROM tbl_Quotation q
+                    LEFT OUTER JOIN tbl_Client c ON q.Client_Id = c.Client_Id 
+                    OUTER APPLY (
+                        SELECT TOP 1 PServiceName 
+                        FROM tbl_QuoPriSerTogather 
+                        WHERE qutno = q.Quotation_no 
+                        ORDER BY TimeStamp DESC
+                    ) s
+                    WHERE q.RecordType = 'Quotation' 
+                      AND MONTH(CAST(q.Quotation_date as date)) = MONTH(GETDATE()) 
+                      AND YEAR(CAST(q.Quotation_date as date)) = YEAR(GETDATE())
+                    ORDER BY CAST(q.Quotation_date as date) DESC";
 
                 Binddata(cmdstring);
             }

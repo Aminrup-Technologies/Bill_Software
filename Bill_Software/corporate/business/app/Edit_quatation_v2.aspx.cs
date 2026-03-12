@@ -473,18 +473,29 @@ namespace Bill_Software.corporate.business.app
                 GridViewRow row = gd_Service_Product.Rows[i];
                 if (row.RowType == DataControlRowType.DataRow)
                 {
-                    dt.Rows[i]["Quantity"] = ((TextBox)row.FindControl("Quantity")).Text;
-                    dt.Rows[i]["Sail_Rate"] = ((TextBox)row.FindControl("Sail_Rate")).Text;
-                    dt.Rows[i]["Discount_Rate"] = ((TextBox)row.FindControl("Discount_Rate")).Text;
-                    dt.Rows[i]["ItemNo"] = ((TextBox)row.FindControl("ItemNo"))?.Text ?? "";
-                    dt.Rows[i]["MaterialNo"] = ((TextBox)row.FindControl("MaterialNo"))?.Text ?? "";
-                    dt.Rows[i]["PackSize"] = ((TextBox)row.FindControl("PackSize"))?.Text ?? "";
-                    dt.Rows[i]["ItemRemarks"] = ((TextBox)row.FindControl("ItemRemarks")).Text;
+                    // Safely extracts text whether you used a TextBox or a Label in the ASPX
+                    Func<string, string> GetGridValue = (controlId) =>
+                    {
+                        System.Web.UI.Control ctrl = row.FindControl(controlId);
+                        if (ctrl is TextBox) return ((TextBox)ctrl).Text;
+                        if (ctrl is Label) return ((Label)ctrl).Text;
+                        return "";
+                    };
+
+                    dt.Rows[i]["Quantity"] = GetGridValue("Quantity");
+                    dt.Rows[i]["Sail_Rate"] = GetGridValue("Sail_Rate");
+                    dt.Rows[i]["Discount_Rate"] = GetGridValue("Discount_Rate");
+                    dt.Rows[i]["Brand"] = GetGridValue("Brand");
+                    dt.Rows[i]["Specification"] = GetGridValue("Specification");
+                    dt.Rows[i]["ItemNo"] = GetGridValue("ItemNo");
+                    dt.Rows[i]["MaterialNo"] = GetGridValue("MaterialNo");
+                    dt.Rows[i]["PackSize"] = GetGridValue("PackSize");
+                    dt.Rows[i]["ItemRemarks"] = GetGridValue("ItemRemarks");
 
                     if (!rbQt.Checked && dt.Columns.Contains("DeliveryDate"))
                     {
-                        dt.Rows[i]["DeliveryDate"] = ((TextBox)row.FindControl("DeliveryDate")).Text;
-                        dt.Rows[i]["Department"] = ((TextBox)row.FindControl("Department")).Text;
+                        dt.Rows[i]["DeliveryDate"] = GetGridValue("DeliveryDate");
+                        dt.Rows[i]["Department"] = GetGridValue("Department");
                     }
                 }
             }
@@ -538,26 +549,57 @@ namespace Bill_Software.corporate.business.app
         protected void btnNext3_Click(object sender, EventArgs e)
         {
             PanelGlobalAlert.Visible = false;
+
+            // 1. Save the cart data from the active GridView into ViewState FIRST
             SaveCartToViewState();
+
             DataTable currentCart = (DataTable)ViewState["PhaseProductData"];
 
+            // Ensure the user actually has items before letting them go to the final step
             if (currentCart == null || currentCart.Rows.Count == 0)
             {
                 ShowAlert("Cart is empty! Add products to proceed.", true);
                 return;
             }
 
+            // 2. Bind the phase types for the final view
             bindphaseType(lblqno.Text);
-            WizardMultiView.ActiveViewIndex = 4; // Move to Terms
+
+            // Note: LoadPrimaryServices is already handled in DataList1_ItemCommand when you first load the quote, 
+            // so we don't need to call a 'bindPrimaryServices' method here!
+
+            // 3. Now it is safe to move to Step 4 (Terms & Conditions)
+            WizardMultiView.ActiveViewIndex = 4;
         }
 
         protected void btnPrev4_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 3; }
 
 
-        // ================= WIZARD VIEW 4: TERMS & SAVE =================
+        protected void btnSabe_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Executes the updated method that reads from ViewState["PhaseProductData"]
+                DataUpdaterMethod();
+            }
+            catch (Exception ex)
+            {
+                ShowAlert("Error updating version: " + ex.Message, true);
+            }
+        }
 
-        protected void btnSabe_Click(object sender, EventArgs e) { DataUpdaterMethod(); }
-        protected void btnNew_Click(object sender, EventArgs e) { MagicianNew(); }
+        protected void btnNew_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Executes the updated method that reads from ViewState["PhaseProductData"]
+                MagicianNew();
+            }
+            catch (Exception ex)
+            {
+                ShowAlert("Error creating new version: " + ex.Message, true);
+            }
+        }
 
         private void DataUpdaterMethod()
         {
@@ -621,18 +663,19 @@ namespace Bill_Software.corporate.business.app
                             sCmd.ExecuteNonQuery();
                         }
 
-                        // 4. Insert New Details
+                        // 4. Insert New Details - NOW USING VIEWSTATE CART INSTEAD OF GRIDVIEW
                         int h = 0;
-                        foreach (GridViewRow row in gd_Service_Product.Rows)
+                        DataTable dtCart = ViewState["PhaseProductData"] as DataTable;
+
+                        if (dtCart != null)
                         {
-                            CheckBox chk = (CheckBox)row.FindControl("chk"); // hidden in cart, forced checked
-                            if (chk != null && chk.Checked)
+                            foreach (DataRow row in dtCart.Rows)
                             {
                                 h++;
-                                decimal Quantity = ParseDecimal(((TextBox)row.FindControl("Quantity")).Text);
-                                decimal Sail_Rate = ParseDecimal(((TextBox)row.FindControl("Sail_Rate")).Text);
-                                decimal Tax_Rate = ParseDecimal(((Label)row.FindControl("Tax_Rate")).Text);
-                                decimal Discount_Rate = ParseDecimal(((TextBox)row.FindControl("Discount_Rate")).Text);
+                                decimal Quantity = ParseDecimal(row["Quantity"].ToString());
+                                decimal Sail_Rate = ParseDecimal(row["Sail_Rate"].ToString());
+                                decimal Tax_Rate = ParseDecimal(row["Tax_Rate"].ToString());
+                                decimal Discount_Rate = ParseDecimal(row["Discount_Rate"].ToString());
 
                                 decimal discounted_rate = Sail_Rate - (Sail_Rate * Discount_Rate / 100);
                                 decimal taxMultiplier = (Tax_Rate + 100) / 100;
@@ -646,19 +689,19 @@ namespace Bill_Software.corporate.business.app
                                 new_Gross_amount += Total_sail_rate1;
 
                                 using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotaion_details 
-                                (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discount_rate, new_sailrate, 
-                                 Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, 
-                                 ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest)
-                                VALUES 
-                                (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discount_rate, @new_sailrate, 
-                                 @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, 'No', @Type, @Unit, @ProductOrServiceCat, 
-                                 @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), @Version, 0, 1)", conn, trans))
+                        (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discount_rate, new_sailrate, 
+                         Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, 
+                         ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest)
+                        VALUES 
+                        (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discount_rate, @new_sailrate, 
+                         @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, 'No', @Type, @Unit, @ProductOrServiceCat, 
+                         @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), @Version, 0, 1)", conn, trans))
                                 {
                                     cmd.Parameters.AddWithValue("@Sl_no", h);
                                     cmd.Parameters.AddWithValue("@Quotation_no", qno);
-                                    cmd.Parameters.AddWithValue("@Product_id", ((Label)row.FindControl("Product_code"))?.Text ?? ""); // HSN Code mapped to Product_id
-                                    cmd.Parameters.AddWithValue("@Product_Code", ((Label)row.FindControl("ProductID"))?.Text ?? ""); // PRD Custom ID mapped to Product_Code
-                                    cmd.Parameters.AddWithValue("@Product_name", ((Label)row.FindControl("ProductName"))?.Text ?? "");
+                                    cmd.Parameters.AddWithValue("@Product_id", row["Product_code"].ToString()); // HSN
+                                    cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"].ToString());  // PRD Custom ID
+                                    cmd.Parameters.AddWithValue("@Product_name", row["ProductName"].ToString());
                                     cmd.Parameters.AddWithValue("@Quantity", Quantity);
                                     cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
                                     cmd.Parameters.AddWithValue("@Service_tax_rate", Tax_Rate);
@@ -667,19 +710,19 @@ namespace Bill_Software.corporate.business.app
                                     cmd.Parameters.AddWithValue("@Total_sail_rate", Total_sail_rate);
                                     cmd.Parameters.AddWithValue("@Total_sail_rate1", Total_sail_rate1);
                                     cmd.Parameters.AddWithValue("@Total_sail_rate2", Total_sail_rate2);
-                                    cmd.Parameters.AddWithValue("@specification", ((TextBox)row.FindControl("Brand"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@Misc", ((TextBox)row.FindControl("Specification"))?.Text ?? "~");
-                                    cmd.Parameters.AddWithValue("@Type", ((Label)row.FindControl("Type"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@Unit", ((Label)row.FindControl("Unit"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@ProductOrServiceCat", ((Label)row.FindControl("ProductOrServiceCat"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@ItemRemarks", ((TextBox)row.FindControl("ItemRemarks"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@ItemNo", ((TextBox)row.FindControl("ItemNo"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@MaterialNo", ((TextBox)row.FindControl("MaterialNo"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@PackSize", ((TextBox)row.FindControl("PackSize"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@DeliveryDate", rbQt.Checked ? "" : ((TextBox)row.FindControl("DeliveryDate"))?.Text ?? "");
-                                    cmd.Parameters.AddWithValue("@Department", rbQt.Checked ? "" : ((TextBox)row.FindControl("Department"))?.Text ?? "");
+                                    cmd.Parameters.AddWithValue("@specification", row["Brand"].ToString());
+                                    cmd.Parameters.AddWithValue("@Misc", row["Specification"].ToString());
+                                    cmd.Parameters.AddWithValue("@Type", row["Type"].ToString());
+                                    cmd.Parameters.AddWithValue("@Unit", row["Unit"].ToString());
+                                    cmd.Parameters.AddWithValue("@ProductOrServiceCat", row["ProductOrServiceCat"].ToString());
+                                    cmd.Parameters.AddWithValue("@ItemRemarks", row["ItemRemarks"].ToString());
+                                    cmd.Parameters.AddWithValue("@ItemNo", row["ItemNo"].ToString());
+                                    cmd.Parameters.AddWithValue("@MaterialNo", row["MaterialNo"].ToString());
+                                    cmd.Parameters.AddWithValue("@PackSize", row["PackSize"].ToString());
+                                    cmd.Parameters.AddWithValue("@DeliveryDate", rbQt.Checked ? "" : row["DeliveryDate"]?.ToString() ?? "");
+                                    cmd.Parameters.AddWithValue("@Department", rbQt.Checked ? "" : row["Department"]?.ToString() ?? "");
                                     cmd.Parameters.AddWithValue("@AddedById", userId);
-                                    cmd.Parameters.AddWithValue("@Version", newVersion);
+                                    cmd.Parameters.AddWithValue("@Version", newVersion); // Ensures history is tracked
                                     cmd.ExecuteNonQuery();
                                 }
                             }
@@ -694,17 +737,17 @@ namespace Bill_Software.corporate.business.app
                         decimal finalNet = Math.Round(new_Gross_amount + tcsAmount + deliveryAmount + otherAmount, 2);
 
                         string updateHeader = @"UPDATE tbl_Quotation SET 
-                        Gross = @Gross, Service_tax = @STax, Net_amount = @Net, service_tax1 = @STax1, sub_total = @SubT,
-                        ValidityDays = @VDays, DeliveryTenure = @DTenure, PackingCharges = @PCharge, 
-                        cgstOrsgst = @CGST, igst = @IGST, PlaceofSupply = @POS, 
-                        ReferenceData = @RefD, ReferenceName = @RefN, ReferenceId = @RefI, ReferenceDate = @RefDt,
-                        Remarks = @Remarks, DetailedView = @DView, DiscountView = @DiscView, 
-                        RecordType = @RType, DO_Number = @DONum, PO_Number = @PONum, PO_Date = @PODt, 
-                        Validity_StartDate = @VStart, Validity_EndDate = @VEnd,
-                        TCS_Amount = @TCSA, TCS_Percent = @TCSP, Freight_Amount = @FrA, Freight_VAT_Percent = @FrP, 
-                        OtherCharge_Name = @OthName, OtherCharge_Amount = @OthAmnt,
-                        ModifiedById = @ModBy, ModifiedOn = GETDATE() 
-                        WHERE Quotation_no = @QNo";
+                Gross = @Gross, Service_tax = @STax, Net_amount = @Net, service_tax1 = @STax1, sub_total = @SubT,
+                ValidityDays = @VDays, DeliveryTenure = @DTenure, PackingCharges = @PCharge, 
+                cgstOrsgst = @CGST, igst = @IGST, PlaceofSupply = @POS, 
+                ReferenceData = @RefD, ReferenceName = @RefN, ReferenceId = @RefI, ReferenceDate = @RefDt,
+                Remarks = @Remarks, DetailedView = @DView, DiscountView = @DiscView, 
+                RecordType = @RType, DO_Number = @DONum, PO_Number = @PONum, PO_Date = @PODt, 
+                Validity_StartDate = @VStart, Validity_EndDate = @VEnd,
+                TCS_Amount = @TCSA, TCS_Percent = @TCSP, Freight_Amount = @FrA, Freight_VAT_Percent = @FrP, 
+                OtherCharge_Name = @OthName, OtherCharge_Amount = @OthAmnt,
+                ModifiedById = @ModBy, ModifiedOn = GETDATE() 
+                WHERE Quotation_no = @QNo";
 
                         using (SqlCommand hCmd = new SqlCommand(updateHeader, conn, trans))
                         {
@@ -795,16 +838,19 @@ namespace Bill_Software.corporate.business.app
                 try
                 {
                     int h = 0;
-                    foreach (GridViewRow row in gd_Service_Product.Rows)
+
+                    // FIX: Pull directly from the ViewState Cart instead of the GridView
+                    DataTable dtCart = ViewState["PhaseProductData"] as DataTable;
+
+                    if (dtCart != null)
                     {
-                        CheckBox chk = (CheckBox)row.FindControl("chk");
-                        if (chk != null && chk.Checked)
+                        foreach (DataRow row in dtCart.Rows)
                         {
                             h++;
-                            decimal Quantity = ParseDecimal(((TextBox)row.FindControl("Quantity")).Text);
-                            decimal Sail_Rate = ParseDecimal(((TextBox)row.FindControl("Sail_Rate")).Text);
-                            decimal Tax_Rate = ParseDecimal(((Label)row.FindControl("Tax_Rate")).Text);
-                            decimal Discount_Rate = ParseDecimal(((TextBox)row.FindControl("Discount_Rate")).Text);
+                            decimal Quantity = ParseDecimal(row["Quantity"].ToString());
+                            decimal Sail_Rate = ParseDecimal(row["Sail_Rate"].ToString());
+                            decimal Tax_Rate = ParseDecimal(row["Tax_Rate"].ToString());
+                            decimal Discount_Rate = ParseDecimal(row["Discount_Rate"].ToString());
 
                             decimal discounted_rate = Sail_Rate - (Sail_Rate * Discount_Rate / 100);
                             decimal taxMultiplier = (Tax_Rate + 100) / 100;
@@ -818,19 +864,21 @@ namespace Bill_Software.corporate.business.app
                             new_Gross_amount += Total_sail_rate1;
 
                             using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotaion_details 
-                            (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discount_rate, new_sailrate, 
-                             Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, 
-                             ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest) 
-                            VALUES 
-                            (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discount_rate, @new_sailrate, 
-                             @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, 'No', @Type, @Unit, @ProductOrServiceCat, 
-                             @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), 1, 0, 1)", conn, trans))
+                    (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discount_rate, new_sailrate, 
+                     Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, 
+                     ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest) 
+                    VALUES 
+                    (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discount_rate, @new_sailrate, 
+                     @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, 'No', @Type, @Unit, @ProductOrServiceCat, 
+                     @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), 1, 0, 1)", conn, trans))
                             {
                                 cmd.Parameters.AddWithValue("@Sl_no", h);
                                 cmd.Parameters.AddWithValue("@Quotation_no", newRecordID);
-                                cmd.Parameters.AddWithValue("@Product_id", ((Label)row.FindControl("Product_code"))?.Text ?? ""); // HSN Code mapped to Product_id
-                                cmd.Parameters.AddWithValue("@Product_Code", ((Label)row.FindControl("ProductID"))?.Text ?? ""); // PRD Custom ID mapped to Product_Code
-                                cmd.Parameters.AddWithValue("@Product_name", ((Label)row.FindControl("ProductName"))?.Text ?? "");
+
+                                // Mapping strictly from the DataRow
+                                cmd.Parameters.AddWithValue("@Product_id", row["Product_code"].ToString()); // HSN
+                                cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"].ToString());  // PRD Custom ID
+                                cmd.Parameters.AddWithValue("@Product_name", row["ProductName"].ToString());
                                 cmd.Parameters.AddWithValue("@Quantity", Quantity);
                                 cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
                                 cmd.Parameters.AddWithValue("@Service_tax_rate", Tax_Rate);
@@ -839,17 +887,20 @@ namespace Bill_Software.corporate.business.app
                                 cmd.Parameters.AddWithValue("@Total_sail_rate", Total_sail_rate);
                                 cmd.Parameters.AddWithValue("@Total_sail_rate1", Total_sail_rate1);
                                 cmd.Parameters.AddWithValue("@Total_sail_rate2", Total_sail_rate2);
-                                cmd.Parameters.AddWithValue("@specification", ((TextBox)row.FindControl("Brand"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@Misc", ((TextBox)row.FindControl("Specification"))?.Text ?? "~");
-                                cmd.Parameters.AddWithValue("@Type", ((Label)row.FindControl("Type"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@Unit", ((Label)row.FindControl("Unit"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@ProductOrServiceCat", ((Label)row.FindControl("ProductOrServiceCat"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@ItemRemarks", ((TextBox)row.FindControl("ItemRemarks"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@ItemNo", ((TextBox)row.FindControl("ItemNo"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@MaterialNo", ((TextBox)row.FindControl("MaterialNo"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@PackSize", ((TextBox)row.FindControl("PackSize"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@DeliveryDate", rbQt.Checked ? "" : ((TextBox)row.FindControl("DeliveryDate"))?.Text ?? "");
-                                cmd.Parameters.AddWithValue("@Department", rbQt.Checked ? "" : ((TextBox)row.FindControl("Department"))?.Text ?? "");
+                                cmd.Parameters.AddWithValue("@specification", row["Brand"].ToString());
+                                cmd.Parameters.AddWithValue("@Misc", row["Specification"].ToString());
+                                cmd.Parameters.AddWithValue("@Type", row["Type"].ToString());
+                                cmd.Parameters.AddWithValue("@Unit", row["Unit"].ToString());
+                                cmd.Parameters.AddWithValue("@ProductOrServiceCat", row["ProductOrServiceCat"].ToString());
+                                cmd.Parameters.AddWithValue("@ItemRemarks", row["ItemRemarks"].ToString());
+                                cmd.Parameters.AddWithValue("@ItemNo", row["ItemNo"].ToString());
+                                cmd.Parameters.AddWithValue("@MaterialNo", row["MaterialNo"].ToString());
+                                cmd.Parameters.AddWithValue("@PackSize", row["PackSize"].ToString());
+
+                                // Only push DeliveryDate and Dept if this is a PO
+                                cmd.Parameters.AddWithValue("@DeliveryDate", rbQt.Checked ? "" : row["DeliveryDate"]?.ToString() ?? "");
+                                cmd.Parameters.AddWithValue("@Department", rbQt.Checked ? "" : row["Department"]?.ToString() ?? "");
+
                                 cmd.Parameters.AddWithValue("@AddedById", userId);
                                 cmd.ExecuteNonQuery();
                             }
