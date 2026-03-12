@@ -20,16 +20,32 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                // Auto-fill the date if they clicked it on the calendar!
+                GetAdminName();
+                string mode = Request.QueryString["mode"] ?? "plan";
+
+                // Auto-fill the date passed from the calendar
                 if (Request.QueryString["date"] != null)
                 {
-                    txtVisitDate.Text = Convert.ToDateTime(Request.QueryString["date"]).ToString("dd-MMM-yyyy");
+                    txtVisitDate.Text = Convert.ToDateTime(Request.QueryString["date"]).ToString("yyyy-MM-dd");
                 }
                 else
                 {
-                    txtVisitDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                    txtVisitDate.Text = DateTime.Now.ToString("yyyy-MM-dd");
                 }
-                GetAdminName();
+
+                // UI Configuration based on Mode
+                if (mode == "past")
+                {
+                    lblPageTitle.Text = "Log Past Executed Visit";
+                    lblDiscussionLabel.Text = "Visit Outcome / Discussion Points";
+                    pnlExecution.Visible = true;
+                }
+                else
+                {
+                    lblPageTitle.Text = "Plan Future Sales Visit";
+                    lblDiscussionLabel.Text = "Agenda / Purpose";
+                    pnlExecution.Visible = false;
+                }
             }
         }
 
@@ -40,8 +56,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
-            SqlDataReader Rdr;
-            Rdr = cmd.ExecuteReader();
+            SqlDataReader Rdr = cmd.ExecuteReader();
             if (Rdr.Read())
             {
                 txtSalesperson.Text = Rdr["Name"].ToString();
@@ -56,17 +71,18 @@ namespace Bill_Software.corporate.business.app
 
             try
             {
+                string mode = Request.QueryString["mode"] ?? "plan";
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                string visitPhase = (mode == "past") ? "Executed" : "Planned";
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    // Updated Query: Setting VisitPhase to 'Planned' and safely inserting NULLs for execution fields
                     string query = @"INSERT INTO tbl_SalesVisitReport 
                         (VisitDate, Salesperson, CustomerName, Department, ContactPerson, VisitType, DiscussionPoints, 
-                         VisitPhase, Status, FollowUpRequired, NextFollowUpDate, AttachmentName, CreatedDate, CreatedByCode) 
+                         VisitPhase, Status, FollowUpRequired, NextFollowUpDate, AttachmentName, ExecutionDateTime, CreatedDate, CreatedByCode) 
                         VALUES 
                         (@VisitDate, @Salesperson, @CustomerName, @Department, @ContactPerson, @VisitType, @DiscussionPoints, 
-                         'Planned', 'Pending Execution', '', NULL, NULL, @CreatedDate, @CreatedByCode)";
+                         @VisitPhase, @Status, @FollowUpRequired, @NextFollowUpDate, @AttachmentName, @ExecutionDateTime, @CreatedDate, @CreatedByCode)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
@@ -76,7 +92,42 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Department", txtDepartment.Text.Trim());
                         cmd.Parameters.AddWithValue("@ContactPerson", txtContactPerson.Text.Trim());
                         cmd.Parameters.AddWithValue("@VisitType", ddlVisitType.SelectedValue);
-                        cmd.Parameters.AddWithValue("@DiscussionPoints", txtDiscussion.Text.Trim()); // This is now Agenda
+                        cmd.Parameters.AddWithValue("@DiscussionPoints", txtDiscussion.Text.Trim());
+                        cmd.Parameters.AddWithValue("@VisitPhase", visitPhase);
+
+                        if (mode == "past")
+                        {
+                            // It is a past record, fill out the execution columns
+                            cmd.Parameters.AddWithValue("@ExecutionDateTime", txtVisitDate.Text.Trim()); // Treat visit date as execution date
+                            cmd.Parameters.AddWithValue("@Status", ddlStatus.SelectedValue);
+                            cmd.Parameters.AddWithValue("@FollowUpRequired", ddlFollowUp.SelectedValue);
+
+                            if (!string.IsNullOrEmpty(txtNextFollowUp.Text))
+                                cmd.Parameters.AddWithValue("@NextFollowUpDate", txtNextFollowUp.Text.Trim());
+                            else
+                                cmd.Parameters.AddWithValue("@NextFollowUpDate", DBNull.Value);
+
+                            // Handle Attachment
+                            string fileName = null;
+                            if (fileAttachment.HasFile)
+                            {
+                                string datePrefix = DateTime.Now.ToString("yyyyMMddHHmmss");
+                                fileName = datePrefix + "_" + Path.GetFileName(fileAttachment.FileName);
+                                string uploadPath = Server.MapPath("~/Uploads/");
+                                if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+                                fileAttachment.SaveAs(Path.Combine(uploadPath, fileName));
+                            }
+                            cmd.Parameters.AddWithValue("@AttachmentName", (object)fileName ?? DBNull.Value);
+                        }
+                        else
+                        {
+                            // Planning mode: send nulls for execution metrics
+                            cmd.Parameters.AddWithValue("@ExecutionDateTime", DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Status", "Pending Execution");
+                            cmd.Parameters.AddWithValue("@FollowUpRequired", "");
+                            cmd.Parameters.AddWithValue("@NextFollowUpDate", DBNull.Value);
+                            cmd.Parameters.AddWithValue("@AttachmentName", DBNull.Value);
+                        }
 
                         cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Today);
                         string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
@@ -87,61 +138,18 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
-                //lblOk.Text = "Sales visit planned successfully!";
-                //PanelOK.Visible = true;
-                //ClearForm();
-
-                ClearForm();
-                ScriptManager.RegisterStartupScript(this, GetType(), "redirect",
-                    "alert('Sales visit planned successfully!'); window.location='visit_planner.aspx';", true);
+                ScriptManager.RegisterStartupScript(this, GetType(), "redirect", "alert('Record saved successfully!'); window.location='visit_planner.aspx';", true);
             }
             catch (Exception ex)
-            {
-                lblErrorMsg.Text = "An error occurred. Please try again later.";
-                PanelError.Visible = true;
-                LogErrorToFile(ex);
-            }
-        }
-
-        private void LogErrorToFile(Exception ex)
-        {
-            try
-            {
-                string logPath = Server.MapPath("~/Logs/");
-                if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
-                string logFile = Path.Combine(logPath, "ErrorLog.txt");
-
-                using (StreamWriter writer = new StreamWriter(logFile, true))
-                {
-                    writer.WriteLine("[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "]");
-                    writer.WriteLine("Message: " + ex.Message);
-                    writer.WriteLine("StackTrace: " + ex.StackTrace);
-                    writer.WriteLine("----------------------------------------");
-                }
-            }
-            catch (Exception)
             {
                 lblErrorMsg.Text = "An error occurred: " + ex.Message;
                 PanelError.Visible = true;
             }
         }
 
-        private void ClearForm()
-        {
-            txtVisitDate.Text = string.Empty;
-            // Kept Salesperson intact as it is read-only
-            txtCustomerName.Text = string.Empty;
-            txtDepartment.Text = string.Empty;
-            txtContactPerson.Text = string.Empty;
-            ddlVisitType.SelectedIndex = 0;
-            txtDiscussion.Text = string.Empty;
-        }
-
         protected void btnReset_Click(object sender, EventArgs e)
         {
-            ClearForm();
-            PanelOK.Visible = false;
-            PanelError.Visible = false;
+            Response.Redirect("visit_planner.aspx");
         }
     }
 }
