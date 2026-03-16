@@ -52,11 +52,11 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            LoadTaxRates(); // Load rates for dropdowns
+            LoadTaxRates();
 
             if (!IsPostBack)
             {
-                GridData = null; // Reset Grid
+                GridData = null;
                 LoadInitialData();
             }
         }
@@ -219,7 +219,6 @@ namespace Bill_Software.corporate.business.app
                     return;
                 }
 
-                // 1. Save inputs first
                 UpdateStateFromGrid();
 
                 string itemName = cmbproduct_service.SelectedItem.Text;
@@ -249,7 +248,6 @@ namespace Bill_Software.corporate.business.app
                     newRow["Ser_pro_Name"] = dtItem.Rows[0]["Name"];
                     newRow["Order"] = currentGrid.Rows.Count + 1;
 
-                    // Set Defaults
                     newRow["Quantity"] = "1";
                     newRow["Vendor_rate"] = "0";
                     newRow["DiscountPercent"] = "0";
@@ -264,7 +262,6 @@ namespace Bill_Software.corporate.business.app
                     GridData = currentGrid;
                     BindGrid();
 
-                    // Reset UI
                     cmbproduct_service.SelectedIndex = 0;
                     string script = string.Format("document.getElementById('txtItemFilter').value=''; filterDropdown('txtItemFilter', '{0}');", cmbproduct_service.ClientID);
                     ScriptManager.RegisterStartupScript(this, GetType(), "resetSearch", script, true);
@@ -325,7 +322,7 @@ namespace Bill_Software.corporate.business.app
             {
                 if (e.CommandName == "MoveUp" || e.CommandName == "MoveDown" || e.CommandName == "RemoveItem")
                 {
-                    UpdateStateFromGrid(); // Save inputs first
+                    UpdateStateFromGrid();
 
                     DataTable dt = GridData;
                     int index = Convert.ToInt32(e.CommandArgument);
@@ -349,7 +346,6 @@ namespace Bill_Software.corporate.business.app
                         dt.Rows.RemoveAt(index);
                     }
 
-                    // Re-index Order
                     for (int i = 0; i < dt.Rows.Count; i++) dt.Rows[i]["Order"] = i + 1;
 
                     GridData = dt;
@@ -456,7 +452,7 @@ namespace Bill_Software.corporate.business.app
         // --- SAVE TRANSACTION ---
         protected void Button3_Click(object sender, EventArgs e)
         {
-            UpdateStateFromGrid(); // Capture latest inputs
+            UpdateStateFromGrid();
 
             if (GridData.Rows.Count == 0)
             {
@@ -571,10 +567,11 @@ namespace Bill_Software.corporate.business.app
                     cmdHead.Parameters.AddWithValue("@delR", DDL_vat_parsentage.SelectedValue);
                     cmdHead.Parameters.AddWithValue("@oth1", oth1);
                     cmdHead.Parameters.AddWithValue("@oth2", oth2);
-                    cmdHead.Parameters.AddWithValue("@oth1n", TextBox1.Text.Trim()); // description for otherAmount1
-                    cmdHead.Parameters.AddWithValue("@oth2n", TextBox2.Text.Trim()); // description for otherAmount2
-                    cmdHead.Parameters.AddWithValue("@bno", txt_reforder.Text.Trim()); // BuyerOrderNo
-                    cmdHead.Parameters.AddWithValue("@bdate", txt_refordrdate.Text.Trim()); // OrderDate
+                    cmdHead.Parameters.AddWithValue("@oth1n", TextBox1.Text.Trim());
+                    cmdHead.Parameters.AddWithValue("@oth2n", TextBox2.Text.Trim());
+                    cmdHead.Parameters.AddWithValue("@bno", txt_reforder.Text.Trim());
+                    cmdHead.Parameters.AddWithValue("@bdate", txt_refordrdate.Text.Trim());
+
                     string uid = "admin";
                     if (Session["USERID"] != null) uid = Session["USERID"].ToString();
                     cmdHead.Parameters.AddWithValue("@uid", uid);
@@ -717,3 +714,15 @@ namespace Bill_Software.corporate.business.app
         }
     }
 }
+
+/*
+=======================================================================
+File: Purches_exting_vendor.aspx.cs
+Revised On: 16-Mar-2026
+Description: Purchase Wizard Backend (Step 1 to 4)
+Updates:
+- Added Data Persistence (UpdateStateFromGrid) to prevent grid data loss on re-order/remove.
+- Fixed Decimal tracking for stock accuracy via 'Quantity_Num'.
+- Restored Audit tracking parameters (AddedOn, ModifiedOn, ModifiedByUserId) in UpdateStock method.
+=======================================================================
+*/

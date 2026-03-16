@@ -3,7 +3,7 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
 
-    <style>
+    <style type="text/css">
         .dashboard-container { display: flex; flex-wrap: wrap; gap: 20px; margin: 20px auto; max-width: 100%; padding: 0 15px; }
         .calendar-section { flex: 2; min-width: 600px; background-color: #ffffff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
         .list-section { flex: 1; min-width: 300px; background-color: #ffffff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; max-height: 750px; border: 1px solid #eaeaea; }
