@@ -31,15 +31,6 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.UpdatePanel UpdatePanel1;
         
         /// <summary>
-        /// lblclientId control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblclientId;
-        
-        /// <summary>
         /// PanelOK control.
         /// </summary>
         /// <remarks>
@@ -47,15 +38,6 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel PanelOK;
-        
-        /// <summary>
-        /// imageTick control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Image imageTick;
         
         /// <summary>
         /// lblOk control.
@@ -76,15 +58,6 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Panel PanelError;
         
         /// <summary>
-        /// Image1 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Image Image1;
-        
-        /// <summary>
         /// lblErrorMsg control.
         /// </summary>
         /// <remarks>
@@ -101,6 +74,15 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList cmbvendor;
+        
+        /// <summary>
+        /// RadioButtonList1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButtonList RadioButtonList1;
         
         /// <summary>
         /// txttodate control.
@@ -121,13 +103,13 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.TextBox txtfromDate;
         
         /// <summary>
-        /// RadioButtonList1 control.
+        /// lblclientId control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.RadioButtonList RadioButtonList1;
+        protected global::System.Web.UI.WebControls.Label lblclientId;
         
         /// <summary>
         /// btnSertch control.
@@ -157,156 +139,210 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.DataList DataList2;
         
         /// <summary>
-        /// upComments control.
+        /// hfMegaVisitId control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.UpdatePanel upComments;
+        protected global::System.Web.UI.WebControls.HiddenField hfMegaVisitId;
         
         /// <summary>
-        /// pnlComments control.
+        /// lblMegaHeaderTitle control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlComments;
+        protected global::System.Web.UI.WebControls.Label lblMegaHeaderTitle;
         
         /// <summary>
-        /// hfVisitId control.
+        /// lblMegaSalesperson control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfVisitId;
+        protected global::System.Web.UI.WebControls.Label lblMegaSalesperson;
         
         /// <summary>
-        /// litComments control.
+        /// lblMegaCustomer control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litComments;
+        protected global::System.Web.UI.WebControls.Label lblMegaCustomer;
         
         /// <summary>
-        /// txtNewComment control.
+        /// lblMegaContact control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtNewComment;
+        protected global::System.Web.UI.WebControls.Label lblMegaContact;
         
         /// <summary>
-        /// btnSendComment control.
+        /// lblMegaPlanDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnSendComment;
+        protected global::System.Web.UI.WebControls.Label lblMegaPlanDate;
         
         /// <summary>
-        /// btnCloseComments control.
+        /// lblMegaExecDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnCloseComments;
+        protected global::System.Web.UI.WebControls.Label lblMegaExecDate;
         
         /// <summary>
-        /// lblDetCustomer control.
+        /// lblMegaFollow control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetCustomer;
+        protected global::System.Web.UI.WebControls.Label lblMegaFollow;
         
         /// <summary>
-        /// lblDetDept control.
+        /// hlMegaAttachment control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetDept;
+        protected global::System.Web.UI.WebControls.HyperLink hlMegaAttachment;
         
         /// <summary>
-        /// lblDetContact control.
+        /// lblMegaNotes control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetContact;
+        protected global::System.Web.UI.WebControls.Label lblMegaNotes;
         
         /// <summary>
-        /// lblDetSalesperson control.
+        /// megaMapContainer control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetSalesperson;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl megaMapContainer;
         
         /// <summary>
-        /// lblDetVisitType control.
+        /// gvMegaExpenses control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetVisitType;
+        protected global::System.Web.UI.WebControls.GridView gvMegaExpenses;
         
         /// <summary>
-        /// lblDetPlanDate control.
+        /// litMegaComments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetPlanDate;
+        protected global::System.Web.UI.WebControls.Literal litMegaComments;
         
         /// <summary>
-        /// lblDetExecDate control.
+        /// txtMegaNewComment control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetExecDate;
+        protected global::System.Web.UI.WebControls.TextBox txtMegaNewComment;
         
         /// <summary>
-        /// lblDetStatus control.
+        /// btnMegaSendChat control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetStatus;
+        protected global::System.Web.UI.WebControls.Button btnMegaSendChat;
         
         /// <summary>
-        /// mapContainer control.
+        /// pnlMegaAction control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl mapContainer;
+        protected global::System.Web.UI.WebControls.Panel pnlMegaAction;
         
         /// <summary>
-        /// lblDetNotes control.
+        /// txtMegaRemarks control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDetNotes;
+        protected global::System.Web.UI.WebControls.TextBox txtMegaRemarks;
+        
+        /// <summary>
+        /// btnMegaReject control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnMegaReject;
+        
+        /// <summary>
+        /// btnMegaApprove control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnMegaApprove;
+        
+        /// <summary>
+        /// pnlMegaAlreadyActioned control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlMegaAlreadyActioned;
+        
+        /// <summary>
+        /// lblMegaFinalStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMegaFinalStatus;
+        
+        /// <summary>
+        /// lblMegaFinalBy control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMegaFinalBy;
+        
+        /// <summary>
+        /// lblMegaFinalDate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMegaFinalDate;
     }
 }

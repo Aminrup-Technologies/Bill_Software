@@ -2,36 +2,290 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
-        .auto-style1 { width: 100%; }
-        .style2 { color: #FFFFFF; font-weight: bold; }
-        .table1 { border-collapse: collapse; }
-        .table1 td { text-align: left; border: 1px solid #666666; width: 100%; padding: 5px; }
-        .table2 { border-collapse: collapse; }
-        .table2 td { text-align: left; border: 1px solid #666666; width: 100%; border-top: none; padding: 5px; }
+        .auto-style1 {
+            width: 100%;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
 
-        .modalPopup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 99999; }
-        .modal-content { background: #fff; padding: 20px; margin: 5% auto; width: 90%; max-width: 850px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .style2 {
+            color: #FFFFFF;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 10px;
+            display: inline-block;
+        }
 
-        .comment { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        .comment-left { text-align: left; }
-        .comment-right { text-align: right; }
-        .comment-right b { display: inline-block; background: #e1f5fe; padding: 8px; border-radius: 8px; }
-        .comment-left b { display: inline-block; background: #fce4ec; padding: 8px; border-radius: 8px; }
+        /* Clean Summary Table */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+            .summary-table th {
+                background-color: #19658A;
+                color: white;
+                padding: 12px;
+                text-align: left;
+                font-weight: bold;
+                border: 1px solid #0f4b69;
+            }
+
+            .summary-table td {
+                padding: 10px 12px;
+                border: 1px solid #ddd;
+                vertical-align: middle;
+            }
+
+            .summary-table tr:hover {
+                background-color: #f1f8ff;
+            }
+
+        /* Mega Modal Styling */
+        .mega-modal-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 99999;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        .mega-modal-content {
+            background: #fff;
+            width: 95%;
+            max-width: 900px;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .mega-modal-header {
+            background-color: #19658A;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* === NEW: TAB UI STYLING === */
+        .mega-tabs {
+            display: flex;
+            background: #f1f8ff;
+            border-bottom: 2px solid #19658A;
+        }
+
+        .mega-tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            transition: 0.3s;
+            border-right: 1px solid #e1eef4;
+        }
+
+            .mega-tab-btn:hover {
+                background: #e1eef4;
+                color: #19658A;
+            }
+
+            .mega-tab-btn.active {
+                background: #19658A;
+                color: white;
+                border-bottom: none;
+            }
+
+        .tab-content { 
+            display: none; 
+            padding: 25px; 
+            background: white; 
+            min-height: 400px; 
+            box-sizing: border-box; /* FIX: Prevents padding from breaking the layout */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Modal Sections & Forms */
+        .section-title {
+            font-size: 16px;
+            color: #19658A;
+            font-weight: bold;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            margin-top: 0;
+        }
+
+        /* === WHATSAPP STYLE CHAT === */
+        .chat-box { 
+            height: 300px; /* FIX: Strict height forces the scrollbar inside this box */
+            overflow-y: auto; 
+            padding: 20px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            background-color: #e5ddd5; 
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-message {
+            max-width: 75%;
+            min-width: 130px; /* FIX: Forces bubble to be wide enough for the timestamp */
+            padding: 8px 12px 24px 12px; /* FIX: Added a bit more bottom padding */
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            font-size: 14px;
+            line-height: 1.5;
+            display: inline-block;
+            word-wrap: break-word;
+        }
+
+        /* Salesperson (Left side - White Bubble) */
+        .chat-left {
+            align-self: flex-start;
+            background-color: #ffffff;
+            border-top-left-radius: 0;
+        }
+        .chat-left::before { 
+            content: ''; position: absolute; top: 0; left: -10px; width: 0; height: 0; 
+            border: 10px solid transparent; border-right-color: #ffffff; border-top: 0; 
+        }
+
+        /* Manager (Right side - Green Bubble) */
+        .chat-right {
+            align-self: flex-end;
+            background-color: #dcf8c6;
+            border-top-right-radius: 0;
+        }
+        .chat-right::before { 
+            content: ''; position: absolute; top: 0; right: -10px; width: 0; height: 0; 
+            border: 10px solid transparent; border-left-color: #dcf8c6; border-top: 0; 
+        }
+
+        .chat-sender {
+            font-size: 12px;
+            font-weight: 800;
+            color: #128C7E;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .chat-right .chat-sender { color: #075E54; } /* Darker green for self */
+
+        .chat-time {
+            font-size: 10px;
+            color: #999;
+            position: absolute;
+            bottom: 4px;
+            right: 8px;
+            white-space: nowrap; /* FIX: Prevents the date from wrapping into two lines */
+        }
+        
+        .chat-text {
+            color: #303030;
+            display: block;
+            margin-bottom: 2px; /* Keeps text away from the timestamp */
+        }
+        
+        /* Modernized Chat Input Box */
+        .chat-input-container { display: flex; gap: 10px; margin-top: 10px; background: #f0f0f0; padding: 10px; border-radius: 8px; }
+        .chat-input-box { flex-grow: 1; padding: 12px 15px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+
+        /* Expense Grid inside Modal */
+        .exp-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+            .exp-grid th {
+                background: #6c757d;
+                color: white;
+                padding: 8px;
+                text-align: left;
+            }
+
+            .exp-grid td {
+                padding: 8px;
+                border-bottom: 1px solid #eee;
+            }
+
+        .mega-modal-footer {
+            background-color: #f1f8ff;
+            padding: 15px 25px;
+            border-top: 2px solid #19658A;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exp-action-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
     </style>
 
     <script type="text/javascript">
-        function showCommentsPopup() {
-            document.getElementById('<%= pnlComments.ClientID %>').style.display = 'block';
+        // NEW: Handles clicking between tabs
+        function openMegaTab(tabId, btnElement) {
+            // Hide all contents
+            var contents = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].style.display = 'none';
+            }
+            // Remove active style from all buttons
+            var btns = document.getElementsByClassName('mega-tab-btn');
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].classList.remove('active');
+            }
+            // Show target tab and highlight button
+            document.getElementById(tabId).style.display = 'block';
+            if (btnElement) { btnElement.classList.add('active'); }
         }
-        function hideCommentsPopup() {
-            document.getElementById('<%= pnlComments.ClientID %>').style.display = 'none';
+
+        // UPDATED: Accepts a 'defaultTabId' so C# can tell it which tab to open
+        function showMegaModal(defaultTabId) {
+            document.getElementById('megaModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Lock background scrolling
+
+            if (!defaultTabId) { defaultTabId = 'tabDetails'; }
+
+            var btnId = defaultTabId.replace('tab', 'btnTab');
+            var tabBtn = document.getElementById(btnId);
+            openMegaTab(defaultTabId, tabBtn);
+
+            scrollToBottomChat();
         }
-        function scrollToBottom() {
-            var container = document.getElementById("commentsContainer");
+
+        function hideMegaModal() {
+            document.getElementById('megaModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Unlock background scrolling
+        }
+
+        function scrollToBottomChat() {
+            var container = document.getElementById("chatContainer");
             if (container) { container.scrollTop = container.scrollHeight; }
-        }
-        function hideDetailsModal() {
-            document.getElementById('viewDetailsModal').style.display = 'none';
         }
     </script>
 </asp:Content>
@@ -54,195 +308,241 @@
 
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
-            <table cellpadding="0" cellspacing="0" class="auto-style1">
-                <tr><td colspan="6" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;Search Daily Reports</span></td></tr>
+            <table cellpadding="0" cellspacing="0" class="auto-style1" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <tr>
-                    <td width="15%">&nbsp;</td>
-                    <td width="35%" colspan="2"><asp:Label ID="lblclientId" runat="server" Visible="False"></asp:Label></td>
-                    <td width="35%" colspan="2">&nbsp;</td>
-                    <td width="15%">&nbsp;</td>
+                    <td colspan="6" bgcolor="#19658A" style="border-radius: 6px 6px 0 0;"><span class="style2">🔍 Manager Dashboard: Search Daily Reports</span></td>
                 </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="4">
-                        <asp:Panel ID="PanelOK" runat="server" BackColor="#EEFFDD" BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False" Padding="5">
-                            &nbsp;<asp:Image ID="imageTick" runat="server" ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
-                            &nbsp;<asp:Label ID="lblOk" runat="server" Font-Bold="true" ForeColor="DarkGreen"></asp:Label>
-                        </asp:Panel>
-                        <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False" Padding="5">
-                            &nbsp;<asp:Image ID="Image1" runat="server" Height="16px" ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png" Width="16px" />
-                            &nbsp;<asp:Label ID="lblErrorMsg" runat="server" Font-Bold="true" ForeColor="Red"></asp:Label>
-                        </asp:Panel>
-                    </td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr><td>&nbsp;</td><td colspan="4">&nbsp;</td><td>&nbsp;</td></tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">Sales Person Name</td>
-                    <td colspan="2"><asp:DropDownList ID="cmbvendor" runat="server" CssClass="dropdown_style"></asp:DropDownList></td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td>From Date</td>
-                    <td><asp:TextBox ID="txttodate" runat="server" CssClass="datepicker textbox_style" Width="110px"></asp:TextBox></td>
-                    <td>To Date</td>
-                    <td><asp:TextBox ID="txtfromDate" runat="server" CssClass="datepicker textbox_style" Width="110px"></asp:TextBox></td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="2">Search Type</td>
-                    <td colspan="2">
-                        <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal">
-                            <asp:ListItem>Only Person</asp:ListItem>
-                            <asp:ListItem Selected="True">Only Date</asp:ListItem>
-                            <asp:ListItem>Person & Date</asp:ListItem>
-                        </asp:RadioButtonList>
-                    </td>
-                    <td>&nbsp;</td>
-                </tr>
-                <tr><td>&nbsp;</td><td colspan="4" style="text-align: center; padding: 15px;">
-                    <asp:Button ID="btnSertch" runat="server" CssClass="btn_style" OnClick="btnSertch_Click" Text="Search" />&nbsp;
-                    <asp:Button ID="btnreset" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="Reset" />
-                </td><td>&nbsp;</td></tr>
-                
                 <tr>
                     <td colspan="6">
-                        <asp:DataList ID="DataList2" runat="server" Width="100%" OnItemCommand="DataList2_ItemCommand" OnItemDataBound="DataList2_ItemDataBound">
-                            <HeaderTemplate>
-                                <table class="table1">
-                                    <tr style="background-color:#006699; color:white; font-weight:bold;">
-                                        <td style="text-align:center; width:8%;">Visit Date</td>
-                                        <td style="text-align:center; width:10%;">Salesperson</td>
-                                        <td style="text-align:center; width:12%;">Customer</td>
-                                        <td style="text-align:center; width:8%;">Department</td>
-                                        <td style="text-align:center; width:10%;">Contact Person</td>
-                                        <td style="text-align:center; width:8%;">Visit Type</td>
-                                        <td style="text-align:center; width:6%;">Follow-Up</td>
-                                        <td style="text-align:center; width:8%;">Next Date</td>
-                                        <td style="text-align:center; width:6%;">Status</td>
-                                        <td style="text-align:center; width:6%;">Details/Map</td>
-                                        <td style="text-align:center; width:6%;">Attachment</td>
-                                        <td style="text-align:center; width:12%;">Created Date</td>
-                                    </tr>
-                                </table>
-                            </HeaderTemplate>
-                            <ItemTemplate>
-                                <table class="table2">
-                                    <tr style="background-color: <%# Container.ItemIndex % 2 == 0 ? "#ffffff" : "#f4f8fb" %>;">
-                                        <td style="text-align:center; width:8%;"><asp:Label ID="lblVisitDate" runat="server" Text='<%# Eval("VisitDate", "{0:dd-MM-yyyy}") %>' Font-Bold="true" ForeColor="DarkBlue"></asp:Label></td>
-                                        <td style="text-align:center; width:10%;"><asp:Label ID="lblSalesperson" runat="server" Text='<%# Eval("Salesperson") %>'></asp:Label></td>
-                                        <td style="text-align:center; width:12%;"><asp:Label ID="lblCustomerName" runat="server" Text='<%# Eval("CustomerName") %>'></asp:Label></td>
-                                        <td style="text-align:center; width:8%;"><asp:Label ID="lblDepartment" runat="server" Text='<%# Eval("Department") %>'></asp:Label></td>
-                                        <td style="text-align:center; width:10%;"><asp:Label ID="lblContactPerson" runat="server" Text='<%# Eval("ContactPerson") %>'></asp:Label></td>
-                                        <td style="text-align:center; width:8%;"><asp:Label ID="lblVisitType" runat="server" Text='<%# Eval("VisitType") %>'></asp:Label></td>
-                                        <td style="text-align:center; width:6%;"><asp:Label ID="lblFollowUpRequired" runat="server" Text='<%# Eval("FollowUpRequired") %>'></asp:Label></td>
-                                        <td style="text-align:center; width:8%;"><asp:Label ID="lblNextFollowUpDate" runat="server" Text='<%# Eval("NextFollowUpDate", "{0:dd-MM-yyyy}") %>'></asp:Label></td>
-                                        <td style="text-align:center; width:6%; font-weight:bold;"><asp:Label ID="lblStatus" runat="server" Text='<%# Eval("Status") %>'></asp:Label></td>
-                                        
-                                        <td style="text-align:center; width:6%;">
-                                            <asp:Button ID="btnViewDet" runat="server" Text="📍 Map" CommandName="ViewDetails" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" style="background-color:#17a2b8; color:white; padding: 4px 8px; font-size:11px;" />
-                                        </td>
-                                        
-                                        <td style="text-align:center; width:6%;"><asp:HyperLink ID="hlAttachment" runat="server" NavigateUrl='<%# Eval("AttachmentName", "~/Uploads/{0}") %>' Text="View" Target="_blank" /></td>
-                                        <td style="text-align:center; width:12%;"><asp:Label ID="lblCreatedDate" runat="server" Text='<%# Eval("TimeStamp", "{0:dd-MM-yyyy HH:mm tt}") %>'></asp:Label></td>
-                                    </tr>
-                                    <tr style="background-color: <%# Container.ItemIndex % 2 == 0 ? "#ffffff" : "#f4f8fb" %>;">
-                                        <td colspan="12" style="padding: 10px;">
-                                            <b>Discussion Points:</b>
-                                            <asp:Label ID="Label1" runat="server" Text='<%# Eval("DiscussionPoints").ToString().Replace(Environment.NewLine, "<br/>") %>' EnableViewState="false"></asp:Label>
-                                        </td>
-                                    </tr>
-                                    <tr style="background-color: <%# Container.ItemIndex % 2 == 0 ? "#ffffff" : "#f4f8fb" %>;">
-                                        <td colspan="12" style="padding: 10px; border-top: 1px dashed #ccc;">
-                                            <table style="width: 100%;">
-                                                <tr>
-                                                    <td style="vertical-align: top; text-align: left; width: 60%;">
-                                                        <asp:Panel ID="pnlApproval" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() == "Pending" %>'>
-                                                            <asp:TextBox ID="txtManagerRemarks" runat="server" CssClass="textbox_style" Width="60%" TextMode="MultiLine" Rows="2" placeholder="Manager Remarks..."></asp:TextBox>&nbsp;
-                                                            <asp:Button ID="btnApprove" runat="server" Text="Approve" CommandName="Approve" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" style="background-color:#28a745; color:white;" />&nbsp;
-                                                            <asp:Button ID="btnReject" runat="server" Text="Reject" CommandName="Reject" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" style="background-color:#dc3545; color:white;" />
-                                                        </asp:Panel>
-                                                        <asp:Panel ID="pnlApprovedInfo" runat="server" Visible='<%# Eval("ApprovalStatus").ToString() != "Pending" %>'>
-                                                            <b>Approval Status:</b> <asp:Label ID="lblApprovalStatus" runat="server" Text='<%# Eval("ApprovalStatus") %>' Font-Bold="true"></asp:Label> &nbsp;|&nbsp;
-                                                            <b>Approved By:</b> <asp:Label ID="lblApprovedBy" runat="server" Text='<%# Eval("ApprovedBy") %>'></asp:Label> &nbsp;|&nbsp;
-                                                            <b>Timestamp:</b> <asp:Label ID="lblApprovedTime" runat="server" Text='<%# Eval("ApprovedDate", "{0:dd-MMM-yyyy HH:mm}") %>'></asp:Label>
-                                                        </asp:Panel>
-                                                    </td>
-                                                    <td style="vertical-align: top; text-align: right; width: 40%;">
-                                                        <asp:Button ID="btnViewComments" runat="server" Text="💬 View Comments" CommandName="ViewComments" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" />
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </ItemTemplate>
-                        </asp:DataList>
-
-                        <asp:UpdatePanel ID="upComments" runat="server" UpdateMode="Conditional">
-                            <ContentTemplate>
-                                <asp:Panel ID="pnlComments" runat="server" Width="100%" CssClass="modalPopup" Style="display: none;">
-                                    <div class="modal-content">
-                                        <h3 style="font-weight: bold; color: #19658A;">Conversations:</h3><hr />
-                                        <asp:HiddenField ID="hfVisitId" runat="server" />
-                                        <div id="commentsContainer" style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; background:#f9f9f9;">
-                                            <asp:Literal ID="litComments" runat="server"></asp:Literal>
-                                        </div><hr />
-                                        <h5 style="font-weight: bold; color: #19658A;">Type New Comment:</h5>
-                                        <asp:TextBox ID="txtNewComment" runat="server" TextMode="MultiLine" Width="100%" CssClass="textbox_style" Rows="3" /><br /><br />
-                                        <div style="text-align:right;">
-                                            <asp:Button ID="btnSendComment" runat="server" Text="Send Message" CssClass="btn_style" OnClick="btnSendComment_Click" style="background-color:#19658A; color:white;" />
-                                            <asp:Button ID="btnCloseComments" runat="server" Text="Close" CssClass="btn_style" OnClientClick="hideCommentsPopup(); return false;" />
-                                        </div>
-                                    </div>
-                                </asp:Panel>
-                            </ContentTemplate>
-                            <Triggers>
-                                <asp:AsyncPostBackTrigger ControlID="btnSendComment" EventName="Click" />
-                            </Triggers>
-                        </asp:UpdatePanel>
-
-                        <div id="viewDetailsModal" class="modalPopup" style="display: none;">
-                            <div class="modal-content" style="max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
-                                <div style="background-color: #19658A; color: white; padding: 15px; font-weight: bold; font-size: 16px; border-radius: 4px 4px 0 0;">
-                                    📍 Executed Visit Details & Location
-                                </div>
-                                <div style="padding: 20px; line-height: 1.6;">
-                                    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                                        <div style="flex: 1; min-width: 250px;">
-                                            <p style="margin: 0 0 5px 0;"><b>Customer:</b> <asp:Label ID="lblDetCustomer" runat="server" ForeColor="#333"></asp:Label></p>
-                                            <p style="margin: 0 0 5px 0;"><b>Department:</b> <asp:Label ID="lblDetDept" runat="server" ForeColor="#333"></asp:Label></p>
-                                            <p style="margin: 0 0 5px 0;"><b>Contact:</b> <asp:Label ID="lblDetContact" runat="server" ForeColor="#333"></asp:Label></p>
-                                            <p style="margin: 0 0 5px 0;"><b>Salesperson:</b> <asp:Label ID="lblDetSalesperson" runat="server" ForeColor="#333"></asp:Label></p>
-                                            <p style="margin: 0 0 5px 0;"><b>Visit Type:</b> <asp:Label ID="lblDetVisitType" runat="server" ForeColor="#333"></asp:Label></p>
-                                            <p style="margin: 0 0 5px 0;"><b>Planned Date:</b> <asp:Label ID="lblDetPlanDate" runat="server" ForeColor="#333"></asp:Label></p>
-                                            <p style="margin: 0 0 5px 0;"><b>Executed Date:</b> <asp:Label ID="lblDetExecDate" runat="server" ForeColor="#333"></asp:Label></p>
-                                            <p style="margin: 0 0 5px 0;"><b>Status:</b> <asp:Label ID="lblDetStatus" runat="server" Font-Bold="true" ForeColor="#19658A"></asp:Label></p>
-                                        </div>
-                                        <div style="flex: 1; min-width: 300px;">
-                                            <b style="display:block; margin-bottom: 5px;">Execution Location Map:</b>
-                                            <div id="mapContainer" runat="server" style="border: 2px solid #eaeaea; border-radius: 8px; height: 250px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-                                                <span style='color: #888; font-style: italic;'>Map will load here...</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;" />
-                                    <p style="margin:0;"><b>Discussion Points:</b><br />
-                                        <asp:Label ID="lblDetNotes" runat="server" style="display:block; background:#f9fcfd; border: 1px solid #e1eef4; padding:10px; border-radius:6px; margin-top:5px; white-space: pre-wrap; color: #444;"></asp:Label>
-                                    </p>
-                                </div>
-                                <div style="text-align: right; padding: 15px; border-top: 1px solid #eee; background-color: #fcfcfc;">
-                                    <button type="button" class="btn_style" onclick="hideDetailsModal();" style="background-color: #6c757d; color: white; padding: 8px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Close View</button>
-                                </div>
-                            </div>
-                        </div>
-
+                        <asp:Panel ID="PanelOK" runat="server" BackColor="#EEFFDD" BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False" Padding="10" Style="margin-top: 10px;">
+                            <asp:Label ID="lblOk" runat="server" Font-Bold="true" ForeColor="DarkGreen"></asp:Label>
+                        </asp:Panel>
+                        <asp:Panel ID="PanelError" runat="server" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False" Padding="10" BackColor="#FFDDDD" Style="margin-top: 10px;">
+                            <asp:Label ID="lblErrorMsg" runat="server" Font-Bold="true" ForeColor="Red"></asp:Label>
+                        </asp:Panel>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="height: 15px;"></td>
+                </tr>
+                <tr>
+                    <td style="width: 5%"></td>
+                    <td style="width: 15%; padding: 8px;"><b>Salesperson:</b></td>
+                    <td style="width: 30%;">
+                        <asp:DropDownList ID="cmbvendor" runat="server" CssClass="dropdown_style" Width="90%"></asp:DropDownList></td>
+                    <td style="width: 15%; padding: 8px;"><b>Search By:</b></td>
+                    <td style="width: 30%;">
+                        <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal">
+                            <asp:ListItem>Person</asp:ListItem>
+                            <asp:ListItem Selected="True">Date</asp:ListItem>
+                            <asp:ListItem>Both</asp:ListItem>
+                        </asp:RadioButtonList>
+                    </td>
+                    <td style="width: 5%"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td style="padding: 8px;"><b>From Date:</b></td>
+                    <td>
+                        <asp:TextBox ID="txttodate" runat="server" CssClass="datepicker textbox_style" Width="50%"></asp:TextBox></td>
+                    <td style="padding: 8px;"><b>To Date:</b></td>
+                    <td>
+                        <asp:TextBox ID="txtfromDate" runat="server" CssClass="datepicker textbox_style" Width="50%"></asp:TextBox></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 20px;">
+                        <asp:Label ID="lblclientId" runat="server" Visible="False"></asp:Label>
+                        <asp:Button ID="btnSertch" runat="server" CssClass="btn_style" OnClick="btnSertch_Click" Text="🔍 Search" Style="background: #19658A; color: white; padding: 8px 25px;" />
+                        <asp:Button ID="btnreset" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="🔄 Reset" Style="background: #6c757d; color: white; padding: 8px 25px;" />
                     </td>
                 </tr>
             </table>
+
+            <asp:DataList ID="DataList2" runat="server" Width="100%" OnItemCommand="DataList2_ItemCommand">
+                <HeaderTemplate>
+                    <table class="summary-table">
+                        <tr>
+                            <th style="width: 10%;">Date</th>
+                            <th style="width: 15%;">Salesperson</th>
+                            <th style="width: 20%;">Customer</th>
+                            <th style="width: 15%;">Type</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 10%;">Approval</th>
+                            <th style="width: 15%; text-align: center;">Action</th>
+                        </tr>
+                </HeaderTemplate>
+                <ItemTemplate>
+                    <tr style="background-color: <%# Container.ItemIndex % 2 == 0 ? "#ffffff" : "#fbfcfd" %>;">
+                        <td>
+                            <asp:Label ID="lblVisitDate" runat="server" Text='<%# Eval("VisitDate", "{0:dd-MMM-yyyy}") %>' Font-Bold="true"></asp:Label></td>
+                        <td><%# Eval("Salesperson") %></td>
+                        <td><b><%# Eval("CustomerName") %></b><br />
+                            <small style="color: #666;"><%# Eval("Department") %></small></td>
+                        <td><%# Eval("VisitType") %></td>
+                        <td>
+                            <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: <%# Eval("Status").ToString() == "Completed" ? "#d4edda" : "#fff3cd" %>; color: <%# Eval("Status").ToString() == "Completed" ? "#155724" : "#856404" %>;">
+                                <%# Eval("Status") %>
+                            </span>
+                        </td>
+                        <td>
+                            <span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: <%# Eval("ApprovalStatus").ToString() == "Approved" ? "#d4edda" : (Eval("ApprovalStatus").ToString() == "Rejected" ? "#f8d7da" : "#e2e3e5") %>; color: <%# Eval("ApprovalStatus").ToString() == "Approved" ? "#155724" : (Eval("ApprovalStatus").ToString() == "Rejected" ? "#721c24" : "#383d41") %>;">
+                                <%# Eval("ApprovalStatus") %>
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <asp:Button ID="btnViewComplete" runat="server" Text="👁️ View Complete File" CommandName="OpenMegaModal" CommandArgument='<%# Eval("Id") %>' CssClass="btn_style" Style="background-color: #19658A; color: white; padding: 6px 12px; font-size: 12px; border: none; cursor: pointer;" />
+                        </td>
+                    </tr>
+                </ItemTemplate>
+                <FooterTemplate>
+                    </table>
+                </FooterTemplate>
+            </asp:DataList>
+
+            <asp:HiddenField ID="hfMegaVisitId" runat="server" />
+
+            <div id="megaModal" class="mega-modal-bg" style="display: none;">
+                <div class="mega-modal-content">
+
+                    <div class="mega-modal-header">
+                        <span>📋 Complete Visit File:
+                            <asp:Label ID="lblMegaHeaderTitle" runat="server"></asp:Label></span>
+                        <button type="button" onclick="hideMegaModal();" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; line-height: 1;">×</button>
+                    </div>
+
+                    <div class="mega-tabs">
+                        <button type="button" id="btnTabDetails" class="mega-tab-btn active" onclick="openMegaTab('tabDetails', this)">📋 Details</button>
+                        <button type="button" id="btnTabLocation" class="mega-tab-btn" onclick="openMegaTab('tabLocation', this)">📍 Location Map</button>
+                        <button type="button" id="btnTabExpenses" class="mega-tab-btn" onclick="openMegaTab('tabExpenses', this)">💸 Expenses</button>
+                        <button type="button" id="btnTabAction" class="mega-tab-btn" onclick="openMegaTab('tabAction', this)">💬 Chat</button>
+                    </div>
+
+                    <div id="tabDetails" class="tab-content active">
+                        <h4 class="section-title">Visit Details & Notes</h4>
+                        <table style="width: 100%; line-height: 2; font-size: 15px;">
+                            <tr>
+                                <td style="width: 30%; color: #666;">Salesperson:</td>
+                                <td><b>
+                                    <asp:Label ID="lblMegaSalesperson" runat="server"></asp:Label></b></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666;">Customer:</td>
+                                <td><b>
+                                    <asp:Label ID="lblMegaCustomer" runat="server"></asp:Label></b></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666;">Contact / Dept:</td>
+                                <td>
+                                    <asp:Label ID="lblMegaContact" runat="server"></asp:Label></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666;">Planned Date:</td>
+                                <td>
+                                    <asp:Label ID="lblMegaPlanDate" runat="server"></asp:Label></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666;">Execution Date:</td>
+                                <td>
+                                    <asp:Label ID="lblMegaExecDate" runat="server" ForeColor="#28a745" Font-Bold="true"></asp:Label></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666;">Follow-Up / Next:</td>
+                                <td>
+                                    <asp:Label ID="lblMegaFollow" runat="server"></asp:Label></td>
+                            </tr>
+                            <tr>
+                                <td style="color: #666;">Attachment:</td>
+                                <td>
+                                    <asp:HyperLink ID="hlMegaAttachment" runat="server" Target="_blank" Style="color: #0066cc; font-weight: bold;"></asp:HyperLink></td>
+                            </tr>
+                        </table>
+                        <div style="margin-top: 20px; padding: 15px; background: #f4f8fb; border: 1px solid #e1eef4; border-radius: 6px;">
+                            <b style="color: #19658A;">Discussion Points / Notes:</b><br />
+                            <br />
+                            <asp:Label ID="lblMegaNotes" runat="server" Style="white-space: pre-wrap; font-size: 14px; color: #333;"></asp:Label>
+                        </div>
+                    </div>
+
+                    <div id="tabLocation" class="tab-content">
+                        <h4 class="section-title">📍 Execution Location</h4>
+                        <div id="megaMapContainer" runat="server" style="border: 2px solid #eaeaea; border-radius: 8px; height: 350px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; width: 100%;">
+                            <span style='color: #888; font-style: italic;'>Map loading...</span>
+                        </div>
+                        <p style="text-align: center; color: #666; margin-top: 15px; font-size: 13px;">
+                            <i>Note: The map pin represents the exact GPS location of the salesperson when they pressed the "Execute" button.</i>
+                        </p>
+                    </div>
+
+                    <div id="tabExpenses" class="tab-content">
+                        <h4 class="section-title">💸 Expenses Claimed for this Visit</h4>
+                        <asp:GridView ID="gvMegaExpenses" runat="server" AutoGenerateColumns="False" DataKeyNames="Id" OnRowCommand="gvMegaExpenses_RowCommand" CssClass="exp-grid" EmptyDataText="No expenses submitted for this visit." GridLines="None">
+                            <Columns>
+                                <asp:BoundField DataField="ExpenseDate" HeaderText="Date" DataFormatString="{0:dd-MMM-yyyy}" />
+                                <asp:BoundField DataField="ExpenseCategory" HeaderText="Category" />
+                                <asp:BoundField DataField="Description" HeaderText="Details" />
+                                <asp:BoundField DataField="Amount" HeaderText="Amount (₹)" DataFormatString="{0:N2}" ItemStyle-Font-Bold="true" />
+                                <asp:TemplateField HeaderText="Receipt">
+                                    <ItemTemplate>
+                                        <asp:HyperLink ID="hlExpReceipt" runat="server" NavigateUrl='<%# Eval("AttachmentName", "~/Uploads/Expenses/{0}") %>' Text="View File" Target="_blank" Visible='<%# Eval("AttachmentName") != DBNull.Value %>' ForeColor="#0066cc" Font-Bold="true" />
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Status">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblExpStatus" runat="server" Text='<%# Eval("ApprovalStatus") %>' Font-Bold="true"
+                                            ForeColor='<%# Eval("ApprovalStatus").ToString() == "Approved" ? System.Drawing.Color.Green : (Eval("ApprovalStatus").ToString() == "Rejected" ? System.Drawing.Color.Red : System.Drawing.Color.Orange) %>'>
+                                        </asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Action">
+                                    <ItemTemplate>
+                                        <asp:LinkButton ID="lnkApproveExp" runat="server" CommandName="ApproveExp" CommandArgument='<%# Eval("Id") %>' Visible='<%# Eval("ApprovalStatus").ToString() == "Pending" %>' Text="✔" CssClass="exp-action-btn" Style="color: #28a745; font-weight: bold;" ToolTip="Approve Expense" />
+                                        <asp:LinkButton ID="lnkRejectExp" runat="server" CommandName="RejectExp" CommandArgument='<%# Eval("Id") %>' Visible='<%# Eval("ApprovalStatus").ToString() == "Pending" %>' Text="✖" CssClass="exp-action-btn" Style="color: #dc3545; font-weight: bold;" ToolTip="Reject Expense" />
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                            </Columns>
+                        </asp:GridView>
+                    </div>
+
+                    <div id="tabAction" class="tab-content" style="display: flex; flex-direction: column; height: auto;">
+                        <h4 class="section-title" style="flex: 0 0 auto;">💬 Conversation Thread</h4>
+                        
+                        <div id="chatContainer" class="chat-box">
+                            <asp:Literal ID="litMegaComments" runat="server"></asp:Literal>
+                        </div>
+                        
+                        <div class="chat-input-container" style="flex: 0 0 auto;">
+                            <asp:TextBox ID="txtMegaNewComment" runat="server" CssClass="chat-input-box" placeholder="Type a message..."></asp:TextBox>
+                            <asp:Button ID="btnMegaSendChat" runat="server" Text="➤ Send" CssClass="btn_style" OnClick="btnMegaSendChat_Click" style="background:#128C7E; color:white; border:none; border-radius:20px; padding:0 20px; font-weight:bold; font-size: 15px;" />
+                        </div>
+                    </div>
+
+                    <div class="mega-modal-footer">
+                        <asp:Panel ID="pnlMegaAction" runat="server" Width="100%" Style="display: flex; gap: 15px; align-items: center;">
+                            <div style="flex-grow: 1;">
+                                <asp:TextBox ID="txtMegaRemarks" runat="server" CssClass="textbox_style" Width="100%" placeholder="Enter Official Manager Remarks here before approving/rejecting the overall visit..." Style="padding: 8px; border: 1px solid #ccc;"></asp:TextBox>
+                            </div>
+                            <div>
+                                <asp:Button ID="btnMegaReject" runat="server" Text="✖ Reject Visit" OnClick="btnMegaReject_Click" CssClass="btn_style" Style="background: #dc3545; color: white; padding: 5px 5px; border: none; border-radius: 2px; font-weight: bold; cursor: pointer;" />
+                                <asp:Button ID="btnMegaApprove" runat="server" Text="✔ Approve Visit" OnClick="btnMegaApprove_Click" CssClass="btn_style" Style="background: #28a745; color: white; padding: 5px 5px; border: none; border-radius: 2px; font-weight: bold; cursor: pointer;" />
+                            </div>
+                        </asp:Panel>
+
+                        <asp:Panel ID="pnlMegaAlreadyActioned" runat="server" Visible="false" Width="100%">
+                            <div style="text-align: center; width: 100%; font-size: 15px; color: #333;">
+                                Visit Status:
+                                <asp:Label ID="lblMegaFinalStatus" runat="server" Font-Bold="true" Font-Size="16px"></asp:Label>
+                                | Actioned By:
+                                <asp:Label ID="lblMegaFinalBy" runat="server" Font-Bold="true"></asp:Label>
+                                on
+                                <asp:Label ID="lblMegaFinalDate" runat="server" Font-Bold="true"></asp:Label>
+                            </div>
+                        </asp:Panel>
+                    </div>
+
+                </div>
+            </div>
+
         </ContentTemplate>
     </asp:UpdatePanel>
 </asp:Content>
