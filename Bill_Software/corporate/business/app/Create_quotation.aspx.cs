@@ -38,6 +38,59 @@ namespace Bill_Software.corporate.business.app
             {
                 BindDropdowns();
                 txtquotationDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+
+                // --- PIPELINE INTEGRATION: Capture the Visit ID ---
+                if (Request.QueryString["visitId"] != null)
+                {
+                    int visitId;
+                    if (int.TryParse(Request.QueryString["visitId"], out visitId))
+                    {
+                        // 1. Store the VisitId in a HiddenField so it survives postbacks 
+                        //    and can be inserted into tbl_Quotation upon saving.
+                        hfVisitId.Value = visitId.ToString();
+
+                        // 2. Fetch the customer from the visit to save the salesperson time
+                        PreFillClientFromVisit(visitId);
+                    }
+                }
+            }
+        }
+
+        // Helper method to fetch the Customer from the Sales Visit table
+        private void PreFillClientFromVisit(int visitId)
+        {
+            try
+            {
+                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(connStr))
+                {
+                    // Assuming tbl_SalesVisitReport holds CustomerName.
+                    // You may need to join this with your Client Master if your dropdown uses Client_Id values instead of text.
+                    string query = "SELECT CustomerName FROM tbl_SalesVisitReport WHERE Id = @Id";
+                    using (System.Data.SqlClient.SqlCommand cmd = new System.Data.SqlClient.SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Id", visitId);
+                        conn.Open();
+                        object result = cmd.ExecuteScalar();
+
+                        if (result != null)
+                        {
+                            string customerName = result.ToString();
+
+                            // Example A: If your client selector is a DropDownList
+                            // ddlClient.ClearSelection();
+                            // System.Web.UI.WebControls.ListItem item = ddlClient.Items.FindByText(customerName);
+                            // if(item != null) item.Selected = true;
+
+                            // Example B: If your client selector is a TextBox
+                            // txtClientName.Text = customerName;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle silently or log error
             }
         }
 
@@ -485,8 +538,8 @@ namespace Bill_Software.corporate.business.app
                     decimal final_service_tax = Math.Round(new_total_Service, 2);
 
                     using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotation 
-                    (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount)
-                    VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView, @TCS_Amount, @TCS_Percent, @Freight_Amount, @Freight_VAT_Percent, @OtherCharge_Name, @OtherCharge_Amount)", conn, trans))
+                    (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount,VisitId)
+                    VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView, @TCS_Amount, @TCS_Percent, @Freight_Amount, @Freight_VAT_Percent, @OtherCharge_Name, @OtherCharge_Amount,@VisitId)", conn, trans))
                     {
                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
                         cmd.Parameters.AddWithValue("@Quotation_date", txtquotationDate.Text);
@@ -523,6 +576,10 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Freight_VAT_Percent", freightPercent);
                         cmd.Parameters.AddWithValue("@OtherCharge_Name", TextBox1.Text);
                         cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
+                        if (!string.IsNullOrEmpty(hfVisitId.Value))
+                            cmd.Parameters.AddWithValue("@VisitId", Convert.ToInt32(hfVisitId.Value));
+                        else
+                            cmd.Parameters.AddWithValue("@VisitId", DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
 

@@ -1,4 +1,16 @@
-﻿using System;
+﻿/*
+-----------------------------------------------------------------------------------------
+-- File Name: daily_rpt.aspx.cs
+-- When:      2026-03-22
+-- Why:       To fix a bug where `DateTime.TryParse` failed due to URL-decoded timezone 
+--            offsets (the '+' turning into a space). Added string sanitization and a 
+--            fallback to ensure the datetime-local fields never load empty.
+-- What:      Added `.Substring(0, 16)` extraction to `startQs` and `endQs` inside the 
+--            `Page_Load` method to cleanly parse "yyyy-MM-ddTHH:mm". Added an `else` 
+--            block for Parse failures.
+-----------------------------------------------------------------------------------------
+*/
+using System;
 using System.Web.UI.WebControls;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -23,17 +35,78 @@ namespace Bill_Software.corporate.business.app
                 GetAdminName();
                 string mode = Request.QueryString["mode"] ?? "plan";
 
-                // Auto-fill the date passed from the calendar
-                if (Request.QueryString["date"] != null)
+                // Backward compatibility for 'date' param, but prefer 'start' and 'end'
+                string startQs = Request.QueryString["start"] ?? Request.QueryString["date"];
+                string endQs = Request.QueryString["end"];
+
+                if (!string.IsNullOrEmpty(startQs))
                 {
-                    txtVisitDate.Text = Convert.ToDateTime(Request.QueryString["date"]).ToString("yyyy-MM-dd");
+                    // Sanitize strings to handle URL timezone encoding issues 
+                    // (e.g. "+05:30" becoming " 05:30" and breaking TryParse)
+                    // We extract just the "yyyy-MM-ddTHH:mm" portion (16 characters)
+                    if (startQs.Contains("T") && startQs.Length >= 16)
+                    {
+                        startQs = startQs.Substring(0, 16);
+                    }
+
+                    DateTime parsedStart;
+                    if (DateTime.TryParse(startQs, out parsedStart))
+                    {
+                        // If only a date was sent (Month view click), default to 9:00 AM
+                        if (startQs.Length <= 10 && !startQs.Contains("T"))
+                        {
+                            parsedStart = parsedStart.AddHours(9);
+                        }
+                        txtVisitStart.Text = parsedStart.ToString("yyyy-MM-ddTHH:mm");
+
+                        // Parse End Time
+                        if (!string.IsNullOrEmpty(endQs))
+                        {
+                            if (endQs.Contains("T") && endQs.Length >= 16)
+                            {
+                                endQs = endQs.Substring(0, 16);
+                            }
+
+                            DateTime parsedEnd;
+                            if (DateTime.TryParse(endQs, out parsedEnd))
+                            {
+                                // If Month view, FullCalendar sends end date as the NEXT day at 00:00.
+                                // We override this to just be a 1-hour block on the chosen start day.
+                                if (endQs.Length <= 10 || (parsedEnd.Hour == 0 && parsedEnd.Minute == 0))
+                                {
+                                    txtVisitEnd.Text = parsedStart.AddHours(1).ToString("yyyy-MM-ddTHH:mm");
+                                }
+                                else
+                                {
+                                    txtVisitEnd.Text = parsedEnd.ToString("yyyy-MM-ddTHH:mm");
+                                }
+                            }
+                            else
+                            {
+                                txtVisitEnd.Text = parsedStart.AddHours(1).ToString("yyyy-MM-ddTHH:mm");
+                            }
+                        }
+                        else
+                        {
+                            // Fallback 1-hour duration if no end string is passed
+                            txtVisitEnd.Text = parsedStart.AddHours(1).ToString("yyyy-MM-ddTHH:mm");
+                        }
+                    }
+                    else
+                    {
+                        // Safe Fallback: If parsing entirely fails, don't leave it blank
+                        txtVisitStart.Text = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+                        txtVisitEnd.Text = DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm");
+                    }
                 }
                 else
                 {
-                    txtVisitDate.Text = DateTime.Now.ToString("yyyy-MM-dd");
+                    // Default to current time, 1-hour duration for manual entries
+                    DateTime now = DateTime.Now;
+                    txtVisitStart.Text = now.ToString("yyyy-MM-ddTHH:mm");
+                    txtVisitEnd.Text = now.AddHours(1).ToString("yyyy-MM-ddTHH:mm");
                 }
 
-                // UI Configuration based on Mode
                 if (mode == "past")
                 {
                     lblPageTitle.Text = "Log Past Executed Visit";
@@ -78,15 +151,17 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string query = @"INSERT INTO tbl_SalesVisitReport 
-                        (VisitDate, Salesperson, CustomerName, Department, ContactPerson, VisitType, DiscussionPoints, 
+                        (VisitDate, VisitEndDate, Salesperson, CustomerName, Department, ContactPerson, VisitType, DiscussionPoints, 
                          VisitPhase, Status, FollowUpRequired, NextFollowUpDate, AttachmentName, ExecutionDateTime, CreatedDate, CreatedByCode) 
                         VALUES 
-                        (@VisitDate, @Salesperson, @CustomerName, @Department, @ContactPerson, @VisitType, @DiscussionPoints, 
+                        (@VisitDate, @VisitEndDate, @Salesperson, @CustomerName, @Department, @ContactPerson, @VisitType, @DiscussionPoints, 
                          @VisitPhase, @Status, @FollowUpRequired, @NextFollowUpDate, @AttachmentName, @ExecutionDateTime, @CreatedDate, @CreatedByCode)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@VisitDate", txtVisitDate.Text.Trim());
+                        cmd.Parameters.AddWithValue("@VisitDate", Convert.ToDateTime(txtVisitStart.Text.Trim()));
+                        cmd.Parameters.AddWithValue("@VisitEndDate", Convert.ToDateTime(txtVisitEnd.Text.Trim()));
+
                         cmd.Parameters.AddWithValue("@Salesperson", txtSalesperson.Text.Trim());
                         cmd.Parameters.AddWithValue("@CustomerName", txtCustomerName.Text.Trim());
                         cmd.Parameters.AddWithValue("@Department", txtDepartment.Text.Trim());
@@ -97,17 +172,16 @@ namespace Bill_Software.corporate.business.app
 
                         if (mode == "past")
                         {
-                            // It is a past record, fill out the execution columns
-                            cmd.Parameters.AddWithValue("@ExecutionDateTime", txtVisitDate.Text.Trim()); // Treat visit date as execution date
+                            // If retroactively logging, execution time is equal to the Visit Start time
+                            cmd.Parameters.AddWithValue("@ExecutionDateTime", Convert.ToDateTime(txtVisitStart.Text.Trim()));
                             cmd.Parameters.AddWithValue("@Status", ddlStatus.SelectedValue);
                             cmd.Parameters.AddWithValue("@FollowUpRequired", ddlFollowUp.SelectedValue);
 
                             if (!string.IsNullOrEmpty(txtNextFollowUp.Text))
-                                cmd.Parameters.AddWithValue("@NextFollowUpDate", txtNextFollowUp.Text.Trim());
+                                cmd.Parameters.AddWithValue("@NextFollowUpDate", Convert.ToDateTime(txtNextFollowUp.Text.Trim()));
                             else
                                 cmd.Parameters.AddWithValue("@NextFollowUpDate", DBNull.Value);
 
-                            // Handle Attachment
                             string fileName = null;
                             if (fileAttachment.HasFile)
                             {
@@ -121,7 +195,6 @@ namespace Bill_Software.corporate.business.app
                         }
                         else
                         {
-                            // Planning mode: send nulls for execution metrics
                             cmd.Parameters.AddWithValue("@ExecutionDateTime", DBNull.Value);
                             cmd.Parameters.AddWithValue("@Status", "Pending Execution");
                             cmd.Parameters.AddWithValue("@FollowUpRequired", "");

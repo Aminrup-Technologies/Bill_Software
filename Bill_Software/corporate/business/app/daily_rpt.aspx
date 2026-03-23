@@ -11,21 +11,31 @@
     <script type="text/javascript">
         function validateSalesVisitForm() {
             const mode = '<%= Request.QueryString["mode"] ?? "plan" %>';
-            const visitDate = document.getElementById('<%= txtVisitDate.ClientID %>').value.trim();
+            const visitStart = document.getElementById('<%= txtVisitStart.ClientID %>').value.trim();
+            const visitEnd = document.getElementById('<%= txtVisitEnd.ClientID %>').value.trim();
             const customerName = document.getElementById('<%= txtCustomerName.ClientID %>').value.trim();
             const department = document.getElementById('<%= txtDepartment.ClientID %>').value.trim();
             const contactPerson = document.getElementById('<%= txtContactPerson.ClientID %>').value.trim();
             const visitType = document.getElementById('<%= ddlVisitType.ClientID %>').value;
             const discussion = document.getElementById('<%= txtDiscussion.ClientID %>').value.trim();
-
+            
             let errorMsg = '';
-            if (visitDate === '') errorMsg += '• Visit Date is required.\n';
+            if (visitStart === '') errorMsg += '• Start Date & Time is required.\n';
+            if (visitEnd === '') errorMsg += '• End Date & Time is required.\n';
+            
+            // Validate chronological order if both are provided
+            if (visitStart !== '' && visitEnd !== '') {
+                if (new Date(visitStart) >= new Date(visitEnd)) {
+                    errorMsg += '• End Time must be strictly after the Start Time.\n';
+                }
+            }
+
             if (customerName === '') errorMsg += '• Customer Name is required.\n';
             if (department === '') errorMsg += '• Please enter a Department.\n';
             if (contactPerson === '') errorMsg += '• Contact Person is required.\n';
             if (visitType === '') errorMsg += '• Please select a Visit Type.\n';
             if (discussion === '') errorMsg += (mode === 'past') ? '• Visit Outcome is required.\n' : '• Agenda is required.\n';
-
+            
             if (mode === 'past') {
                 const followUp = document.getElementById('<%= ddlFollowUp.ClientID %>').value;
                 const status = document.getElementById('<%= ddlStatus.ClientID %>').value;
@@ -49,9 +59,7 @@
         <ContentTemplate>
             <table class="style1" style="margin-top: 20px;">
                 <tr>
-                    <td bgcolor="#19658A" colspan="7" style="padding: 8px;">&nbsp;
-                        <asp:Label ID="lblPageTitle" runat="server" CssClass="style2"></asp:Label>&nbsp;
-                    </td>
+                    <td bgcolor="#19658A" colspan="7" style="padding: 8px;">&nbsp;<asp:Label ID="lblPageTitle" runat="server" CssClass="style2"></asp:Label>&nbsp;</td>
                 </tr>
                 <tr><td colspan="7">&nbsp;</td></tr>
 
@@ -73,32 +81,41 @@
 
                 <tr>
                     <td style="width: 2%">&nbsp;</td>
-                    <td width="15%"><span class="style3">*</span>Visit Date</td>
+                    <td width="15%"><span class="style3">*</span>Start Time</td>
                     <td width="30%">
-                        <asp:TextBox ID="txtVisitDate" runat="server" TextMode="Date" CssClass="textbox_style" Width="90%"></asp:TextBox>
+                        <asp:TextBox ID="txtVisitStart" runat="server" TextMode="DateTimeLocal" CssClass="textbox_style" Width="90%"></asp:TextBox>
                     </td>
                     <td style="width: 2%">&nbsp;</td>
-                    <td width="15%"><span class="style3">*</span>Salesperson</td>
+                    <td width="15%"><span class="style3">*</span>End Time</td>
                     <td width="30%">
-                        <asp:TextBox ID="txtSalesperson" runat="server" CssClass="textbox_style" ReadOnly="true" Width="90%" BackColor="#f4f4f4"></asp:TextBox>
+                        <asp:TextBox ID="txtVisitEnd" runat="server" TextMode="DateTimeLocal" CssClass="textbox_style" Width="90%"></asp:TextBox>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
 
                 <tr>
+                    <td>&nbsp;</td>
+                    <td style="padding-top: 15px;"><span class="style3">*</span>Salesperson</td>
+                    <td style="padding-top: 15px;">
+                        <asp:TextBox ID="txtSalesperson" runat="server" CssClass="textbox_style" ReadOnly="true" Width="90%" BackColor="#f4f4f4"></asp:TextBox>
+                    </td>
                     <td>&nbsp;</td>
                     <td style="padding-top: 15px;"><span class="style3">*</span>Customer Name</td>
                     <td style="padding-top: 15px;"><asp:TextBox ID="txtCustomerName" runat="server" CssClass="textbox_style" Width="90%"></asp:TextBox></td>
                     <td>&nbsp;</td>
-                    <td style="padding-top: 15px;"><span class="style3">*</span>Department</td>
-                    <td style="padding-top: 15px;"><asp:TextBox ID="txtDepartment" runat="server" CssClass="textbox_style" Width="90%"></asp:TextBox></td>
-                    <td>&nbsp;</td>
                 </tr>
 
                 <tr>
                     <td>&nbsp;</td>
+                    <td style="padding-top: 15px;"><span class="style3">*</span>Department</td>
+                    <td style="padding-top: 15px;"><asp:TextBox ID="txtDepartment" runat="server" CssClass="textbox_style" Width="90%"></asp:TextBox></td>
+                    <td>&nbsp;</td>
                     <td style="padding-top: 15px;"><span class="style3">*</span>Contact Person</td>
                     <td style="padding-top: 15px;"><asp:TextBox ID="txtContactPerson" runat="server" CssClass="textbox_style" Width="90%"></asp:TextBox></td>
+                    <td>&nbsp;</td>
+                </tr>
+
+                <tr>
                     <td>&nbsp;</td>
                     <td style="padding-top: 15px;"><span class="style3">*</span>Visit Type</td>
                     <td style="padding-top: 15px;">
@@ -110,13 +127,9 @@
                         </asp:DropDownList>
                     </td>
                     <td>&nbsp;</td>
-                </tr>
-
-                <tr>
-                    <td>&nbsp;</td>
                     <td style="padding-top: 15px; vertical-align: top;"><span class="style3">*</span><asp:Label ID="lblDiscussionLabel" runat="server"></asp:Label></td>
-                    <td colspan="4" style="padding-top: 15px;">
-                        <asp:TextBox ID="txtDiscussion" runat="server" CssClass="textbox_style" TextMode="MultiLine" Rows="4" Width="96%"></asp:TextBox>
+                    <td style="padding-top: 15px;">
+                        <asp:TextBox ID="txtDiscussion" runat="server" CssClass="textbox_style" TextMode="MultiLine" Rows="3" Width="90%"></asp:TextBox>
                     </td>
                     <td>&nbsp;</td>
                 </tr>
@@ -135,9 +148,9 @@
                             </asp:DropDownList>
                         </td>
                         <td style="width: 2%">&nbsp;</td>
-                        <td width="15%" style="padding-top: 15px;">Next Follow-Up Date</td>
+                        <td width="15%" style="padding-top: 15px;">Next Follow-Up Time</td>
                         <td width="30%" style="padding-top: 15px;">
-                            <asp:TextBox ID="txtNextFollowUp" runat="server" TextMode="Date" CssClass="textbox_style" Width="90%"></asp:TextBox>
+                            <asp:TextBox ID="txtNextFollowUp" runat="server" TextMode="DateTimeLocal" CssClass="textbox_style" Width="90%"></asp:TextBox>
                         </td>
                         <td>&nbsp;</td>
                     </tr>

@@ -412,6 +412,7 @@
     </script>
 
     <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
+    <asp:HiddenField ID="hfVisitId" runat="server" />
 
     <asp:Panel ID="PanelGlobalAlert" runat="server" Visible="False" Style="margin: 15px 0; padding: 10px; border-radius: 5px; border: 1px solid;">
         <asp:Label ID="lblGlobalAlert" runat="server" Font-Bold="True"></asp:Label>
