@@ -100,8 +100,8 @@ namespace Bill_Software.corporate.business.app
             if (string.IsNullOrEmpty(strIpAddress))
                 strIpAddress = Request.ServerVariables["REMOTE_ADDR"];
 
-            lblIP.Text = strIpAddress;
-            lblpcname.Text = Environment.MachineName.ToString();
+            //lblIP.Text = strIpAddress;
+            //lblpcname.Text = Environment.MachineName.ToString();
         }
 
         private void Binddata()

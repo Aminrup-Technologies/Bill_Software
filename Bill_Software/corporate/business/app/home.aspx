@@ -68,64 +68,118 @@
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function () {
             var userName = document.getElementById('<%= lblName.ClientID %>').innerText;
-            var userEmail = document.getElementById('<%= lblEmailID.ClientID %>').innerText;
-            var userRole = document.getElementById('<%= lblDashboardRole.ClientID %>').innerText;
+        var userEmail = document.getElementById('<%= lblEmailID.ClientID %>').innerText;
+        var userRole = document.getElementById('<%= lblDashboardRole.ClientID %>').innerText;
+        var requireGeo = document.getElementById('<%= hfRequireGeo.ClientID %>').value === 'true';
 
-            // NEW: Read the dynamic flag from the server
-            var requireGeo = document.getElementById('<%= hfRequireGeo.ClientID %>').value === 'true';
+        var qrContainer = document.getElementById("qrcode");
+        var timeLabel = document.getElementById("liveTimestamp");
+        var gpsLabel = document.getElementById("liveGPS");
 
-            var qrContainer = document.getElementById("qrcode");
-            var timeLabel = document.getElementById("liveTimestamp");
-            var gpsLabel = document.getElementById("liveGPS");
+        var currentTime = new Date().toLocaleString();
+        timeLabel.innerText = "Logged: " + currentTime;
 
-            var currentTime = new Date().toLocaleString();
-            timeLabel.innerText = "Logged: " + currentTime;
+        function generateQR(lat, lon) {
+            qrContainer.innerHTML = "";
+            var qrData = "FLAME-EX SECURE ID\n" +
+                         "Name: " + userName + "\n" +
+                         "Role: " + userRole + "\n" +
+                         "Email: " + userEmail + "\n" +
+                         "Company: Aminrup Technologies\n" +
+                         "Time: " + currentTime + "\n" +
+                         "GPS: " + lat + ", " + lon;
 
-            function generateQR(lat, lon) {
-                qrContainer.innerHTML = "";
-                var qrData = "FLAME-EX SECURE ID\n" +
-                             "Name: " + userName + "\n" +
-                             "Role: " + userRole + "\n" +
-                             "Email: " + userEmail + "\n" +
-                             "Time: " + currentTime + "\n" +
-                             "GPS: " + lat + ", " + lon;
+            new QRCode(qrContainer, {
+                text: qrData, width: 90, height: 90,
+                colorDark: "#153e75", colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.L
+            });
+        }
 
-                new QRCode(qrContainer, {
-                    text: qrData, width: 90, height: 90,
-                    colorDark: "#153e75", colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.L
-                });
-            }
-
-            // NEW LOGIC: Only prompt for GPS if the Admin enabled it for this user
-            if (requireGeo) {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        function (position) {
-                            var lat = position.coords.latitude.toFixed(6);
-                            var lon = position.coords.longitude.toFixed(6);
-                            gpsLabel.innerText = "GPS: " + lat + ", " + lon;
-                            generateQR(lat, lon);
-                        },
-                        function (error) {
-                            var reason = "Access Denied/Unavailable";
-                            if (error.code === error.TIMEOUT) reason = "Request Timed Out";
-                            gpsLabel.innerText = "GPS: " + reason;
-                            generateQR("N/A", "N/A");
-                        },
-                        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-                    );
-                } else {
-                    gpsLabel.innerText = "GPS: Not Supported";
-                    generateQR("N/A", "N/A");
-                }
+        if (requireGeo) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        var lat = position.coords.latitude.toFixed(6);
+                        var lon = position.coords.longitude.toFixed(6);
+                        gpsLabel.innerText = "GPS: " + lat + ", " + lon;
+                        generateQR(lat, lon);
+                    },
+                    function (error) {
+                        var reason = "Access Denied/Unavailable";
+                        if (error.code === error.TIMEOUT) reason = "Request Timed Out";
+                        gpsLabel.innerText = "GPS: " + reason;
+                        generateQR("N/A", "N/A");
+                    },
+                    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+                );
             } else {
-                // User does not require Geo Tracking
-                gpsLabel.innerText = "GPS: Not Required";
-                generateQR("Disabled", "Disabled");
+                gpsLabel.innerText = "GPS: Not Supported";
+                generateQR("N/A", "N/A");
             }
+        } else {
+            gpsLabel.innerText = "GPS: Not Required";
+            generateQR("Disabled", "Disabled");
+        }
+    });
+
+    // --- NEW: The Share / Download Logic ---
+    function shareOrDownloadIDCard() {
+        var card = document.getElementById('idCardContainer');
+        var userName = document.getElementById('<%= lblName.ClientID %>').innerText.trim().replace(/\s+/g, '_');
+        var btn = document.getElementById('btnShareID');
+
+        // UI Feedback
+        var originalText = btn.innerHTML;
+        btn.innerHTML = "⏳ Generating Image...";
+        btn.disabled = true;
+
+        // Take the screenshot using html2canvas
+        html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null }).then(function (canvas) {
+            canvas.toBlob(function (blob) {
+                var fileName = 'FLAME_EX_ID_' + userName + '.png';
+                var file = new File([blob], fileName, { type: 'image/png' });
+
+                // Check if the device supports native sharing (Mobile phones mostly)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        title: 'Official Digital ID',
+                        text: 'Please find my official Aminrup Technologies Digital ID attached.',
+                        files: [file]
+                    }).then(() => {
+                        resetButton(btn, originalText);
+                    }).catch((error) => {
+                        console.log('Share cancelled or failed', error);
+                        // Fallback to download if they cancel the share
+                        fallbackDownload(file, fileName);
+                        resetButton(btn, originalText);
+                    });
+                } else {
+                    // Fallback for Desktop: Directly download the image
+                    fallbackDownload(file, fileName);
+                    resetButton(btn, originalText);
+                }
+            }, 'image/png');
         });
-    </script>
+    }
+
+    function fallbackDownload(file, fileName) {
+        var url = URL.createObjectURL(file);
+        var link = document.createElement('a');
+        link.download = fileName;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function resetButton(btn, text) {
+        btn.innerHTML = text;
+        btn.disabled = false;
+    }
+</script>
+
     <asp:Panel ID="pnlNotification" runat="server" Visible="false" CssClass="erp-alert">
         <strong>📢 New Module Live</strong><br />
         The <b>PR–PO (Purchase Requisition → Purchase Order)</b> module has been incorporated into the ERP.
@@ -179,10 +233,21 @@
                 </td>
                 <td colspan="2">
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
                     <asp:Panel ID="Panel1" runat="server" Style="max-width: 600px; margin: 0 auto 20px auto; font-family: 'Segoe UI', Arial, sans-serif;">
 
-                        <div style="background: linear-gradient(135deg, #ffffff 0%, #f4f7f6 100%); border: 1px solid #c3d4e6; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); overflow: hidden; position: relative;">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                            <button type="button" id="btnShareID" onclick="shareOrDownloadIDCard()"
+                                style="background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s;">
+                                📤 Share / Download ID Card
+       
+                            </button>
+                        </div>
+
+                        <asp:HiddenField ID="hfRequireGeo" runat="server" Value="true" />
+
+                        <div id="idCardContainer" style="background: linear-gradient(135deg, #ffffff 0%, #f4f7f6 100%); border: 1px solid #c3d4e6; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); overflow: hidden; position: relative;">
 
                             <div style="background-color: #153e75; color: white; padding: 10px 20px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
                                 <span>FLAME-EX DIGITAL ID</span>
@@ -192,25 +257,22 @@
                             <div style="display: flex; flex-wrap: wrap; padding: 20px; gap: 20px;">
 
                                 <div style="display: flex; flex-direction: column; align-items: center; width: 120px;">
-                                    <asp:Image ID="imgIdProfile" runat="server" ImageUrl="~/corporate/business/WebImages/representative.png"
+                                    <asp:Image ID="imgIdProfile" runat="server" ImageUrl="~/corporate/business/WebImages/default-avatar.png"
                                         Style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; border: 3px solid #19658A; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 10px;" />
-                                    <asp:HiddenField ID="hfRequireGeo" runat="server" Value="true" />
                                     <asp:Label ID="lblDashboardRole" runat="server" Font-Bold="True" ForeColor="#ffffff"
                                         Style="background-color: #19658A; padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; text-align: center; width: 100%; box-sizing: border-box;"></asp:Label>
                                 </div>
 
                                 <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; justify-content: center;">
-                                    <asp:Label ID="lblName" runat="server" Font-Bold="True" ForeColor="#333333" Style="font-size: 22px; margin-bottom: 5px;"></asp:Label>
+                                    <asp:Label ID="lblName" runat="server" Font-Bold="True" ForeColor="#333333" Style="font-size: 22px; margin-bottom: 5px; line-height: 1.1;"></asp:Label>
 
-                                    <div style="font-size: 13px; color: #555; line-height: 1.6;">
-                                        <strong style="color: #888;">Email:</strong>
+                                    <div style="font-size: 13px; color: #555; line-height: 1.6; margin-top: 5px;">
+                                        <strong style="color: #153e75;">🏢 FLAME-EX</strong><br />
+                                        <strong style="color: #888;">🌐 Web:</strong> <a href="https://www.aagroupindia.com/" style="color: #19658A; text-decoration: none;">www.aagroupindia.com</a><br />
+                                        <strong style="color: #888;">✉️ Email:</strong>
                                         <asp:Label ID="lblEmailID" runat="server"></asp:Label><br />
-                                        <strong style="color: #888;">Phone:</strong>
-                                        <asp:Label ID="lblContactNo" runat="server"></asp:Label><br />
-                                        <strong style="color: #888;">IP:</strong>
-                                        <asp:Label ID="lblIP" runat="server"></asp:Label><br />
-                                        <strong style="color: #888;">PC:</strong>
-                                        <asp:Label ID="lblpcname" runat="server"></asp:Label>
+                                        <strong style="color: #888;">📞 Phone:</strong>
+                                        <asp:Label ID="lblContactNo" runat="server"></asp:Label>
                                     </div>
                                 </div>
 
