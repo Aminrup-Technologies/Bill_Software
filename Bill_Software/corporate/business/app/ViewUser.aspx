@@ -327,7 +327,8 @@
 
                                 <div class="card-status">
                                     <asp:Label ID="lblStatus" runat="server" Text='<%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>' CssClass='<%# Convert.ToBoolean(Eval("IsActive")) ? "badge badge-success" : "badge badge-danger" %>'></asp:Label>
-                                    <span style="font-size: 11px; color: #888;" title="Last Login">🕒 <%# Eval("LastLogin", "{0:MMM dd, HH:mm}") %></span>
+                                    <span style="font-size: 11px; color:#888;" title="Last Login">🕒 <%# Eval("LastLogin", "{0:MMM dd, HH:mm}") %></span>
+                                    <span style="font-size: 11px; color:#888;" title="Geo Tagging">📍 <%# (Eval("RequireGeoTagging") != DBNull.Value && Convert.ToBoolean(Eval("RequireGeoTagging"))) ? "Geo: ON" : "Geo: OFF" %></span>
                                 </div>
 
                                 <div class="card-actions">
@@ -374,6 +375,11 @@
                                     <div class="edit-group" style="flex-direction: row; align-items: center; gap: 8px;">
                                         <asp:CheckBox ID="chkMustChangePwd" runat="server" Checked='<%# Eval("MustChangePassword") != DBNull.Value && Convert.ToBoolean(Eval("MustChangePassword")) %>' />
                                         <label style="margin: 0;">Force Password Change</label>
+                                    </div>
+
+                                    <div class="edit-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                                        <asp:CheckBox ID="chkRequireGeo" runat="server" Checked='<%# Eval("RequireGeoTagging") != DBNull.Value && Convert.ToBoolean(Eval("RequireGeoTagging")) %>' />
+                                        <label style="margin:0;">Require Geo-Tagging</label>
                                     </div>
 
                                     <div style="display: flex; justify-content: flex-end; gap: 10px; width: 100%;">

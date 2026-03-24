@@ -67,24 +67,22 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function () {
-            // 1. Grab user data from the ASP.NET rendered labels
             var userName = document.getElementById('<%= lblName.ClientID %>').innerText;
             var userEmail = document.getElementById('<%= lblEmailID.ClientID %>').innerText;
             var userRole = document.getElementById('<%= lblDashboardRole.ClientID %>').innerText;
+
+            // NEW: Read the dynamic flag from the server
+            var requireGeo = document.getElementById('<%= hfRequireGeo.ClientID %>').value === 'true';
 
             var qrContainer = document.getElementById("qrcode");
             var timeLabel = document.getElementById("liveTimestamp");
             var gpsLabel = document.getElementById("liveGPS");
 
-            // Set the live timestamp immediately
             var currentTime = new Date().toLocaleString();
             timeLabel.innerText = "Logged: " + currentTime;
 
-            // 2. Function to generate the QR Code
             function generateQR(lat, lon) {
-                qrContainer.innerHTML = ""; // Clear any existing code
-
-                // Build the string that will be hidden inside the QR Code
+                qrContainer.innerHTML = "";
                 var qrData = "FLAME-EX SECURE ID\n" +
                              "Name: " + userName + "\n" +
                              "Role: " + userRole + "\n" +
@@ -92,40 +90,39 @@
                              "Time: " + currentTime + "\n" +
                              "GPS: " + lat + ", " + lon;
 
-                // Generate the QR Code visually
                 new QRCode(qrContainer, {
-                    text: qrData,
-                    width: 90,
-                    height: 90,
-                    colorDark: "#153e75",
-                    colorLight: "#ffffff",
+                    text: qrData, width: 90, height: 90,
+                    colorDark: "#153e75", colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.L
                 });
             }
 
-            // 3. Request GPS Coordinates from the Browser
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        var lat = position.coords.latitude.toFixed(6);
-                        var lon = position.coords.longitude.toFixed(6);
-                        gpsLabel.innerText = "GPS: " + lat + ", " + lon;
-                        generateQR(lat, lon); // Generate QR with real GPS
-                    },
-                    function (error) {
-                        // Provide a better error message if it fails
-                        var reason = "Access Denied/Unavailable";
-                        if (error.code === error.TIMEOUT) reason = "Request Timed Out";
-
-                        gpsLabel.innerText = "GPS: " + reason;
-                        generateQR("N/A", "N/A"); // Generate QR without GPS
-                    },
-                    // FIX: Increased timeout to 30 seconds (30000ms) to allow time to click "Allow"
-                    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-                );
+            // NEW LOGIC: Only prompt for GPS if the Admin enabled it for this user
+            if (requireGeo) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function (position) {
+                            var lat = position.coords.latitude.toFixed(6);
+                            var lon = position.coords.longitude.toFixed(6);
+                            gpsLabel.innerText = "GPS: " + lat + ", " + lon;
+                            generateQR(lat, lon);
+                        },
+                        function (error) {
+                            var reason = "Access Denied/Unavailable";
+                            if (error.code === error.TIMEOUT) reason = "Request Timed Out";
+                            gpsLabel.innerText = "GPS: " + reason;
+                            generateQR("N/A", "N/A");
+                        },
+                        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+                    );
+                } else {
+                    gpsLabel.innerText = "GPS: Not Supported";
+                    generateQR("N/A", "N/A");
+                }
             } else {
-                gpsLabel.innerText = "GPS: Not Supported";
-                generateQR("N/A", "N/A");
+                // User does not require Geo Tracking
+                gpsLabel.innerText = "GPS: Not Required";
+                generateQR("Disabled", "Disabled");
             }
         });
     </script>
@@ -197,6 +194,7 @@
                                 <div style="display: flex; flex-direction: column; align-items: center; width: 120px;">
                                     <asp:Image ID="imgIdProfile" runat="server" ImageUrl="~/corporate/business/WebImages/representative.png"
                                         Style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; border: 3px solid #19658A; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 10px;" />
+                                    <asp:HiddenField ID="hfRequireGeo" runat="server" Value="true" />
                                     <asp:Label ID="lblDashboardRole" runat="server" Font-Bold="True" ForeColor="#ffffff"
                                         Style="background-color: #19658A; padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; text-align: center; width: 100%; box-sizing: border-box;"></asp:Label>
                                 </div>

@@ -107,10 +107,10 @@ namespace Bill_Software.corporate.business.app
         private void Binddata()
         {
             string cmdstring = @"
-        SELECT u.Name, u.Phone_no, u.Email, u.ProfilePictureUrl, r.RoleName 
-        FROM tbl_login u 
-        LEFT JOIN Roles r ON u.RoleId = r.RoleId 
-        WHERE u.User_Id = @UserId";
+               SELECT u.Name, u.Phone_no, u.Email, u.ProfilePictureUrl, r.RoleName, u.RequireGeoTagging
+                FROM tbl_login u 
+                LEFT JOIN Roles r ON u.RoleId = r.RoleId 
+                WHERE u.User_Id = @UserId";
 
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
@@ -126,6 +126,13 @@ namespace Bill_Software.corporate.business.app
                         lblName.Text = re["Name"] != DBNull.Value ? re["Name"].ToString() : "Unknown User";
                         lblContactNo.Text = re["Phone_no"] != DBNull.Value ? re["Phone_no"].ToString() : "N/A";
                         lblEmailID.Text = re["Email"] != DBNull.Value ? re["Email"].ToString() : "N/A";
+
+                        bool requireGeo = re["RequireGeoTagging"] != DBNull.Value ? Convert.ToBoolean(re["RequireGeoTagging"]) : true;
+                        HiddenField hfGeo = this.FindControl("hfRequireGeo") as HiddenField;
+                        if (hfGeo != null)
+                        {
+                            hfGeo.Value = requireGeo.ToString().ToLower(); // "true" or "false"
+                        }
 
                         // FIX: Directly assign the text instead of using FindControl
                         string role = re["RoleName"] != DBNull.Value ? re["RoleName"].ToString() : "";
