@@ -128,11 +128,8 @@ namespace Bill_Software.corporate.business.app
                         lblEmailID.Text = re["Email"] != DBNull.Value ? re["Email"].ToString() : "N/A";
 
                         bool requireGeo = re["RequireGeoTagging"] != DBNull.Value ? Convert.ToBoolean(re["RequireGeoTagging"]) : true;
-                        HiddenField hfGeo = this.FindControl("hfRequireGeo") as HiddenField;
-                        if (hfGeo != null)
-                        {
-                            hfGeo.Value = requireGeo.ToString().ToLower(); // "true" or "false"
-                        }
+                        // Call the control ID directly!
+                        hfRequireGeo.Value = requireGeo.ToString().ToLower();
 
                         // FIX: Directly assign the text instead of using FindControl
                         string role = re["RoleName"] != DBNull.Value ? re["RoleName"].ToString() : "";

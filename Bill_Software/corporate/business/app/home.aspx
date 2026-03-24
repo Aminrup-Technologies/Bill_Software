@@ -67,8 +67,10 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function () {
+            // 1. Grab all user data (Added userPhone!)
             var userName = document.getElementById('<%= lblName.ClientID %>').innerText;
         var userEmail = document.getElementById('<%= lblEmailID.ClientID %>').innerText;
+        var userPhone = document.getElementById('<%= lblContactNo.ClientID %>').innerText;
         var userRole = document.getElementById('<%= lblDashboardRole.ClientID %>').innerText;
         var requireGeo = document.getElementById('<%= hfRequireGeo.ClientID %>').value === 'true';
 
@@ -81,21 +83,32 @@
 
         function generateQR(lat, lon) {
             qrContainer.innerHTML = "";
-            var qrData = "FLAME-EX SECURE ID\n" +
-                         "Name: " + userName + "\n" +
-                         "Role: " + userRole + "\n" +
-                         "Email: " + userEmail + "\n" +
-                         "Company: Aminrup Technologies\n" +
-                         "Time: " + currentTime + "\n" +
-                         "GPS: " + lat + ", " + lon;
 
+            // 2. Strict vCard Format (Triggers "Save Contact" on mobile)
+            // Using \r\n as it is the official standard for vCards
+            var vCardData = "BEGIN:VCARD\r\n" +
+                            "VERSION:3.0\r\n" +
+                            "FN:" + userName + "\r\n" +
+                            "ORG:Flame-Ex\r\n" +
+                            "TITLE:" + userRole + "\r\n" +
+                            "TEL:" + userPhone + "\r\n" +
+                            "EMAIL:" + userEmail + "\r\n" +
+                            "URL:https://www.aagroupindia.com\r\n" +
+                            "NOTE:Verified at: " + currentTime + "\r\n" +
+                            "END:VCARD";
+
+            // Generate QR - Using CorrectLevel.L keeps the squares larger and easier to scan
             new QRCode(qrContainer, {
-                text: qrData, width: 90, height: 90,
-                colorDark: "#153e75", colorLight: "#ffffff",
+                text: vCardData,
+                width: 120,
+                height: 120,
+                colorDark: "#153e75",
+                colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.L
             });
         }
 
+        // 3. Location & QR Trigger
         if (requireGeo) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -123,39 +136,34 @@
         }
     });
 
-    // --- NEW: The Share / Download Logic ---
+    // --- The Share / Download Logic ---
     function shareOrDownloadIDCard() {
         var card = document.getElementById('idCardContainer');
         var userName = document.getElementById('<%= lblName.ClientID %>').innerText.trim().replace(/\s+/g, '_');
         var btn = document.getElementById('btnShareID');
 
-        // UI Feedback
         var originalText = btn.innerHTML;
         btn.innerHTML = "⏳ Generating Image...";
         btn.disabled = true;
 
-        // Take the screenshot using html2canvas
         html2canvas(card, { scale: 2, useCORS: true, backgroundColor: null }).then(function (canvas) {
             canvas.toBlob(function (blob) {
                 var fileName = 'FLAME_EX_ID_' + userName + '.png';
                 var file = new File([blob], fileName, { type: 'image/png' });
 
-                // Check if the device supports native sharing (Mobile phones mostly)
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     navigator.share({
                         title: 'Official Digital ID',
-                        text: 'Please find my official Aminrup Technologies Digital ID attached.',
+                        text: 'Please find my official FLAME-EX Digital ID attached.',
                         files: [file]
                     }).then(() => {
                         resetButton(btn, originalText);
                     }).catch((error) => {
                         console.log('Share cancelled or failed', error);
-                        // Fallback to download if they cancel the share
                         fallbackDownload(file, fileName);
                         resetButton(btn, originalText);
                     });
                 } else {
-                    // Fallback for Desktop: Directly download the image
                     fallbackDownload(file, fileName);
                     resetButton(btn, originalText);
                 }
@@ -178,7 +186,7 @@
         btn.innerHTML = text;
         btn.disabled = false;
     }
-</script>
+    </script>
 
     <asp:Panel ID="pnlNotification" runat="server" Visible="false" CssClass="erp-alert">
         <strong>📢 New Module Live</strong><br />
@@ -276,7 +284,7 @@
                                     </div>
                                 </div>
 
-                                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100px;">
+                                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 130px;">
                                     <div id="qrcode" style="padding: 5px; background: white; border: 1px solid #ccc; border-radius: 4px;"></div>
                                     <div style="font-size: 9px; color: #888; margin-top: 5px; text-align: center;">LIVE SECURE TAG</div>
                                 </div>
