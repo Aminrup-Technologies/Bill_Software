@@ -41,31 +41,94 @@
         }
 
         .erp-alert {
-    background: #f0f8ff;
-    border-left: 5px solid #1e90ff;
-    padding: 12px 16px;
-    margin-bottom: 15px;
-    position: relative;
-    font-size: 13px;
-}
+            background: #f0f8ff;
+            border-left: 5px solid #1e90ff;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            position: relative;
+            font-size: 13px;
+        }
 
-.erp-alert-sub {
-    font-size: 12px;
-    color: #444;
-}
+        .erp-alert-sub {
+            font-size: 12px;
+            color: #444;
+        }
 
-.erp-alert-close {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    font-weight: bold;
-    text-decoration: none;
-    color: #555;
-}
-
+        .erp-alert-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-weight: bold;
+            text-decoration: none;
+            color: #555;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Grab user data from the ASP.NET rendered labels
+            var userName = document.getElementById('<%= lblName.ClientID %>').innerText;
+            var userEmail = document.getElementById('<%= lblEmailID.ClientID %>').innerText;
+            var userRole = document.getElementById('<%= lblDashboardRole.ClientID %>').innerText;
+
+            var qrContainer = document.getElementById("qrcode");
+            var timeLabel = document.getElementById("liveTimestamp");
+            var gpsLabel = document.getElementById("liveGPS");
+
+            // Set the live timestamp immediately
+            var currentTime = new Date().toLocaleString();
+            timeLabel.innerText = "Logged: " + currentTime;
+
+            // 2. Function to generate the QR Code
+            function generateQR(lat, lon) {
+                qrContainer.innerHTML = ""; // Clear any existing code
+
+                // Build the string that will be hidden inside the QR Code
+                var qrData = "FLAME-EX SECURE ID\n" +
+                             "Name: " + userName + "\n" +
+                             "Role: " + userRole + "\n" +
+                             "Email: " + userEmail + "\n" +
+                             "Time: " + currentTime + "\n" +
+                             "GPS: " + lat + ", " + lon;
+
+                // Generate the QR Code visually
+                new QRCode(qrContainer, {
+                    text: qrData,
+                    width: 90,
+                    height: 90,
+                    colorDark: "#153e75",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            }
+
+            // 3. Request GPS Coordinates from the Browser
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        var lat = position.coords.latitude.toFixed(6);
+                        var lon = position.coords.longitude.toFixed(6);
+                        gpsLabel.innerText = "GPS: " + lat + ", " + lon;
+                        generateQR(lat, lon); // Generate QR with real GPS
+                    },
+                    function (error) {
+                        // Provide a better error message if it fails
+                        var reason = "Access Denied/Unavailable";
+                        if (error.code === error.TIMEOUT) reason = "Request Timed Out";
+
+                        gpsLabel.innerText = "GPS: " + reason;
+                        generateQR("N/A", "N/A"); // Generate QR without GPS
+                    },
+                    // FIX: Increased timeout to 30 seconds (30000ms) to allow time to click "Allow"
+                    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+                );
+            } else {
+                gpsLabel.innerText = "GPS: Not Supported";
+                generateQR("N/A", "N/A");
+            }
+        });
+    </script>
     <asp:Panel ID="pnlNotification" runat="server" Visible="false" CssClass="erp-alert">
         <strong>📢 New Module Live</strong><br />
         The <b>PR–PO (Purchase Requisition → Purchase Order)</b> module has been incorporated into the ERP.
@@ -118,36 +181,52 @@
 
                 </td>
                 <td colspan="2">
-                    <asp:Panel ID="Panel1" runat="server" BorderColor="#336699" BorderStyle="Solid"
-                        BorderWidth="2px">
-                        <table cellpadding="0" cellspacing="1" class="style1">
-                            <tr>
-                                <td class="style1" colspan="2" width="50%">&nbsp;Welcome
-                            <asp:Label ID="lblName" runat="server" CssClass="style3"></asp:Label>
-                                    &nbsp;to <b>Flam-Ex</b>. You are logged in from <b>IP</b> : &nbsp;<asp:Label ID="lblIP" runat="server" Font-Bold="True" ForeColor="DarkBlue"></asp:Label>
-                                    &nbsp;& Computer Name :
-                                <asp:Label ID="lblpcname" runat="server" Font-Bold="True" ForeColor="DarkBlue"></asp:Label>.</td>
-                            </tr>
-                            <tr>
-                                <td class="style1" colspan="2" width="50%">&nbsp;</td>
-                            </tr>
-                            <tr>
-                                <td width="50%">&nbsp;<span class="style4">Contact Information</span>&nbsp;</td>
-                                <td width="50%">&nbsp;</td>
-                            </tr>
-                            <tr>
-                                <td>&nbsp;Your Email ID is
-                            <asp:Label ID="lblEmailID" runat="server" CssClass="style3"
-                                Text="username@domain.com"></asp:Label>
-                                    &nbsp;</td>
-                                <td>&nbsp;&nbsp;Contact No.
-                            <asp:Label ID="lblContactNo" runat="server" CssClass="style3"></asp:Label>
-                                    &nbsp;</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">&nbsp;</td>
-                            </tr>
-                        </table>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+                    <asp:Panel ID="Panel1" runat="server" Style="max-width: 600px; margin: 0 auto 20px auto; font-family: 'Segoe UI', Arial, sans-serif;">
+
+                        <div style="background: linear-gradient(135deg, #ffffff 0%, #f4f7f6 100%); border: 1px solid #c3d4e6; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); overflow: hidden; position: relative;">
+
+                            <div style="background-color: #153e75; color: white; padding: 10px 20px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>FLAME-EX DIGITAL ID</span>
+                                <span style="font-size: 12px; font-weight: normal; opacity: 0.8;">Authorized Personnel</span>
+                            </div>
+
+                            <div style="display: flex; flex-wrap: wrap; padding: 20px; gap: 20px;">
+
+                                <div style="display: flex; flex-direction: column; align-items: center; width: 120px;">
+                                    <asp:Image ID="imgIdProfile" runat="server" ImageUrl="~/corporate/business/WebImages/representative.png"
+                                        Style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; border: 3px solid #19658A; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 10px;" />
+                                    <asp:Label ID="lblDashboardRole" runat="server" Font-Bold="True" ForeColor="#ffffff"
+                                        Style="background-color: #19658A; padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; text-align: center; width: 100%; box-sizing: border-box;"></asp:Label>
+                                </div>
+
+                                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; justify-content: center;">
+                                    <asp:Label ID="lblName" runat="server" Font-Bold="True" ForeColor="#333333" Style="font-size: 22px; margin-bottom: 5px;"></asp:Label>
+
+                                    <div style="font-size: 13px; color: #555; line-height: 1.6;">
+                                        <strong style="color: #888;">Email:</strong>
+                                        <asp:Label ID="lblEmailID" runat="server"></asp:Label><br />
+                                        <strong style="color: #888;">Phone:</strong>
+                                        <asp:Label ID="lblContactNo" runat="server"></asp:Label><br />
+                                        <strong style="color: #888;">IP:</strong>
+                                        <asp:Label ID="lblIP" runat="server"></asp:Label><br />
+                                        <strong style="color: #888;">PC:</strong>
+                                        <asp:Label ID="lblpcname" runat="server"></asp:Label>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100px;">
+                                    <div id="qrcode" style="padding: 5px; background: white; border: 1px solid #ccc; border-radius: 4px;"></div>
+                                    <div style="font-size: 9px; color: #888; margin-top: 5px; text-align: center;">LIVE SECURE TAG</div>
+                                </div>
+                            </div>
+
+                            <div style="background-color: #eaf2ff; border-top: 1px solid #c3d4e6; padding: 8px 20px; font-size: 11px; color: #555; display: flex; justify-content: space-between;">
+                                <span id="liveTimestamp">Locating...</span>
+                                <span id="liveGPS">GPS: Acquiring...</span>
+                            </div>
+                        </div>
                     </asp:Panel>
                 </td>
                 <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

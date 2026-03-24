@@ -25,125 +25,412 @@ namespace Bill_Software.corporate.business.app
 
             if (!IsPostBack)
             {
-                LoadEmployeeDropdown();
+                //LoadEmployeeDropdown();
                 BindGrid();
             }
         }
 
-        private void LoadEmployeeDropdown()
+        protected void btnFilter_Click(object sender, EventArgs e)
         {
-            using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT User_Id FROM tbl_login WHERE User_Id NOT IN ('admin', 'AT01') ORDER BY Id", cn))
+            Button clickedButton = sender as Button;
+            if (clickedButton != null)
             {
-                var dt = new DataTable();
-                var da = new SqlDataAdapter(cmd);
-                da.Fill(dt);
-                ddlEmpId.Items.Clear();
-                ddlEmpId.Items.Add(new ListItem("-- All --", ""));
-                foreach (DataRow r in dt.Rows)
-                {
-                    ddlEmpId.Items.Add(new ListItem(r["User_Id"].ToString(), r["User_Id"].ToString()));
-                }
+                string selectedFilter = clickedButton.CommandArgument;
+                ViewState["CurrentFilter"] = selectedFilter;
+
+                // Reset all buttons to default style
+                btnFilterAll.CssClass = "filter-btn";
+                btnFilterActive.CssClass = "filter-btn";
+                btnFilterInactive.CssClass = "filter-btn";
+                btnFilterLocked.CssClass = "filter-btn";
+
+                // Apply 'active' style to the clicked button
+                clickedButton.CssClass = "filter-btn active";
+
+                // Close any open edit rows and refresh the data
+                lvUsers.EditIndex = -1;
+                BindGrid();
             }
         }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            lvUsers.EditIndex = -1; // Close any open edit panels when searching
+            BindGrid();
+        }
+
+        protected void btnClear_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = string.Empty;
+            ViewState["CurrentFilter"] = "All";
+
+            btnFilterAll.CssClass = "filter-btn active";
+            btnFilterActive.CssClass = "filter-btn";
+            btnFilterInactive.CssClass = "filter-btn";
+            btnFilterLocked.CssClass = "filter-btn";
+
+            lvUsers.EditIndex = -1;
+            BindGrid();
+        }
+
+        //private void LoadEmployeeDropdown()
+        //{
+        //    using (var cn = new SqlConnection(ConnString))
+        //    using (var cmd = new SqlCommand("SELECT User_Id FROM tbl_login WHERE User_Id NOT IN ('admin', 'AT01') ORDER BY Id", cn))
+        //    {
+        //        var dt = new DataTable();
+        //        var da = new SqlDataAdapter(cmd);
+        //        da.Fill(dt);
+        //        ddlEmpId.Items.Clear();
+        //        ddlEmpId.Items.Add(new ListItem("-- All --", ""));
+        //        foreach (DataRow r in dt.Rows)
+        //        {
+        //            ddlEmpId.Items.Add(new ListItem(r["User_Id"].ToString(), r["User_Id"].ToString()));
+        //        }
+        //    }
+        //}
 
         protected void ddlEmpId_SelectedIndexChanged(object sender, EventArgs e) => BindGrid();
         protected void btnRefresh_Click(object sender, EventArgs e) => BindGrid();
 
         private void BindGrid()
         {
-            // BUG FIX: Removed "AND IsActive = 1" so admin can see inactive users to reactivate them.
-            //var sql = @"SELECT Id, User_Id, Name, Email, Phone_no, IsActive, LockoutEnd, LastLogin, CreatedAt
-            //            FROM dbo.tbl_login
-            //            WHERE (@UserId = '' OR User_Id = @UserId)
-            //            AND (User_Id NOT IN ('admin', 'AT01'))
-            //            ORDER BY Id";
+            string sql = @"SELECT u.Id, u.User_Id, u.Name, u.Email, u.Phone_no, u.IsActive, u.LockoutEnd, 
+                          u.LastLogin, u.CreatedAt, u.MustChangePassword, u.EmailVerified,
+                          u.ProfilePictureUrl, u.RoleId, r.RoleName
+                   FROM dbo.tbl_login u
+                   LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
+                   WHERE (u.User_Id NOT IN ('admin', 'AT01')) ";
 
-            // Added MustChangePassword and EmailVerified to the SELECT statement
-            var sql = @"SELECT Id, User_Id, Name, Email, Phone_no, IsActive, LockoutEnd, LastLogin, CreatedAt, MustChangePassword, EmailVerified
-                        FROM dbo.tbl_login
-                        WHERE (@UserId = '' OR User_Id = @UserId)
-                        AND (User_Id NOT IN ('admin', 'AT01'))
-                        ORDER BY Id";
+            // --- 1. APPLY BUTTON FILTERS ---
+            string currentFilter = ViewState["CurrentFilter"] as string;
+            if (currentFilter == "Active")
+            {
+                sql += " AND u.IsActive = 1 ";
+            }
+            else if (currentFilter == "Inactive")
+            {
+                sql += " AND u.IsActive = 0 ";
+            }
+            else if (currentFilter == "Locked")
+            {
+                // Safe check for both datetime and datetimeoffset locking mechanisms
+                sql += " AND (u.LockoutEnd IS NOT NULL AND u.LockoutEnd > SYSDATETIMEOFFSET()) ";
+            }
+
+            // --- 2. APPLY TEXT SEARCH ---
+            string searchTerm = txtSearch.Text.Trim();
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                sql += @" AND (
+                    u.User_Id LIKE '%' + @SearchTerm + '%' OR 
+                    u.Name LIKE '%' + @SearchTerm + '%' OR 
+                    u.Email LIKE '%' + @SearchTerm + '%' OR 
+                    u.Phone_no LIKE '%' + @SearchTerm + '%'
+                  ) ";
+            }
+
+            sql += " ORDER BY u.Id";
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(sql, cn))
             {
-                cmd.Parameters.AddWithValue("@UserId", ddlEmpId.SelectedValue ?? string.Empty);
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", searchTerm);
+                }
+
                 var dt = new DataTable();
                 var da = new SqlDataAdapter(cmd);
                 da.Fill(dt);
-                gvUsers.DataSource = dt;
-                gvUsers.DataBind();
+
+                lvUsers.DataSource = dt;
+                lvUsers.DataBind();
             }
         }
 
-        #region Edit Grid Events
+        #region ListView Events
 
-        protected void gvUsers_RowEditing(object sender, GridViewEditEventArgs e)
+        protected void lvUsers_ItemEditing(object sender, ListViewEditEventArgs e)
         {
-            gvUsers.EditIndex = e.NewEditIndex;
+            lvUsers.EditIndex = e.NewEditIndex;
             BindGrid();
         }
 
-        protected void gvUsers_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
+        protected void lvUsers_ItemCanceling(object sender, ListViewCancelEventArgs e)
         {
-            gvUsers.EditIndex = -1;
+            lvUsers.EditIndex = -1;
             BindGrid();
         }
 
-        protected void gvUsers_RowUpdating(object sender, GridViewUpdateEventArgs e)
+        protected void lvUsers_ItemUpdating(object sender, ListViewUpdateEventArgs e)
         {
-            int id = Convert.ToInt32(gvUsers.DataKeys[e.RowIndex].Value);
-            GridViewRow row = gvUsers.Rows[e.RowIndex];
+            int id = Convert.ToInt32(lvUsers.DataKeys[e.ItemIndex].Value);
+            ListViewItem item = lvUsers.Items[e.ItemIndex];
 
-            // Grab the updated values from the TextBoxes
-            string newName = (row.FindControl("txtName") as TextBox)?.Text.Trim();
-            string newEmail = (row.FindControl("txtEmail") as TextBox)?.Text.Trim();
-            string newPhone = (row.FindControl("txtPhone") as TextBox)?.Text.Trim();
+            TextBox txtName = item.FindControl("txtName") as TextBox;
+            TextBox txtEmail = item.FindControl("txtEmail") as TextBox;
+            TextBox txtPhone = item.FindControl("txtPhone") as TextBox;
+            CheckBox chkEmail = item.FindControl("chkEmailVerified") as CheckBox;
+            CheckBox chkPwd = item.FindControl("chkMustChangePwd") as CheckBox;
+            DropDownList ddlGridRole = item.FindControl("ddlGridRole") as DropDownList;
 
-            // Grab the checkbox states (default to false if not found)
-            bool emailVerified = (row.FindControl("chkEmailVerified") as CheckBox)?.Checked ?? false;
-            bool mustChangePwd = (row.FindControl("chkMustChangePwd") as CheckBox)?.Checked ?? false;
+            string newName = txtName != null ? txtName.Text.Trim() : null;
+            string newEmail = txtEmail != null ? txtEmail.Text.Trim() : null;
+            string newPhone = txtPhone != null ? txtPhone.Text.Trim() : null;
+            bool emailVerified = chkEmail != null ? chkEmail.Checked : false;
+            bool mustChangePwd = chkPwd != null ? chkPwd.Checked : false;
 
-            // Perform Update including the new boolean flags
+            object roleIdParam = DBNull.Value;
+            if (ddlGridRole != null && ddlGridRole.SelectedValue != "0")
+            {
+                roleIdParam = Convert.ToInt32(ddlGridRole.SelectedValue);
+            }
+
             string updateSql = @"UPDATE dbo.tbl_login 
-                                 SET Name = @Name, 
-                                     Email = @Email, 
-                                     Phone_no = @Phone, 
-                                     EmailVerified = @EmailVerified, 
-                                     MustChangePassword = @MustChangePwd 
-                                 WHERE Id = @Id";
+                         SET Name = @Name, Email = @Email, Phone_no = @Phone, 
+                             EmailVerified = @EmailVerified, MustChangePassword = @MustChangePwd, RoleId = @RoleId
+                         WHERE Id = @Id";
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(updateSql, cn))
             {
-                cmd.Parameters.AddWithValue("@Name", newName ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Email", newEmail ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Phone", newPhone ?? (object)DBNull.Value);
-
-                // Add the new bit parameters
+                cmd.Parameters.AddWithValue("@Name", newName != null ? (object)newName : DBNull.Value);
+                cmd.Parameters.AddWithValue("@Email", newEmail != null ? (object)newEmail : DBNull.Value);
+                cmd.Parameters.AddWithValue("@Phone", newPhone != null ? (object)newPhone : DBNull.Value);
                 cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
                 cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
-
+                cmd.Parameters.AddWithValue("@RoleId", roleIdParam);
                 cmd.Parameters.AddWithValue("@Id", id);
 
                 cn.Open();
                 cmd.ExecuteNonQuery();
             }
 
-            ShowOk("User details updated successfully.");
-            gvUsers.EditIndex = -1; // Exit edit mode
+            ShowOk("User details and roles updated successfully.");
+            lvUsers.EditIndex = -1;
             BindGrid();
         }
+
+        protected void lvUsers_ItemDataBound(object sender, ListViewItemEventArgs e)
+        {
+            if (e.Item.ItemType == ListViewItemType.DataItem)
+            {
+                ListViewDataItem dataItem = (ListViewDataItem)e.Item;
+                DataRowView drv = (DataRowView)dataItem.DataItem;
+
+                // Populate Dropdown if in Edit Mode
+                if (lvUsers.EditIndex == dataItem.DisplayIndex)
+                {
+                    DropDownList ddlGridRole = e.Item.FindControl("ddlGridRole") as DropDownList;
+                    HiddenField hfCurrentRoleId = e.Item.FindControl("hfCurrentRoleId") as HiddenField;
+
+                    if (ddlGridRole != null)
+                    {
+                        using (var cn = new SqlConnection(ConnString))
+                        using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
+                        {
+                            var dt = new DataTable();
+                            var da = new SqlDataAdapter(cmd);
+                            da.Fill(dt);
+                            ddlGridRole.DataSource = dt;
+                            ddlGridRole.DataTextField = "RoleName";
+                            ddlGridRole.DataValueField = "RoleId";
+                            ddlGridRole.DataBind();
+                        }
+                        ddlGridRole.Items.Insert(0, new ListItem("-- Unassigned --", "0"));
+
+                        if (hfCurrentRoleId != null && !string.IsNullOrEmpty(hfCurrentRoleId.Value))
+                        {
+                            ddlGridRole.SelectedValue = hfCurrentRoleId.Value;
+                        }
+                    }
+                    return; // Stop here if in edit mode
+                }
+
+                // Style the Toggle/Lock Buttons for Normal View Mode
+                bool isActive = !drv.Row.IsNull("IsActive") && Convert.ToBoolean(drv["IsActive"]);
+
+                bool isLocked = false;
+                if (!drv.Row.IsNull("LockoutEnd"))
+                {
+                    var val = drv["LockoutEnd"];
+                    if (val is DateTimeOffset) isLocked = ((DateTimeOffset)val) > DateTimeOffset.UtcNow;
+                    else isLocked = Convert.ToDateTime(val) > DateTime.UtcNow;
+                }
+
+                LinkButton lnkToggle = e.Item.FindControl("lnkToggleActive") as LinkButton;
+                if (lnkToggle != null)
+                {
+                    lnkToggle.Text = isActive ? "Deactivate" : "Activate";
+                    lnkToggle.CssClass = isActive ? "action-btn btn-danger" : "action-btn btn-success";
+                }
+
+                LinkButton lnkLock = e.Item.FindControl("lnkLock") as LinkButton;
+                if (lnkLock != null)
+                {
+                    lnkLock.Text = isLocked ? "Unlock" : "Lock";
+                    lnkLock.CssClass = isLocked ? "action-btn btn-warning" : "action-btn btn-warning";
+                }
+            }
+        }
+
+        protected void lvUsers_ItemCommand(object sender, ListViewCommandEventArgs e)
+        {
+            if (e.CommandName == "Edit" || e.CommandName == "Cancel" || e.CommandName == "Update")
+                return;
+
+            int id = Convert.ToInt32(e.CommandArgument);
+            switch (e.CommandName)
+            {
+                case "ToggleActive": ToggleActive(id); break;
+                case "ResetPassword": ResetPassword(id); break;
+                case "DeleteUser": DeleteUser(id); break;
+                case "ToggleLock": ToggleLock(id); break;
+                case "MenuEdit":
+                    string userId = GetUserIdById(id);
+                    Response.Redirect("~/corporate/business/app/Update_Designation.aspx?User_Id=" + userId, false);
+                    break;
+            }
+            BindGrid();
+        }
+        #endregion
+
+        //private void BindGrid()
+        //{
+        //    // ENRICHED SQL: Joins tbl_login with Roles to fetch RoleName and ProfilePictureUrl
+        //    var sql = @"SELECT u.Id, u.User_Id, u.Name, u.Email, u.Phone_no, u.IsActive, u.LockoutEnd, 
+        //               u.LastLogin, u.CreatedAt, u.MustChangePassword, u.EmailVerified,
+        //               u.ProfilePictureUrl, u.RoleId, r.RoleName
+        //        FROM dbo.tbl_login u
+        //        LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
+        //        WHERE (@UserId = '' OR u.User_Id = @UserId)
+        //        AND (u.User_Id NOT IN ('admin', 'AT01'))
+        //        ORDER BY u.Id";
+
+        //    using (var cn = new SqlConnection(ConnString))
+        //    using (var cmd = new SqlCommand(sql, cn))
+        //    {
+        //        string selectedUser = ddlEmpId.SelectedValue;
+        //        cmd.Parameters.AddWithValue("@UserId", selectedUser != null ? selectedUser : string.Empty);
+
+        //        var dt = new DataTable();
+        //        var da = new SqlDataAdapter(cmd);
+        //        da.Fill(dt);
+        //        gvUsers.DataSource = dt;
+        //        gvUsers.DataBind();
+        //    }
+        //}
+
+        #region Edit Grid Events
+
+        //protected void gvUsers_RowEditing(object sender, GridViewEditEventArgs e)
+        //{
+        //    gvUsers.EditIndex = e.NewEditIndex;
+        //    BindGrid();
+        //}
+
+        //protected void gvUsers_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
+        //{
+        //    gvUsers.EditIndex = -1;
+        //    BindGrid();
+        //}
+
+        //protected void gvUsers_RowUpdating(object sender, GridViewUpdateEventArgs e)
+        //{
+        //    int id = Convert.ToInt32(gvUsers.DataKeys[e.RowIndex].Value);
+        //    GridViewRow row = gvUsers.Rows[e.RowIndex];
+
+        //    // Classic C# 5.0 null checks
+        //    TextBox txtName = row.FindControl("txtName") as TextBox;
+        //    TextBox txtEmail = row.FindControl("txtEmail") as TextBox;
+        //    TextBox txtPhone = row.FindControl("txtPhone") as TextBox;
+        //    CheckBox chkEmail = row.FindControl("chkEmailVerified") as CheckBox;
+        //    CheckBox chkPwd = row.FindControl("chkMustChangePwd") as CheckBox;
+        //    DropDownList ddlGridRole = row.FindControl("ddlGridRole") as DropDownList;
+
+        //    string newName = txtName != null ? txtName.Text.Trim() : null;
+        //    string newEmail = txtEmail != null ? txtEmail.Text.Trim() : null;
+        //    string newPhone = txtPhone != null ? txtPhone.Text.Trim() : null;
+        //    bool emailVerified = chkEmail != null ? chkEmail.Checked : false;
+        //    bool mustChangePwd = chkPwd != null ? chkPwd.Checked : false;
+
+        //    // Get the selected Role ID
+        //    object roleIdParam = DBNull.Value;
+        //    if (ddlGridRole != null && ddlGridRole.SelectedValue != "0")
+        //    {
+        //        roleIdParam = Convert.ToInt32(ddlGridRole.SelectedValue);
+        //    }
+
+        //    string updateSql = @"UPDATE dbo.tbl_login 
+        //                 SET Name = @Name, 
+        //                     Email = @Email, 
+        //                     Phone_no = @Phone, 
+        //                     EmailVerified = @EmailVerified, 
+        //                     MustChangePassword = @MustChangePwd,
+        //                     RoleId = @RoleId
+        //                 WHERE Id = @Id";
+
+        //    using (var cn = new SqlConnection(ConnString))
+        //    using (var cmd = new SqlCommand(updateSql, cn))
+        //    {
+        //        cmd.Parameters.AddWithValue("@Name", newName != null ? (object)newName : DBNull.Value);
+        //        cmd.Parameters.AddWithValue("@Email", newEmail != null ? (object)newEmail : DBNull.Value);
+        //        cmd.Parameters.AddWithValue("@Phone", newPhone != null ? (object)newPhone : DBNull.Value);
+        //        cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
+        //        cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
+        //        cmd.Parameters.AddWithValue("@RoleId", roleIdParam); // NEW: Saves the role!
+        //        cmd.Parameters.AddWithValue("@Id", id);
+
+        //        cn.Open();
+        //        cmd.ExecuteNonQuery();
+        //    }
+
+        //    ShowOk("User details and roles updated successfully.");
+        //    gvUsers.EditIndex = -1; // Exit edit mode
+        //    BindGrid();
+        //}
 
         #endregion
 
         protected void gvUsers_RowDataBound(object sender, GridViewRowEventArgs e)
         {
             // Skip execution if we are in Edit Mode for this row
+            //if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) > 0)
+            //    return;
+
+            // NEW LOGIC: If we are in Edit Mode, populate the Role DropDownList
             if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) > 0)
-                return;
+            {
+                DropDownList ddlGridRole = e.Row.FindControl("ddlGridRole") as DropDownList;
+                HiddenField hfCurrentRoleId = e.Row.FindControl("hfCurrentRoleId") as HiddenField;
+
+                if (ddlGridRole != null)
+                {
+                    // Fetch Roles from Database
+                    using (var cn = new SqlConnection(ConnString))
+                    {
+                        using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
+                        {
+                            var dt = new DataTable();
+                            var da = new SqlDataAdapter(cmd);
+                            da.Fill(dt);
+                            ddlGridRole.DataSource = dt;
+                            ddlGridRole.DataTextField = "RoleName";
+                            ddlGridRole.DataValueField = "RoleId";
+                            ddlGridRole.DataBind();
+                        }
+                    }
+                    ddlGridRole.Items.Insert(0, new ListItem("-- Unassigned --", "0"));
+
+                    // Pre-select the user's current Role
+                    if (hfCurrentRoleId != null && !string.IsNullOrEmpty(hfCurrentRoleId.Value))
+                    {
+                        ddlGridRole.SelectedValue = hfCurrentRoleId.Value;
+                    }
+                }
+                return; // Exit here, don't run the rest of the styling logic for the edit row
+            }
 
             if (e.Row.RowType != DataControlRowType.DataRow) return;
 

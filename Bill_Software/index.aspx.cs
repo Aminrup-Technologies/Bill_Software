@@ -23,7 +23,12 @@ namespace Bill_Software
             public bool MustChangePassword { get; set; }
             public bool EmailVerified { get; set; }
             public string Email { get; set; }
-        }
+
+            // NEW ENRICHMENT PROPERTIES
+            public string ProfilePictureUrl { get; set; }
+            public int? RoleId { get; set; }
+            public string RoleName { get; set; }
+        } 
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -59,8 +64,15 @@ namespace Bill_Software
 
             if (cmbLoginAs.SelectedIndex == 0 || cmbLoginAs.SelectedIndex == 1)
             {
-                const string cmdString = "SELECT TOP 1 Id, User_Id, Password, PasswordHash, PasswordSalt, MustChangePassword, EmailVerified, Email FROM tbl_login WHERE User_Id = @UserId AND IsActive = 1";
-
+                //const string cmdString = "SELECT TOP 1 Id, User_Id, Password, PasswordHash, PasswordSalt, MustChangePassword, EmailVerified, Email FROM tbl_login WHERE User_Id = @UserId AND IsActive = 1";
+                const string cmdString = @"
+                    SELECT TOP 1 
+                        u.Id, u.User_Id, u.Password, u.PasswordHash, u.PasswordSalt, 
+                        u.MustChangePassword, u.EmailVerified, u.Email, u.ProfilePictureUrl,
+                        u.RoleId, r.RoleName
+                    FROM tbl_login u
+                    LEFT JOIN Roles r ON u.RoleId = r.RoleId
+                    WHERE u.User_Id = @UserId AND u.IsActive = 1";
                 try
                 {
                     DbCL.Sqlconnection();
@@ -79,7 +91,7 @@ namespace Bill_Software
                                 return;
                             }
 
-                            // 1. Map the User Data
+                            // 1. Map the User Data (Including new enriched fields)
                             var user = new UserModel
                             {
                                 Id = rdr["Id"] != DBNull.Value ? Convert.ToInt32(rdr["Id"]) : 0,
@@ -87,7 +99,12 @@ namespace Bill_Software
                                 PasswordPlain = rdr["Password"]?.ToString() ?? string.Empty,
                                 MustChangePassword = rdr["MustChangePassword"] != DBNull.Value && Convert.ToBoolean(rdr["MustChangePassword"]),
                                 EmailVerified = rdr["EmailVerified"] != DBNull.Value && Convert.ToBoolean(rdr["EmailVerified"]),
-                                Email = rdr["Email"]?.ToString() ?? string.Empty
+                                Email = rdr["Email"]?.ToString() ?? string.Empty,
+
+                                // Read enriched data safely
+                                ProfilePictureUrl = rdr["ProfilePictureUrl"]?.ToString() ?? string.Empty,
+                                RoleId = rdr["RoleId"] != DBNull.Value ? (int?)Convert.ToInt32(rdr["RoleId"]) : null,
+                                RoleName = rdr["RoleName"]?.ToString() ?? string.Empty
                             };
 
                             if (rdr["PasswordHash"] is byte[]) { user.PasswordHash = (byte[])rdr["PasswordHash"]; }
@@ -123,6 +140,15 @@ namespace Bill_Software
                             Session["USERTYPE"] = cmbLoginAs.SelectedValue;
                             Session["UserDbId"] = user.Id;
 
+                            // NEW: Store Enriched Data in Session
+                            Session["RoleId"] = user.RoleId;
+                            Session["RoleName"] = string.IsNullOrEmpty(user.RoleName) ? "Standard User" : user.RoleName;
+
+                            // If no profile pic exists, provide a default fallback image path
+                            Session["ProfilePic"] = string.IsNullOrEmpty(user.ProfilePictureUrl)
+                                ? "~/corporate/business/WebImages/default-avatar.png"
+                                : user.ProfilePictureUrl;
+
                             // 4. Create Single Active Session (Log out from other devices)
                             string newToken = Guid.NewGuid().ToString();
                             string ipAddr = Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
@@ -150,6 +176,23 @@ namespace Bill_Software
                                     cmdIns.Parameters.AddWithValue("@UA", userAgent);
                                     cmdIns.ExecuteNonQuery();
                                 }
+
+                                // ==========================================
+                                // NEW LOGIC: Update LastLogin & Reset Lockouts
+                                // ==========================================
+                                string sqlLastLogin = @"UPDATE tbl_login 
+                                    SET LastLogin = @LastLogin, 
+                                        FailedAccessCount = 0, 
+                                        LockoutEnd = NULL 
+                                    WHERE Id = @UserId";
+
+                                using (var cmdUpdateLogin = new SqlCommand(sqlLastLogin, cn))
+                                {
+                                    cmdUpdateLogin.Parameters.AddWithValue("@LastLogin", DateTimeOffset.Now);
+                                    cmdUpdateLogin.Parameters.AddWithValue("@UserId", user.Id);
+                                    cmdUpdateLogin.ExecuteNonQuery();
+                                }
+                                // ==========================================
                             }
                             Session["SessionToken"] = newToken;
 

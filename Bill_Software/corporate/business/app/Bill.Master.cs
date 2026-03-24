@@ -7,14 +7,13 @@ using System.Web;
 using System.Web.UI;
 using System.Net.Mail;
 using System.IO;
+using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class Bill : System.Web.UI.MasterPage
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-
-        // Use your web.config connection string directly for the new RBAC queries
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
@@ -64,86 +63,17 @@ namespace Bill_Software.corporate.business.app
             GetAdminName();
         }
 
-        // --- Add this method anywhere in your Bill.master.cs class ---
-
-        private void CreateiTopTicket_OLD(string userId, string name, string currentUrl, string userMessage, string base64Screenshot)
-        {
-            try
-            {
-                // 1. Fetch settings from web.config
-                string iTopUrl = ConfigurationManager.AppSettings["iTopUrl"];
-                string iTopUser = ConfigurationManager.AppSettings["iTopUser"];
-                string iTopPass = ConfigurationManager.AppSettings["iTopPass"];
-                string callerEmail = ConfigurationManager.AppSettings["iTopCallerEmail"];
-                string orgName = ConfigurationManager.AppSettings["iTopOrgName"];
-
-                // 2. Format the HTML Description (Injecting the base64 image directly!)
-                string descriptionHtml = $"<p><strong>Reported By:</strong> {name} (User ID: {userId})</p>";
-                descriptionHtml += $"<p><strong>Page URL:</strong> <a href='{currentUrl}'>{currentUrl}</a></p>";
-                descriptionHtml += $"<p><strong>Message:</strong><br/>{userMessage.Replace(Environment.NewLine, "<br/>")}</p>";
-
-                if (!string.IsNullOrEmpty(base64Screenshot))
-                {
-                    // By putting the base64 string directly into an img tag, iTop renders it inline!
-                    descriptionHtml += $"<br/><hr/><p><strong>Auto-Captured Screenshot:</strong><br/><img src='{base64Screenshot}' style='max-width:100%; border:1px solid #ccc;' /></p>";
-                }
-
-                // 3. Construct the JSON Payload safely using JavaScriptSerializer
-                System.Web.Script.Serialization.JavaScriptSerializer js = new System.Web.Script.Serialization.JavaScriptSerializer();
-                js.MaxJsonLength = int.MaxValue; // Required to allow large Base64 image strings
-
-                var payload = new
-                {
-                    operation = "core/create",
-                    comment = "Ticket created via FLAME-EX Portal API",
-                    @class = "UserRequest",
-                    output_fields = "id, ref",
-                    fields = new
-                    {
-                        // iTop OQL queries to dynamically link the ticket
-                        org_id = $"SELECT Organization WHERE name = '{orgName}'",
-                        caller_id = $"SELECT Person WHERE email = '{callerEmail}'",
-                        title = $"FLAME-EX Issue: {name} ({userId})",
-                        description = descriptionHtml
-                    }
-                };
-
-                
-                string jsonData = js.Serialize(payload);
-                //System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-                System.Net.ServicePointManager.SecurityProtocol = (System.Net.SecurityProtocolType)3072;
-                // 4. Send the POST request to iTop
-                using (var client = new System.Net.WebClient())
-                {
-                    var reqParm = new System.Collections.Specialized.NameValueCollection();
-                    reqParm.Add("version", "1.3");
-                    reqParm.Add("auth_user", iTopUser);
-                    reqParm.Add("auth_pwd", iTopPass);
-                    reqParm.Add("json_data", jsonData);
-
-                    // Upload the data to the iTop REST API
-                    byte[] responseBytes = client.UploadValues(iTopUrl, "POST", reqParm);
-                    string responseBody = System.Text.Encoding.UTF8.GetString(responseBytes);
-
-                    // If iTop returns an error code (not 0), throw an exception so we know what went wrong
-                    if (responseBody.Contains("\"code\":") && !responseBody.Contains("\"code\":0"))
-                    {
-                        throw new Exception("iTop API Error: " + responseBody);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to create ticket in iTop: " + ex.Message);
-            }
-        }
-
         private void GetAdminName()
         {
             if (Session["USERID"] == null) return;
 
             string UserName = Session["USERID"].ToString();
-            string cmdString = "SELECT Name FROM tbl_login WHERE User_Id=@UserId";
+
+            string cmdString = @"
+        SELECT u.Name, r.RoleName, u.ProfilePictureUrl 
+        FROM tbl_login u 
+        LEFT JOIN Roles r ON u.RoleId = r.RoleId 
+        WHERE u.User_Id=@UserId";
 
             try
             {
@@ -156,14 +86,32 @@ namespace Bill_Software.corporate.business.app
                     {
                         if (rdr.Read())
                         {
-                            lblName.Text = rdr["Name"].ToString();
+                            // Classic DBNull checks for ASP.NET 4.5.2
+                            lblName.Text = rdr["Name"] != DBNull.Value ? rdr["Name"].ToString() : "Unknown User";
+
+                            // Classic control casting
+                            Label lblRole = this.FindControl("lblRole") as Label;
+                            if (lblRole != null)
+                            {
+                                string role = rdr["RoleName"] != DBNull.Value ? rdr["RoleName"].ToString() : "";
+                                lblRole.Text = string.IsNullOrEmpty(role) ? "Standard User" : role;
+                            }
+
+                            Image imgProfile = this.FindControl("imgProfile") as Image;
+                            if (imgProfile != null)
+                            {
+                                string picUrl = rdr["ProfilePictureUrl"] != DBNull.Value ? rdr["ProfilePictureUrl"].ToString() : "";
+                                imgProfile.ImageUrl = string.IsNullOrEmpty(picUrl)
+                                    ? "~/corporate/business/WebImages/representative.png"
+                                    : picUrl;
+                            }
                         }
                     }
                 }
             }
             finally
             {
-                DbCL.DisconnectDb(); // Ensures the connection is safely closed
+                DbCL.DisconnectDb();
             }
         }
 
@@ -570,88 +518,6 @@ namespace Bill_Software.corporate.business.app
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);
-            }
-        }
-
-        protected void btnSubmitSupport_Click_OLD(object sender, EventArgs e)
-        {
-            try
-            {
-                // 1. Gather Information
-                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "Unknown User";
-                string userName = lblName.Text;
-                string currentUrl = Request.Url.AbsoluteUri;
-                string userMessage = txtSupportMessage.Text;
-
-                // This is used for your SQL/Email backup
-                string userEmail = "support@yourdomain.com";
-
-                // 2. Prepare paths for local file saving
-                string saveDirectory = Server.MapPath("~/SupportUploads/");
-                if (!System.IO.Directory.Exists(saveDirectory)) System.IO.Directory.CreateDirectory(saveDirectory);
-
-                string file1Path = string.Empty; // For Auto-Screenshot
-                string file2Path = string.Empty; // For Manual Upload
-
-                // 3. Handle the Auto-Screenshot
-                string rawBase64 = hfAutoScreenshot.Value; // The full string for iTop
-                if (!string.IsNullOrEmpty(rawBase64))
-                {
-                    // For saving as a physical file, we strip the header
-                    string cleanBase64 = rawBase64.Contains(",") ? rawBase64.Split(',')[1] : rawBase64;
-                    byte[] imageBytes = Convert.FromBase64String(cleanBase64);
-
-                    string autoFileName = userId + "_auto_" + DateTime.Now.Ticks + ".png";
-                    file1Path = System.IO.Path.Combine(saveDirectory, autoFileName);
-                    System.IO.File.WriteAllBytes(file1Path, imageBytes);
-                }
-
-                // 4. Handle Manual File Upload
-                if (fileScreenshot1.HasFile)
-                {
-                    string fileName1 = userId + "_manual_" + DateTime.Now.Ticks + "_" + fileScreenshot1.FileName;
-                    file2Path = System.IO.Path.Combine(saveDirectory, fileName1);
-                    fileScreenshot1.SaveAs(file2Path);
-                }
-
-                // 5. THE INTEGRATIONS
-
-                // A. Create Ticket in iTop (Uses rawBase64 for the inline image)
-                CreateiTopTicket(userId, userName, currentUrl, userMessage, rawBase64);
-
-                // B. Send Email and Log to SQL (Uses the saved file paths)
-                NotifyITSupport(userId, userName, userEmail, currentUrl, userMessage, file1Path, file2Path);
-
-                //// 6. Final Cleanup and Success Message
-                //txtSupportMessage.Text = "";
-                //hfAutoScreenshot.Value = "";
-
-                //string successScript = "alert('Success! Ticket logged in iTop and Support Email sent.'); document.getElementById('supportModal').style.display = 'none'; document.getElementById('imgScreenshotPreview').style.display = 'none';";
-                //ScriptManager.RegisterStartupScript(this, this.GetType(), "CloseModal", successScript, true);
-
-                // 5. Final Cleanup and In-Modal Success Message
-                txtSupportMessage.Text = "";
-                hfAutoScreenshot.Value = "";
-
-                // Show the success message directly inside the modal's label
-                lblSupportStatus.Text = "Success! Your concern has been logged in iTop and emailed to the IT Team.";
-                lblSupportStatus.ForeColor = System.Drawing.Color.Green;
-
-                // Update the JavaScript to KEEP the modal open (display = 'block') 
-                // but reset the camera preview so it's ready for next time.
-                string successScript = @"
-                    document.getElementById('supportModal').style.display = 'block'; 
-                    document.getElementById('imgScreenshotPreview').style.display = 'none';
-                    document.getElementById('btnCaptureScreen').innerHTML = '📸 Capture Current Page';
-                    document.getElementById('btnCaptureScreen').disabled = false;
-                ";
-
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "KeepModalOpenSuccess", successScript, true);
-            }
-            catch (Exception ex)
-            {
-                lblSupportStatus.Text = "Error: " + ex.Message;
-                lblSupportStatus.ForeColor = System.Drawing.Color.Red;
             }
         }
     }

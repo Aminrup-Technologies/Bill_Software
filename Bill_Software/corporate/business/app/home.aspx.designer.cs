@@ -49,6 +49,24 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Panel Panel1;
         
         /// <summary>
+        /// imgIdProfile control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Image imgIdProfile;
+        
+        /// <summary>
+        /// lblDashboardRole control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblDashboardRole;
+        
+        /// <summary>
         /// lblName control.
         /// </summary>
         /// <remarks>
@@ -56,24 +74,6 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblName;
-        
-        /// <summary>
-        /// lblIP control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblIP;
-        
-        /// <summary>
-        /// lblpcname control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblpcname;
         
         /// <summary>
         /// lblEmailID control.
@@ -92,6 +92,24 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblContactNo;
+        
+        /// <summary>
+        /// lblIP control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblIP;
+        
+        /// <summary>
+        /// lblpcname control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblpcname;
         
         /// <summary>
         /// PanelFallback control.

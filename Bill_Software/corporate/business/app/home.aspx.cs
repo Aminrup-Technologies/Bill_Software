@@ -11,19 +11,6 @@ namespace Bill_Software.corporate.business.app
     public partial class WebForm1 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        //protected void Page_Load(object sender, EventArgs e)
-        //{
-        //    if (HttpContext.Current.Session["USERID"] == null)
-        //    {
-        //        Response.Redirect("~/index.aspx");
-        //    }
-        //    if (!IsPostBack)
-        //    {
-        //        Binddata();
-        //        IpAddress();
-        //    }
-        //}
-
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Session["USERID"] == null)
@@ -32,13 +19,11 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            // show once per login
             if (Session["HOME_PRPO_NOTICE"] == null)
             {
                 pnlNotification.Visible = true;
             }
 
-            // 1. Enforce mandatory update
             if (UserRequiresUpdate())
             {
                 // Block page content
@@ -121,7 +106,11 @@ namespace Bill_Software.corporate.business.app
 
         private void Binddata()
         {
-            string cmdstring = "SELECT Name, Phone_no, Email FROM tbl_login WHERE User_Id = @UserId";
+            string cmdstring = @"
+        SELECT u.Name, u.Phone_no, u.Email, u.ProfilePictureUrl, r.RoleName 
+        FROM tbl_login u 
+        LEFT JOIN Roles r ON u.RoleId = r.RoleId 
+        WHERE u.User_Id = @UserId";
 
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
@@ -134,9 +123,18 @@ namespace Bill_Software.corporate.business.app
                 {
                     if (re.Read())
                     {
-                        lblName.Text = re["Name"].ToString();
-                        lblContactNo.Text = re["Phone_no"].ToString();
-                        lblEmailID.Text = re["Email"].ToString();
+                        lblName.Text = re["Name"] != DBNull.Value ? re["Name"].ToString() : "Unknown User";
+                        lblContactNo.Text = re["Phone_no"] != DBNull.Value ? re["Phone_no"].ToString() : "N/A";
+                        lblEmailID.Text = re["Email"] != DBNull.Value ? re["Email"].ToString() : "N/A";
+
+                        // FIX: Directly assign the text instead of using FindControl
+                        string role = re["RoleName"] != DBNull.Value ? re["RoleName"].ToString() : "";
+                        lblDashboardRole.Text = string.IsNullOrEmpty(role) ? "Unassigned Role" : role;
+
+                        string picUrl = re["ProfilePictureUrl"] != DBNull.Value ? re["ProfilePictureUrl"].ToString() : "";
+                        imgIdProfile.ImageUrl = string.IsNullOrEmpty(picUrl)
+                            ? "~/corporate/business/WebImages/representative.png"
+                            : picUrl;
                     }
                 }
             }
