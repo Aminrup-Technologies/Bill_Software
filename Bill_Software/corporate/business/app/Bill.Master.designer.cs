@@ -40,6 +40,24 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Image Image2;
         
         /// <summary>
+        /// lblCompanyName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblCompanyName;
+        
+        /// <summary>
+        /// ddlCompany control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlCompany;
+        
+        /// <summary>
         /// lblName control.
         /// </summary>
         /// <remarks>

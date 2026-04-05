@@ -31,6 +31,19 @@
                 width: 100%;
                 border-top: none;
             }
+            
+        .btn-export {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            height: 25px;
+        }
+        .btn-export:hover {
+            background-color: #45a049;
+        }
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -57,6 +70,9 @@
     <asp:ScriptManager ID="ScriptManager1" runat="server">
     </asp:ScriptManager>
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
+        <Triggers>
+            <asp:PostBackTrigger ControlID="btnExport" />
+        </Triggers>
         <ContentTemplate>
             <table cellpadding="0" cellspacing="0" class="auto-style1">
                 <tr>
@@ -129,6 +145,7 @@
                     <td colspan="4" style="text-align: center">
                         <asp:Button ID="btnSertch" runat="server" CssClass="btn_style" OnClick="btnSertch_Click" Text="Search" />
                         &nbsp;<asp:Button ID="btnreset" runat="server" CssClass="btn_style" OnClick="btnreset_Click" Text="Reset" />
+                        &nbsp;<asp:Button ID="btnExport" runat="server" CssClass="btn-export" OnClick="btnExport_Click" Text="Export to Excel" />
                     </td>
                     <td>&nbsp;</td>
                 </tr>
@@ -146,66 +163,6 @@
                 </tr>
                 <tr>
                     <td colspan="6">
-                        <%--<asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%">
-                    <FooterStyle BackColor="White" ForeColor="#000066" />
-                    <AlternatingItemStyle BackColor="#94B8FF" />
-                    <SeparatorStyle BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" />
-                    <SelectedItemStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
-                    <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
-                    <HeaderTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table1" width="100%">
-                            <tr>
-                                <td style="text-align:center; width:20%;">
-                                    <asp:Label ID="showid0" runat="server" Text="Quotation no"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="showrm0" runat="server" Text="Quotation Date"></asp:Label>
-                                </td>
-                                 <td style="text-align:center; width:35%;">
-                                    <asp:Label ID="Label9" runat="server" Text="Client Name"></asp:Label>
-                                </td>
-                               
-                                 <td style="text-align:center; width:20%;"> 
-                                    <asp:Label ID="Label12" runat="server" Text="Net Amount"></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <asp:Label ID="edit0" runat="server" Text="View"></asp:Label>
-                                </td>
-                               
-                                
-                               
-                                
-                                
-                            </tr>
-                        </table>
-                    </HeaderTemplate>
-                    <ItemTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table2" width="100%">
-                            <tr>
-                                <td style="text-align:center; width:20%;">
-                                    <asp:Label ID="ID0" runat="server" Text='<%# Eval("Quotation_no") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:15%;">
-                                    <asp:Label ID="addshowname0" runat="server" Text='<%# Eval("Quotation_date") %>'></asp:Label>
-                                </td>
-                                <td style="text-align:center; width:35%;">
-                                    <asp:Label ID="Label13" runat="server" Text='<%# Eval("Client_Name") %>'></asp:Label>
-                                </td>
-                                
-                               
-                                <td style="text-align:center; width:20%;">Rs. 
-                                    <asp:Label ID="Label16" runat="server" Text='<%# Eval("Net_amount") %>'></asp:Label> /-
-                                </td>
-                                <td style="text-align:center; width:10%;">
-                                    <a href = "#" title="Print Quotation..." onclick="window.open('/corporate/business/print/NewQuotation.aspx?ID=<%# DataBinder.Eval (Container.DataItem,"ID")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
-                                                <img alt="" height="25px" src="../WebImages/viewicon.png" /></a>
-                                </td>
-                            </tr>
-                        </table>
-                    </ItemTemplate>
-                </asp:DataList>--%>
-
-
                         <asp:DataList ID="DataList1" runat="server" BorderColor="#666666" BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="11px" ForeColor="#2D2D2D" GridLines="Both" Width="100%" OnItemCommand="DataList1_ItemCommand">
                             <FooterStyle BackColor="White" ForeColor="#000066" />
                             <AlternatingItemStyle BackColor="#94B8FF" />

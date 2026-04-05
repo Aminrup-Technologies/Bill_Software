@@ -4,7 +4,7 @@ using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI.WebControls;
 using System.IO;
-using ClosedXML.Excel; // Our newly installed library!
+using ClosedXML.Excel;
 using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
@@ -12,8 +12,6 @@ namespace Bill_Software.corporate.business.app
     public partial class WebForm23 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        // You can keep your dtmain and cultureInfo if you plan to use them later, 
-        // but I have cleaned them up here since they weren't being used in the current flow.
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -23,7 +21,7 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                // Updated query using OUTER APPLY to fix the empty Product Category issue
+                // --- INJECTION 1: Filtering the main DataList by active CompanyID ---
                 string cmdstring = @"
                     SELECT 
                         s.PServiceName, 
@@ -48,6 +46,7 @@ namespace Bill_Software.corporate.business.app
                     WHERE q.RecordType = 'Quotation' 
                       AND MONTH(CAST(q.Quotation_date as date)) = MONTH(GETDATE()) 
                       AND YEAR(CAST(q.Quotation_date as date)) = YEAR(GETDATE())
+                      AND q.CompanyID = " + CompanyContext.CurrentCompanyID + @"
                     ORDER BY CAST(q.Quotation_date as date) DESC";
 
                 Binddata(cmdstring);
@@ -91,7 +90,7 @@ namespace Bill_Software.corporate.business.app
         // --- EXCEL EXPORT METHOD ---
         protected void btnExport_Click_OLD(object sender, EventArgs e)
         {
-            // Join Master, Header, and Detail tables for current month
+            // --- INJECTION 2: Filtering the old export by active CompanyID ---
             string query = @"
                 SELECT 
                     q.Quotation_no AS [Quotation Number], 
@@ -111,6 +110,7 @@ namespace Bill_Software.corporate.business.app
                 WHERE q.RecordType = 'Quotation' 
                   AND MONTH(CAST(q.Quotation_date as date)) = MONTH(GETDATE()) 
                   AND YEAR(CAST(q.Quotation_date as date)) = YEAR(GETDATE())
+                  AND q.CompanyID = " + CompanyContext.CurrentCompanyID + @"
                 ORDER BY CAST(q.Quotation_date as date) DESC";
 
             DataTable dtExport = new DataTable();
@@ -130,23 +130,19 @@ namespace Bill_Software.corporate.business.app
             {
                 using (XLWorkbook wb = new XLWorkbook())
                 {
-                    // Add DataTable as a worksheet
                     var ws = wb.Worksheets.Add(dtExport, "Current_Month_Quotations");
 
-                    // Format Header Row
                     ws.Row(1).Style.Font.Bold = true;
                     ws.Row(1).Style.Fill.BackgroundColor = XLColor.Navy;
                     ws.Row(1).Style.Font.FontColor = XLColor.White;
 
-                    // Auto-size all columns for better readability
                     ws.Columns().AdjustToContents();
 
-                    // Prepare Response for download
                     Response.Clear();
                     Response.Buffer = true;
                     Response.Charset = "";
                     Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                    Response.AddHeader("content-disposition", "attachment;filename=Quotations_" + DateTime.Now.ToString("MMM_yyyy") + ".xlsx");
+                    Response.AddHeader("content-disposition", "attachment;filename=" + CompanyContext.CurrentCompanyCode + "_Quotations_" + DateTime.Now.ToString("MMM_yyyy") + ".xlsx");
 
                     using (MemoryStream MyMemoryStream = new MemoryStream())
                     {
@@ -159,7 +155,6 @@ namespace Bill_Software.corporate.business.app
             }
             else
             {
-                // Optional: Alert the user that there is no data to export
                 ScriptManager.RegisterStartupScript(this, GetType(), "alert", "alert('No data available for the current month.');", true);
             }
         }
@@ -167,7 +162,7 @@ namespace Bill_Software.corporate.business.app
         // --- ENRICHED EXCEL EXPORT METHOD ---
         protected void btnExport_Click(object sender, EventArgs e)
         {
-            // A comprehensive query mapping all data points from your MagicianNew method
+            // --- INJECTION 3: Filtering the Enriched export by active CompanyID ---
             string query = @"
         SELECT 
             -- Document Header Details
@@ -235,6 +230,7 @@ namespace Bill_Software.corporate.business.app
         WHERE q.RecordType = 'Quotation' 
           AND MONTH(CAST(q.Quotation_date as date)) = MONTH(GETDATE()) 
           AND YEAR(CAST(q.Quotation_date as date)) = YEAR(GETDATE())
+          AND q.CompanyID = " + CompanyContext.CurrentCompanyID + @"
         ORDER BY CAST(q.Quotation_date as date) DESC, CAST(qd.Sl_no as int) ASC";
 
             DataTable dtExport = new DataTable();
@@ -254,41 +250,36 @@ namespace Bill_Software.corporate.business.app
             {
                 using (XLWorkbook wb = new XLWorkbook())
                 {
-                    // Adding the DataTable this way automatically creates an Excel Table with built-in filters!
                     var ws = wb.Worksheets.Add(dtExport, "Current_Month_Data");
 
-                    // 1. Format Header Row (Overriding the default table style to match your website)
                     var headerRow = ws.Row(1);
                     headerRow.Style.Font.Bold = true;
                     headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#19658A");
                     headerRow.Style.Font.FontColor = XLColor.White;
                     headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                    // 2. Freeze the top row so it stays visible when scrolling down
                     ws.SheetView.FreezeRows(1);
 
-                    // 3. Format Number Columns (Assuming columns 20 through 27, and 30 through 37 contain rates/totals)
                     var numericColumns = new int[] { 20, 21, 22, 23, 24, 25, 26, 30, 31, 35, 36, 38, 40 };
                     foreach (int col in numericColumns)
                     {
                         ws.Column(col).Style.NumberFormat.Format = "#,##0.00";
                     }
 
-                    // 4. Auto-size all columns to fit the data perfectly
                     ws.Columns().AdjustToContents();
 
-                    // 5. Ensure some specific wide text columns don't get too overwhelmingly wide
                     ws.Column(10).Width = 30; // Product Name
                     ws.Column(14).Width = 30; // Specifications
                     ws.Column(44).Width = 40; // Doc Remarks
-                    ws.Style.Alignment.WrapText = true; // Wrap text for long descriptions
+                    ws.Style.Alignment.WrapText = true;
 
-                    // Prepare Response for download
                     Response.Clear();
                     Response.Buffer = true;
                     Response.Charset = "";
                     Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                    Response.AddHeader("content-disposition", "attachment;filename=Detailed_Quotations_" + DateTime.Now.ToString("MMM_yyyy") + ".xlsx");
+
+                    // Added CompanyCode to the Excel Filename for better organization!
+                    Response.AddHeader("content-disposition", "attachment;filename=" + CompanyContext.CurrentCompanyCode + "_Detailed_Quotations_" + DateTime.Now.ToString("MMM_yyyy") + ".xlsx");
 
                     using (MemoryStream MyMemoryStream = new MemoryStream())
                     {

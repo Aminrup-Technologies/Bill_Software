@@ -19,8 +19,6 @@ namespace Bill_Software.corporate.business.app
             if (Session["USERID"] == null)
             {
                 Response.Redirect("~/index.aspx");
-                Context.ApplicationInstance.CompleteRequest(); // The modern, safe way to stop execution
-                return; // Exit the method immediately
             }
 
             if (!IsPostBack)
@@ -28,11 +26,13 @@ namespace Bill_Software.corporate.business.app
                 LoadClients();
                 LoadCategories();
                 txtInvoiceDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+
+                // Initialize Empty Cart in ViewState
                 ViewState["PhaseProductData"] = CreateCartTable();
             }
         }
 
-        #region STEP 1: SETUP
+        #region STEP 1: SETUP (CLIENT & DETAILS)
         private void LoadClients()
         {
             DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
@@ -43,10 +43,10 @@ namespace Bill_Software.corporate.business.app
         {
             if (cmbClient.SelectedIndex > 0)
             {
+                DbCL.Sqlconnection();
+                DbCL.ConnectDb();
                 try
                 {
-                    DbCL.Sqlconnection();
-                    DbCL.ConnectDb();
                     SqlCommand cmd = new SqlCommand("select Client_Id from tbl_Client where Client_Name=@Name", DbCL.Conn);
                     cmd.Parameters.AddWithValue("@Name", cmbClient.SelectedItem.Text);
                     object res = cmd.ExecuteScalar();
@@ -56,24 +56,20 @@ namespace Bill_Software.corporate.business.app
                         LoadAddresses(lblClientID.Text);
                     }
                 }
-                catch (Exception ex)
-                {
-                    WriteLog("CLIENT SELECT ERROR: " + ex.ToString());
-                    ShowMsg("We couldn't load the details for this client. Please refresh and try again.", false);
-                }
-                finally
-                {
-                    if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
-                }
+                catch { }
+                finally { DbCL.Conn.Close(); }
             }
         }
 
         private void LoadAddresses(string cid)
         {
             lstAddresses.Items.Clear();
+
+            // Load Billing/Factory Addresses
             DataTable dt1 = DbCL.ReturnDataTable("select Address1+', '+City+', '+pin+', '+State from tbl_Client where Client_Id='" + cid + "'");
             foreach (DataRow dr in dt1.Rows) lstAddresses.Items.Add(dr[0].ToString());
 
+            // Load Registered Addresses
             DataTable dt2 = DbCL.ReturnDataTable("select Address+', '+State+', '+City+', '+pin from tbl_ClientRegAddress where Client_Id='" + cid + "'");
             foreach (DataRow dr in dt2.Rows) lstAddresses.Items.Add(dr[0].ToString());
 
@@ -82,15 +78,23 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnNext_Click(object sender, EventArgs e)
         {
-            if (cmbClient.SelectedIndex == 0) { ShowMsg("Select Client", false); return; }
-            if (lstAddresses.SelectedIndex == -1) { ShowMsg("Select Address", false); return; }
+            if (cmbClient.SelectedIndex == 0)
+            {
+                ShowMsg("Please select a Client.", false);
+                return;
+            }
+            if (lstAddresses.SelectedIndex == -1)
+            {
+                ShowMsg("Please select at least one Address.", false);
+                return;
+            }
 
             ShowMsg("", true);
-            mvInvoice.ActiveViewIndex = 1;
+            mvInvoice.ActiveViewIndex = 1; // Move to Products Step
         }
         #endregion
 
-        #region STEP 2: PRODUCTS
+        #region STEP 2: PRODUCT SELECTION
         private void LoadCategories()
         {
             DbCL.FillCombo(cmbCategory, "select distinct ProductOrServiceCat from tbl_NewparentProduct order by ProductOrServiceCat");
@@ -105,46 +109,20 @@ namespace Bill_Software.corporate.business.app
         private void BindProductGrid()
         {
             string qry = "select ProductID, Product_code, ProductName, Brand, Unit, Sail_Rate, Tax_Rate, Quantity from tbl_NewProduct";
-
-            // Use parameterized query instead of direct concatenation
             if (cmbCategory.SelectedIndex > 0)
             {
-                qry += " WHERE ProductOrServiceCat = @Cat";
+                qry += " WHERE ProductOrServiceCat = '" + cmbCategory.SelectedItem.Text + "'";
             }
             qry += " ORDER BY ProductName";
 
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            try
-            {
-                SqlCommand cmd = new SqlCommand(qry, DbCL.Conn);
-                if (cmbCategory.SelectedIndex > 0)
-                {
-                    cmd.Parameters.AddWithValue("@Cat", cmbCategory.SelectedItem.Text);
-                }
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-
-                gridProdWithCat.DataSource = dt;
-                gridProdWithCat.DataBind();
-            }
-            catch (Exception ex)
-            {
-                WriteLog("BindProductGrid Error: " + ex.ToString());
-                ShowMsg("Could not load products. Please try again.", false);
-            }
-            finally
-            {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
-            }
+            gridProdWithCat.DataSource = DbCL.ReturnDataTable(qry);
+            gridProdWithCat.DataBind();
         }
 
         protected void btnAddToCart_Click(object sender, EventArgs e)
         {
-            DataTable dt = (DataTable)ViewState["PhaseProductData"];
-            bool added = false;
+            DataTable dtCart = (DataTable)ViewState["PhaseProductData"];
+            bool itemAdded = false;
 
             foreach (GridViewRow row in gridProdWithCat.Rows)
             {
@@ -152,19 +130,19 @@ namespace Bill_Software.corporate.business.app
                 if (chk != null && chk.Checked)
                 {
                     string pid = gridProdWithCat.DataKeys[row.RowIndex].Value.ToString();
-                    DataRow[] exist = dt.Select("ProductID='" + pid + "'");
 
+                    // Check if already in cart
+                    DataRow[] exist = dtCart.Select("ProductID='" + pid + "'");
                     if (exist.Length == 0)
                     {
-                        DataRow dr = dt.NewRow();
+                        DataRow dr = dtCart.NewRow();
                         dr["ProductID"] = pid;
 
-                        // FIX: Correct Column Indexing & HTML Decoding
-                        dr["Product_code"] = HttpUtility.HtmlDecode(row.Cells[2].Text);
-                        dr["ProductName"] = HttpUtility.HtmlDecode(row.Cells[3].Text);
-                        dr["Brand"] = HttpUtility.HtmlDecode(row.Cells[4].Text);
+                        // Indexes match your ASPX GridView Columns exactly
+                        dr["Product_code"] = HttpUtility.HtmlDecode(row.Cells[2].Text); // HSN
+                        dr["ProductName"] = HttpUtility.HtmlDecode(row.Cells[3].Text); // Name
+                        dr["Brand"] = HttpUtility.HtmlDecode(row.Cells[4].Text); // Spec/Brand
 
-                        // Extract Rate & Tax from TemplateFields
                         Label lblRate = (Label)row.FindControl("lblBaseRate");
                         Label lblTax = (Label)row.FindControl("lblGstRate");
 
@@ -173,26 +151,31 @@ namespace Bill_Software.corporate.business.app
 
                         dr["IQuantity"] = 1;
                         dr["Discount_Rate"] = 0;
-                        dt.Rows.Add(dr);
-                        added = true;
+                        dtCart.Rows.Add(dr);
+
+                        itemAdded = true;
                     }
-                    chk.Checked = false;
+                    chk.Checked = false; // Clear checkbox after adding
                 }
             }
 
-            if (added)
+            if (itemAdded)
             {
-                ViewState["PhaseProductData"] = dt;
+                ViewState["PhaseProductData"] = dtCart;
                 BindCartGrid();
+
+                // Display text for the review page headers
                 lblClientDisplay.Text = cmbClient.SelectedItem.Text;
                 lblTaxModeDisplay.Text = rbTaxType.SelectedItem.Text;
-                mvInvoice.ActiveViewIndex = 2;
 
+                mvInvoice.ActiveViewIndex = 2; // Move to Review Step
+
+                // Trigger Javascript calculations for the new rows
                 ScriptManager.RegisterStartupScript(this, GetType(), "calc", "setTimeout(function(){ var rows=document.getElementById('" + gd_Cart.ClientID + "').getElementsByTagName('tr'); for(var i=1;i<rows.length;i++){ var t=rows[i].querySelector(\"input[id*='txtQty']\"); if(t) CalculateRow(t,'MAIN'); } }, 500);", true);
             }
             else
             {
-                ShowMsg("No new items selected.", false);
+                ShowMsg("No new items were selected, or items are already in the cart.", false);
             }
         }
 
@@ -202,7 +185,7 @@ namespace Bill_Software.corporate.business.app
         }
         #endregion
 
-        #region STEP 3: REVIEW
+        #region STEP 3: REVIEW & CART MANAGEMENT
         private DataTable CreateCartTable()
         {
             DataTable dt = new DataTable();
@@ -229,23 +212,34 @@ namespace Bill_Software.corporate.business.app
             {
                 int idx = Convert.ToInt32(e.CommandArgument);
                 DataTable dt = (DataTable)ViewState["PhaseProductData"];
+
+                // Sync user typed values to datatable before altering row positions
                 UpdateCartFromGrid(dt);
 
-                if (e.CommandName == "Remove") dt.Rows[idx].Delete();
+                if (e.CommandName == "Remove")
+                {
+                    dt.Rows[idx].Delete();
+                }
                 else if (e.CommandName == "MoveUp" && idx > 0)
                 {
-                    DataRow r = dt.NewRow(); r.ItemArray = dt.Rows[idx].ItemArray;
-                    dt.Rows.RemoveAt(idx); dt.Rows.InsertAt(r, idx - 1);
+                    DataRow r = dt.NewRow();
+                    r.ItemArray = dt.Rows[idx].ItemArray;
+                    dt.Rows.RemoveAt(idx);
+                    dt.Rows.InsertAt(r, idx - 1);
                 }
                 else if (e.CommandName == "MoveDown" && idx < dt.Rows.Count - 1)
                 {
-                    DataRow r = dt.NewRow(); r.ItemArray = dt.Rows[idx].ItemArray;
-                    dt.Rows.RemoveAt(idx); dt.Rows.InsertAt(r, idx + 1);
+                    DataRow r = dt.NewRow();
+                    r.ItemArray = dt.Rows[idx].ItemArray;
+                    dt.Rows.RemoveAt(idx);
+                    dt.Rows.InsertAt(r, idx + 1);
                 }
+
                 dt.AcceptChanges();
                 ViewState["PhaseProductData"] = dt;
                 BindCartGrid();
 
+                // Re-trigger math
                 ScriptManager.RegisterStartupScript(this, GetType(), "recalc", "setTimeout(function(){ var rows=document.getElementById('" + gd_Cart.ClientID + "').getElementsByTagName('tr'); for(var i=1;i<rows.length;i++){ var t=rows[i].querySelector(\"input[id*='txtQty']\"); if(t) CalculateRow(t,'MAIN'); } }, 500);", true);
             }
         }
@@ -261,7 +255,10 @@ namespace Bill_Software.corporate.business.app
 
                 if (tQty == null) continue;
 
-                decimal q = 0, r = 0, d = 0;
+                decimal q = 0;
+                decimal r = 0;
+                decimal d = 0;
+
                 if (decimal.TryParse(tQty.Text, out q)) dt.Rows[i]["IQuantity"] = q;
                 if (decimal.TryParse(tRate.Text, out r)) dt.Rows[i]["Sail_Rate"] = r;
                 if (decimal.TryParse(tDisc.Text, out d)) dt.Rows[i]["Discount_Rate"] = d;
@@ -275,42 +272,43 @@ namespace Bill_Software.corporate.business.app
         }
         #endregion
 
-        #region SAVE LOGIC
+        #region SAVE TO DATABASE
         protected void btnSave_Click(object sender, EventArgs e)
         {
             try
             {
-                if (ViewState["PhaseProductData"] == null) { ShowMsg("Session Timeout", false); return; }
-
-                UpdateCartFromGrid((DataTable)ViewState["PhaseProductData"]);
-                DataTable dt = (DataTable)ViewState["PhaseProductData"];
-                //if (dt.Rows.Count == 0) { ShowMsg("Cart is empty", false); return; }
-                // NEW: Prevent saving invoices with 0 quantity
-                decimal totalCartQty = 0;
-                foreach (DataRow dr in dt.Rows)
+                if (ViewState["PhaseProductData"] == null)
                 {
-                    totalCartQty += Convert.ToDecimal(dr["IQuantity"]);
-                }
-
-                if (totalCartQty <= 0)
-                {
-                    ShowMsg("Please enter a valid quantity greater than 0 for your items.", false);
+                    ShowMsg("Session Timeout. Please reload.", false);
                     return;
                 }
+
+                UpdateCartFromGrid((DataTable)ViewState["PhaseProductData"]);
+                DataTable dtCart = (DataTable)ViewState["PhaseProductData"];
+
+                if (dtCart.Rows.Count == 0)
+                {
+                    ShowMsg("Cart is empty. Please select products.", false);
+                    return;
+                }
+
                 string invNo = GenerateInvoiceNo();
                 string uid = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
                 int slNo = GetSlNo();
 
-                decimal gGross = 0, gDisc = 0, gTax = 0, gNet = 0;
+                decimal gGross = 0;
+                decimal gDisc = 0;
+                decimal gTax = 0;
+                decimal gNet = 0;
 
-                foreach (DataRow dr in dt.Rows)
+                // 1. Calculate Server Side Math
+                foreach (DataRow dr in dtCart.Rows)
                 {
                     decimal q = Convert.ToDecimal(dr["IQuantity"]);
                     decimal r = Convert.ToDecimal(dr["Sail_Rate"]);
                     decimal dPer = Convert.ToDecimal(dr["Discount_Rate"]);
                     decimal tPer = Convert.ToDecimal(dr["Tax_Rate"]);
 
-                    // FORCE ROUNDING TO 2 DECIMAL PLACES
                     decimal rowGross = Math.Round(q * r, 2);
                     decimal rowDisc = Math.Round((rowGross * dPer) / 100, 2);
                     decimal taxable = Math.Round(rowGross - rowDisc, 2);
@@ -322,59 +320,68 @@ namespace Bill_Software.corporate.business.app
                     gNet += (taxable + rowTax);
                 }
 
-                decimal frt = 0, oth = 0;
+                decimal frt = 0;
+                decimal oth = 0;
                 decimal.TryParse(txtFreight.Text, out frt);
                 decimal.TryParse(txtOtherCharge.Text, out oth);
 
-                // Round extras too
                 frt = Math.Round(frt, 2);
                 oth = Math.Round(oth, 2);
+
                 gNet += frt + oth;
                 gNet = Math.Round(gNet, 2);
 
-                // FIX: Fallback Connection String
+                // Safely determine Connection String
                 string connStr = "";
                 if (DbCL.Conn != null && !string.IsNullOrEmpty(DbCL.Conn.ConnectionString))
+                {
                     connStr = DbCL.Conn.ConnectionString;
-                else if (System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"] != null)
-                    connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                }
+                else if (System.Configuration.ConfigurationManager.ConnectionStrings["constr"] != null)
+                {
+                    connStr = System.Configuration.ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
+                }
                 else
+                {
                     throw new Exception("Connection string not found.");
+                }
 
+                // 2. Perform Database Transaction
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     conn.Open();
                     SqlTransaction tran = conn.BeginTransaction();
                     try
                     {
-                        // 1. Header
-                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, ExtInvoiceNo, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, PServiceName, addressfor) VALUES (@Inv, @Date, @PO, @ERP, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @Oth, 'No', 'Active', @Intra, @Inter, @User, @primarycat, @addressfor)";
+                        // A. Insert Header
+                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, ExtInvoiceNo, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1, otherAmount1_name, status1, status2, cgstOrsgst, igst, AddedById) VALUES (@Inv, @Date, @PO, @ERP, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @Oth, @OthName, 'No', 'Active', @Intra, @Inter, @User)";
                         SqlCommand cmdH = new SqlCommand(sqlH, conn, tran);
                         cmdH.Parameters.AddWithValue("@Inv", invNo);
                         cmdH.Parameters.AddWithValue("@Date", txtInvoiceDate.Text);
-                        cmdH.Parameters.AddWithValue("@PO", txtPONo.Text.Trim());
+
+                        string strPo = string.IsNullOrWhiteSpace(txtPONo.Text) ? "N/A" : txtPONo.Text.Trim();
+                        cmdH.Parameters.AddWithValue("@PO", strPo);
                         cmdH.Parameters.AddWithValue("@ERP", txtERPRef.Text.Trim());
                         cmdH.Parameters.AddWithValue("@CID", lblClientID.Text);
 
-                        // Explicit Types for Money
                         cmdH.Parameters.Add("@Gr", SqlDbType.Decimal).Value = gGross;
                         cmdH.Parameters.Add("@Di", SqlDbType.Decimal).Value = gDisc;
-                        cmdH.Parameters.Add("@Sub", SqlDbType.Decimal).Value = Math.Round(gGross - gDisc, 2);
-                        cmdH.Parameters.AddWithValue("@Tax", gTax.ToString("0.00"));
+                        cmdH.Parameters.Add("@Sub", SqlDbType.Decimal).Value = Math.Round(gGross - gDisc, 2); // Taxable
+                        cmdH.Parameters.Add("@Tax", SqlDbType.Decimal).Value = gTax;
                         cmdH.Parameters.Add("@Net", SqlDbType.Decimal).Value = gNet;
 
-                        cmdH.Parameters.AddWithValue("@Sl", slNo.ToString());
+                        cmdH.Parameters.AddWithValue("@Sl", slNo);
                         cmdH.Parameters.Add("@Frt", SqlDbType.Decimal).Value = frt;
                         cmdH.Parameters.Add("@Oth", SqlDbType.Decimal).Value = oth;
+                        cmdH.Parameters.AddWithValue("@OthName", "Other Charges"); // Static name since TextBox1 was removed
+
                         cmdH.Parameters.AddWithValue("@Intra", rbTaxType.SelectedValue == "1" ? "YES" : (object)DBNull.Value);
                         cmdH.Parameters.AddWithValue("@Inter", rbTaxType.SelectedValue == "0" ? "YES" : (object)DBNull.Value);
-                        cmdH.Parameters.AddWithValue("@User", uid); //PServiceName, addressfor
-                        cmdH.Parameters.AddWithValue("@primarycat", cmbCategory.SelectedItem.Text.ToString());
-                        cmdH.Parameters.AddWithValue("@addressfor", "Corporate office");
+                        cmdH.Parameters.AddWithValue("@User", uid);
                         cmdH.ExecuteNonQuery();
 
-                        // 2. Details & Stock Update
-                        foreach (DataRow dr in dt.Rows)
+                        // B. Insert Details & Update Stock
+                        foreach (DataRow dr in dtCart.Rows)
                         {
                             decimal q = Convert.ToDecimal(dr["IQuantity"]);
                             decimal r = Convert.ToDecimal(dr["Sail_Rate"]);
@@ -390,17 +397,15 @@ namespace Bill_Software.corporate.business.app
                             string sqlD = "INSERT INTO tbl_Invoice_details (Invoice_No, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, discountRate, Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification, AddedById) VALUES (@Inv, @PO, @PID, @HSN, @Name, @Qty, @Rate, @DPer, @TPer, @Net, @Base, @Brand, @User)";
                             SqlCommand cmdD = new SqlCommand(sqlD, conn, tran);
                             cmdD.Parameters.AddWithValue("@Inv", invNo);
-                            cmdD.Parameters.AddWithValue("@PO", txtPONo.Text.Trim());
+                            cmdD.Parameters.AddWithValue("@PO", strPo);
                             cmdD.Parameters.AddWithValue("@PID", dr["ProductID"]);
                             cmdD.Parameters.AddWithValue("@HSN", dr["Product_code"]);
                             cmdD.Parameters.AddWithValue("@Name", dr["ProductName"]);
 
-                            //cmdD.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
-                            cmdD.Parameters.AddWithValue("@Qty", q.ToString("0.####")); // Preserves up to 4 decimals as string
+                            cmdD.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
                             cmdD.Parameters.Add("@Rate", SqlDbType.Decimal).Value = r;
                             cmdD.Parameters.Add("@DPer", SqlDbType.Decimal).Value = dPer;
-                            //cmdD.Parameters.Add("@TPer", SqlDbType.Decimal).Value = tPer;                           
-                            cmdD.Parameters.AddWithValue("@TPer", tPer.ToString("0.00")); // Pass as string
+                            cmdD.Parameters.Add("@TPer", SqlDbType.Decimal).Value = tPer;
                             cmdD.Parameters.Add("@Net", SqlDbType.Decimal).Value = rowNet;
                             cmdD.Parameters.Add("@Base", SqlDbType.Decimal).Value = taxable;
 
@@ -408,26 +413,15 @@ namespace Bill_Software.corporate.business.app
                             cmdD.Parameters.AddWithValue("@User", uid);
                             cmdD.ExecuteNonQuery();
 
-                            // Stock Deduct
-                            string sqlStock = @"UPDATE tbl_NewProduct 
-                                SET Quantity = CAST((CAST(ISNULL(Quantity, '0') AS DECIMAL(18,4)) - @Qty) AS NVARCHAR(100)), 
-                                    Quantity_Num = ISNULL(Quantity_Num, 0) - @Qty 
-                                WHERE ProductID = @PID";
-
+                            // Stock Deduct (Safe cast prevents NVarchar Overflow error)
+                            string sqlStock = "UPDATE tbl_NewProduct SET Quantity = CAST(ISNULL(Quantity, '0') AS DECIMAL(18,2)) - @Qty WHERE ProductID = @PID";
                             SqlCommand cmdS = new SqlCommand(sqlStock, conn, tran);
-
-                            // Safe decimal parameter with precision mapping to your database
-                            SqlParameter paramQty = new SqlParameter("@Qty", SqlDbType.Decimal);
-                            paramQty.Precision = 18;
-                            paramQty.Scale = 4; // Matches the database decimal(18,4)
-                            paramQty.Value = q;
-                            cmdS.Parameters.Add(paramQty);
-
+                            cmdS.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
                             cmdS.Parameters.Add("@PID", SqlDbType.VarChar).Value = dr["ProductID"].ToString();
                             cmdS.ExecuteNonQuery();
                         }
 
-                        // 3. Address
+                        // C. Insert Addresses
                         foreach (ListItem itm in lstAddresses.Items)
                         {
                             if (itm.Selected)
@@ -441,71 +435,59 @@ namespace Bill_Software.corporate.business.app
 
                         tran.Commit();
                         ShowMsg("Success! Invoice Generated: " + invNo, true);
-                        WriteLog("Invoice: " + invNo);
+                        WriteLog("Invoice successfully generated: " + invNo);
 
+                        // Clear Grid & Session
                         ViewState["PhaseProductData"] = CreateCartTable();
+                        gd_Cart.DataSource = null;
+                        gd_Cart.DataBind();
+                        txtPONo.Text = "";
+                        txtERPRef.Text = "";
+                        txtFreight.Text = "0";
+                        txtOtherCharge.Text = "0";
+
                         mvInvoice.ActiveViewIndex = 0;
-                        txtPONo.Text = ""; txtERPRef.Text = "";
                     }
                     catch (Exception ex)
                     {
                         tran.Rollback();
-                        throw; // FIX: Use 'throw;' instead of 'throw ex;' to preserve the exact line number of the error
+                        throw ex;
                     }
                 }
             }
             catch (Exception ex)
             {
-                // FIX: Log the actual technical error to your file
-                WriteLog("Invoice Save Error: " + ex.ToString());
-
-                // FIX: Show a soft, non-technical message to the user
-                // 2. Show a soft, friendly message to the user
-                ShowMsg("Oops! We encountered a slight issue while generating the invoice. Please try again or contact support if the issue persists.", false);
+                ShowMsg("Error: " + ex.Message, false);
+                WriteLog(ex.ToString());
             }
         }
         #endregion
 
-        #region HELPERS
+        #region UTILITIES
         private void ShowMsg(string msg, bool ok)
         {
-            PanelMsg.Visible = true;
+            PanelMsg.Visible = !string.IsNullOrEmpty(msg);
             lblMsg.Text = msg;
-            // Soften the colors slightly for better UI/UX
-            PanelMsg.Style["border-color"] = ok ? "#d6e9c6" : "#ebccd1";
-            PanelMsg.Style["background-color"] = ok ? "#dff0d8" : "#f2dede";
-            lblMsg.ForeColor = ok ? System.Drawing.Color.DarkGreen : System.Drawing.Color.DarkRed;
+            lblMsg.ForeColor = ok ? System.Drawing.Color.Green : System.Drawing.Color.Red;
         }
 
         private string GenerateInvoiceNo()
         {
-            DateTime dt = DateTime.Parse(txtInvoiceDate.Text);
+            DateTime dt;
+            if (!DateTime.TryParse(txtInvoiceDate.Text, out dt)) dt = DateTime.Now;
+
             string yy = "";
             if (dt.Month >= 4) yy = dt.Year.ToString().Substring(2) + "-" + (dt.Year + 1).ToString().Substring(2);
             else yy = (dt.Year - 1).ToString().Substring(2) + "-" + dt.Year.ToString().Substring(2);
+
             return "INV/C/" + yy + "/" + GetSlNo();
         }
 
         private int GetSlNo()
         {
-            try
-            {
-                // TRY_CAST safely ignores text values (like "INV-ABC") and only finds the max of actual numbers
-                string query = "SELECT ISNULL(MAX(TRY_CAST(Sl_no AS INT)), 0) + 1 FROM tbl_Invoice";
-                DataTable dt = DbCL.ReturnDataTable(query);
-
-                if (dt.Rows.Count > 0 && dt.Rows[0][0] != DBNull.Value)
-                {
-                    return Convert.ToInt32(dt.Rows[0][0]);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log the error silently and let the system fallback to 1
-                WriteLog("Error generating Serial Number (GetSlNo): " + ex.ToString());
-            }
-
-            return 1; // Fallback serial number
+            DataTable dt = DbCL.ReturnDataTable("SELECT ISNULL(MAX(CAST(Sl_no AS INT)), 0) + 1 FROM tbl_Invoice");
+            if (dt.Rows.Count > 0) return Convert.ToInt32(dt.Rows[0][0]);
+            return 1;
         }
 
         private void WriteLog(string txt)
@@ -514,7 +496,7 @@ namespace Bill_Software.corporate.business.app
             {
                 string p = Server.MapPath("~/Uploads/InvoiceLogs/Log.txt");
                 if (!Directory.Exists(Path.GetDirectoryName(p))) Directory.CreateDirectory(Path.GetDirectoryName(p));
-                File.AppendAllText(p, DateTime.Now + ": " + txt + Environment.NewLine);
+                File.AppendAllText(p, DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss") + " : " + txt + Environment.NewLine);
             }
             catch { }
         }

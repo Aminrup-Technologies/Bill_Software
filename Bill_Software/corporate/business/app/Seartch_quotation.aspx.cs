@@ -5,7 +5,7 @@ using System.Configuration;
 using System.Web;
 using System.Web.UI.WebControls;
 using System.IO;
-using ClosedXML.Excel; // Ensure ClosedXML is installed
+using ClosedXML.Excel;
 using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
@@ -22,13 +22,12 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                BindClients(); // Replaced the inline query with a dedicated method
+                BindClients();
                 txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
                 txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
             }
         }
 
-        // NEW: Dedicated method to bind the dropdown with a blank default row
         private void BindClients()
         {
             DbCL.Sqlconnection();
@@ -45,14 +44,11 @@ namespace Bill_Software.corporate.business.app
             }
             DbCL.Conn.Close();
 
-            // Insert a blank item at the top so the Select2 search placeholder shows up properly
             cmbvendor.Items.Insert(0, new ListItem("", ""));
         }
 
-        // NEW: Fired instantly when a user selects a client from the searchable dropdown
         protected void cmbvendor_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // If they clear the search box, hide the details panel
             if (string.IsNullOrEmpty(cmbvendor.SelectedValue))
             {
                 pnlClientDetails.Visible = false;
@@ -60,7 +56,6 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            // Fetch the details based on the selected Client Name
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             string query = "SELECT Client_Id, Address1, City, State, pin, Pan_no, Service_tax_no FROM tbl_Client WHERE Client_Name = @ClientName";
@@ -72,25 +67,19 @@ namespace Bill_Software.corporate.business.app
                 {
                     if (dr.Read())
                     {
-                        // 1. Set the hidden Client ID for your search logic
                         lblclientId.Text = dr["Client_Id"].ToString();
 
-                        // 2. Populate the details box
                         string address = dr["Address1"].ToString();
                         string city = dr["City"].ToString();
                         string state = dr["State"].ToString();
                         string pin = dr["pin"].ToString();
 
                         lblCAddress.Text = string.IsNullOrWhiteSpace(address) ? "N/A" : address;
-
-                        // Cleanly formats "City, State - PIN"
                         string cityStatePin = $"{city}, {state} - {pin}".Trim(new char[] { ' ', '-', ',' });
                         lblCCityState.Text = string.IsNullOrWhiteSpace(cityStatePin) ? "N/A" : cityStatePin;
-
                         lblCPan.Text = string.IsNullOrWhiteSpace(dr["Pan_no"].ToString()) ? "N/A" : dr["Pan_no"].ToString();
                         lblCGST.Text = string.IsNullOrWhiteSpace(dr["Service_tax_no"].ToString()) ? "N/A" : dr["Service_tax_no"].ToString();
 
-                        // 3. Show the panel!
                         pnlClientDetails.Visible = true;
                     }
                     else
@@ -102,19 +91,17 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-        // --- SHARED QUERY BUILDER ---
-        // This helper generates the SqlCommand based on your search filters
-        // If isExport = false, it grabs the lightweight grid data.
-        // If isExport = true, it grabs the heavy, detailed line-item data.
+        // --- SHARED QUERY BUILDER WITH TENANT ISOLATION ---
         private SqlCommand GetSearchCommand(bool isExport)
         {
-            BuindCompanyId(); // Make sure the Client_Id label is populated based on dropdown
+            BuindCompanyId();
 
+            SqlCommand cmd = new SqlCommand();
             string cmdstring = "";
 
             if (!isExport)
             {
-                // Lightweight query for the UI Grid
+                // --- INJECTION 1: Added CompanyID filter to the UI Grid Query ---
                 cmdstring = @"
                     SELECT 
                         q.ID, q.Quotation_no, q.Quotation_date, q.service_tax1, q.sub_total, 
@@ -128,11 +115,11 @@ namespace Bill_Software.corporate.business.app
                         WHERE qutno = q.Quotation_no 
                         ORDER BY TimeStamp DESC
                     ) s
-                    WHERE q.RecordType = 'Quotation' ";
+                    WHERE q.RecordType = 'Quotation' AND q.CompanyID = @CompanyID ";
             }
             else
             {
-                // Enriched detailed query for Excel Export
+                // --- INJECTION 2: Added CompanyID filter to the Excel Export Query ---
                 cmdstring = @"
                     SELECT 
                         q.RecordType AS [Record Type], q.Quotation_no AS [Document Number], q.Quotation_date AS [Document Date], 
@@ -154,12 +141,12 @@ namespace Bill_Software.corporate.business.app
                     FROM tbl_Quotation q
                     LEFT JOIN tbl_Client c ON q.Client_Id = c.Client_Id
                     LEFT JOIN tbl_Quotaion_details qd ON q.Quotation_no = qd.Quotation_no AND qd.IsDeleted = 0
-                    WHERE q.RecordType = 'Quotation' ";
+                    WHERE q.RecordType = 'Quotation' AND q.CompanyID = @CompanyID ";
             }
 
-            SqlCommand cmd = new SqlCommand();
+            // Always bind the active company parameter
+            cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
-            // Append filters based on RadioButton selection
             string searchType = RadioButtonList1.SelectedValue;
 
             if (searchType == "Client")
@@ -182,13 +169,10 @@ namespace Bill_Software.corporate.business.app
             }
             else if (searchType == "QutNo")
             {
-                // LIKE search so partial numbers work too
                 cmdstring += " AND q.Quotation_no LIKE '%' + @QutNo + '%'";
                 cmd.Parameters.AddWithValue("@QutNo", txtQutNo.Text.Trim());
             }
-            // If "All", we add no extra WHERE clauses
 
-            // Finally, add sorting
             if (isExport)
             {
                 cmdstring += " ORDER BY CAST(q.Quotation_date AS DATE) DESC, CAST(qd.Sl_no as int) ASC";
@@ -208,7 +192,6 @@ namespace Bill_Software.corporate.business.app
             SqlCommand cmd = GetSearchCommand(isExport: false);
             BuinddatagridNew(cmd);
 
-            // Show Export button only after a successful search
             btnExport.Visible = true;
         }
 
@@ -227,7 +210,6 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        // --- NEW EXCEL EXPORT METHOD ---
         protected void btnExport_Click(object sender, EventArgs e)
         {
             SqlCommand cmd = GetSearchCommand(isExport: true);
@@ -248,7 +230,6 @@ namespace Bill_Software.corporate.business.app
                 {
                     var ws = wb.Worksheets.Add(dtExport, "Search_Results");
 
-                    // Formatting Headers
                     var headerRow = ws.Row(1);
                     headerRow.Style.Font.Bold = true;
                     headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#19658A");
@@ -257,7 +238,6 @@ namespace Bill_Software.corporate.business.app
 
                     ws.SheetView.FreezeRows(1);
 
-                    // Number formatting for specific columns
                     var numericColumns = new int[] { 20, 21, 22, 23, 24, 25, 26, 30, 31, 35, 36, 38, 40 };
                     foreach (int col in numericColumns)
                     {
@@ -265,17 +245,18 @@ namespace Bill_Software.corporate.business.app
                     }
 
                     ws.Columns().AdjustToContents();
-                    ws.Column(10).Width = 30; // Product Name
-                    ws.Column(14).Width = 30; // Specifications
-                    ws.Column(44).Width = 40; // Doc Remarks
+                    ws.Column(10).Width = 30;
+                    ws.Column(14).Width = 30;
+                    ws.Column(44).Width = 40;
                     ws.Style.Alignment.WrapText = true;
 
-                    // Download
                     Response.Clear();
                     Response.Buffer = true;
                     Response.Charset = "";
                     Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                    Response.AddHeader("content-disposition", "attachment;filename=Quotation_Search_Results_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx");
+
+                    // --- INJECTION 3: Dynamic File Naming based on active company ---
+                    Response.AddHeader("content-disposition", "attachment;filename=" + CompanyContext.CurrentCompanyCode + "_Quotation_Search_Results_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx");
 
                     using (MemoryStream MyMemoryStream = new MemoryStream())
                     {
@@ -342,12 +323,14 @@ namespace Bill_Software.corporate.business.app
         private string buindalldata(string ID)
         {
             string qdate = "";
-            string query = "select Quotation_date from tbl_Quotation where ID=@ID";
+            // --- INJECTION 4: Strict cross-tenant check. Cannot fetch data outside active CompanyID ---
+            string query = "select Quotation_date from tbl_Quotation where ID=@ID AND CompanyID=@CompanyID";
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
             {
                 cmd.Parameters.AddWithValue("@ID", ID);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 object result = cmd.ExecuteScalar();
                 if (result != null)
                 {

@@ -1,14 +1,4 @@
-﻿/*
-======================================================================================
-When: 01-Mar-2026
-Why:  1. To refactor Edit_Quotation.aspx into a high-performance Wizard UI matching the Create flow.
-      2. Removed heavy C# 7.0 inline variables (out decimal) to ensure compilation.
-      3. Fixed data mapping to prevent Product_id (HSN) and Product_Code (PRD) swapping.
-      4. Ensured robust logic for both 'Update' and 'Recreate New Version' features.
-======================================================================================
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
@@ -59,7 +49,7 @@ namespace Bill_Software.corporate.business.app
         {
             string clientId = GetClientId(cmbvendor.Text);
 
-            // We start with a clean, parameterized base query using OUTER APPLY to grab the newest service
+            // --- INJECTION 1: Securing the Search by appending CompanyID ---
             string cmdstring = @"
             SELECT 
                 s.PServiceName,
@@ -82,11 +72,11 @@ namespace Bill_Software.corporate.business.app
                 WHERE qutno = q.Quotation_no 
                 ORDER BY TimeStamp DESC
             ) s
-            WHERE 1=1 "; // 1=1 makes appending conditions easier!
+            WHERE q.CompanyID = @CompanyID "; // Bound to active tenant
 
             SqlCommand cmd = new SqlCommand();
+            cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
-            // Safely append conditions and parameters based on the radio button selected
             if (RadioButtonList1.SelectedIndex == 0) // Only Client
             {
                 cmdstring += " AND q.Client_Id = @ClientId ";
@@ -107,15 +97,11 @@ namespace Bill_Software.corporate.business.app
                 cmd.Parameters.AddWithValue("@ToDate", txttodate.Text);
             }
 
-            // Append the final ordering logic
             cmdstring += " ORDER BY q.ID DESC";
-
             cmd.CommandText = cmdstring;
 
-            // Database connection and execution
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-
             cmd.Connection = DbCL.Conn;
 
             using (SqlDataAdapter da = new SqlDataAdapter(cmd))
@@ -137,7 +123,6 @@ namespace Bill_Software.corporate.business.app
                 }
             }
 
-            // Clean up
             DbCL.Conn.Close();
             cmd.Dispose();
         }
@@ -167,7 +152,6 @@ namespace Bill_Software.corporate.business.app
                 lbl_recordno.Text = Quotation_no;
                 lblqno.Text = Quotation_no;
 
-                // Load the Cart Data into ViewState
                 string cmdstring = "select Product_Code as ProductId, Product_id as Product_code, Product_name as ProductName, Type, sail_rate as Sail_Rate, Service_tax_rate as Tax_Rate, Unit, Quantity, ProductOrServiceCat, specification as Brand, Misc as Specification, ItemNo, MaterialNo, PackSize, ItemRemarks, discount_rate as Discount_Rate, Sl_no, DeliveryDate, Department from tbl_Quotaion_details where Quotation_no=@Quotation_no AND IsLatest = 1 AND IsDeleted = 0 order by CAST(Sl_no as int)";
                 SqlParameter[] pram = { new SqlParameter("@Quotation_no", Quotation_no) };
                 DataTable dtLoaded = DbCL.SPreturn_dt(cmdstring, pram);
@@ -178,10 +162,6 @@ namespace Bill_Software.corporate.business.app
 
                 Bindcombo();
 
-                // =========================================================================
-                // NEW UX LOGIC: Pre-select Category & Auto-Load Grid in Step 2 
-                // based on the original data loaded in the cart.
-                // =========================================================================
                 if (dtLoaded != null && dtLoaded.Rows.Count > 0)
                 {
                     string originalCategory = dtLoaded.Rows[0]["ProductOrServiceCat"].ToString();
@@ -197,7 +177,6 @@ namespace Bill_Software.corporate.business.app
                         cmbproduct_service.ClearSelection();
                         catItem.Selected = true;
 
-                        // Auto-load the Catalog Grid for this category
                         PanelCatalogGrid.Visible = true;
                         string catQuery = "select Id, Product_code, ProductID, ProductOrServiceCat, Brand, ProductName, Specification, Type,Sail_Rate,Tax_Rate,Unit from tbl_NewProduct where ProductOrServiceCat=@Cat order by Id,ProductName";
                         SqlParameter[] catParam = { new SqlParameter("@Cat", originalCategory) };
@@ -211,14 +190,13 @@ namespace Bill_Software.corporate.business.app
                         }
                     }
                 }
-                // =========================================================================
 
                 BindQuotationDetails(Quotation_no);
                 BindPaymentPhases(Quotation_no);
                 LoadPrimaryServices(Quotation_no);
                 ToggleGridColumns();
 
-                WizardMultiView.ActiveViewIndex = 1; // Move to Step 1
+                WizardMultiView.ActiveViewIndex = 1;
             }
         }
 
@@ -227,16 +205,18 @@ namespace Bill_Software.corporate.business.app
         protected void btnNext1_Click(object sender, EventArgs e)
         {
             PanelGlobalAlert.Visible = false;
-            WizardMultiView.ActiveViewIndex = 2; // Move to Step 2 (Catalog)
+            WizardMultiView.ActiveViewIndex = 2;
         }
 
         private void BindQuotationDetails(string quotationNo)
         {
-            string query = "SELECT * FROM tbl_Quotation WHERE Quotation_no = @Quotation_no";
+            // --- INJECTION 2: Securing the data fetch to ensure cross-tenant viewing is blocked ---
+            string query = "SELECT * FROM tbl_Quotation WHERE Quotation_no = @Quotation_no AND CompanyID = @CompanyID";
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
                 cmd.Parameters.AddWithValue("@Quotation_no", quotationNo);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 conn.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
@@ -403,8 +383,8 @@ namespace Bill_Software.corporate.business.app
                     if (chkdtp != null && chkdtp.Checked)
                     {
                         DataRow dr = dtPCat.NewRow();
-                        dr["ProductId"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text; // PRD 
-                        dr["Product_code"] = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text; // HSN
+                        dr["ProductId"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
+                        dr["Product_code"] = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
                         dr["ProductName"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName")).Text;
                         dr["Brand"] = ((Label)gridProdWithCat.Rows[i].FindControl("Brand")).Text;
                         dr["Specification"] = ((Label)gridProdWithCat.Rows[i].FindControl("Specification")).Text;
@@ -435,7 +415,7 @@ namespace Bill_Software.corporate.business.app
             gd_Service_Product.DataBind();
             ToggleGridColumns();
             TakePservice(cmbproduct_service.Text);
-            WizardMultiView.ActiveViewIndex = 3; // Move to Cart
+            WizardMultiView.ActiveViewIndex = 3;
         }
 
         private void TakePservice(string pservice)
@@ -473,7 +453,6 @@ namespace Bill_Software.corporate.business.app
                 GridViewRow row = gd_Service_Product.Rows[i];
                 if (row.RowType == DataControlRowType.DataRow)
                 {
-                    // Safely extracts text whether you used a TextBox or a Label in the ASPX
                     Func<string, string> GetGridValue = (controlId) =>
                     {
                         System.Web.UI.Control ctrl = row.FindControl(controlId);
@@ -505,7 +484,7 @@ namespace Bill_Software.corporate.business.app
         protected void btnAddMoreProducts_Click(object sender, EventArgs e)
         {
             SaveCartToViewState();
-            WizardMultiView.ActiveViewIndex = 2; // Back to Step 2
+            WizardMultiView.ActiveViewIndex = 2;
         }
 
         protected void gd_Service_Product_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -549,56 +528,31 @@ namespace Bill_Software.corporate.business.app
         protected void btnNext3_Click(object sender, EventArgs e)
         {
             PanelGlobalAlert.Visible = false;
-
-            // 1. Save the cart data from the active GridView into ViewState FIRST
             SaveCartToViewState();
-
             DataTable currentCart = (DataTable)ViewState["PhaseProductData"];
 
-            // Ensure the user actually has items before letting them go to the final step
             if (currentCart == null || currentCart.Rows.Count == 0)
             {
                 ShowAlert("Cart is empty! Add products to proceed.", true);
                 return;
             }
 
-            // 2. Bind the phase types for the final view
             bindphaseType(lblqno.Text);
-
-            // Note: LoadPrimaryServices is already handled in DataList1_ItemCommand when you first load the quote, 
-            // so we don't need to call a 'bindPrimaryServices' method here!
-
-            // 3. Now it is safe to move to Step 4 (Terms & Conditions)
             WizardMultiView.ActiveViewIndex = 4;
         }
 
         protected void btnPrev4_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 3; }
 
-
         protected void btnSabe_Click(object sender, EventArgs e)
         {
-            try
-            {
-                // Executes the updated method that reads from ViewState["PhaseProductData"]
-                DataUpdaterMethod();
-            }
-            catch (Exception ex)
-            {
-                ShowAlert("Error updating version: " + ex.Message, true);
-            }
+            try { DataUpdaterMethod(); }
+            catch (Exception ex) { ShowAlert("Error updating version: " + ex.Message, true); }
         }
 
         protected void btnNew_Click(object sender, EventArgs e)
         {
-            try
-            {
-                // Executes the updated method that reads from ViewState["PhaseProductData"]
-                MagicianNew();
-            }
-            catch (Exception ex)
-            {
-                ShowAlert("Error creating new version: " + ex.Message, true);
-            }
+            try { MagicianNew(); }
+            catch (Exception ex) { ShowAlert("Error creating new version: " + ex.Message, true); }
         }
 
         private void DataUpdaterMethod()
@@ -606,9 +560,12 @@ namespace Bill_Software.corporate.business.app
             string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
             string qno = lblqno.Text;
 
-            // 1. Validation Check (Proforma/Tax/Payment)
-            string query = "select Status1, Status2, PaymentStatus from tbl_Quotation where Quotation_no=@Quotation_no";
-            SqlParameter[] checkParam = { new SqlParameter("@Quotation_no", qno) };
+            // --- INJECTION 3: Scoping validation checks ---
+            string query = "select Status1, Status2, PaymentStatus from tbl_Quotation where Quotation_no=@Quotation_no AND CompanyID=@CompanyID";
+            SqlParameter[] checkParam = {
+                new SqlParameter("@Quotation_no", qno),
+                new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
+            };
             DataTable dtProInvPay = DbCL.SPreturn_dt(query, checkParam);
 
             if (dtProInvPay.Rows.Count > 0)
@@ -647,14 +604,12 @@ namespace Bill_Software.corporate.business.app
                 SqlTransaction trans = conn.BeginTransaction();
                 try
                 {
-                    // 2. Determine Next Integer Version
                     string versionQuery = "SELECT ISNULL(MAX(Version), 0) + 1 FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no";
                     using (SqlCommand vCmd = new SqlCommand(versionQuery, conn, trans))
                     {
                         vCmd.Parameters.AddWithValue("@Quotation_no", qno);
                         int newVersion = Convert.ToInt32(vCmd.ExecuteScalar());
 
-                        // 3. Soft delete old latest records
                         string softDeleteQuery = @"UPDATE tbl_Quotaion_details SET IsDeleted = 1, IsLatest = 0, DeletedById = @DeletedById, DeletedOn = GETDATE() WHERE Quotation_no = @Quotation_no AND IsDeleted = 0 AND IsLatest = 1";
                         using (SqlCommand sCmd = new SqlCommand(softDeleteQuery, conn, trans))
                         {
@@ -663,7 +618,6 @@ namespace Bill_Software.corporate.business.app
                             sCmd.ExecuteNonQuery();
                         }
 
-                        // 4. Insert New Details - NOW USING VIEWSTATE CART INSTEAD OF GRIDVIEW
                         int h = 0;
                         DataTable dtCart = ViewState["PhaseProductData"] as DataTable;
 
@@ -691,16 +645,16 @@ namespace Bill_Software.corporate.business.app
                                 using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotaion_details 
                         (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, discount_rate, new_sailrate, 
                          Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, 
-                         ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest)
+                         ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, AddedOn, Version, IsDeleted, IsLatest, CompanyID)
                         VALUES 
                         (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @discount_rate, @new_sailrate, 
                          @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, 'No', @Type, @Unit, @ProductOrServiceCat, 
-                         @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), @Version, 0, 1)", conn, trans))
+                         @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, GETDATE(), @Version, 0, 1, @CompanyID)", conn, trans))
                                 {
                                     cmd.Parameters.AddWithValue("@Sl_no", h);
                                     cmd.Parameters.AddWithValue("@Quotation_no", qno);
-                                    cmd.Parameters.AddWithValue("@Product_id", row["Product_code"].ToString()); // HSN
-                                    cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"].ToString());  // PRD Custom ID
+                                    cmd.Parameters.AddWithValue("@Product_id", row["Product_code"].ToString());
+                                    cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"].ToString());
                                     cmd.Parameters.AddWithValue("@Product_name", row["ProductName"].ToString());
                                     cmd.Parameters.AddWithValue("@Quantity", Quantity);
                                     cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
@@ -722,13 +676,13 @@ namespace Bill_Software.corporate.business.app
                                     cmd.Parameters.AddWithValue("@DeliveryDate", rbQt.Checked ? "" : row["DeliveryDate"]?.ToString() ?? "");
                                     cmd.Parameters.AddWithValue("@Department", rbQt.Checked ? "" : row["Department"]?.ToString() ?? "");
                                     cmd.Parameters.AddWithValue("@AddedById", userId);
-                                    cmd.Parameters.AddWithValue("@Version", newVersion); // Ensures history is tracked
+                                    cmd.Parameters.AddWithValue("@Version", newVersion);
+                                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                                     cmd.ExecuteNonQuery();
                                 }
                             }
                         }
 
-                        // 5. Update Header Table (tbl_Quotation)
                         decimal tcsAmount = ParseDecimal(txt_tcs_amnt.Text);
                         decimal tcsPercent = ParseDecimal(txt_tcs_percent.Text);
                         decimal deliveryAmount = ParseDecimal(txt_delivery_amnt.Text);
@@ -736,6 +690,7 @@ namespace Bill_Software.corporate.business.app
                         decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
                         decimal finalNet = Math.Round(new_Gross_amount + tcsAmount + deliveryAmount + otherAmount, 2);
 
+                        // --- INJECTION 4: Prevent cross-tenant update ---
                         string updateHeader = @"UPDATE tbl_Quotation SET 
                 Gross = @Gross, Service_tax = @STax, Net_amount = @Net, service_tax1 = @STax1, sub_total = @SubT,
                 ValidityDays = @VDays, DeliveryTenure = @DTenure, PackingCharges = @PCharge, 
@@ -747,7 +702,7 @@ namespace Bill_Software.corporate.business.app
                 TCS_Amount = @TCSA, TCS_Percent = @TCSP, Freight_Amount = @FrA, Freight_VAT_Percent = @FrP, 
                 OtherCharge_Name = @OthName, OtherCharge_Amount = @OthAmnt,
                 ModifiedById = @ModBy, ModifiedOn = GETDATE() 
-                WHERE Quotation_no = @QNo";
+                WHERE Quotation_no = @QNo AND CompanyID = @CompanyID";
 
                         using (SqlCommand hCmd = new SqlCommand(updateHeader, conn, trans))
                         {
@@ -783,10 +738,10 @@ namespace Bill_Software.corporate.business.app
                             hCmd.Parameters.AddWithValue("@OthAmnt", otherAmount);
                             hCmd.Parameters.AddWithValue("@ModBy", userId);
                             hCmd.Parameters.AddWithValue("@QNo", qno);
+                            hCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                             hCmd.ExecuteNonQuery();
                         }
 
-                        // Rebuild auxiliary data
                         insertPaymentPhaseNew(qno, conn, trans);
                         insertprimaryServiceNew(qno, conn, trans);
 
@@ -838,8 +793,6 @@ namespace Bill_Software.corporate.business.app
                 try
                 {
                     int h = 0;
-
-                    // FIX: Pull directly from the ViewState Cart instead of the GridView
                     DataTable dtCart = ViewState["PhaseProductData"] as DataTable;
 
                     if (dtCart != null)
@@ -874,10 +827,8 @@ namespace Bill_Software.corporate.business.app
                             {
                                 cmd.Parameters.AddWithValue("@Sl_no", h);
                                 cmd.Parameters.AddWithValue("@Quotation_no", newRecordID);
-
-                                // Mapping strictly from the DataRow
-                                cmd.Parameters.AddWithValue("@Product_id", row["Product_code"].ToString()); // HSN
-                                cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"].ToString());  // PRD Custom ID
+                                cmd.Parameters.AddWithValue("@Product_id", row["Product_code"].ToString());
+                                cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"].ToString());
                                 cmd.Parameters.AddWithValue("@Product_name", row["ProductName"].ToString());
                                 cmd.Parameters.AddWithValue("@Quantity", Quantity);
                                 cmd.Parameters.AddWithValue("@sail_rate", Sail_Rate);
@@ -896,11 +847,8 @@ namespace Bill_Software.corporate.business.app
                                 cmd.Parameters.AddWithValue("@ItemNo", row["ItemNo"].ToString());
                                 cmd.Parameters.AddWithValue("@MaterialNo", row["MaterialNo"].ToString());
                                 cmd.Parameters.AddWithValue("@PackSize", row["PackSize"].ToString());
-
-                                // Only push DeliveryDate and Dept if this is a PO
                                 cmd.Parameters.AddWithValue("@DeliveryDate", rbQt.Checked ? "" : row["DeliveryDate"]?.ToString() ?? "");
                                 cmd.Parameters.AddWithValue("@Department", rbQt.Checked ? "" : row["Department"]?.ToString() ?? "");
-
                                 cmd.Parameters.AddWithValue("@AddedById", userId);
                                 cmd.ExecuteNonQuery();
                             }
@@ -914,9 +862,10 @@ namespace Bill_Software.corporate.business.app
                     decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
                     decimal finalNet = Math.Round(new_Gross_amount + tcsAmount + deliveryAmount + otherAmount, 2);
 
+                    // --- INJECTION 5: Insert new revision securely into active tenant ---
                     using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotation 
-                    (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount, IsLatest, Version)
-                    VALUES (@QNo, @QDate, @CId, @Gross, @STax, @Net, 'No', 'No', @Sl, 'No', @STax1, @Sub, @CGST, @IGST, @POS, 'No', @RefD, @RefN, @RefI, @RefDt, @VDays, @DTenure, @PCharge, @Rem, @DView, @RType, @DO, @PO, @PODate, @VStart, @VEnd, @UserId, @DiscView, @TCSA, @TCSP, @FrA, @FrP, @OthN, @OthA, 1, 1)", conn, trans))
+                    (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount, IsLatest, Version, CompanyID)
+                    VALUES (@QNo, @QDate, @CId, @Gross, @STax, @Net, 'No', 'No', @Sl, 'No', @STax1, @Sub, @CGST, @IGST, @POS, 'No', @RefD, @RefN, @RefI, @RefDt, @VDays, @DTenure, @PCharge, @Rem, @DView, @RType, @DO, @PO, @PODate, @VStart, @VEnd, @UserId, @DiscView, @TCSA, @TCSP, @FrA, @FrP, @OthN, @OthA, 1, 1, @CompanyID)", conn, trans))
                     {
                         cmd.Parameters.AddWithValue("@QNo", newRecordID);
                         cmd.Parameters.AddWithValue("@QDate", GetSafeDate(txtquotationDate.Text));
@@ -953,6 +902,7 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@FrP", freightPercent);
                         cmd.Parameters.AddWithValue("@OthN", TextBox1.Text.Trim());
                         cmd.Parameters.AddWithValue("@OthA", otherAmount);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         cmd.ExecuteNonQuery();
                     }
 
@@ -1025,23 +975,27 @@ namespace Bill_Software.corporate.business.app
             lblqno.Text = newQuotationNo;
         }
 
+        // --- INJECTION 6: Verify revision code uniqueness per tenant ---
         private bool QuotationNoExists(string quotationNo)
         {
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-            using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM tbl_Quotation WHERE Quotation_no = @QuotationNo", con))
+            using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM tbl_Quotation WHERE Quotation_no = @QuotationNo AND CompanyID = @CompanyID", con))
             {
-                cmd.Parameters.AddWithValue("@QuotationNo", quotationNo); con.Open();
+                cmd.Parameters.AddWithValue("@QuotationNo", quotationNo);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                con.Open();
                 return (int)cmd.ExecuteScalar() > 0;
             }
         }
 
+        // --- INJECTION 7: Calculate max serial ID per tenant ---
         private int idreturn()
         {
             int b = 0; DbCL.Sqlconnection(); DbCL.ConnectDb();
             string d = txtquotationDate.Text, m = d.Substring(3, 3), y = d.Substring(7, 4), d4, d5, d6;
             if (m == "Jan" || m == "Feb" || m == "Mar") { d4 = (Convert.ToInt32(y) - 1).ToString(); d5 = "31-Mar-" + d4; d6 = "31-Mar-" + y; }
             else { d4 = (Convert.ToInt32(y) + 1).ToString(); d5 = "31-Mar-" + y; d6 = "31-Mar-" + d4; }
-            using (SqlCommand cmd = new SqlCommand("select Sl_no from tbl_Quotation where ID=(select max(ID) from tbl_Quotation where cast(Quotation_date as datetime) between '" + d5 + "' and '" + d6 + "')", DbCL.Conn))
+            using (SqlCommand cmd = new SqlCommand("select Sl_no from tbl_Quotation where ID=(select max(ID) from tbl_Quotation where cast(Quotation_date as datetime) between '" + d5 + "' and '" + d6 + "' AND CompanyID = " + CompanyContext.CurrentCompanyID + ")", DbCL.Conn))
             using (SqlDataReader re = cmd.ExecuteReader()) { if (re.Read()) b = Convert.ToInt32(re["Sl_no"]); }
             DbCL.Conn.Close(); return b;
         }
@@ -1092,7 +1046,6 @@ namespace Bill_Software.corporate.business.app
 
         private void insertPaymentPhaseNew(string qutno, SqlConnection conn, SqlTransaction trans)
         {
-            // Clear existing phases to prevent duplicates on update
             using (SqlCommand delCmd = new SqlCommand("DELETE FROM tbl_QutPaymentPhase WHERE qut_no = @qno", conn, trans))
             {
                 delCmd.Parameters.AddWithValue("@qno", qutno);
@@ -1114,7 +1067,6 @@ namespace Bill_Software.corporate.business.app
 
         private void insertprimaryServiceNew(string qutno, SqlConnection conn, SqlTransaction trans)
         {
-            // Clear existing to prevent duplicates on update
             using (SqlCommand delCmd = new SqlCommand("DELETE FROM tbl_QutPrimaryService WHERE qut_no = @qno", conn, trans)) { delCmd.Parameters.AddWithValue("@qno", qutno); delCmd.ExecuteNonQuery(); }
             using (SqlCommand delCmd = new SqlCommand("DELETE FROM tbl_QuoPserTerm WHERE qutno = @qno", conn, trans)) { delCmd.Parameters.AddWithValue("@qno", qutno); delCmd.ExecuteNonQuery(); }
             using (SqlCommand delCmd = new SqlCommand("DELETE FROM tbl_QuoPriSerTogather WHERE qutno = @qno", conn, trans)) { delCmd.Parameters.AddWithValue("@qno", qutno); delCmd.ExecuteNonQuery(); }
@@ -1179,9 +1131,8 @@ namespace Bill_Software.corporate.business.app
             if (gd_Service_Product.Columns.Count > 20)
             {
                 bool isQuotation = rbQt.Checked;
-                // Updated Column Indexes based on the new human-readable Grid Layout
-                gd_Service_Product.Columns[22].Visible = !isQuotation; // Del Date
-                gd_Service_Product.Columns[23].Visible = !isQuotation; // Dept 
+                gd_Service_Product.Columns[22].Visible = !isQuotation;
+                gd_Service_Product.Columns[23].Visible = !isQuotation;
             }
         }
 
@@ -1198,7 +1149,7 @@ namespace Bill_Software.corporate.business.app
             {
                 GridView3.DataSource = dt;
                 GridView3.DataBind();
-                ViewState["phaseAmountData"] = dt; // Preserve for the grid
+                ViewState["phaseAmountData"] = dt;
             }
             else
             {
@@ -1247,7 +1198,6 @@ namespace Bill_Software.corporate.business.app
             SqlParameter[] param = { new SqlParameter("@qutno", qutno) };
             DataTable selectedPhases = DbCL.SPreturn_dt(selectedQuery, param);
 
-            // Extract selected phases into a list safely (Without LINQ to avoid framework issues)
             List<string> selectedValues = new List<string>();
             if (selectedPhases != null)
             {

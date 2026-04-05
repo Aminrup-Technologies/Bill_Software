@@ -1,7 +1,7 @@
 ﻿<%@ Page Title="View Purchase Orders" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="View_PurchaseOrder.aspx.cs" Inherits="Bill_Software.corporate.business.app.View_PurchaseOrder" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
@@ -65,7 +65,7 @@
     <style type="text/css">
         /* Layout matching the provided image */
         .wrapper-card { border: 1px solid #ddd; border-radius: 6px; background: #fff; margin: 15px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-header { background-color: #1a6083; color: white; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 5px 5px 0 0; }
+        .card-header { background-color: #1a6083; color: white; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 5px 5px 0 0; display: flex; justify-content: space-between; align-items: center;}
         
         /* Search Panel Styling */
         .search-area { background-color: #f9f9f9; padding: 15px 20px; border-bottom: 1px solid #eaeaea; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
@@ -78,6 +78,7 @@
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; font-size: 12px; }
         .btn-search { background-color: #005b8f; }
         .btn-clear { background-color: #6c757d; }
+        .btn-export { background-color: #28a745; }
         .btn:hover { opacity: 0.9; }
 
         /* Table Styling */
@@ -97,28 +98,24 @@
         .summary-tax { color: #1a6083; }
 
         .error-panel { background-color: #f8d7da; color: #721c24; padding: 10px; border-bottom: 1px solid #f5c6cb; font-size: 12px; }
+        
         /* --- jQuery UI Autocomplete Fixes --- */
         .ui-autocomplete {
-            background-color: #ffffff !important; /* Force white background */
+            background-color: #ffffff !important; 
             border: 1px solid #cccccc !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* Add a subtle drop shadow */
-            max-height: 250px; /* Prevent it from getting too tall */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
+            max-height: 250px; 
             overflow-y: auto;
             overflow-x: hidden;
-            z-index: 9999 !important; /* Ensure it pops up over everything else */
+            z-index: 9999 !important; 
             padding: 0;
             margin: 0;
         }
 
-        .ui-menu-item {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
+        .ui-menu-item { list-style-type: none; margin: 0; padding: 0; }
         .ui-menu-item .ui-menu-item-wrapper {
             padding: 8px 12px !important;
-            color: #333333 !important; /* Force dark gray text so it is readable */
+            color: #333333 !important; 
             font-size: 12px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             border-bottom: 1px solid #f0f0f0;
@@ -128,8 +125,8 @@
         /* Hover & Selection State */
         .ui-menu-item .ui-state-active,
         .ui-menu-item .ui-menu-item-wrapper:hover {
-            background-color: #1a6083 !important; /* Your theme's blue color */
-            color: #ffffff !important; /* White text on hover */
+            background-color: #1a6083 !important; 
+            color: #ffffff !important; 
             border: none !important;
             border-radius: 0;
         }
@@ -140,7 +137,7 @@
     <div class="wrapper-card">
         
         <div class="card-header">
-            View Purchase Orders
+            <span>View Purchase Orders</span>
         </div>
 
         <asp:Panel ID="pnlError" runat="server" Visible="false" CssClass="error-panel">
@@ -171,6 +168,7 @@
             <div class="btn-group">
                 <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn btn-search" OnClick="btnSearch_Click" />
                 <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn btn-clear" OnClick="btnClear_Click" />
+                <asp:Button ID="btnExport" runat="server" Text="Export to Excel" CssClass="btn btn-export" OnClick="btnExport_Click" />
             </div>
         </div>
 
