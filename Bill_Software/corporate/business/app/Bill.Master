@@ -243,7 +243,8 @@
                             <li style="border-left: 1px solid #2268a9;" id="Home" runat="server">Home
                                 <ul class="nav first">
                                     <li id="home1" runat="server"><a href="home.aspx">My Profile</a></li>
-                                    <li id="daily_attendance" runat="server"><a href="attendance.aspx">Daily Attendance</a></li>
+                                    <li id="daily_attendance" runat="server"><a href="attendance.aspx">My Attendance</a></li>
+                                    <li id="my_leaves" runat="server"><a href="MyLeaves.aspx">My Leaves</a></li>
                                     <li id="settings" runat="server"><a href="settings.aspx">Settings</a></li>
                                 </ul>
                             </li>

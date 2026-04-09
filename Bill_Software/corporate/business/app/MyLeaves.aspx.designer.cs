@@ -10,132 +10,105 @@
 namespace Bill_Software.corporate.business.app {
     
     
-    public partial class attendance {
+    public partial class MyLeaves {
         
         /// <summary>
-        /// hfLatitude control.
+        /// PanelOK control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfLatitude;
+        protected global::System.Web.UI.WebControls.Panel PanelOK;
         
         /// <summary>
-        /// hfLongitude control.
+        /// lblOk control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfLongitude;
+        protected global::System.Web.UI.WebControls.Label lblOk;
         
         /// <summary>
-        /// hfPunchAction control.
+        /// PanelError control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfPunchAction;
+        protected global::System.Web.UI.WebControls.Panel PanelError;
         
         /// <summary>
-        /// btnProcessServerPunch control.
+        /// lblErrorMsg control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnProcessServerPunch;
+        protected global::System.Web.UI.WebControls.Label lblErrorMsg;
         
         /// <summary>
-        /// lblCurrentDate control.
+        /// ddlLeaveType control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblCurrentDate;
+        protected global::System.Web.UI.WebControls.DropDownList ddlLeaveType;
         
         /// <summary>
-        /// lblAssignedShift control.
+        /// txtStartDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblAssignedShift;
+        protected global::System.Web.UI.WebControls.TextBox txtStartDate;
         
         /// <summary>
-        /// lblStatusBadge control.
+        /// txtEndDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblStatusBadge;
+        protected global::System.Web.UI.WebControls.TextBox txtEndDate;
         
         /// <summary>
-        /// lblPunchInTime control.
+        /// txtReason control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblPunchInTime;
+        protected global::System.Web.UI.WebControls.TextBox txtReason;
         
         /// <summary>
-        /// lblPunchOutTime control.
+        /// btnSubmitLeave control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblPunchOutTime;
+        protected global::System.Web.UI.WebControls.Button btnSubmitLeave;
         
         /// <summary>
-        /// btnHtmlPunchIn control.
+        /// gvBalances control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlButton btnHtmlPunchIn;
+        protected global::System.Web.UI.WebControls.GridView gvBalances;
         
         /// <summary>
-        /// btnHtmlPunchOut control.
+        /// gvHistory control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlButton btnHtmlPunchOut;
-        
-        /// <summary>
-        /// lblError control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblError;
-        
-        /// <summary>
-        /// gvAttendanceHistory control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvAttendanceHistory;
-        
-        /// <summary>
-        /// gvRegHistory control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvRegHistory;
+        protected global::System.Web.UI.WebControls.GridView gvHistory;
     }
 }

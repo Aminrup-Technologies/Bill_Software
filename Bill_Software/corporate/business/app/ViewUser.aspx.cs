@@ -97,7 +97,7 @@ namespace Bill_Software.corporate.business.app
         {
             string sql = @"SELECT u.Id, u.User_Id, u.Name, u.Email, u.Phone_no, u.IsActive, u.LockoutEnd, 
                           u.LastLogin, u.CreatedAt, u.MustChangePassword, u.EmailVerified,
-                          u.ProfilePictureUrl, u.RoleId, r.RoleName, u.RequireGeoTagging
+                          u.ProfilePictureUrl, u.RoleId, r.RoleName, u.RequireGeoTagging, u.EnableEmailAlerts, u.EnableWhatsAppAlerts
                    FROM dbo.tbl_login u
                    LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
                    WHERE (u.User_Id NOT IN ('admin', 'AT01')) ";
@@ -173,6 +173,10 @@ namespace Bill_Software.corporate.business.app
             TextBox txtPhone = item.FindControl("txtPhone") as TextBox;
             CheckBox chkEmail = item.FindControl("chkEmailVerified") as CheckBox;
             CheckBox chkPwd = item.FindControl("chkMustChangePwd") as CheckBox;
+
+            CheckBox chkEmails = item.FindControl("chkEmails") as CheckBox;
+            CheckBox chkWhatsApp = item.FindControl("chkWhatsApp") as CheckBox;
+
             DropDownList ddlGridRole = item.FindControl("ddlGridRole") as DropDownList;
 
             string newName = txtName != null ? txtName.Text.Trim() : null;
@@ -185,6 +189,12 @@ namespace Bill_Software.corporate.business.app
             CheckBox chkGeo = item.FindControl("chkRequireGeo") as CheckBox;
             bool requireGeo = chkGeo != null ? chkGeo.Checked : true;
 
+            CheckBox chkE = item.FindControl("chkEmails") as CheckBox;
+            bool requireEmails = chkE != null ? chkE.Checked : true;
+
+            CheckBox chkWA = item.FindControl("chkWhatsApp") as CheckBox;
+            bool requireWhatsApp = chkWA != null ? chkWA.Checked : true;
+
             object roleIdParam = DBNull.Value;
             if (ddlGridRole != null && ddlGridRole.SelectedValue != "0")
             {
@@ -194,7 +204,7 @@ namespace Bill_Software.corporate.business.app
             string updateSql = @"UPDATE dbo.tbl_login 
                          SET Name = @Name, Email = @Email, Phone_no = @Phone, 
                              EmailVerified = @EmailVerified, MustChangePassword = @MustChangePwd, 
-                             RoleId = @RoleId, RequireGeoTagging = @RequireGeoTagging
+                             RoleId = @RoleId, RequireGeoTagging = @RequireGeoTagging, EnableEmailAlerts = @EnableEmailAlerts, EnableWhatsAppAlerts = @EnableWhatsAppAlerts
                          WHERE Id = @Id";
 
             using (var cn = new SqlConnection(ConnString))
@@ -207,6 +217,8 @@ namespace Bill_Software.corporate.business.app
                 cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
                 cmd.Parameters.AddWithValue("@RoleId", roleIdParam);
                 cmd.Parameters.AddWithValue("@RequireGeoTagging", requireGeo); // NEW
+                cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails); // NEW
+                cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp); // NEW
                 cmd.Parameters.AddWithValue("@Id", id);
 
                 cn.Open();

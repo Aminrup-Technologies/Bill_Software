@@ -22,26 +22,59 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
+                // Default search: Last 30 days to today
+                txtSearchFrom.Text = DateTime.Now.AddDays(-30).ToString("dd-MMM-yyyy");
+                txtSearchTo.Text = DateTime.Now.ToString("dd-MMM-yyyy");
                 BindSalesVisits();
             }
         }
 
         // ==========================================
-        // MAIN GRID BINDING
+        // SEARCH FILTERS & GRID BINDING
         // ==========================================
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            BindSalesVisits();
+        }
+
+        protected void btnResetSearch_Click(object sender, EventArgs e)
+        {
+            txtSearchFrom.Text = DateTime.Now.AddDays(-30).ToString("dd-MMM-yyyy");
+            txtSearchTo.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+            ddlSearchStatus.SelectedIndex = 0;
+            BindSalesVisits();
+        }
+
         private void BindSalesVisits()
         {
             string user = HttpContext.Current.Session["USERID"]?.ToString() ?? "";
+
+            // Base query
             string query = @"
             SELECT Id, VisitDate, CustomerName, VisitType, Status, ApprovalStatus 
             FROM tbl_SalesVisitReport
-            WHERE CreatedByCode = @CreatedByCode
-            ORDER BY VisitDate DESC";
+            WHERE CreatedByCode = @CreatedByCode ";
+
+            // Dynamically build WHERE clause based on filters
+            if (!string.IsNullOrEmpty(txtSearchFrom.Text) && !string.IsNullOrEmpty(txtSearchTo.Text))
+            {
+                query += " AND CAST(VisitDate AS DATE) BETWEEN CAST(@FromDate AS DATE) AND CAST(@ToDate AS DATE) ";
+            }
+            if (ddlSearchStatus.SelectedValue != "")
+            {
+                query += " AND Status = @Status ";
+            }
+
+            query += " ORDER BY VisitDate DESC";
 
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(query, con))
             {
                 cmd.Parameters.AddWithValue("@CreatedByCode", user);
+                if (!string.IsNullOrEmpty(txtSearchFrom.Text)) cmd.Parameters.AddWithValue("@FromDate", txtSearchFrom.Text);
+                if (!string.IsNullOrEmpty(txtSearchTo.Text)) cmd.Parameters.AddWithValue("@ToDate", txtSearchTo.Text);
+                if (ddlSearchStatus.SelectedValue != "") cmd.Parameters.AddWithValue("@Status", ddlSearchStatus.SelectedValue);
+
                 con.Open();
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
@@ -71,7 +104,6 @@ namespace Bill_Software.corporate.business.app
             {
                 string visitId = e.CommandArgument.ToString();
                 hfMegaVisitId.Value = visitId;
-
                 PanelOK.Visible = false;
                 PanelError.Visible = false;
 
@@ -87,8 +119,7 @@ namespace Bill_Software.corporate.business.app
             {
                 con.Open();
 
-                // 1. Load Core Details
-                // FIX: Added a subquery to count Manager Comments directly in this initial query to prevent DataReader collisions!
+                // 1. Load Core Details with subquery to prevent DataReader crashes
                 string query = @"
                     SELECT v.*, 
                            (SELECT COUNT(*) FROM tbl_SalesVisitResponses r WHERE r.VisitId = v.Id AND r.RespondentRole = 'Manager') AS MgrCommentCount
@@ -104,18 +135,18 @@ namespace Bill_Software.corporate.business.app
                         {
                             lblMegaHeaderTitle.Text = $"#{visitId} - {rdr["CustomerName"]}";
 
-                            // Populate Form Fields
-                            txtVisitDate.Text = Convert.ToDateTime(rdr["VisitDate"]).ToString("dd-MMM-yyyy");
-                            txtCustomerName.Text = rdr["CustomerName"].ToString();
-                            txtDepartment.Text = rdr["Department"].ToString();
-                            txtContactPerson.Text = rdr["ContactPerson"].ToString();
-                            txtDiscussion.Text = rdr["DiscussionPoints"].ToString();
+                            // Populate EDIT Form Fields (using edit_ prefix)
+                            edit_txtVisitDate.Text = Convert.ToDateTime(rdr["VisitDate"]).ToString("dd-MMM-yyyy");
+                            edit_txtCustomerName.Text = rdr["CustomerName"].ToString();
+                            edit_txtDepartment.Text = rdr["Department"].ToString();
+                            edit_txtContactPerson.Text = rdr["ContactPerson"].ToString();
+                            edit_txtDiscussion.Text = rdr["DiscussionPoints"].ToString();
 
-                            if (ddlVisitType.Items.FindByValue(rdr["VisitType"].ToString()) != null) ddlVisitType.SelectedValue = rdr["VisitType"].ToString();
-                            if (ddlFollowUp.Items.FindByValue(rdr["FollowUpRequired"].ToString()) != null) ddlFollowUp.SelectedValue = rdr["FollowUpRequired"].ToString();
-                            if (ddlStatus.Items.FindByValue(rdr["Status"].ToString()) != null) ddlStatus.SelectedValue = rdr["Status"].ToString();
+                            if (edit_ddlVisitType.Items.FindByValue(rdr["VisitType"].ToString()) != null) edit_ddlVisitType.SelectedValue = rdr["VisitType"].ToString();
+                            if (edit_ddlFollowUp.Items.FindByValue(rdr["FollowUpRequired"].ToString()) != null) edit_ddlFollowUp.SelectedValue = rdr["FollowUpRequired"].ToString();
+                            if (edit_ddlStatus.Items.FindByValue(rdr["Status"].ToString()) != null) edit_ddlStatus.SelectedValue = rdr["Status"].ToString();
 
-                            txtNextFollowUp.Text = rdr["NextFollowUpDate"] != DBNull.Value ? Convert.ToDateTime(rdr["NextFollowUpDate"]).ToString("dd-MMM-yyyy") : "";
+                            edit_txtNextFollowUp.Text = rdr["NextFollowUpDate"] != DBNull.Value ? Convert.ToDateTime(rdr["NextFollowUpDate"]).ToString("dd-MMM-yyyy") : "";
 
                             if (rdr["AttachmentName"] != DBNull.Value && rdr["AttachmentName"].ToString() != "")
                             {
@@ -128,7 +159,7 @@ namespace Bill_Software.corporate.business.app
                                 hlCurrentAttachment.NavigateUrl = "";
                             }
 
-                            // 🚨 EDIT LOCK LOGIC (FIXED) 🚨
+                            // 🚨 EDIT LOCK LOGIC 🚨
                             DateTime visitDate = Convert.ToDateTime(rdr["VisitDate"]);
                             string approvalStatus = rdr["ApprovalStatus"].ToString();
                             bool isEditable = true;
@@ -146,7 +177,6 @@ namespace Bill_Software.corporate.business.app
                             }
                             else
                             {
-                                // FIX: We now just read the count from our modified SELECT query above instead of opening a 2nd DataReader!
                                 int mgrComments = Convert.ToInt32(rdr["MgrCommentCount"]);
                                 if (mgrComments > 0)
                                 {
@@ -155,7 +185,6 @@ namespace Bill_Software.corporate.business.app
                                 }
                             }
 
-                            // Apply Lock States
                             pnlEditForm.Enabled = isEditable;
                             btnUpdateVisit.Visible = isEditable;
                             lblEditWarning.Visible = !isEditable;
@@ -216,26 +245,25 @@ namespace Bill_Software.corporate.business.app
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
-                        cmd.Parameters.AddWithValue("@VisitDate", Convert.ToDateTime(txtVisitDate.Text));
-                        cmd.Parameters.AddWithValue("@CustomerName", txtCustomerName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Department", txtDepartment.Text.Trim());
-                        cmd.Parameters.AddWithValue("@ContactPerson", txtContactPerson.Text.Trim());
-                        cmd.Parameters.AddWithValue("@VisitType", ddlVisitType.SelectedValue);
-                        cmd.Parameters.AddWithValue("@DiscussionPoints", txtDiscussion.Text.Trim());
-                        cmd.Parameters.AddWithValue("@FollowUpRequired", ddlFollowUp.SelectedValue);
-                        cmd.Parameters.AddWithValue("@Status", ddlStatus.SelectedValue);
+                        cmd.Parameters.AddWithValue("@VisitDate", Convert.ToDateTime(edit_txtVisitDate.Text));
+                        cmd.Parameters.AddWithValue("@CustomerName", edit_txtCustomerName.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Department", edit_txtDepartment.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ContactPerson", edit_txtContactPerson.Text.Trim());
+                        cmd.Parameters.AddWithValue("@VisitType", edit_ddlVisitType.SelectedValue);
+                        cmd.Parameters.AddWithValue("@DiscussionPoints", edit_txtDiscussion.Text.Trim());
+                        cmd.Parameters.AddWithValue("@FollowUpRequired", edit_ddlFollowUp.SelectedValue);
+                        cmd.Parameters.AddWithValue("@Status", edit_ddlStatus.SelectedValue);
 
-                        if (!string.IsNullOrEmpty(txtNextFollowUp.Text)) cmd.Parameters.AddWithValue("@NextFollowUpDate", Convert.ToDateTime(txtNextFollowUp.Text));
+                        if (!string.IsNullOrEmpty(edit_txtNextFollowUp.Text)) cmd.Parameters.AddWithValue("@NextFollowUpDate", Convert.ToDateTime(edit_txtNextFollowUp.Text));
                         else cmd.Parameters.AddWithValue("@NextFollowUpDate", DBNull.Value);
 
-                        // File Upload Logic
                         string fileName = null;
-                        if (fileAttachment.HasFile)
+                        if (edit_fileAttachment.HasFile)
                         {
-                            fileName = DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Path.GetFileName(fileAttachment.FileName);
+                            fileName = DateTime.Now.ToString("yyyyMMddHHmmss") + "_" + Path.GetFileName(edit_fileAttachment.FileName);
                             string uploadPath = Server.MapPath("~/Uploads/");
                             if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
-                            fileAttachment.SaveAs(Path.Combine(uploadPath, fileName));
+                            edit_fileAttachment.SaveAs(Path.Combine(uploadPath, fileName));
                         }
                         cmd.Parameters.AddWithValue("@AttachmentName", (object)fileName ?? DBNull.Value);
 
@@ -281,7 +309,7 @@ namespace Bill_Software.corporate.business.app
                     StringBuilder sb = new StringBuilder();
                     while (dr.Read())
                     {
-                        // 🟢 FLIPPED COLORS: Since current user = Salesperson, their bubbles are Right (Green). Managers are Left (White).
+                        // FLIPPED COLORS: Current user = Salesperson (Right/Green). Managers = Left/White.
                         bool isSalesperson = dr["RespondentRole"].ToString().Equals("Salesperson", StringComparison.OrdinalIgnoreCase);
                         string bubbleClass = isSalesperson ? "chat-right" : "chat-left";
 
@@ -417,7 +445,7 @@ namespace Bill_Software.corporate.business.app
 
                     string dataRichHtml = GetVisitEmailBody(visitId, conn);
                     string body = $@"<html><body style='font-family: Arial, sans-serif; color: #333;'>
-                            <h2 style='color: #0056b3; margin-bottom: 15px;'>Sales Visit Report &ndash; Salesperson Reply</h2>
+                            <h2 style='color: #0056b3; margin-bottom: 15px;'>Sales Visit Report – Salesperson Reply</h2>
                             <div style='margin-bottom: 20px;'>{dataRichHtml}</div>
                             <div style='border: 2px solid #0056b3; padding: 15px; margin-top: 20px; max-width: 800px;'>
                                 <h3 style='color: #0056b3; margin-top: 0; margin-bottom: 15px;'>Salesperson Reply</h3>

@@ -248,6 +248,9 @@
     <Content Include="Content\themes\base\tabs.css" />
     <Content Include="Content\themes\base\theme.css" />
     <Content Include="Content\themes\base\tooltip.css" />
+    <Content Include="corporate\business\app\AdminApprovalDashboard.aspx" />
+    <Content Include="corporate\business\app\AdminLeaveSetup.aspx" />
+    <Content Include="corporate\business\app\AdminShiftSetup.aspx" />
     <Content Include="corporate\business\app\Approve_PR.aspx" />
     <Content Include="corporate\business\app\attendance.aspx" />
     <Content Include="corporate\business\app\calender\jquery-1.7.1.js" />
@@ -275,6 +278,7 @@
     <Content Include="corporate\business\app\ManagePermissions.aspx" />
     <Content Include="corporate\business\app\ManageRoles.aspx" />
     <Content Include="corporate\business\app\Manual_Invoice.aspx" />
+    <Content Include="corporate\business\app\MyLeaves.aspx" />
     <Content Include="corporate\business\app\PaymentMail.aspx" />
     <Content Include="corporate\business\app\productparent.aspx" />
     <Content Include="corporate\business\app\ProformaMail.aspx" />
@@ -681,6 +685,27 @@
     </Compile>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\AuthConfig.cs" />
+    <Compile Include="corporate\business\app\AdminApprovalDashboard.aspx.cs">
+      <DependentUpon>AdminApprovalDashboard.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminApprovalDashboard.aspx.designer.cs">
+      <DependentUpon>AdminApprovalDashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminLeaveSetup.aspx.cs">
+      <DependentUpon>AdminLeaveSetup.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminLeaveSetup.aspx.designer.cs">
+      <DependentUpon>AdminLeaveSetup.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminShiftSetup.aspx.cs">
+      <DependentUpon>AdminShiftSetup.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminShiftSetup.aspx.designer.cs">
+      <DependentUpon>AdminShiftSetup.aspx</DependentUpon>
+    </Compile>
     <Compile Include="corporate\business\app\Approve_PR.aspx.cs">
       <DependentUpon>Approve_PR.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -697,7 +722,6 @@
     </Compile>
     <Compile Include="corporate\business\app\Bill.Master.cs">
       <DependentUpon>Bill.Master</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="corporate\business\app\Bill.Master.designer.cs">
       <DependentUpon>Bill.Master</DependentUpon>
@@ -847,6 +871,13 @@
     </Compile>
     <Compile Include="corporate\business\app\Manual_Invoice.aspx.designer.cs">
       <DependentUpon>Manual_Invoice.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\MyLeaves.aspx.cs">
+      <DependentUpon>MyLeaves.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\MyLeaves.aspx.designer.cs">
+      <DependentUpon>MyLeaves.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\PaymentMail.aspx.cs">
       <DependentUpon>PaymentMail.aspx</DependentUpon>

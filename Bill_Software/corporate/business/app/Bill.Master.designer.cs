@@ -121,6 +121,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl daily_attendance;
         
         /// <summary>
+        /// my_leaves control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl my_leaves;
+        
+        /// <summary>
         /// settings control.
         /// </summary>
         /// <remarks>

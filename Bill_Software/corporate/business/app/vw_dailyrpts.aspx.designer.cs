@@ -67,6 +67,51 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Label lblErrorMsg;
         
         /// <summary>
+        /// txtSearchFrom control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtSearchFrom;
+        
+        /// <summary>
+        /// txtSearchTo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtSearchTo;
+        
+        /// <summary>
+        /// ddlSearchStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlSearchStatus;
+        
+        /// <summary>
+        /// btnSearch control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnSearch;
+        
+        /// <summary>
+        /// btnResetSearch control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnResetSearch;
+        
+        /// <summary>
         /// gvSalesVisits control.
         /// </summary>
         /// <remarks>
@@ -112,94 +157,94 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Panel pnlEditForm;
         
         /// <summary>
-        /// txtVisitDate control.
+        /// edit_txtVisitDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtVisitDate;
+        protected global::System.Web.UI.WebControls.TextBox edit_txtVisitDate;
         
         /// <summary>
-        /// ddlVisitType control.
+        /// edit_ddlVisitType control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlVisitType;
+        protected global::System.Web.UI.WebControls.DropDownList edit_ddlVisitType;
         
         /// <summary>
-        /// txtCustomerName control.
+        /// edit_txtCustomerName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtCustomerName;
+        protected global::System.Web.UI.WebControls.TextBox edit_txtCustomerName;
         
         /// <summary>
-        /// txtDepartment control.
+        /// edit_txtDepartment control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtDepartment;
+        protected global::System.Web.UI.WebControls.TextBox edit_txtDepartment;
         
         /// <summary>
-        /// txtContactPerson control.
+        /// edit_txtContactPerson control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtContactPerson;
+        protected global::System.Web.UI.WebControls.TextBox edit_txtContactPerson;
         
         /// <summary>
-        /// ddlStatus control.
+        /// edit_ddlStatus control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlStatus;
+        protected global::System.Web.UI.WebControls.DropDownList edit_ddlStatus;
         
         /// <summary>
-        /// txtDiscussion control.
+        /// edit_txtDiscussion control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtDiscussion;
+        protected global::System.Web.UI.WebControls.TextBox edit_txtDiscussion;
         
         /// <summary>
-        /// ddlFollowUp control.
+        /// edit_ddlFollowUp control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlFollowUp;
+        protected global::System.Web.UI.WebControls.DropDownList edit_ddlFollowUp;
         
         /// <summary>
-        /// txtNextFollowUp control.
+        /// edit_txtNextFollowUp control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtNextFollowUp;
+        protected global::System.Web.UI.WebControls.TextBox edit_txtNextFollowUp;
         
         /// <summary>
-        /// fileAttachment control.
+        /// edit_fileAttachment control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.FileUpload fileAttachment;
+        protected global::System.Web.UI.WebControls.FileUpload edit_fileAttachment;
         
         /// <summary>
         /// hlCurrentAttachment control.

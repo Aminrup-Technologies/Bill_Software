@@ -382,6 +382,16 @@
                                         <label style="margin:0;">Require Geo-Tagging</label>
                                     </div>
 
+                                    <div class="edit-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                                        <asp:CheckBox ID="chkEmails" runat="server" Checked='<%# Eval("EnableEmailAlerts") != DBNull.Value && Convert.ToBoolean(Eval("EnableEmailAlerts")) %>' />
+                                        <label style="margin:0;">Email Alerts</label>
+                                    </div>
+
+                                    <div class="edit-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                                        <asp:CheckBox ID="chkWhatsApp" runat="server" Checked='<%# Eval("EnableWhatsAppAlerts") != DBNull.Value && Convert.ToBoolean(Eval("EnableWhatsAppAlerts")) %>' />
+                                        <label style="margin:0;">WhatsApp Alerts</label>
+                                    </div>
+
                                     <div style="display: flex; justify-content: flex-end; gap: 10px; width: 100%;">
                                         <asp:LinkButton ID="lnkCancel" runat="server" CommandName="Cancel" CssClass="action-btn btn-secondary" Style="border-radius: 4px;">Cancel</asp:LinkButton>
                                         <asp:LinkButton ID="lnkUpdate" runat="server" CommandName="Update" CssClass="action-btn btn-success" Style="border-radius: 4px;">Save Changes</asp:LinkButton>
