@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Web;
+using System.Web.SessionState; // Ensure this is explicitly included
 
 namespace Bill_Software.corporate.business.app
 {
-    public class Heartbeat : IHttpHandler, System.Web.SessionState.IRequiresSessionState
+    public class Heartbeat : IHttpHandler, IRequiresSessionState
     {
         public void ProcessRequest(HttpContext context)
         {
@@ -17,54 +19,76 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            string sessionToken = context.Session["SessionToken"].ToString();
+            // 1. C# 5.0 Compatible OUT parameter parsing
+            Guid sessionToken;
+            if (!Guid.TryParse(context.Session["SessionToken"].ToString(), out sessionToken))
+            {
+                KillLocalSession(context);
+                context.Response.Write("{\"status\":\"logout\", \"reason\":\"invalid_token_format\"}");
+                return;
+            }
+
             string connString = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
-            using (var cn = new SqlConnection(connString))
+            using (SqlConnection cn = new SqlConnection(connString))
             {
                 cn.Open();
 
+                bool isActive = false;
+                bool isFound = false;
+                DateTimeOffset lastHeartbeat = DateTimeOffset.MinValue;
+
+                // Step 1: Read the session status
                 string sql = "SELECT IsActive, LastHeartbeat FROM dbo.ActiveSessions WHERE SessionToken = @Token";
-                using (var cmd = new SqlCommand(sql, cn))
-                using (var rdr = cmd.ExecuteReader())
+                using (SqlCommand cmd = new SqlCommand(sql, cn))
                 {
-                    if (rdr.Read())
-                    {
-                        bool isActive = rdr.GetBoolean(0);
-                        DateTimeOffset lastHeartbeat = rdr.GetDateTimeOffset(1);
+                    cmd.Parameters.Add("@Token", SqlDbType.UniqueIdentifier).Value = sessionToken;
 
-                        if (!isActive)
-                        {
-                            KillLocalSession(context);
-                            context.Response.Write("{\"status\":\"logout\", \"reason\":\"superseded\"}");
-                            return;
-                        }
-
-                        // 30-minute idle timeout
-                        if ((DateTimeOffset.UtcNow - lastHeartbeat).TotalMinutes > 30)
-                        {
-                            KillLocalSession(context);
-                            using (var cmdKill = new SqlCommand("UPDATE dbo.ActiveSessions SET IsActive = 0 WHERE SessionToken = @Token", cn))
-                            {
-                                cmdKill.Parameters.AddWithValue("@Token", sessionToken);
-                                cmdKill.ExecuteNonQuery();
-                            }
-                            context.Response.Write("{\"status\":\"logout\", \"reason\":\"timeout\"}");
-                            return;
-                        }
-                    }
-                    else
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        KillLocalSession(context);
-                        context.Response.Write("{\"status\":\"logout\", \"reason\":\"invalid\"}");
-                        return;
+                        if (rdr.Read())
+                        {
+                            isFound = true;
+                            isActive = rdr.GetBoolean(0);
+                            lastHeartbeat = rdr.GetDateTimeOffset(1);
+                        }
                     }
                 }
 
-                // Session is valid! Update LastHeartbeat
-                using (var cmdUpd = new SqlCommand("UPDATE dbo.ActiveSessions SET LastHeartbeat = sysutcdatetime() WHERE SessionToken = @Token", cn))
+                // Step 2: Evaluate the status and take action
+                if (!isFound)
                 {
-                    cmdUpd.Parameters.AddWithValue("@Token", sessionToken);
+                    KillLocalSession(context);
+                    context.Response.Write("{\"status\":\"logout\", \"reason\":\"invalid\"}");
+                    return;
+                }
+
+                if (!isActive)
+                {
+                    KillLocalSession(context);
+                    context.Response.Write("{\"status\":\"logout\", \"reason\":\"superseded\"}");
+                    return;
+                }
+
+                // 30-minute idle timeout
+                if ((DateTimeOffset.UtcNow - lastHeartbeat.ToUniversalTime()).TotalMinutes > 30)
+                {
+                    KillLocalSession(context);
+
+                    using (SqlCommand cmdKill = new SqlCommand("UPDATE dbo.ActiveSessions SET IsActive = 0 WHERE SessionToken = @Token", cn))
+                    {
+                        cmdKill.Parameters.Add("@Token", SqlDbType.UniqueIdentifier).Value = sessionToken;
+                        cmdKill.ExecuteNonQuery();
+                    }
+
+                    context.Response.Write("{\"status\":\"logout\", \"reason\":\"timeout\"}");
+                    return;
+                }
+
+                // Step 3: Session is valid! Update LastHeartbeat
+                using (SqlCommand cmdUpd = new SqlCommand("UPDATE dbo.ActiveSessions SET LastHeartbeat = SYSDATETIMEOFFSET() WHERE SessionToken = @Token", cn))
+                {
+                    cmdUpd.Parameters.Add("@Token", SqlDbType.UniqueIdentifier).Value = sessionToken;
                     cmdUpd.ExecuteNonQuery();
                 }
 
@@ -78,6 +102,10 @@ namespace Bill_Software.corporate.business.app
             context.Session.Abandon();
         }
 
-        public bool IsReusable => false;
+        // FIX: C# 5.0 / ASP.NET 4.5.2 compatible property getter
+        public bool IsReusable
+        {
+            get { return false; }
+        }
     }
 }

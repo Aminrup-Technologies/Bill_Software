@@ -146,9 +146,13 @@ namespace Bill_Software.corporate.business.app
                         Label lblRate = (Label)row.FindControl("lblBaseRate");
                         Label lblTax = (Label)row.FindControl("lblGstRate");
 
-                        dr["Sail_Rate"] = lblRate != null ? lblRate.Text : "0";
-                        dr["Tax_Rate"] = lblTax != null ? lblTax.Text : "0";
+                        // SAFE PARSING: Ensures valid numeric assignment to DataRow to prevent ArgumentExceptions
+                        decimal sRate = 0, tRate = 0;
+                        if (lblRate != null) decimal.TryParse(lblRate.Text, out sRate);
+                        if (lblTax != null) decimal.TryParse(lblTax.Text, out tRate);
 
+                        dr["Sail_Rate"] = sRate;
+                        dr["Tax_Rate"] = tRate;
                         dr["IQuantity"] = 1;
                         dr["Discount_Rate"] = 0;
                         dtCart.Rows.Add(dr);
@@ -255,13 +259,18 @@ namespace Bill_Software.corporate.business.app
 
                 if (tQty == null) continue;
 
+                // SAFE PARSING: Forces failed parses (like empty textboxes) to 0 so math calculation doesn't use old data
                 decimal q = 0;
                 decimal r = 0;
                 decimal d = 0;
 
-                if (decimal.TryParse(tQty.Text, out q)) dt.Rows[i]["IQuantity"] = q;
-                if (decimal.TryParse(tRate.Text, out r)) dt.Rows[i]["Sail_Rate"] = r;
-                if (decimal.TryParse(tDisc.Text, out d)) dt.Rows[i]["Discount_Rate"] = d;
+                decimal.TryParse(tQty.Text, out q);
+                decimal.TryParse(tRate.Text, out r);
+                decimal.TryParse(tDisc.Text, out d);
+
+                dt.Rows[i]["IQuantity"] = q;
+                dt.Rows[i]["Sail_Rate"] = r;
+                dt.Rows[i]["Discount_Rate"] = d;
             }
         }
 
@@ -413,8 +422,8 @@ namespace Bill_Software.corporate.business.app
                             cmdD.Parameters.AddWithValue("@User", uid);
                             cmdD.ExecuteNonQuery();
 
-                            // Stock Deduct (Safe cast prevents NVarchar Overflow error)
-                            string sqlStock = "UPDATE tbl_NewProduct SET Quantity = CAST(ISNULL(Quantity, '0') AS DECIMAL(18,2)) - @Qty WHERE ProductID = @PID";
+                            // SAFE QUERY: Prevents "nvarchar to numeric" error by explicitly catching empty string '' data using CASE.
+                            string sqlStock = "UPDATE tbl_NewProduct SET Quantity = CAST(CASE WHEN ISNULL(Quantity, '') = '' THEN '0' ELSE Quantity END AS DECIMAL(18,2)) - @Qty WHERE ProductID = @PID";
                             SqlCommand cmdS = new SqlCommand(sqlStock, conn, tran);
                             cmdS.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
                             cmdS.Parameters.Add("@PID", SqlDbType.VarChar).Value = dr["ProductID"].ToString();
@@ -485,7 +494,8 @@ namespace Bill_Software.corporate.business.app
 
         private int GetSlNo()
         {
-            DataTable dt = DbCL.ReturnDataTable("SELECT ISNULL(MAX(CAST(Sl_no AS INT)), 0) + 1 FROM tbl_Invoice");
+            // SAFE QUERY: Prevents legacy dirty string data from crashing the numeric validation
+            DataTable dt = DbCL.ReturnDataTable("SELECT ISNULL(MAX(CAST(CASE WHEN ISNULL(Sl_no, '') = '' OR ISNUMERIC(Sl_no) = 0 THEN '0' ELSE Sl_no END AS INT)), 0) + 1 FROM tbl_Invoice");
             if (dt.Rows.Count > 0) return Convert.ToInt32(dt.Rows[0][0]);
             return 1;
         }

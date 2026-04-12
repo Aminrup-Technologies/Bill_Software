@@ -42,12 +42,14 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // 1. Validate Core Session
             if (Session["USERID"] == null || Session["SessionToken"] == null)
             {
                 Response.Redirect("~/index.aspx", false);
                 return;
             }
 
+            // 2. Validate Active Session Token (Concurrent Login Check)
             using (var cn = new SqlConnection(ConnString))
             {
                 cn.Open();
@@ -71,7 +73,30 @@ namespace Bill_Software.corporate.business.app
             HttpContext.Current.Response.Cache.SetCacheability(HttpCacheability.NoCache);
             HttpContext.Current.Response.Cache.SetNoStore();
 
-            // 4. Load UI Elements
+            // ==========================================
+            // FORCE PASSWORD & CONTACT VERIFICATION GLOBAL LOCKOUT
+            // ==========================================
+            bool isLockedOut = Session["MustUpdateUserId"] != null || Session["MustVerifyContact"] != null;
+
+            if (isLockedOut)
+            {
+                // Get the current page filename 
+                string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath).ToLower();
+
+                // If they are NOT on the settings page, force them there immediately
+                if (currentPage != "settings.aspx")
+                {
+                    Response.Redirect("~/corporate/business/app/settings.aspx", false);
+                    return;
+                }
+
+                // IMPORTANT: If they ARE on settings.aspx and locked out, we return immediately.
+                // We do NOT want to load the menu, company dropdown, or header if they are locked out.
+                return;
+            }
+            // ==========================================
+
+            // 4. Load Normal UI Elements (Only executes if NOT locked out)
             if (!IsPostBack)
             {
                 int currentYear = DateTime.Now.Year;

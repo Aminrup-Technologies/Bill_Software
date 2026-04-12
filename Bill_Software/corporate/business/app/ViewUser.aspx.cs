@@ -13,7 +13,11 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm80 : System.Web.UI.Page
     {
-        private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+        // FIX 1: C# 5.0 Compatible Property
+        private string ConnString
+        {
+            get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; }
+        }
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -25,7 +29,6 @@ namespace Bill_Software.corporate.business.app
 
             if (!IsPostBack)
             {
-                //LoadEmployeeDropdown();
                 BindGrid();
             }
         }
@@ -73,36 +76,26 @@ namespace Bill_Software.corporate.business.app
             BindGrid();
         }
 
-        //private void LoadEmployeeDropdown()
-        //{
-        //    using (var cn = new SqlConnection(ConnString))
-        //    using (var cmd = new SqlCommand("SELECT User_Id FROM tbl_login WHERE User_Id NOT IN ('admin', 'AT01') ORDER BY Id", cn))
-        //    {
-        //        var dt = new DataTable();
-        //        var da = new SqlDataAdapter(cmd);
-        //        da.Fill(dt);
-        //        ddlEmpId.Items.Clear();
-        //        ddlEmpId.Items.Add(new ListItem("-- All --", ""));
-        //        foreach (DataRow r in dt.Rows)
-        //        {
-        //            ddlEmpId.Items.Add(new ListItem(r["User_Id"].ToString(), r["User_Id"].ToString()));
-        //        }
-        //    }
-        //}
-
-        protected void ddlEmpId_SelectedIndexChanged(object sender, EventArgs e) => BindGrid();
-        protected void btnRefresh_Click(object sender, EventArgs e) => BindGrid();
+        // FIX 1: C# 5.0 Compatible Event Handlers
+        protected void ddlEmpId_SelectedIndexChanged(object sender, EventArgs e) { BindGrid(); }
+        protected void btnRefresh_Click(object sender, EventArgs e) { BindGrid(); }
 
         private void BindGrid()
         {
             string sql = @"SELECT u.Id, u.User_Id, u.Name, u.Email, u.Phone_no, u.IsActive, u.LockoutEnd, 
                           u.LastLogin, u.CreatedAt, u.MustChangePassword, u.EmailVerified,
-                          u.ProfilePictureUrl, u.RoleId, r.RoleName, u.RequireGeoTagging, u.EnableEmailAlerts, u.EnableWhatsAppAlerts
+                          u.ProfilePictureUrl, u.RoleId, r.RoleName, u.RequireGeoTagging, u.EnableEmailAlerts, u.EnableWhatsAppAlerts,
+                          u.DepartmentID, d.DepartmentName, 
+                          u.DesignationID, des.DesignationName, 
+                          u.ReportingManagerId, mgr.Name AS ManagerName,
+                          (SELECT TOP 1 LastHeartbeat FROM ActiveSessions s WHERE s.UserId = u.Id ORDER BY LastHeartbeat DESC) AS LatestHeartbeat
                    FROM dbo.tbl_login u
                    LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
+                   LEFT JOIN dbo.tbl_Departments d ON u.DepartmentID = d.DepartmentID
+                   LEFT JOIN dbo.tbl_Designations des ON u.DesignationID = des.DesignationID
+                   LEFT JOIN dbo.tbl_login mgr ON u.ReportingManagerId = mgr.User_Id
                    WHERE (u.User_Id NOT IN ('admin', 'AT01')) ";
 
-            // --- 1. APPLY BUTTON FILTERS ---
             string currentFilter = ViewState["CurrentFilter"] as string;
             if (currentFilter == "Active")
             {
@@ -114,11 +107,9 @@ namespace Bill_Software.corporate.business.app
             }
             else if (currentFilter == "Locked")
             {
-                // Safe check for both datetime and datetimeoffset locking mechanisms
                 sql += " AND (u.LockoutEnd IS NOT NULL AND u.LockoutEnd > SYSDATETIMEOFFSET()) ";
             }
 
-            // --- 2. APPLY TEXT SEARCH ---
             string searchTerm = txtSearch.Text.Trim();
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -168,32 +159,31 @@ namespace Bill_Software.corporate.business.app
             int id = Convert.ToInt32(lvUsers.DataKeys[e.ItemIndex].Value);
             ListViewItem item = lvUsers.Items[e.ItemIndex];
 
+            // FIX 2: Cleaned up duplicate variable declarations
             TextBox txtName = item.FindControl("txtName") as TextBox;
             TextBox txtEmail = item.FindControl("txtEmail") as TextBox;
             TextBox txtPhone = item.FindControl("txtPhone") as TextBox;
+
             CheckBox chkEmail = item.FindControl("chkEmailVerified") as CheckBox;
             CheckBox chkPwd = item.FindControl("chkMustChangePwd") as CheckBox;
-
+            CheckBox chkGeo = item.FindControl("chkRequireGeo") as CheckBox;
             CheckBox chkEmails = item.FindControl("chkEmails") as CheckBox;
             CheckBox chkWhatsApp = item.FindControl("chkWhatsApp") as CheckBox;
 
             DropDownList ddlGridRole = item.FindControl("ddlGridRole") as DropDownList;
+            DropDownList ddlDepartment = item.FindControl("ddlDepartment") as DropDownList;
+            DropDownList ddlDesignation = item.FindControl("ddlDesignation") as DropDownList;
+            DropDownList ddlManager = item.FindControl("ddlManager") as DropDownList;
 
-            string newName = txtName != null ? txtName.Text.Trim() : null;
-            string newEmail = txtEmail != null ? txtEmail.Text.Trim() : null;
-            string newPhone = txtPhone != null ? txtPhone.Text.Trim() : null;
+            string newName = txtName != null ? txtName.Text.Trim() : "";
+            string newEmail = txtEmail != null ? txtEmail.Text.Trim() : "";
+            string newPhone = txtPhone != null ? txtPhone.Text.Trim() : "";
+
             bool emailVerified = chkEmail != null ? chkEmail.Checked : false;
             bool mustChangePwd = chkPwd != null ? chkPwd.Checked : false;
-
-            // Add this with the other control definitions
-            CheckBox chkGeo = item.FindControl("chkRequireGeo") as CheckBox;
-            bool requireGeo = chkGeo != null ? chkGeo.Checked : true;
-
-            CheckBox chkE = item.FindControl("chkEmails") as CheckBox;
-            bool requireEmails = chkE != null ? chkE.Checked : true;
-
-            CheckBox chkWA = item.FindControl("chkWhatsApp") as CheckBox;
-            bool requireWhatsApp = chkWA != null ? chkWA.Checked : true;
+            bool requireGeo = chkGeo != null ? chkGeo.Checked : false;
+            bool requireEmails = chkEmails != null ? chkEmails.Checked : false;
+            bool requireWhatsApp = chkWhatsApp != null ? chkWhatsApp.Checked : false;
 
             object roleIdParam = DBNull.Value;
             if (ddlGridRole != null && ddlGridRole.SelectedValue != "0")
@@ -204,28 +194,39 @@ namespace Bill_Software.corporate.business.app
             string updateSql = @"UPDATE dbo.tbl_login 
                          SET Name = @Name, Email = @Email, Phone_no = @Phone, 
                              EmailVerified = @EmailVerified, MustChangePassword = @MustChangePwd, 
-                             RoleId = @RoleId, RequireGeoTagging = @RequireGeoTagging, EnableEmailAlerts = @EnableEmailAlerts, EnableWhatsAppAlerts = @EnableWhatsAppAlerts
+                             RoleId = @RoleId, RequireGeoTagging = @RequireGeoTagging, 
+                             EnableEmailAlerts = @EnableEmailAlerts, EnableWhatsAppAlerts = @EnableWhatsAppAlerts,
+                             DepartmentID = @DeptId, DesignationID = @DesigId, ReportingManagerId = @ManagerId
                          WHERE Id = @Id";
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(updateSql, cn))
             {
-                cmd.Parameters.AddWithValue("@Name", newName != null ? (object)newName : DBNull.Value);
-                cmd.Parameters.AddWithValue("@Email", newEmail != null ? (object)newEmail : DBNull.Value);
-                cmd.Parameters.AddWithValue("@Phone", newPhone != null ? (object)newPhone : DBNull.Value);
+                // FIX 3: Safe DBNull conversion to prevent the Unique Constraint Crash!
+                cmd.Parameters.AddWithValue("@Name", string.IsNullOrWhiteSpace(newName) ? DBNull.Value : (object)newName);
+                cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(newEmail) ? DBNull.Value : (object)newEmail);
+
+                // Optional: Strip spaces/dashes to ensure strict E.164 WhatsApp format on save
+                string cleanPhone = newPhone.Replace(" ", "").Replace("-", "");
+                cmd.Parameters.AddWithValue("@Phone", string.IsNullOrWhiteSpace(cleanPhone) ? DBNull.Value : (object)cleanPhone);
+
+                cmd.Parameters.AddWithValue("@DeptId", (ddlDepartment != null && !string.IsNullOrEmpty(ddlDepartment.SelectedValue)) ? (object)Convert.ToInt32(ddlDepartment.SelectedValue) : DBNull.Value);
+                cmd.Parameters.AddWithValue("@DesigId", (ddlDesignation != null && !string.IsNullOrEmpty(ddlDesignation.SelectedValue)) ? (object)Convert.ToInt32(ddlDesignation.SelectedValue) : DBNull.Value);
+                cmd.Parameters.AddWithValue("@ManagerId", (ddlManager != null && !string.IsNullOrEmpty(ddlManager.SelectedValue)) ? (object)ddlManager.SelectedValue : DBNull.Value);
+
                 cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
                 cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
                 cmd.Parameters.AddWithValue("@RoleId", roleIdParam);
-                cmd.Parameters.AddWithValue("@RequireGeoTagging", requireGeo); // NEW
-                cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails); // NEW
-                cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp); // NEW
+                cmd.Parameters.AddWithValue("@RequireGeoTagging", requireGeo);
+                cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails);
+                cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp);
                 cmd.Parameters.AddWithValue("@Id", id);
 
                 cn.Open();
                 cmd.ExecuteNonQuery();
             }
 
-            ShowOk("User details and roles updated successfully.");
+            ShowOk("User details updated successfully.");
             lvUsers.EditIndex = -1;
             BindGrid();
         }
@@ -237,36 +238,91 @@ namespace Bill_Software.corporate.business.app
                 ListViewDataItem dataItem = (ListViewDataItem)e.Item;
                 DataRowView drv = (DataRowView)dataItem.DataItem;
 
-                // Populate Dropdown if in Edit Mode
                 if (lvUsers.EditIndex == dataItem.DisplayIndex)
                 {
-                    DropDownList ddlGridRole = e.Item.FindControl("ddlGridRole") as DropDownList;
-                    HiddenField hfCurrentRoleId = e.Item.FindControl("hfCurrentRoleId") as HiddenField;
-
-                    if (ddlGridRole != null)
+                    using (var cn = new SqlConnection(ConnString))
                     {
-                        using (var cn = new SqlConnection(ConnString))
-                        using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
-                        {
-                            var dt = new DataTable();
-                            var da = new SqlDataAdapter(cmd);
-                            da.Fill(dt);
-                            ddlGridRole.DataSource = dt;
-                            ddlGridRole.DataTextField = "RoleName";
-                            ddlGridRole.DataValueField = "RoleId";
-                            ddlGridRole.DataBind();
-                        }
-                        ddlGridRole.Items.Insert(0, new ListItem("-- Unassigned --", "0"));
+                        DropDownList ddlGridRole = e.Item.FindControl("ddlGridRole") as DropDownList;
+                        HiddenField hfCurrentRoleId = e.Item.FindControl("hfCurrentRoleId") as HiddenField;
 
-                        if (hfCurrentRoleId != null && !string.IsNullOrEmpty(hfCurrentRoleId.Value))
+                        if (ddlGridRole != null)
                         {
-                            ddlGridRole.SelectedValue = hfCurrentRoleId.Value;
+                            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
+                            {
+                                var dt = new DataTable();
+                                var da = new SqlDataAdapter(cmd);
+                                da.Fill(dt);
+                                ddlGridRole.DataSource = dt;
+                                ddlGridRole.DataTextField = "RoleName";
+                                ddlGridRole.DataValueField = "RoleId";
+                                ddlGridRole.DataBind();
+                            }
+                            ddlGridRole.Items.Insert(0, new ListItem("-- Unassigned --", "0"));
+
+                            if (hfCurrentRoleId != null && !string.IsNullOrEmpty(hfCurrentRoleId.Value))
+                            {
+                                ddlGridRole.SelectedValue = hfCurrentRoleId.Value;
+                            }
+                        }
+
+                        DropDownList ddlDept = e.Item.FindControl("ddlDepartment") as DropDownList;
+                        HiddenField hfDeptId = e.Item.FindControl("hfDeptId") as HiddenField;
+                        if (ddlDept != null)
+                        {
+                            using (var cmdD = new SqlCommand("SELECT DepartmentID, DepartmentName FROM tbl_Departments WHERE IsActive = 1", cn))
+                            {
+                                var dtD = new DataTable();
+                                new SqlDataAdapter(cmdD).Fill(dtD);
+                                ddlDept.DataSource = dtD;
+                                ddlDept.DataTextField = "DepartmentName";
+                                ddlDept.DataValueField = "DepartmentID";
+                                ddlDept.DataBind();
+                            }
+                            ddlDept.Items.Insert(0, new ListItem("-- Select Dept --", ""));
+                            if (hfDeptId != null && !string.IsNullOrEmpty(hfDeptId.Value))
+                                ddlDept.SelectedValue = hfDeptId.Value;
+                        }
+
+                        DropDownList ddlDesig = e.Item.FindControl("ddlDesignation") as DropDownList;
+                        HiddenField hfDesigId = e.Item.FindControl("hfDesigId") as HiddenField;
+                        if (ddlDesig != null)
+                        {
+                            using (var cmdD = new SqlCommand("SELECT DesignationID, DesignationName FROM tbl_Designations WHERE IsActive = 1", cn))
+                            {
+                                var dtD = new DataTable();
+                                new SqlDataAdapter(cmdD).Fill(dtD);
+                                ddlDesig.DataSource = dtD;
+                                ddlDesig.DataTextField = "DesignationName";
+                                ddlDesig.DataValueField = "DesignationID";
+                                ddlDesig.DataBind();
+                            }
+                            ddlDesig.Items.Insert(0, new ListItem("-- Select Desig --", ""));
+                            if (hfDesigId != null && !string.IsNullOrEmpty(hfDesigId.Value))
+                                ddlDesig.SelectedValue = hfDesigId.Value;
+                        }
+
+                        DropDownList ddlManager = e.Item.FindControl("ddlManager") as DropDownList;
+                        HiddenField hfManagerId = e.Item.FindControl("hfManagerId") as HiddenField;
+                        if (ddlManager != null)
+                        {
+                            using (var cmdM = new SqlCommand("SELECT User_Id, Name FROM tbl_login WHERE IsActive = 1 AND User_Id NOT IN ('admin', 'AT01')", cn))
+                            {
+                                var dtM = new DataTable();
+                                new SqlDataAdapter(cmdM).Fill(dtM);
+                                ddlManager.DataSource = dtM;
+                                ddlManager.DataTextField = "Name";
+                                ddlManager.DataValueField = "User_Id";
+                                ddlManager.DataBind();
+                            }
+                            ddlManager.Items.Insert(0, new ListItem("-- No Manager --", ""));
+                            if (hfManagerId != null && !string.IsNullOrEmpty(hfManagerId.Value))
+                                ddlManager.SelectedValue = hfManagerId.Value;
                         }
                     }
-                    return; // Stop here if in edit mode
+
+                    return;
                 }
 
-                // Style the Toggle/Lock Buttons for Normal View Mode
                 bool isActive = !drv.Row.IsNull("IsActive") && Convert.ToBoolean(drv["IsActive"]);
 
                 bool isLocked = false;
@@ -313,220 +369,6 @@ namespace Bill_Software.corporate.business.app
             BindGrid();
         }
         #endregion
-
-        //private void BindGrid()
-        //{
-        //    // ENRICHED SQL: Joins tbl_login with Roles to fetch RoleName and ProfilePictureUrl
-        //    var sql = @"SELECT u.Id, u.User_Id, u.Name, u.Email, u.Phone_no, u.IsActive, u.LockoutEnd, 
-        //               u.LastLogin, u.CreatedAt, u.MustChangePassword, u.EmailVerified,
-        //               u.ProfilePictureUrl, u.RoleId, r.RoleName
-        //        FROM dbo.tbl_login u
-        //        LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
-        //        WHERE (@UserId = '' OR u.User_Id = @UserId)
-        //        AND (u.User_Id NOT IN ('admin', 'AT01'))
-        //        ORDER BY u.Id";
-
-        //    using (var cn = new SqlConnection(ConnString))
-        //    using (var cmd = new SqlCommand(sql, cn))
-        //    {
-        //        string selectedUser = ddlEmpId.SelectedValue;
-        //        cmd.Parameters.AddWithValue("@UserId", selectedUser != null ? selectedUser : string.Empty);
-
-        //        var dt = new DataTable();
-        //        var da = new SqlDataAdapter(cmd);
-        //        da.Fill(dt);
-        //        gvUsers.DataSource = dt;
-        //        gvUsers.DataBind();
-        //    }
-        //}
-
-        #region Edit Grid Events
-
-        //protected void gvUsers_RowEditing(object sender, GridViewEditEventArgs e)
-        //{
-        //    gvUsers.EditIndex = e.NewEditIndex;
-        //    BindGrid();
-        //}
-
-        //protected void gvUsers_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
-        //{
-        //    gvUsers.EditIndex = -1;
-        //    BindGrid();
-        //}
-
-        //protected void gvUsers_RowUpdating(object sender, GridViewUpdateEventArgs e)
-        //{
-        //    int id = Convert.ToInt32(gvUsers.DataKeys[e.RowIndex].Value);
-        //    GridViewRow row = gvUsers.Rows[e.RowIndex];
-
-        //    // Classic C# 5.0 null checks
-        //    TextBox txtName = row.FindControl("txtName") as TextBox;
-        //    TextBox txtEmail = row.FindControl("txtEmail") as TextBox;
-        //    TextBox txtPhone = row.FindControl("txtPhone") as TextBox;
-        //    CheckBox chkEmail = row.FindControl("chkEmailVerified") as CheckBox;
-        //    CheckBox chkPwd = row.FindControl("chkMustChangePwd") as CheckBox;
-        //    DropDownList ddlGridRole = row.FindControl("ddlGridRole") as DropDownList;
-
-        //    string newName = txtName != null ? txtName.Text.Trim() : null;
-        //    string newEmail = txtEmail != null ? txtEmail.Text.Trim() : null;
-        //    string newPhone = txtPhone != null ? txtPhone.Text.Trim() : null;
-        //    bool emailVerified = chkEmail != null ? chkEmail.Checked : false;
-        //    bool mustChangePwd = chkPwd != null ? chkPwd.Checked : false;
-
-        //    // Get the selected Role ID
-        //    object roleIdParam = DBNull.Value;
-        //    if (ddlGridRole != null && ddlGridRole.SelectedValue != "0")
-        //    {
-        //        roleIdParam = Convert.ToInt32(ddlGridRole.SelectedValue);
-        //    }
-
-        //    string updateSql = @"UPDATE dbo.tbl_login 
-        //                 SET Name = @Name, 
-        //                     Email = @Email, 
-        //                     Phone_no = @Phone, 
-        //                     EmailVerified = @EmailVerified, 
-        //                     MustChangePassword = @MustChangePwd,
-        //                     RoleId = @RoleId
-        //                 WHERE Id = @Id";
-
-        //    using (var cn = new SqlConnection(ConnString))
-        //    using (var cmd = new SqlCommand(updateSql, cn))
-        //    {
-        //        cmd.Parameters.AddWithValue("@Name", newName != null ? (object)newName : DBNull.Value);
-        //        cmd.Parameters.AddWithValue("@Email", newEmail != null ? (object)newEmail : DBNull.Value);
-        //        cmd.Parameters.AddWithValue("@Phone", newPhone != null ? (object)newPhone : DBNull.Value);
-        //        cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
-        //        cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
-        //        cmd.Parameters.AddWithValue("@RoleId", roleIdParam); // NEW: Saves the role!
-        //        cmd.Parameters.AddWithValue("@Id", id);
-
-        //        cn.Open();
-        //        cmd.ExecuteNonQuery();
-        //    }
-
-        //    ShowOk("User details and roles updated successfully.");
-        //    gvUsers.EditIndex = -1; // Exit edit mode
-        //    BindGrid();
-        //}
-
-        #endregion
-
-        protected void gvUsers_RowDataBound(object sender, GridViewRowEventArgs e)
-        {
-            // Skip execution if we are in Edit Mode for this row
-            //if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) > 0)
-            //    return;
-
-            // NEW LOGIC: If we are in Edit Mode, populate the Role DropDownList
-            if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) > 0)
-            {
-                DropDownList ddlGridRole = e.Row.FindControl("ddlGridRole") as DropDownList;
-                HiddenField hfCurrentRoleId = e.Row.FindControl("hfCurrentRoleId") as HiddenField;
-
-                if (ddlGridRole != null)
-                {
-                    // Fetch Roles from Database
-                    using (var cn = new SqlConnection(ConnString))
-                    {
-                        using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
-                        {
-                            var dt = new DataTable();
-                            var da = new SqlDataAdapter(cmd);
-                            da.Fill(dt);
-                            ddlGridRole.DataSource = dt;
-                            ddlGridRole.DataTextField = "RoleName";
-                            ddlGridRole.DataValueField = "RoleId";
-                            ddlGridRole.DataBind();
-                        }
-                    }
-                    ddlGridRole.Items.Insert(0, new ListItem("-- Unassigned --", "0"));
-
-                    // Pre-select the user's current Role
-                    if (hfCurrentRoleId != null && !string.IsNullOrEmpty(hfCurrentRoleId.Value))
-                    {
-                        ddlGridRole.SelectedValue = hfCurrentRoleId.Value;
-                    }
-                }
-                return; // Exit here, don't run the rest of the styling logic for the edit row
-            }
-
-            if (e.Row.RowType != DataControlRowType.DataRow) return;
-
-            DataRowView drv = (DataRowView)e.Row.DataItem;
-
-            bool isActive = false;
-            if (!drv.Row.IsNull("IsActive"))
-                isActive = Convert.ToBoolean(drv["IsActive"]);
-
-            bool isLocked = false;
-            if (!drv.Row.IsNull("LockoutEnd"))
-            {
-                var val = drv["LockoutEnd"];
-                if (val is DateTimeOffset)
-                    isLocked = ((DateTimeOffset)val) > DateTimeOffset.UtcNow;
-                else
-                    isLocked = Convert.ToDateTime(val) > DateTime.UtcNow;
-            }
-
-            LinkButton lnkToggle = e.Row.FindControl("lnkToggleActive") as LinkButton;
-            if (lnkToggle != null)
-            {
-                if (isActive)
-                {
-                    lnkToggle.Text = "Deactivate";
-                    lnkToggle.CssClass = "action-btn btn-deactivate";
-                }
-                else
-                {
-                    lnkToggle.Text = "Activate";
-                    lnkToggle.CssClass = "action-btn btn-activate";
-                }
-            }
-
-            LinkButton lnkLock = e.Row.FindControl("lnkLock") as LinkButton;
-            if (lnkLock != null)
-            {
-                if (isLocked)
-                {
-                    lnkLock.Text = "Unlock";
-                    lnkLock.CssClass = "action-btn btn-unlock";
-                }
-                else
-                {
-                    lnkLock.Text = "Lock";
-                    lnkLock.CssClass = "action-btn btn-lock";
-                }
-            }
-        }
-
-        protected void gvUsers_RowCommand(object sender, GridViewCommandEventArgs e)
-        {
-            // Edit, Cancel, and Update are handled automatically by the GridView events
-            if (e.CommandName == "Edit" || e.CommandName == "Cancel" || e.CommandName == "Update")
-                return;
-
-            int id = Convert.ToInt32(e.CommandArgument);
-            switch (e.CommandName)
-            {
-                case "ToggleActive":
-                    ToggleActive(id);
-                    break;
-                case "ResetPassword":
-                    ResetPassword(id);
-                    break;
-                case "DeleteUser":
-                    DeleteUser(id);
-                    break;
-                case "ToggleLock":
-                    ToggleLock(id);
-                    break;
-                case "MenuEdit":
-                    string userId = GetUserIdById(id);
-                    Response.Redirect("~/corporate/business/app/Update_Designation.aspx?User_Id=" + userId, false);
-                    break;
-            }
-            BindGrid();
-        }
 
         private string GetUserIdById(int id)
         {
@@ -738,6 +580,97 @@ namespace Bill_Software.corporate.business.app
                     smtp.Send(message);
                 }
             }
+        }
+
+        public string GetOnlineStatusHtml(object heartbeatObj)
+        {
+            if (heartbeatObj == null || heartbeatObj == DBNull.Value)
+                return "<span class='badge' style='background:#f1f3f5; color:#666; border:1px solid #ddd;'>⚪ Offline</span>";
+
+            DateTime utcHeartbeat;
+            if (heartbeatObj is DateTimeOffset)
+            {
+                utcHeartbeat = ((DateTimeOffset)heartbeatObj).UtcDateTime;
+            }
+            else
+            {
+                utcHeartbeat = Convert.ToDateTime(heartbeatObj);
+                if (utcHeartbeat.Kind == DateTimeKind.Unspecified)
+                    utcHeartbeat = DateTime.SpecifyKind(utcHeartbeat, DateTimeKind.Utc);
+            }
+
+            if (utcHeartbeat > DateTime.UtcNow.AddMinutes(5))
+            {
+                utcHeartbeat = utcHeartbeat.AddHours(-5).AddMinutes(-30);
+            }
+
+            TimeSpan diff = DateTime.UtcNow - utcHeartbeat;
+
+            if (diff.TotalMinutes >= 0 && diff.TotalMinutes <= 10)
+            {
+                return "<span class='badge' style='background:#e6f9ed; color:#2b8a3e; border:1px solid #b2f2bb; cursor:pointer;' title='Click to view history'>🟢 Online</span>";
+            }
+            else
+            {
+                TimeZoneInfo istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+                DateTime istTime = TimeZoneInfo.ConvertTimeFromUtc(utcHeartbeat, istZone);
+                return string.Format("<span class='badge' style='background:#f1f3f5; color:#666; border:1px solid #ddd; cursor:pointer;' title='Last active: {0:dd MMM, hh:mm tt}'>⚪ Offline</span>", istTime);
+            }
+        }
+
+        [System.Web.Services.WebMethod(EnableSession = true)]
+        public static string GetSessionHistory(int userId)
+        {
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            System.Collections.Generic.List<object> sessions = new System.Collections.Generic.List<object>();
+
+            TimeZoneInfo istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+
+            using (SqlConnection cn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    SELECT TOP 15 LoginTime, LastHeartbeat, IPAddress, UserAgent, IsActive 
+                    FROM ActiveSessions 
+                    WHERE UserId = @UserId 
+                    ORDER BY LoginTime DESC";
+
+                using (SqlCommand cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            DateTime utcLogin;
+                            object loginObj = rdr["LoginTime"];
+                            if (loginObj is DateTimeOffset) utcLogin = ((DateTimeOffset)loginObj).UtcDateTime;
+                            else utcLogin = DateTime.SpecifyKind(Convert.ToDateTime(loginObj), DateTimeKind.Utc);
+
+                            DateTime utcHeartbeat;
+                            object hbObj = rdr["LastHeartbeat"];
+                            if (hbObj is DateTimeOffset) utcHeartbeat = ((DateTimeOffset)hbObj).UtcDateTime;
+                            else utcHeartbeat = DateTime.SpecifyKind(Convert.ToDateTime(hbObj), DateTimeKind.Utc);
+
+                            if (utcLogin > DateTime.UtcNow.AddMinutes(5)) utcLogin = utcLogin.AddHours(-5).AddMinutes(-30);
+                            if (utcHeartbeat > DateTime.UtcNow.AddMinutes(5)) utcHeartbeat = utcHeartbeat.AddHours(-5).AddMinutes(-30);
+
+                            DateTime loginIst = TimeZoneInfo.ConvertTimeFromUtc(utcLogin, istZone);
+                            DateTime heartbeatIst = TimeZoneInfo.ConvertTimeFromUtc(utcHeartbeat, istZone);
+
+                            sessions.Add(new
+                            {
+                                LoginTime = loginIst.ToString("dd MMM yyyy, hh:mm tt"),
+                                LastHeartbeat = heartbeatIst.ToString("dd MMM yyyy, hh:mm tt"),
+                                IPAddress = rdr["IPAddress"] != DBNull.Value ? rdr["IPAddress"].ToString() : "Unknown",
+                                UserAgent = rdr["UserAgent"] != DBNull.Value ? rdr["UserAgent"].ToString() : "Unknown",
+                                IsActive = Convert.ToBoolean(rdr["IsActive"])
+                            });
+                        }
+                    }
+                }
+            }
+            return new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(sessions);
         }
 
         #region Helpers

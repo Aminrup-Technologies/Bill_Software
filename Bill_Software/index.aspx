@@ -1,5 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="index.aspx.cs" Inherits="Bill_Software.index" %>
-
+﻿<%@ Page Language="C#" Async="true" AutoEventWireup="true" CodeBehind="index.aspx.cs" Inherits="Bill_Software.index" %>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
@@ -140,6 +139,33 @@
                 color: #153e75;
             }
 
+            /* Password Toggle Styles */
+            .password-wrapper {
+                position: relative;
+                display: flex;
+                align-items: center;
+            }
+
+            .password-wrapper .form-control {
+                padding-right: 40px; /* Make room for the eye icon */
+            }
+
+            .btn-toggle-password {
+                position: absolute;
+                right: 10px;
+                background: none;
+                border: none;
+                color: #666;
+                cursor: pointer;
+                font-size: 18px;
+                padding: 0;
+                outline: none;
+            }
+
+            .btn-toggle-password:hover {
+                color: #153e75;
+            }
+
         /* Desktop Layout (CSS Grid) */
         @media (min-width: 768px) {
             .login-card {
@@ -196,6 +222,27 @@
             var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
             g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
         })();
+
+        function togglePasswordVisibility() {
+        // Get the ASP.NET generated client ID for the textbox
+        var passwordInput = document.getElementById('<%= txtPassword.ClientID %>');
+        var eyeIcon = document.getElementById('eyeIcon');
+        
+        if (passwordInput.type === 'password') {
+            // Show password
+            passwordInput.type = 'text';
+            
+            // Change to "Eye Off" (slashed eye) icon
+            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            
+        } else {
+            // Hide password
+            passwordInput.type = 'password';
+            
+            // Change back to normal Eye icon
+            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+    }
     </script>
 </head>
 <body>
@@ -232,7 +279,15 @@
 
                         <div class="form-group">
                             <label>Password</label>
-                            <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                            <div class="password-wrapper">
+                                <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                                <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility()" aria-label="Show password" title="Show password">
+                                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="remember-me">

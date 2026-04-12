@@ -627,7 +627,8 @@ namespace Bill_Software.corporate.business.app
             if (re.Read())
             {
                 a = re["Sl_no"].ToString();
-                b = Convert.ToInt32(a);
+                // SAFE PARSING: Prevents crashing if Sl_no is dirty or empty
+                int.TryParse(a, out b);
             }
             else
             {
@@ -939,7 +940,8 @@ namespace Bill_Software.corporate.business.app
 
         private void ChecktotalInvAmount(out double totalQutamount, string quno)
         {
-            string query = "select sum(cast(Total_sail_rate1 as real)) as totalQutamount from tbl_Invoice_details where Quotation_no=@Quotation_no";
+            // SAFE QUERY: Prevents crash on empty strings when aggregating historical invoice detail data
+            string query = "select sum(cast(CASE WHEN ISNULL(Total_sail_rate1, '') = '' THEN '0' ELSE Total_sail_rate1 END as real)) as totalQutamount from tbl_Invoice_details where Quotation_no=@Quotation_no";
             SqlParameter[] pram = {
                 new SqlParameter("@Quotation_no",quno)
             };
@@ -987,7 +989,7 @@ namespace Bill_Software.corporate.business.app
                     CheckBox chk = (CheckBox)(Gridview_Product.Rows[i].FindControl("chk"));
                     if (chk.Checked == true)
                     {
-                        
+
                         checkedCount++;
                         try
                         {
@@ -1006,14 +1008,18 @@ namespace Bill_Software.corporate.business.app
 
                             if (InvStatus != "Yes")
                             {
-                                double quotedQuantity = string.IsNullOrEmpty(Quantity) ? 0 : Convert.ToDouble(Quantity);
-                                double deliveredQuantity = string.IsNullOrEmpty(DQnt) ? 0 : Convert.ToDouble(DQnt);
-                                double stockQuantity = string.IsNullOrEmpty(SQnt) ? 0 : Convert.ToDouble(SQnt);
-                                double remainingQuantity = string.IsNullOrEmpty(RQty) ? 0 : Convert.ToDouble(RQty);
+                                // SAFE PARSING APPLIED
+                                double quotedQuantity = 0, deliveredQuantity = 0, stockQuantity = 0, remainingQuantity = 0;
+                                double.TryParse(Quantity, out quotedQuantity);
+                                double.TryParse(DQnt, out deliveredQuantity);
+                                double.TryParse(SQnt, out stockQuantity);
+                                double.TryParse(RQty, out remainingQuantity);
+
                                 if (remainingQuantity <= stockQuantity)
                                 {
-                                    double sailRate = string.IsNullOrEmpty(SailRate) ? 0 : Convert.ToDouble(SailRate);
-                                    double gstPercentage = string.IsNullOrEmpty(GstPercentage) ? 0 : Convert.ToDouble(GstPercentage);
+                                    double sailRate = 0, gstPercentage = 0;
+                                    double.TryParse(SailRate, out sailRate);
+                                    double.TryParse(GstPercentage, out gstPercentage);
 
                                     double invoiceQuantity = (quotedQuantity == remainingQuantity) ? quotedQuantity : remainingQuantity;
                                     double amountWithoutGst = invoiceQuantity * sailRate;
@@ -1135,10 +1141,12 @@ namespace Bill_Software.corporate.business.app
                             string specifai = ((Label)Gridview_Product.Rows[i].FindControl("specification")).Text;
                             string InvStatus = ((Label)Gridview_Product.Rows[i].FindControl("InvStatus")).Text;
 
-                            double quotedQuantity = string.IsNullOrEmpty(Quantity) ? 0 : Convert.ToDouble(Quantity);
-                            double deliveredQuantity = string.IsNullOrEmpty(DQnt) ? 0 : Convert.ToDouble(DQnt);
-                            double stockQuantity = string.IsNullOrEmpty(SQnt) ? 0 : Convert.ToDouble(SQnt);
-                            double remainingQuantity = string.IsNullOrEmpty(RQty) ? 0 : Convert.ToDouble(RQty);
+                            // SAFE PARSING APPLIED
+                            double quotedQuantity = 0, deliveredQuantity = 0, stockQuantity = 0, remainingQuantity = 0;
+                            double.TryParse(Quantity, out quotedQuantity);
+                            double.TryParse(DQnt, out deliveredQuantity);
+                            double.TryParse(SQnt, out stockQuantity);
+                            double.TryParse(RQty, out remainingQuantity);
 
                             // 🚀 **Scenario 1: Already Invoiced**
                             if (InvStatus == "Yes")
@@ -1163,8 +1171,9 @@ namespace Bill_Software.corporate.business.app
                                 else
                                 {
                                     // ✅ **Process valid invoicing scenario**
-                                    double sailRate = string.IsNullOrEmpty(SailRate) ? 0 : Convert.ToDouble(SailRate);
-                                    double gstPercentage = string.IsNullOrEmpty(GstPercentage) ? 0 : Convert.ToDouble(GstPercentage);
+                                    double sailRate = 0, gstPercentage = 0;
+                                    double.TryParse(SailRate, out sailRate);
+                                    double.TryParse(GstPercentage, out gstPercentage);
 
                                     double invoiceQuantity = remainingQuantity;
                                     double amountWithoutGst = invoiceQuantity * sailRate;
@@ -1227,6 +1236,7 @@ namespace Bill_Software.corporate.business.app
                     ShowErrorMessageSpcl(string.Join("<br>", errorMessages));
                 }
             }
+            // ✅ Determine Final Status
             Status = DetermineStatus(completedCount, pendingCount, noStockCount, checkedCount);
             return Status;
         }
@@ -1271,10 +1281,12 @@ namespace Bill_Software.corporate.business.app
                             string specifai = ((Label)Gridview_Product.Rows[i].FindControl("specification")).Text;
                             string InvStatus = ((Label)Gridview_Product.Rows[i].FindControl("InvStatus")).Text;
 
-                            double quotedQuantity = string.IsNullOrEmpty(Quantity) ? 0 : Convert.ToDouble(Quantity);
-                            double deliveredQuantity = string.IsNullOrEmpty(DQnt) ? 0 : Convert.ToDouble(DQnt);
-                            double stockQuantity = string.IsNullOrEmpty(SQnt) ? 0 : Convert.ToDouble(SQnt);
-                            double remainingQuantity = string.IsNullOrEmpty(RQty) ? 0 : Convert.ToDouble(RQty);
+                            // SAFE PARSING APPLIED
+                            double quotedQuantity = 0, deliveredQuantity = 0, stockQuantity = 0, remainingQuantity = 0;
+                            double.TryParse(Quantity, out quotedQuantity);
+                            double.TryParse(DQnt, out deliveredQuantity);
+                            double.TryParse(SQnt, out stockQuantity);
+                            double.TryParse(RQty, out remainingQuantity);
 
                             // ✅ Already Invoiced Check
                             if (InvStatus == "Yes")
@@ -1299,8 +1311,10 @@ namespace Bill_Software.corporate.business.app
                                 else
                                 {
                                     // ✅ Process Invoicing
-                                    double sailRate = string.IsNullOrEmpty(SailRate) ? 0 : Convert.ToDouble(SailRate);
-                                    double gstPercentage = string.IsNullOrEmpty(GstPercentage) ? 0 : Convert.ToDouble(GstPercentage);
+                                    double sailRate = 0, gstPercentage = 0;
+                                    double.TryParse(SailRate, out sailRate);
+                                    double.TryParse(GstPercentage, out gstPercentage);
+
                                     double amountWithoutGst = remainingQuantity * sailRate;
                                     double gstAmount = (amountWithoutGst * gstPercentage) / 100;
                                     double amountWithGst = amountWithoutGst + gstAmount;
@@ -1411,10 +1425,12 @@ namespace Bill_Software.corporate.business.app
                             string GstPercentage = ((Label)Gridview_Product.Rows[i].FindControl("Service_tax_rate")).Text;
                             string InvStatus = ((Label)Gridview_Product.Rows[i].FindControl("InvStatus")).Text;
 
-                            double quotedQuantity = string.IsNullOrEmpty(Quantity) ? 0 : Convert.ToDouble(Quantity);
-                            double deliveredQuantity = string.IsNullOrEmpty(DQnt) ? 0 : Convert.ToDouble(DQnt);
-                            double stockQuantity = string.IsNullOrEmpty(SQnt) ? 0 : Convert.ToDouble(SQnt);
-                            double remainingQuantity = string.IsNullOrEmpty(RQty) ? 0 : Convert.ToDouble(RQty);
+                            // SAFE PARSING APPLIED: Replaces crashing Convert.ToDouble calls
+                            double quotedQuantity = 0, deliveredQuantity = 0, stockQuantity = 0, remainingQuantity = 0;
+                            double.TryParse(Quantity, out quotedQuantity);
+                            double.TryParse(DQnt, out deliveredQuantity);
+                            double.TryParse(SQnt, out stockQuantity);
+                            double.TryParse(RQty, out remainingQuantity);
 
                             if (InvStatus == "Yes")
                             {
@@ -1435,8 +1451,10 @@ namespace Bill_Software.corporate.business.app
                             else
                             {
                                 // Calculate amounts
-                                double sailRate = string.IsNullOrEmpty(SailRate) ? 0 : Convert.ToDouble(SailRate);
-                                double gstPercentage = string.IsNullOrEmpty(GstPercentage) ? 0 : Convert.ToDouble(GstPercentage);
+                                double sailRate = 0, gstPercentage = 0;
+                                double.TryParse(SailRate, out sailRate);
+                                double.TryParse(GstPercentage, out gstPercentage);
+
                                 double amountWithoutGst = remainingQuantity * sailRate;
                                 double gstAmount = (amountWithoutGst * gstPercentage) / 100;
                                 double amountWithGst = amountWithoutGst + gstAmount;
@@ -1556,10 +1574,12 @@ namespace Bill_Software.corporate.business.app
                             string specifai = ((Label)Gridview_Product.Rows[i].FindControl("specification")).Text;
                             string InvStatus = ((Label)Gridview_Product.Rows[i].FindControl("InvStatus")).Text;
 
-                            double quotedQuantity = string.IsNullOrEmpty(Quantity) ? 0 : Convert.ToDouble(Quantity);
-                            double deliveredQuantity = string.IsNullOrEmpty(DQnt) ? 0 : Convert.ToDouble(DQnt);
-                            double stockQuantity = string.IsNullOrEmpty(SQnt) ? 0 : Convert.ToDouble(SQnt);
-                            double remainingQuantity = string.IsNullOrEmpty(RQty) ? 0 : Convert.ToDouble(RQty);
+                            // SAFE PARSING APPLIED
+                            double quotedQuantity = 0, deliveredQuantity = 0, stockQuantity = 0, remainingQuantity = 0;
+                            double.TryParse(Quantity, out quotedQuantity);
+                            double.TryParse(DQnt, out deliveredQuantity);
+                            double.TryParse(SQnt, out stockQuantity);
+                            double.TryParse(RQty, out remainingQuantity);
 
                             if (InvStatus == "Yes")
                             {
@@ -1595,8 +1615,10 @@ namespace Bill_Software.corporate.business.app
                                 }
                                 else
                                 {
-                                    double sailRate = string.IsNullOrEmpty(SailRate) ? 0 : Convert.ToDouble(SailRate);
-                                    double gstPercentage = string.IsNullOrEmpty(GstPercentage) ? 0 : Convert.ToDouble(GstPercentage);
+                                    double sailRate = 0, gstPercentage = 0;
+                                    double.TryParse(SailRate, out sailRate);
+                                    double.TryParse(GstPercentage, out gstPercentage);
+
                                     double amountWithoutGst = remainingQuantity * sailRate;
                                     double gstAmount = (amountWithoutGst * gstPercentage) / 100;
                                     double amountWithGst = amountWithoutGst + gstAmount;
@@ -1802,9 +1824,14 @@ namespace Bill_Software.corporate.business.app
 
         private void updatestock1(string product_code, string Product_name, string Quantity)
         {
-            DbCL.executeRdr("UPDATE tbl_stock SET Quantity = (CAST(Quantity AS FLOAT) - " + Quantity.ToString() + ") " +
-                "WHERE Product_id = '" + product_code.ToString() + "' AND Product_name = '" + Product_name.ToString() + "'");
-
+            // SAFE QUERY: Parameterized and uses CASE to prevent empty string cast errors
+            string query = "UPDATE tbl_stock SET Quantity = (CAST(CASE WHEN ISNULL(Quantity, '') = '' THEN '0' ELSE Quantity END AS FLOAT) - @Qty) WHERE Product_id = @ProdId AND Product_name = @ProdName";
+            SqlParameter[] pram = {
+                new SqlParameter("@Qty", string.IsNullOrEmpty(Quantity) ? "0" : Quantity),
+                new SqlParameter("@ProdId", product_code),
+                new SqlParameter("@ProdName", Product_name)
+            };
+            DbCL.SPExecDB(query, pram);
         }
 
         private string findstock()

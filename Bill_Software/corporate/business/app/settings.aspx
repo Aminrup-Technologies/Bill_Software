@@ -1,281 +1,304 @@
-﻿<%@ Page Title="Settings" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="settings.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm2" %>
+﻿<%@ Page Title="Settings" Language="C#" Async="true" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="settings.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm2" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-    <style type="text/css">
-        .style1 { width: 100%; }
-        .style2 { color: #FFFFFF; font-weight: bold; }
-        
-        /* Modern Container Styles */
-        .settings-container { margin: 20px; font-family: Arial, sans-serif; }
-        .setup-box { border: 1px solid #006699; background: #f4f9ff; padding: 20px; border-radius: 5px; margin-bottom: 20px; width: 60%; }
-        .setup-box h3 { margin-top: 0; color: #006699; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-        
-        .form-row { margin-bottom: 15px; }
-        .form-label { font-weight: bold; display: inline-block; width: 150px; }
-        .form-control { padding: 6px; width: 220px; border: 1px solid #ccc; border-radius: 4px; }
-        
-        .btn-primary { background: #19658A; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .btn-primary:hover { background: #134e6a; }
-        .btn-secondary { background: #666; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        
-        .alert-success { background: #d4edda; color: #155724; padding: 10px; border: 1px solid #c3e6cb; border-radius: 4px; margin-bottom: 15px; font-weight:bold; }
-        .alert-danger { background: #f8d7da; color: #721c24; padding: 10px; border: 1px solid #f5c6cb; border-radius: 4px; margin-bottom: 15px; font-weight:bold; }
-        
-        /* Standard Settings Table */
-        .std-settings td { padding: 12px; border-bottom: 1px solid #eee; }
-        .std-settings .label-col { background: #eaf2ff; font-weight: bold; width: 25%; text-align: right; padding-right: 20px; }
+    <style>
+        .settings-container {
+            max-width: 600px;
+            margin: 30px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .settings-header {
+            border-bottom: 2px solid #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        .profile-pic-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #0056b3;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 5px;
+                color: #333;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+            .checkbox-group label {
+                display: inline;
+                font-weight: normal;
+                margin-left: 5px;
+            }
+
+        .btn-save {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+            .btn-save:hover {
+                background-color: #004494;
+            }
+
+        .btn-verify {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+            .btn-verify:hover {
+                background-color: #218838;
+            }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+
+        .note {
+            font-size: 0.85em;
+            color: #666;
+            font-style: italic;
+        }
+
+        .otp-panel {
+            background: #fff;
+            padding: 20px;
+            border: 2px dashed #0056b3;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .verified-badge {
+            color: #28a745;
+            font-size: 0.85em;
+            margin-left: 8px;
+            font-weight: bold;
+            background: #e2f0e5;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        /* New Password Section Style */
+        .password-panel {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        /* Password Toggle Styles */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+            .password-wrapper .form-control {
+                padding-right: 40px;
+            }
+
+        .btn-toggle-password {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            outline: none;
+        }
+
+            .btn-toggle-password:hover {
+                color: #153e75;
+            }
     </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <table cellpadding="0" cellspacing="1" class="style1">
-        <tr>
-            <td bgcolor="#19658A" colspan="4" style="padding:8px;">&nbsp; <span class="style2">Account Settings</span> </td>
-        </tr>
-    </table>
+    <script>
+        // Handles toggling for both password fields dynamically
+        function togglePasswordVisibility(inputId, iconId) {
+            var passwordInput = document.getElementById(inputId);
+            var eyeIcon = document.getElementById(iconId);
 
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+    </script>
     <div class="settings-container">
-        
-        <asp:Panel ID="PanelMsg" runat="server" Visible="false">
-            <asp:Label ID="lblMsg" runat="server"></asp:Label>
-        </asp:Panel>
+        <h2 class="settings-header">Account Settings</h2>
 
-        <asp:Panel ID="PanelVerifyEmail" runat="server" CssClass="setup-box" Visible="false">
-            <h3>Step 1: Verify Your Email</h3>
-            <p>For security, please verify your email address to continue setting up your account.</p>
-            
-            <div class="form-row">
-                <span class="form-label">Email Address:</span>
-                <asp:Label ID="lblVerifyEmailDisplay" runat="server" Font-Bold="true"></asp:Label>
-            </div>
-            
-            <asp:Panel ID="PanelSendOtp" runat="server">
-                <asp:Button ID="btnSendOtp" runat="server" Text="Send Verification OTP" CssClass="btn-primary" OnClick="btnSendOtp_Click" />
-            </asp:Panel>
+        <asp:Label ID="lblMessage" runat="server" EnableViewState="false"></asp:Label>
 
-            <asp:Panel ID="PanelEnterOtp" runat="server" Visible="false" style="margin-top:15px; border-top:1px dashed #ccc; padding-top:15px;">
-                <p style="color:green; font-weight:bold;">An OTP has been sent to your email! (Valid for 15 minutes)</p>
-                <div class="form-row">
-                    <span class="form-label">Enter 6-Digit OTP:</span>
-                    <asp:TextBox ID="txtOtp" runat="server" CssClass="form-control" MaxLength="6"></asp:TextBox>
+        <asp:Panel ID="pnlChangePassword" runat="server" CssClass="password-panel">
+            <h3 style="margin-top: 0; color: #333; font-size: 18px;">Security Settings</h3>
+            <asp:Label ID="lblPasswordLockoutWarning" runat="server" CssClass="alert alert-danger" Visible="false"
+                Text="You are required to change your temporary password before accessing the system."></asp:Label>
+
+            <div class="form-group">
+                <label>New Password</label>
+                <div class="password-wrapper">
+                    <asp:TextBox ID="txtNewPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                    <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('<%= txtNewPassword.ClientID %>', 'eyeIcon1')" aria-label="Show password" title="Show password">
+                        <svg id="eyeIcon1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
                 </div>
-                <asp:Button ID="btnVerifyOtp" runat="server" Text="Verify OTP" CssClass="btn-primary" OnClick="btnVerifyOtp_Click" />
-                <asp:Button ID="btnResendOtp" runat="server" Text="Resend OTP" CssClass="btn-secondary" OnClick="btnSendOtp_Click" style="margin-left:10px;" />
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <div class="password-wrapper">
+                    <asp:TextBox ID="txtConfirmPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                    <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('<%= txtConfirmPassword.ClientID %>', 'eyeIcon2')" aria-label="Show password" title="Show password">
+                        <svg id="eyeIcon2" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <asp:CompareValidator ID="cvPasswordMatch" runat="server"
+                    ControlToValidate="txtConfirmPassword"
+                    ControlToCompare="txtNewPassword"
+                    Operator="Equal" Type="String"
+                    ErrorMessage="⚠️ Passwords do not match!"
+                    ForeColor="#d93025" Display="Dynamic"
+                    Style="margin-top: 5px; font-weight: bold; font-size: 13px; display: block;">
+                </asp:CompareValidator>
+            </div>
+            <asp:Button ID="btnUpdatePassword" runat="server" Text="Update Password" CssClass="btn-save" Style="background-color: #28a745;" OnClick="btnUpdatePassword_Click" />
+        </asp:Panel>
+
+        <asp:Panel ID="pnlStandardProfile" runat="server">
+            <asp:Label ID="lblContactLockoutWarning" runat="server" CssClass="alert alert-danger" Visible="false" Text="Security Verification: You must add and verify both your Phone Number and Email Address to access the ERP."></asp:Label>
+            <div class="profile-pic-container">
+                <asp:Image ID="imgProfile" runat="server" CssClass="profile-pic" AlternateText="User Profile" />
+            </div>
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <asp:TextBox ID="txtName" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Phone Number 
+                    <asp:Label ID="lblPhoneVerified" runat="server" CssClass="verified-badge" Visible="false">&#10004; Verified</asp:Label>
+                    <span class="note" style="display: block; margin-top: 2px;">(Changes require WhatsApp OTP)</span>
+                </label>
+                <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Email Address 
+                    <asp:Label ID="lblEmailVerified" runat="server" CssClass="verified-badge" Visible="false">&#10004; Verified</asp:Label>
+                    <span class="note" style="display: block; margin-top: 2px;">(Changes require Email OTP)</span>
+                </label>
+                <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email"></asp:TextBox>
+            </div>
+
+            <div class="form-group">
+                <label>Update Profile Picture</label>
+                <asp:FileUpload ID="fuProfilePic" runat="server" CssClass="form-control" />
+            </div>
+
+            <div class="checkbox-group">
+                <asp:CheckBox ID="chkEmailAlerts" runat="server" />
+                <label for="<%= chkEmailAlerts.ClientID %>">Enable Email Alerts</label>
+                <br />
+                <asp:CheckBox ID="chkWhatsAppAlerts" runat="server" />
+                <label for="<%= chkWhatsAppAlerts.ClientID %>">Enable WhatsApp Alerts</label>
+            </div>
+
+            <div class="form-group">
+                <asp:Button ID="btnSave" runat="server" Text="Save Changes" CssClass="btn-save" OnClick="btnSave_Click" />
+            </div>
+
+            <asp:Panel ID="pnlOtp" runat="server" CssClass="otp-panel" Visible="false">
+                <h3 style="margin-top: 0; color: #0056b3;">Verification Required</h3>
+                <p style="font-size: 0.9em; color: #555;">We have sent a 6-digit verification code to confirm your contact detail changes.</p>
+                <div class="form-group">
+                    <label>Enter OTP Code</label>
+                    <asp:TextBox ID="txtOtp" runat="server" CssClass="form-control" MaxLength="6" autocomplete="off"></asp:TextBox>
+                </div>
+                <asp:Button ID="btnVerifyOtp" runat="server" Text="Verify & Apply Changes" CssClass="btn-verify" OnClick="btnVerifyOtp_Click" />
+                <asp:Button ID="btnCancelOtp" runat="server" Text="Cancel" CssClass="btn-save" Style="background-color: #6c757d; margin-top: 10px;" OnClick="btnCancelOtp_Click" />
             </asp:Panel>
-        </asp:Panel>
-
-        <asp:Panel ID="PanelChangePassword" runat="server" CssClass="setup-box" Visible="false">
-            <h3>Step 2: Create a Permanent Password</h3>
-            <p>You are currently using a temporary password. Please create a new, secure password.</p>
-            
-            <div class="form-row">
-                <span class="form-label">New Password:</span>
-                <asp:TextBox ID="txtNewPass" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
-            </div>
-            <div class="form-row">
-                <span class="form-label">Confirm Password:</span>
-                <asp:TextBox ID="txtConfirmPass" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
-            </div>
-            <asp:Button ID="btnSavePassword" runat="server" Text="Save Password & Finish Setup" CssClass="btn-primary" OnClick="btnSavePassword_Click" />
-        </asp:Panel>
-
-        <asp:Panel ID="PanelStandardSettings" runat="server" Visible="false">
-            <p style="padding: 10px; color: #555;">Manage your account details below. Click the gear icon to update specific information.</p>
-            
-            <table class="style1 std-settings">
-                <tr>
-                    <td class="label-col">Name</td>
-                    <td>
-                        <asp:Label ID="lblName" runat="server" Font-Bold="true"></asp:Label>
-                        <asp:Image ID="imgName" runat="server" Style="float: right; cursor:pointer;"
-                            onclick="window.open('/corporate/business/app/Update/name.aspx','popupwindow','width=510px,height=310px,scrollbars=yes');return true"
-                            ImageUrl="~/corporate/business/WebImages/settings_icon.png" ToolTip="Update Your Name" />
-                    </td>
-                </tr>
-                <tr>
-                    <td class="label-col">Password</td>
-                    <td>
-                        ●●●●●●●●
-                        <asp:Image ID="imgPassword" runat="server" Style="float: right; cursor:pointer;"
-                            onclick="window.open('/corporate/business/app/Update/password.aspx','popupwindow','width=520px,height=320px,scrollbars=yes');return true"
-                            ImageUrl="~/corporate/business/WebImages/settings_icon.png" ToolTip="Update Your Password" />
-                    </td>
-                </tr>
-                <tr>
-                    <td class="label-col">Contact No.</td>
-                    <td>
-                        <asp:Label ID="lblContactNo" runat="server" Font-Bold="true"></asp:Label>
-                        <asp:Image ID="imgContactNo" runat="server" Style="float: right; cursor:pointer;"
-                            onclick="window.open('/corporate/business/app/Update/contactno.aspx','popupwindow','width=510px,height=310px,scrollbars=yes');return true"
-                            ImageUrl="~/corporate/business/WebImages/settings_icon.png" ToolTip="Update Your Contact No" />
-                    </td>
-                </tr>
-                <tr>
-                    <td class="label-col">Email ID</td>
-                    <td>
-                        <asp:Label ID="lblEmailID" runat="server" Font-Bold="true"></asp:Label>
-                        <asp:Image ID="imgEmailID" runat="server" Style="float: right; cursor:pointer;"
-                            onclick="window.open('/corporate/business/app/Update/emailid.aspx','popupwindow','width=510px,height=310px,scrollbars=yes');return true"
-                            ImageUrl="~/corporate/business/WebImages/settings_icon.png" ToolTip="Update Your Email ID" />
-                    </td>
-                </tr>
-            </table>
         </asp:Panel>
 
     </div>
 </asp:Content>
-
-<%--<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="settings.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm2" %>
-
-<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-    <style type="text/css">
-        .style1 {
-            width: 100%;
-        }
-
-        .style2 {
-            color: #FFFFFF;
-            font-weight: bold;
-        }
-    </style>
-</asp:Content>
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <table cellpadding="0" cellspacing="1" class="style1">
-        <tr>
-            <td bgcolor="#19658A" colspan="4">&nbsp; <span class="style2">Settings</span> </td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%" bgcolor="#94B8FF">&nbsp;Name&nbsp;</td>
-            <td width="25%" bgcolor="#94B8FF">
-                <asp:Image ID="imgName" runat="server" Style="float: right"
-                    onclick="window.open('/corporate/business/app/Update/name.aspx','popupwindow','width=510px,height=310px,scrollbars=yes');return true"
-                    ImageUrl="~/corporate/business/WebImages/settings_icon.png"
-                    ToolTip="Update Your Name.." />
-                &nbsp;<asp:Label ID="lblName" runat="server"></asp:Label>
-
-            </td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td width="25%">&nbsp;</td>
-            <td width="25%">&nbsp;Password&nbsp;</td>
-            <td width="25%">
-                <asp:Image ID="imgPassword" runat="server" Style="float: right"
-                    onclick="window.open('/corporate/business/app/Update/password.aspx','popupwindow','width=520px,height=320px,scrollbars=yes');return true"
-                    ImageUrl="~/corporate/business/WebImages/settings_icon.png"
-                    ToolTip="Update Your Password.." />
-                &nbsp;●●●●●●●●
-            </td>
-            <td width="25%">&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td bgcolor="#94B8FF">&nbsp;Contact No.&nbsp;</td>
-            <td bgcolor="#94B8FF">
-                <asp:Image ID="imgContactNo" runat="server" Style="float: right"
-                    onclick="window.open('/corporate/business/app/Update/contactno.aspx','popupwindow','width=510px,height=310px,scrollbars=yes');return true"
-                    ImageUrl="~/corporate/business/WebImages/settings_icon.png"
-                    ToolTip="Update Your Contact No.." />
-                &nbsp;<asp:Label ID="lblContactNo" runat="server"></asp:Label>
-            </td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;Email ID&nbsp;</td>
-            <td>
-                <asp:Image ID="imgEmailID" runat="server" Style="float: right"
-                    onclick="window.open('/corporate/business/app/Update/emailid.aspx','popupwindow','width=510px,height=310px,scrollbars=yes');return true"
-                    ImageUrl="~/corporate/business/WebImages/settings_icon.png"
-                    ToolTip="Update Your Email ID.." />
-                &nbsp;<asp:Label ID="lblEmailID" runat="server"></asp:Label>
-            </td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-    </table>
-</asp:Content>--%>

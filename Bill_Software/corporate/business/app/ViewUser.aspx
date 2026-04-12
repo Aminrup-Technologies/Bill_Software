@@ -235,11 +235,123 @@
                 border-color: #19658A;
                 box-shadow: 0 2px 4px rgba(25,101,138,0.3);
             }
+
+            @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+            /* Beautiful Modal Table Styling */
+        .modal-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e1e8f0;
+            background: #fff;
+        }
+
+        .beautiful-grid {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 13px;
+            text-align: left;
+            margin: 0;
+        }
+
+        .beautiful-grid thead th {
+            background-color: #f4f7f9; /* Soft tech-gray background */
+            color: #153e75;           /* Deep navy text */
+            padding: 14px 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e1e8f0;
+        }
+
+        .beautiful-grid tbody td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f4f8;
+            color: #444;
+            vertical-align: middle;
+            line-height: 1.5;
+        }
+
+        /* Remove border from the very last row so it doesn't double-up with the wrapper */
+        .beautiful-grid tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Smooth hover effect */
+        .beautiful-grid tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .beautiful-grid tbody tr:hover {
+            background-color: #f8fbfd;
+        }
     </style>
 
     <script type="text/javascript">
         function confirmSendCredentials() {
             return confirm("Are you sure you want to generate a new temporary password and email it to this user?");
+        }
+    
+        function showSessionHistory(userId, userName) {
+            document.getElementById('sessionModalName').innerText = userName;
+
+            // FIX: Collapsed to a single line
+            document.getElementById('sessionTableBody').innerHTML = "<tr><td colspan='4' style='text-align: center; padding: 20px; color: #666;'>⏳ Loading session data...</td></tr>";
+            document.getElementById('sessionHistoryModal').style.display = 'block';
+
+            fetch('ViewUser.aspx/GetSessionHistory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                body: JSON.stringify({ userId: parseInt(userId) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var sessions = JSON.parse(data.d);
+                var tbody = document.getElementById('sessionTableBody');
+                tbody.innerHTML = "";
+
+                if (sessions.length === 0) {
+                    // FIX: Collapsed to a single line
+                    tbody.innerHTML = "<tr><td colspan='4' style='text-align: center; padding: 20px; color: #666;'>No login history found for this user.</td></tr>";
+                    return;
+                }
+
+                sessions.forEach(s => {
+                    // Create a nice active status indicator
+                    var sessionStatus = s.IsActive
+                        ? "<span style='color: #28a745; font-size: 11px; font-weight: bold;'>● Live Session</span>"
+                        : "<span style='color: #6c757d; font-size: 11px;'>Ended</span>";
+
+                    // Backticks (`) allow multi-line strings, so this part remains as is
+                    var row = `<tr>
+                <td style="font-weight: 500; color: #333;">${s.LoginTime}</td>
+                <td>${s.LastHeartbeat}<br />${sessionStatus}</td>
+                <td style="font-family: monospace; color: #19658A;">${s.IPAddress}</td>
+                <td>
+                    <div style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; color: #555;" title="${s.UserAgent}">${s.UserAgent}</div>
+                </td>
+            </tr>`;
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching sessions:', error);
+                // FIX: Collapsed to a single line
+                document.getElementById('sessionTableBody').innerHTML = "<tr><td colspan='4' style='text-align: center; color: red;'>Failed to load data.</td></tr>";
+            });
         }
     </script>
 </asp:Content>
@@ -317,6 +429,13 @@
                                         <p class="user-name"><%# Eval("Name") %></p>
                                         <span class="user-id">ID: <%# Eval("User_Id") %></span><br />
                                         <span class="role-badge"><%# string.IsNullOrEmpty(Convert.ToString(Eval("RoleName"))) ? "Unassigned" : Eval("RoleName") %></span>
+
+                                        <div style="font-size: 11px; color: #666; margin-top: 6px; line-height: 1.4;">
+                                            🏢 <%# Eval("DepartmentName") == DBNull.Value ? "No Department" : Eval("DepartmentName") %>
+                                            <br />
+                                            💼 <%# Eval("DesignationName") == DBNull.Value ? "No Designation" : Eval("DesignationName") %><br />
+                                            👤 Manager: <strong><%# Eval("ManagerName") == DBNull.Value ? "None" : Eval("ManagerName") %></strong>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -326,9 +445,13 @@
                                 </div>
 
                                 <div class="card-status">
-                                    <asp:Label ID="lblStatus" runat="server" Text='<%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>' CssClass='<%# Convert.ToBoolean(Eval("IsActive")) ? "badge badge-success" : "badge badge-danger" %>'></asp:Label>
-                                    <span style="font-size: 11px; color:#888;" title="Last Login">🕒 <%# Eval("LastLogin", "{0:MMM dd, HH:mm}") %></span>
-                                    <span style="font-size: 11px; color:#888;" title="Geo Tagging">📍 <%# (Eval("RequireGeoTagging") != DBNull.Value && Convert.ToBoolean(Eval("RequireGeoTagging"))) ? "Geo: ON" : "Geo: OFF" %></span>
+                                    <asp:Label ID="lblStatus" runat="server" Text='<%# Convert.ToBoolean(Eval("IsActive")) ? "Active Account" : "Inactive Account" %>' CssClass='<%# Convert.ToBoolean(Eval("IsActive")) ? "badge badge-success" : "badge badge-danger" %>'></asp:Label>
+
+                                    <div style="margin-top: 8px;" onclick="showSessionHistory('<%# Eval("Id") %>', '<%# Eval("Name") %>')">
+                                        <%# GetOnlineStatusHtml(Eval("LatestHeartbeat")) %>
+                                    </div>
+
+                                    <span style="font-size: 11px; color: #888; margin-top: 5px;" title="Geo Tagging">📍 <%# (Eval("RequireGeoTagging") != DBNull.Value && Convert.ToBoolean(Eval("RequireGeoTagging"))) ? "Geo: ON" : "Geo: OFF" %></span>
                                 </div>
 
                                 <div class="card-actions">
@@ -365,6 +488,21 @@
                                         <asp:DropDownList ID="ddlGridRole" runat="server" CssClass="form-control"></asp:DropDownList>
                                         <asp:HiddenField ID="hfCurrentRoleId" runat="server" Value='<%# Eval("RoleId") %>' />
                                     </div>
+                                    <div class="edit-group">
+                                        <label>Department</label>
+                                        <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="form-control"></asp:DropDownList>
+                                        <asp:HiddenField ID="hfDeptId" runat="server" Value='<%# Eval("DepartmentID") %>' />
+                                    </div>
+                                    <div class="edit-group">
+                                        <label>Designation</label>
+                                        <asp:DropDownList ID="ddlDesignation" runat="server" CssClass="form-control"></asp:DropDownList>
+                                        <asp:HiddenField ID="hfDesigId" runat="server" Value='<%# Eval("DesignationID") %>' />
+                                    </div>
+                                    <div class="edit-group">
+                                        <label>Reporting Manager</label>
+                                        <asp:DropDownList ID="ddlManager" runat="server" CssClass="form-control"></asp:DropDownList>
+                                        <asp:HiddenField ID="hfManagerId" runat="server" Value='<%# Eval("ReportingManagerId") %>' />
+                                    </div>
                                 </div>
 
                                 <div class="edit-grid" style="grid-template-columns: auto auto 1fr;">
@@ -379,17 +517,17 @@
 
                                     <div class="edit-group" style="flex-direction: row; align-items: center; gap: 8px;">
                                         <asp:CheckBox ID="chkRequireGeo" runat="server" Checked='<%# Eval("RequireGeoTagging") != DBNull.Value && Convert.ToBoolean(Eval("RequireGeoTagging")) %>' />
-                                        <label style="margin:0;">Require Geo-Tagging</label>
+                                        <label style="margin: 0;">Require Geo-Tagging</label>
                                     </div>
 
                                     <div class="edit-group" style="flex-direction: row; align-items: center; gap: 8px;">
                                         <asp:CheckBox ID="chkEmails" runat="server" Checked='<%# Eval("EnableEmailAlerts") != DBNull.Value && Convert.ToBoolean(Eval("EnableEmailAlerts")) %>' />
-                                        <label style="margin:0;">Email Alerts</label>
+                                        <label style="margin: 0;">Email Alerts</label>
                                     </div>
 
                                     <div class="edit-group" style="flex-direction: row; align-items: center; gap: 8px;">
                                         <asp:CheckBox ID="chkWhatsApp" runat="server" Checked='<%# Eval("EnableWhatsAppAlerts") != DBNull.Value && Convert.ToBoolean(Eval("EnableWhatsAppAlerts")) %>' />
-                                        <label style="margin:0;">WhatsApp Alerts</label>
+                                        <label style="margin: 0;">WhatsApp Alerts</label>
                                     </div>
 
                                     <div style="display: flex; justify-content: flex-end; gap: 10px; width: 100%;">
@@ -504,4 +642,30 @@
             </td>
         </tr>
     </table>
+    <div id="sessionHistoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 99998;">
+        <div style="background: #fff; width: 95%; max-width: 800px; margin: 5% auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; animation: fadeSlideIn 0.3s ease-out;">
+
+            <div style="background-color: #19658A; color: white; padding: 15px 20px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <span>📡 Login Activity: <span id="sessionModalName" style="color: #e1effe;"></span></span>
+                <span style="cursor: pointer; font-size: 20px;" onclick="document.getElementById('sessionHistoryModal').style.display='none';">✖</span>
+            </div>
+
+            <div style="padding: 10px; max-height: 70vh; overflow-y: auto;">
+                <div class="modal-table-wrapper">
+                    <table class="beautiful-grid">
+                        <thead>
+                            <tr>
+                                <th>Login Time</th>
+                                <th>Last Active (Heartbeat)</th>
+                                <th>IP Address</th>
+                                <th>Device / Browser</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionTableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </asp:Content>
