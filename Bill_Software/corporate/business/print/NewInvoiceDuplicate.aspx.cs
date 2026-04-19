@@ -31,7 +31,7 @@ namespace Bill_Software.corporate.business.print
         public string taxorvat = "";
         public string proOrser = "";
         public string psid = "";
-        public int TQ = 0;
+        public double TQ = 0;
         public string lblSubtotal = "", lbldiscount = "", lblstax = "", lblstax0 = "", lblnetamount = "", lblword = "";
 
         // New variables for Freight/Other
@@ -349,7 +349,7 @@ namespace Bill_Software.corporate.business.print
                     {
                         string HSN = dtp.Rows[i]["HSN"].ToString();
                         string Productname = dtp.Rows[i]["Product_name"].ToString();
-                        int Quantity = Convert.ToInt32(dtp.Rows[i]["Quantity"]);
+                        double Quantity = Convert.ToDouble(dtp.Rows[i]["Quantity"]);
                         TQ += Quantity;
 
                         double baserate = Math.Round(Convert.ToDouble(dtp.Rows[i]["sail_rate"]), 2);

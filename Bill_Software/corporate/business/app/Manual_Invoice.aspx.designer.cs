@@ -94,6 +94,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.RadioButtonList rbTaxType;
         
         /// <summary>
+        /// cmbSalesPerson control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList cmbSalesPerson;
+        
+        /// <summary>
         /// lstAddresses control.
         /// </summary>
         /// <remarks>

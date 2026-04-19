@@ -9,30 +9,140 @@
 
     <style type="text/css">
         /* --- Modern Layout & Search Panel --- */
-        .page-header { background-color: #19658A; color: #FFFFFF; padding: 12px 15px; font-weight: bold; font-size: 16px; border-radius: 4px; margin-bottom: 15px; }
-        
-        .search-panel { background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
-        .search-panel label { font-size: 12px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
-        .search-panel input[type="text"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 160px; }
-        
-        .btn-action { padding: 7px 15px; background-color: #006699; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 13px; border-radius: 4px; transition: background 0.2s; margin-top: 18px; }
-        .btn-action:hover { background-color: #004d73; }
-        .btn-clear { background-color: #6c757d; margin-left: 5px; }
-        .btn-clear:hover { background-color: #5a6268; }
+        .page-header {
+            background-color: #19658A;
+            color: #FFFFFF;
+            padding: 12px 15px;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .search-panel {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+            .search-panel label {
+                font-size: 12px;
+                font-weight: bold;
+                color: #333;
+                display: block;
+                margin-bottom: 4px;
+            }
+
+            .search-panel input[type="text"] {
+                padding: 6px 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 13px;
+                width: 160px;
+            }
+
+        .btn-action {
+            padding: 7px 15px;
+            background-color: #006699;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            margin-top: 18px;
+        }
+
+            .btn-action:hover {
+                background-color: #004d73;
+            }
+
+        .btn-clear {
+            background-color: #6c757d;
+            margin-left: 5px;
+        }
+
+            .btn-clear:hover {
+                background-color: #5a6268;
+            }
 
         /* --- Modern Table Design --- */
-        .styled-table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); }
-        .styled-table thead tr { background-color: #006699; color: #ffffff; text-align: center; }
-        .styled-table th { padding: 10px; border: 1px solid #004d73; position: sticky; top: 0; z-index: 5; }
-        .styled-table td { padding: 8px 10px; border: 1px solid #ddd; text-align: center; vertical-align: middle; }
-        .styled-table tbody tr { background-color: #ffffff; transition: background-color 0.15s ease; }
-        .styled-table tbody tr:nth-of-type(even) { background-color: #f3f8fb; }
-        .styled-table tbody tr:hover { background-color: #e2eef4; }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
 
-        .text-left { text-align: left !important; }
-        .text-right { text-align: right !important; }
-        .badge { background: #eee; padding: 2px 5px; border-radius: 3px; font-size: 10px; color: #555; display: inline-block; min-width: 30px; text-align: center; }
-        .badge-blue { background-color: #19658A; color: white; }
+            .styled-table thead tr {
+                background-color: #006699;
+                color: #ffffff;
+                text-align: center;
+            }
+
+            .styled-table th {
+                padding: 10px;
+                border: 1px solid #004d73;
+                position: sticky;
+                top: 0;
+                z-index: 5;
+            }
+
+            .styled-table td {
+                padding: 8px 10px;
+                border: 1px solid #ddd;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            .styled-table tbody tr {
+                background-color: #ffffff;
+                transition: background-color 0.15s ease;
+            }
+
+                .styled-table tbody tr:nth-of-type(even) {
+                    background-color: #f3f8fb;
+                }
+
+                .styled-table tbody tr:hover {
+                    background-color: #e2eef4;
+                }
+
+        .text-left {
+            text-align: left !important;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .badge {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: #555;
+            display: inline-block;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .badge-blue {
+            background-color: #19658A;
+            color: white;
+        }
+        /* --- Fix Datepicker Overlap --- */
+        .ui-datepicker {
+            z-index: 9999 !important;
+        }
     </style>
 
     <script type="text/javascript">
@@ -45,7 +155,7 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div style="width: 98%; margin: auto; padding-top: 10px;">
-        
+
         <div class="page-header">View Tax Invoices</div>
 
         <asp:Panel ID="PanelMsg" runat="server" Visible="false" Style="padding: 10px; margin-bottom: 15px; border-radius: 4px;">
@@ -76,6 +186,8 @@
             <div>
                 <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn-action" OnClick="btnSearch_Click" />
                 <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="btn-action btn-clear" OnClick="btnClear_Click" />
+                <asp:Button ID="btnExport" runat="server" Text="Export Excel" CssClass="btn-action"
+                    Style="background-color: #28a745; margin-left: 5px;" OnClick="btnExport_Click" />
             </div>
         </div>
 
@@ -104,30 +216,38 @@
                                 <td><%# Eval("Invoice_Date") %></td>
                                 <td class="text-left">
                                     <span class="badge badge-blue">Inv</span> <strong><%# Eval("Invoice_No") %></strong><br />
-                                    
+
                                     <%# string.IsNullOrWhiteSpace(Convert.ToString(Eval("ExtInvoiceNo"))) ? "" : "<span class='badge'>Ext</span> " + Eval("ExtInvoiceNo") + "<br />" %>
-                                    
-                                    <span class="badge">Quo</span> 
-                                    <span style='<%# Eval("Quotation_No").ToString().ToUpper() == "VERBAL" ? "color:#d39e00; font-weight:bold;" : "" %>'>
+
+                                    <span class="badge">Quo</span>
+                                    <span style='<%# Eval("Quotation_No").ToString().ToUpper() == "VERBAL" ? "color:#d39e00; font-weight:bold;": "" %>'>
                                         <%# Eval("Quotation_No") %>
-                                    </span><br />
-                                    
-                                    <span style="font-size:10px; color:#666;"><%# Eval("PServiceName") %></span>
+                                    </span>
+                                    <br />
+
+                                    <span style="font-size: 10px; color: #666;"><%# Eval("PServiceName") %></span>
                                 </td>
                                 <td class="text-left">
                                     <span class="badge">ARC</span> <%# Eval("PO_Number") %><br />
                                     <span class="badge">PO/DO</span> <%# Eval("DO_Number") %>
                                 </td>
                                 <td class="text-right" style="line-height: 1.4;">
-                                    <span style="color:#666;">Gross:</span> ₹<%# Eval("Gross") %><br /><%# Convert.ToDecimal(Eval("discount") == DBNull.Value ? 0 : Eval("discount")) > 0 ? "<span style='color:red;'>Disc: -₹" + Eval("discount") + "</span><br />" : "" %><span style="color:#666;">Taxable:</span> ₹<%# Eval("sub_total") %><br /><span class="badge" style="background:#e8f4fd; color:#006699;"><%# Eval("cgstOrsgst").ToString() == "YES" ? "CGST/SGST" : (Eval("igst").ToString() == "YES" ? "IGST" : "TAX") %></span>₹<%# Eval("Gst") %><br /><%# Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1")) > 0 ? "<span style='color:#666;'>Frt/Oth:</span> ₹" + (Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1"))) + "<br />" : "" %><strong style="color:#28a745; font-size:13px;">Total: ₹<%# Eval("Net_Amount") %></strong></td>
+                                    <span style="color: #666;">Gross:</span> ₹<%# Eval("Gross") %><br />
+                                    <%# Convert.ToDecimal(Eval("discount") == DBNull.Value ? 0 : Eval("discount")) > 0 ? "<span style='color:red;'>Disc: -₹" + Eval("discount") + "</span><br />" : "" %><span style="color: #666;">Taxable:</span> ₹<%# Eval("sub_total") %><br />
+                                    <span class="badge" style="background: #e8f4fd; color: #006699;"><%# Eval("cgstOrsgst").ToString() == "YES" ? "CGST/SGST" : (Eval("igst").ToString() == "YES" ? "IGST" : "TAX") %></span>₹<%# Eval("Gst") %><br />
+                                    <%# Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1")) > 0 ? "<span style='color:#666;'>Frt/Oth:</span> ₹" + (Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1"))) + "<br />" : "" %><strong style="color: #28a745; font-size: 13px;">Total: ₹<%# Eval("Net_Amount") %></strong></td>
                                 <td>
-                                    <%# Eval("Validity_StartDate") %> <br />to<br /> <%# Eval("Validity_EndDate") %>
+                                    <%# Eval("Validity_StartDate") %>
+                                    <br />
+                                    to<br />
+                                    <%# Eval("Validity_EndDate") %>
                                 </td>
                                 <td>
-                                    <span style="color:#333; font-weight:bold;">
+                                    <span style="color: #333; font-weight: bold;">
                                         <%# Convert.ToString(Eval("AddedByName")) %>
-                                    </span><br />
-                                    <span style="font-size:10px; color:#666;">
+                                    </span>
+                                    <br />
+                                    <span style="font-size: 10px; color: #666;">
                                         <%# Convert.ToDateTime(Eval("TimeStamp")).ToString("dd-MMM-yyyy hh:mm tt") %>
                                     </span>
                                 </td>
