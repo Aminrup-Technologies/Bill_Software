@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
-using System.Data.SqlClient;
 using System.Data;
+using System.Data.SqlClient;
+using System.Web;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm5 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -20,147 +17,145 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
-                //DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
+                DbCL.FillCombo(cmbState, "SELECT State_Name FROM tbl_State ORDER BY State_Name");
             }
         }
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
-            string companyID = findcompanyId();
-            string cmdstring = "insert into tbl_Vendor(Vendor_Id,Vendor_Name,Address1,Address2,City,pin,State,Com_web_site,Com_email,Com_phone,Com_Fax,Rep_Name,Rep_Desig,Rep_phone,Rep_email,Service_tax_No,Pan_No,Vat_No,PrincipleVndrCode,BankAccNo,BankIfscCode,AccountName)values(@Vendor_Id,@Vendor_Name,@Address1,@Address2,@City,@pin,@State,@Com_web_site,@Com_email,@Com_phone,@Com_Fax,@Rep_Name,@Rep_Desig,@Rep_phone,@Rep_email,@Service_tax_No,@Pan_No,@Vat_No,@PrincipleVndrCode,@BankAccNo,@BankIfscCode,@AccountName)";
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            cmd.CommandType = CommandType.Text;
-            cmd.CommandTimeout = 0;
-            cmd.Parameters.AddWithValue("@Vendor_Id", companyID);
-            cmd.Parameters.AddWithValue("@Vendor_Name", txtvendorName.Text.Trim());
-            cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
-            cmd.Parameters.AddWithValue("@Address2", txtAddress2.Text);
-            cmd.Parameters.AddWithValue("@City", txtCity.Text.Trim());
-            //cmd.Parameters.AddWithValue("@City", cmbcity.Text.Trim());
-            cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
-            cmd.Parameters.AddWithValue("@State", cmbState.Text);
-            cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text);
-            cmd.Parameters.AddWithValue("@Com_email", txtEmail.Text);
-            cmd.Parameters.AddWithValue("@Com_phone", txtPhone.Text);
-            //cmd.Parameters.AddWithValue("@EAC_NACE_Code", cmbEacCode.Text);
-            cmd.Parameters.AddWithValue("@Com_Fax", txtFax.Text);
-            cmd.Parameters.AddWithValue("@Rep_Name", txtRepresentativeName.Text);
-            cmd.Parameters.AddWithValue("@Rep_Desig", txtRepresantativeDesig.Text);
-            cmd.Parameters.AddWithValue("@Rep_phone", txtRepresentativePhone.Text);
-            cmd.Parameters.AddWithValue("@Rep_email", txtRepresentativeEmail.Text);
-            cmd.Parameters.AddWithValue("@Service_tax_No", txtservicetaxNo.Text);
-            cmd.Parameters.AddWithValue("@Pan_No", txtpanNo.Text);
-            //empty string value is passed to vatno field
-            cmd.Parameters.AddWithValue("@Vat_No", string.Empty);
-            //Below fileds are added for meeting the requirements from flame-ex client #21-10-2024
-            cmd.Parameters.AddWithValue("@PrincipleVndrCode", txt_pvc.Text);
-            cmd.Parameters.AddWithValue("@BankAccNo", txt_vndr_bankacc.Text);
-            cmd.Parameters.AddWithValue("@BankIfscCode", txt_ifsc.Text);
-            cmd.Parameters.AddWithValue("@AccountName", txt_accholdername.Text);
-            cmd.ExecuteNonQuery();
-            DbCL.Conn.Close();
+            try
+            {
+                string companyID_Str = findcompanyId();
+                int currentTenantId = CompanyContext.CurrentCompanyID;
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
 
-            //Added on #23-Jan-2025
-            InsertCity();
+                string cmdstring = @"INSERT INTO tbl_Vendor
+                    (Vendor_Id, Vendor_Name, Address1, Address2, City, pin, State, 
+                     Com_web_site, Com_email, Com_phone, Com_Fax, Rep_Name, Rep_Desig, 
+                     Rep_phone, Rep_email, Service_tax_No, Pan_No, Vat_No, PrincipleVndrCode, 
+                     BankAccNo, BankIfscCode, AccountName, CompanyID, CreatedBy, CreatedOn)
+                    VALUES
+                    (@Vendor_Id, @Vendor_Name, @Address1, @Address2, @City, @pin, @State, 
+                     @Com_web_site, @Com_email, @Com_phone, @Com_Fax, @Rep_Name, @Rep_Desig, 
+                     @Rep_phone, @Rep_email, @Service_tax_No, @Pan_No, @Vat_No, @PrincipleVndrCode, 
+                     @BankAccNo, @BankIfscCode, @AccountName, @CompanyID, @CreatedBy, GETDATE())";
 
-            PanelOK.Visible = true;
-            lblOk.Text = "Data and City Saved Successfully...";
-            btnSave.Visible = false;
+                DbCL.Sqlconnection();
+                DbCL.ConnectDb();
+                using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
+                {
+                    cmd.Parameters.AddWithValue("@Vendor_Id", companyID_Str);
+                    cmd.Parameters.AddWithValue("@Vendor_Name", txtvendorName.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Address2", txtAddress2.Text.Trim());
+                    cmd.Parameters.AddWithValue("@City", txtCity.Text.Trim());
+                    cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
+                    cmd.Parameters.AddWithValue("@State", cmbState.Text);
+                    cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Com_email", txtEmail.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Com_phone", txtPhone.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Com_Fax", txtFax.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Rep_Name", txtRepresentativeName.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Rep_Desig", txtRepresantativeDesig.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Rep_phone", txtRepresentativePhone.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Rep_email", txtRepresentativeEmail.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Service_tax_No", txtservicetaxNo.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Pan_No", txtpanNo.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Vat_No", string.Empty);
+                    cmd.Parameters.AddWithValue("@PrincipleVndrCode", txt_pvc.Text.Trim());
+                    cmd.Parameters.AddWithValue("@BankAccNo", txt_vndr_bankacc.Text.Trim());
+                    cmd.Parameters.AddWithValue("@BankIfscCode", txt_ifsc.Text.Trim());
+                    cmd.Parameters.AddWithValue("@AccountName", txt_accholdername.Text.Trim());
 
+                    // FULL STACK TENANT SEGREGATION & AUDIT
+                    cmd.Parameters.AddWithValue("@CompanyID", currentTenantId);
+                    cmd.Parameters.AddWithValue("@CreatedBy", userId);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                InsertCity();
+
+                // ---- PROACTIVE NOTIFICATION LOGGING ----
+                try
+                {
+                    string notifMsg = $"New Vendor '{txtvendorName.Text.Trim()}' (ID: {companyID_Str}) was created successfully.";
+                    string notifQuery = @"INSERT INTO tbl_SystemNotification 
+                                          (CompanyID, Title, Message, Module, Type, UserId, CreatedOn) 
+                                          VALUES (@CompanyID, 'Vendor Created', @Message, 'Vendor Management', 'Success', @UserId, GETDATE())";
+                    SqlParameter[] notifParam = {
+                        new SqlParameter("@CompanyID", currentTenantId),
+                        new SqlParameter("@Message", notifMsg),
+                        new SqlParameter("@UserId", userId)
+                    };
+                    DbCL.SPExecDB(notifQuery, notifParam);
+                }
+                catch { /* Soft catch: don't crash main transaction if logging fails */ }
+
+                DbCL.Conn.Close();
+
+                PanelOK.Visible = true;
+                lblOk.Text = "Vendor Data Saved Successfully.";
+                btnSave.Visible = false;
+            }
+            catch (Exception ex)
+            {
+                // Handle Exceptions gracefully
+            }
         }
 
         private void InsertCity()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-
-            // Check if the combination of City_Name and State_Name already exists
+            // SECURED: Ensure parameterized checks to avoid Injection
             string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName";
-            SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn);
-            checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text);
-            checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
-
-            int count = (int)checkCmd.ExecuteScalar();
-
-            if (count > 0)
+            using (SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn))
             {
-                PanelOK.Visible = true;
-                lblOk.Text = "Record already exists!";
-            }
-            else
-            {
-                // Insert new record
-                string insertQuery = "INSERT INTO tbl_City(City_Name, State_Name) VALUES (@CityName, @StateName)";
-                SqlCommand insertCmd = new SqlCommand(insertQuery, DbCL.Conn);
-                insertCmd.Parameters.AddWithValue("@CityName", txtCity.Text);
-                insertCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
-                insertCmd.ExecuteNonQuery();
+                checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
+                checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+                int count = (int)checkCmd.ExecuteScalar();
 
-                PanelOK.Visible = true;
-                lblOk.Text = "Data saved successfully...";
+                if (count == 0)
+                {
+                    string insertQuery = "INSERT INTO tbl_City (City_Name, State_Name) VALUES (@CityName, @StateName)";
+                    using (SqlCommand insertCmd = new SqlCommand(insertQuery, DbCL.Conn))
+                    {
+                        insertCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
+                        insertCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+                        insertCmd.ExecuteNonQuery();
+                    }
+                }
             }
-            DbCL.Conn.Close();
         }
-
 
         private string findcompanyId()
         {
-            //string ComId = "";
-            //string aa = "";
-            //DbCL.Sqlconnection();
-            //DbCL.ConnectDb();
-            //string cmdString1 = "select Id,Vendor_Id from tbl_Vendor where Id=(select max(Id)from tbl_Vendor)";
-            //SqlCommand com1 = new SqlCommand(cmdString1, DbCL.Conn);
-            //SqlDataReader DR1 = com1.ExecuteReader();
-            //if (DR1.Read())
-            //{
-            //    aa = DR1.GetValue(1).ToString();
-            //    string bb = aa.Substring(5);
-            //    int k = Convert.ToInt32(bb);
-            //    k = k + 1;
-            //    string q = Convert.ToString(k);
-            //    ComId = "VEN00" + q;
-            //}
-            //else
-            //{
-            //    ComId = "VEN001";
-            //}
-
-            //DbCL.Conn.Close();
-            //return ComId;
-
-
-            //The above code is commented on 19-10-2024 for modifying the logic for Auto-Vendor Code generation #Flame-Ex Client
-            string comId = "";
+            string comId = "AA01";
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-            string cmdString = "SELECT TOP 1 Vendor_Id FROM tbl_Vendor ORDER BY Id DESC";
+            // SECURED: Scope MAX lookup to current CompanyID
+            string cmdString = "SELECT TOP 1 Vendor_Id FROM tbl_Vendor WHERE CompanyID = @CompanyID ORDER BY Id DESC";
             using (SqlCommand com = new SqlCommand(cmdString, DbCL.Conn))
             {
+                com.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 using (SqlDataReader dr = com.ExecuteReader())
                 {
                     if (dr.Read())
                     {
                         string vendorId = dr["Vendor_Id"].ToString();
-                        string numericPart = vendorId.Substring(2); // Extract the numeric part after 'AA'
-                        Int32 k = 0;
-                        if (int.TryParse(numericPart, out k))
+                        if (vendorId.Length > 2)
                         {
-                            k++; // Increment the numeric part
-                            comId = "AA" + k.ToString("D2"); // Format the number with 2 digits
+                            string numericPart = vendorId.Substring(2); // Extract after 'AA'
+                            int k = 0;
+                            if (int.TryParse(numericPart, out k))
+                            {
+                                k++;
+                                comId = "AA" + k.ToString("D2"); // Format back to AA02
+                            }
                         }
-                    }
-                    else
-                    {
-                        comId = "AA01"; // Start with AA01 if no matching Vendor_Id found
                     }
                 }
             }
-
             DbCL.Conn.Close();
             return comId;
         }

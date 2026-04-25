@@ -94,6 +94,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.View View1_BasicDetails;
         
         /// <summary>
+        /// HiddenField1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField HiddenField1;
+        
+        /// <summary>
         /// cmbClient control.
         /// </summary>
         /// <remarks>
@@ -103,6 +112,96 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.DropDownList cmbClient;
         
         /// <summary>
+        /// pnlClientPreview control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlClientPreview;
+        
+        /// <summary>
+        /// lblPreviewName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewName;
+        
+        /// <summary>
+        /// lblPreviewERPCode control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewERPCode;
+        
+        /// <summary>
+        /// lblPreviewAddress control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewAddress;
+        
+        /// <summary>
+        /// lblPreviewState control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewState;
+        
+        /// <summary>
+        /// lblPreviewPOS control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewPOS;
+        
+        /// <summary>
+        /// lblPreviewGST control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewGST;
+        
+        /// <summary>
+        /// lblPreviewPAN control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewPAN;
+        
+        /// <summary>
+        /// lblPreviewContact control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblPreviewContact;
+        
+        /// <summary>
+        /// lnkModifyClient control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkModifyClient;
+        
+        /// <summary>
         /// ddlPlaceOfSupply control.
         /// </summary>
         /// <remarks>
@@ -110,6 +209,24 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList ddlPlaceOfSupply;
+        
+        /// <summary>
+        /// cmbSalesPerson control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList cmbSalesPerson;
+        
+        /// <summary>
+        /// txtquotationDate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtquotationDate;
         
         /// <summary>
         /// rbYes control.
@@ -130,13 +247,13 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.RadioButton rbNo;
         
         /// <summary>
-        /// txtquotationDate control.
+        /// RadioButtonGst control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtquotationDate;
+        protected global::System.Web.UI.WebControls.RadioButtonList RadioButtonGst;
         
         /// <summary>
         /// txt_clientrefname control.
@@ -164,15 +281,6 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txt_clientrefdate;
-        
-        /// <summary>
-        /// RadioButtonGst control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.RadioButtonList RadioButtonGst;
         
         /// <summary>
         /// rbQt control.

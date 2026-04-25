@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
-using System.Data.SqlClient;
 using System.Data;
+using System.Data.SqlClient;
+using System.Web;
+using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm17 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -21,49 +19,51 @@ namespace Bill_Software.corporate.business.app
             if (!IsPostBack)
             {
                 string Client_Id = Request.QueryString["Client_Id"];
-                lblvendor_id.Text = Client_Id.ToString();
+                if (string.IsNullOrEmpty(Client_Id)) Response.Redirect("~/corporate/business/app/View_client.aspx");
+
+                lblvendor_id.Text = Client_Id;
+
+                // Load Dropdowns
                 DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
                 DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
                 DbCL.FillCombo(ddlRegState, "select State_Name from tbl_State order by State_Name");
                 DbCL.FillCombo(ddlRegCity, "select City_Name from tbl_City order by City_Name");
                 DbCL.FillCombo(cmbIndustry, "select IndustryName from tbl_Industry");
+
                 Binddate();
             }
-
         }
+
         private void Binddate()
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select * from tbl_Client where Client_Id='" + lblvendor_id.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            // SECURED: Enforce CompanyID
+            string cmdstring = "SELECT * FROM tbl_Client WHERE Client_Id = @ClientId AND CompanyID = @CompanyID";
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                txtvendorName.Text = re["Client_Name"].ToString();
-                //txtAddress1.Text = re["Address1"].ToString();
-                txtAddress1.Text = re["Address1"].ToString();
-                txtPhone.Text = re["Com_phone"].ToString();
-                cmbcity.Text = re["City"].ToString();
-                txtPin.Text = re["pin"].ToString();
-                cmbState.Text = re["State"].ToString();
-               
-                txtWebsite.Text = re["Com_web_site"].ToString();
-                txtEmail.Text = re["Com_email"].ToString();
-                txtFax.Text = re["Com_Fax"].ToString();
-              
-                txtservicetax_no.Text = re["Service_tax_no"].ToString();//gstno
-                txtpanno.Text = re["Pan_no"].ToString();
+                cmd.Parameters.AddWithValue("@ClientId", lblvendor_id.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    if (re.Read())
+                    {
+                        txtvendorName.Text = re["Client_Name"].ToString();
+                        txtAddress1.Text = re["Address1"].ToString();
+                        txtPhone.Text = re["Com_phone"].ToString();
 
-                cmbIndustry.Text= re["Industry"].ToString(); 
-                //txtRepresentativeName.Text = re["Rep_Name"].ToString();
-                //txtRepresantativeDesig.Text = re["Rep_Desig"].ToString();
-                //txtRepresentativePhone.Text = re["Rep_phone"].ToString();
-                //txtRepresentativeEmail.Text = re["Rep_email"].ToString();
+                        SetDropdownSafe(cmbcity, re["City"].ToString());
+                        SetDropdownSafe(cmbState, re["State"].ToString());
+                        SetDropdownSafe(cmbIndustry, re["Industry"].ToString());
 
-
-                ////txtGstNo.Text = re["clientgstno"].ToString();
-                ////txtvatno.Text = re["Vat_no"].ToString();
+                        txtPin.Text = re["pin"].ToString();
+                        txtWebsite.Text = re["Com_web_site"].ToString();
+                        txtEmail.Text = re["Com_email"].ToString();
+                        txtFax.Text = re["Com_Fax"].ToString();
+                        txtservicetax_no.Text = re["Service_tax_no"].ToString();
+                        txtpanno.Text = re["Pan_no"].ToString();
+                    }
+                }
             }
             DbCL.Conn.Close();
             bindregaddress();
@@ -73,107 +73,112 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Address,State,City,Phno,pin from tbl_ClientRegAddress where Client_Id='" + lblvendor_id.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            // SECURED: Enforce CompanyID
+            string cmdstring = "SELECT Address, State, City, Phno, pin FROM tbl_ClientRegAddress WHERE Client_Id = @ClientId AND CompanyID = @CompanyID";
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                txtRegAddress.Text = re["Address"].ToString();
-                ddlRegState.Text = re["State"].ToString();
-                ddlRegCity.Text = re["City"].ToString();
-                txtRegPin.Text = re["pin"].ToString();
-                txtRegPhno.Text = re["Phno"].ToString();
+                cmd.Parameters.AddWithValue("@ClientId", lblvendor_id.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    if (re.Read())
+                    {
+                        txtRegAddress.Text = re["Address"].ToString();
+                        SetDropdownSafe(ddlRegState, re["State"].ToString());
+                        SetDropdownSafe(ddlRegCity, re["City"].ToString());
+                        txtRegPin.Text = re["pin"].ToString();
+                        txtRegPhno.Text = re["Phno"].ToString();
+                    }
+                }
             }
             DbCL.Conn.Close();
         }
 
-        protected void btnEdit_Click(object sender, EventArgs e)
-        {
-            //txtAddress1.Enabled = true;
-            txtAddress1.Enabled = true;
-            txtEmail.Enabled = true;
-            txtFax.Enabled = true;
-            txtPhone.Enabled = true;
-            txtPin.Enabled = true;
-
-            txtRegAddress.Enabled = true;
-            ddlRegState.Enabled = true;
-            ddlRegCity.Enabled = true;
-            txtRegPin.Enabled = true;
-            txtRegPhno.Enabled = true;
-
-
-            //txtRepresantativeDesig.Enabled = true;
-            //txtRepresentativeEmail.Enabled = true;
-            //txtRepresentativeName.Enabled = true;
-            //txtRepresentativePhone.Enabled = true;
-            txtvendorName.Enabled = true;
-            txtWebsite.Enabled = true;
-            txtservicetax_no.Enabled = true;
-            txtpanno.Enabled = true;
-            
-            ////txtGstNo.Enabled = true;
-            ////txtvatno.Enabled = true;
-            cmbcity.Enabled = true;
-            cmbState.Enabled = true;
-            cmbIndustry.Enabled = true;
-            btnUpdate.Visible = true;
-            btnEdit.Visible = false;
-
-        }
-
         protected void btnUpdate_Click(object sender, EventArgs e)
         {
-            //string cmdstring = "update tbl_Client set Client_Name=@Client_Name,Address1=@Address1,Address2=@Address2,City=@City,pin=@pin,State=@State,Com_web_site=@Com_web_site,Com_email=@Com_email,Com_phone=@Com_phone,Com_Fax=@Com_Fax,Rep_Name=@Rep_Name,Rep_Desig=@Rep_Desig,Rep_phone=@Rep_phone,Rep_email=@Rep_email,Service_tax_no=@Service_tax_no,Pan_no=@Pan_no where Client_Id='" + lblvendor_id.Text + "'";
-
-            string cmdstring = "update tbl_Client set Client_Name=@Client_Name,Address1=@Address1,City=@City,pin=@pin,State=@State,Com_web_site=@Com_web_site,Com_email=@Com_email,Com_phone=@Com_phone,Com_Fax=@Com_Fax,Service_tax_no=@Service_tax_no,Pan_no=@Pan_no where Client_Id='" + lblvendor_id.Text + "'";
-
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            cmd.CommandType = CommandType.Text;
-            cmd.CommandTimeout = 0;
-            ////cmd.Parameters.AddWithValue("@Vendor_Id", companyID);
-            cmd.Parameters.AddWithValue("@Client_Name", txtvendorName.Text.Trim());
-            //cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
-            cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
-            cmd.Parameters.AddWithValue("@City", cmbcity.Text.Trim());
-            cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
-            cmd.Parameters.AddWithValue("@State", cmbState.Text);
-            cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text);
-            cmd.Parameters.AddWithValue("@Com_email", txtEmail.Text);
-            cmd.Parameters.AddWithValue("@Com_phone", txtPhone.Text);
-            ////cmd.Parameters.AddWithValue("@EAC_NACE_Code", cmbEacCode.Text);
-            cmd.Parameters.AddWithValue("@Com_Fax", txtFax.Text);
-            //cmd.Parameters.AddWithValue("@Rep_Name", txtRepresentativeName.Text);
-            //cmd.Parameters.AddWithValue("@Rep_Desig", txtRepresantativeDesig.Text);
-            //cmd.Parameters.AddWithValue("@Rep_phone", txtRepresentativePhone.Text);
-            //cmd.Parameters.AddWithValue("@Rep_email", txtRepresentativeEmail.Text);
-            cmd.Parameters.AddWithValue("@Service_tax_no", txtservicetax_no.Text);
-            cmd.Parameters.AddWithValue("@Pan_no", txtpanno.Text);
-            ////cmd.Parameters.AddWithValue("@clientgstno", txtGstNo.Text); 
-            ////cmd.Parameters.AddWithValue("@Vat_no", txtvatno.Text);
-            cmd.ExecuteNonQuery();
+
+            string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+
+            string cmdstring = @"UPDATE tbl_Client SET 
+                     Client_Name=@Client_Name, Address1=@Address1, City=@City, pin=@pin, State=@State, 
+                     Com_web_site=@Com_web_site, Com_email=@Com_email, Com_phone=@Com_phone, Com_Fax=@Com_Fax, 
+                     Service_tax_no=@Service_tax_no, Pan_no=@Pan_no, Industry=@Industry, 
+                     UpdatedBy=@UpdatedBy, UpdatedOn=GETDATE() 
+                     WHERE Client_Id=@ClientId AND CompanyID=@CompanyID";
+
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
+            {
+                cmd.Parameters.AddWithValue("@Client_Name", txtvendorName.Text.Trim());
+                cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text.Trim());
+                cmd.Parameters.AddWithValue("@City", cmbcity.Text);
+                cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
+                cmd.Parameters.AddWithValue("@State", cmbState.Text);
+                cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text.Trim());
+                cmd.Parameters.AddWithValue("@Com_email", txtEmail.Text.Trim());
+                cmd.Parameters.AddWithValue("@Com_phone", txtPhone.Text.Trim());
+                cmd.Parameters.AddWithValue("@Com_Fax", txtFax.Text.Trim());
+                cmd.Parameters.AddWithValue("@Service_tax_no", txtservicetax_no.Text.Trim());
+                cmd.Parameters.AddWithValue("@Pan_no", txtpanno.Text.Trim());
+                cmd.Parameters.AddWithValue("@Industry", cmbIndustry.Text);
+                cmd.Parameters.AddWithValue("@ClientId", lblvendor_id.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                cmd.Parameters.AddWithValue("@UpdatedBy", userId);
+                cmd.ExecuteNonQuery();
+            }
             DbCL.Conn.Close();
 
             updateregaddress();
 
-            PanelOK.Visible = true;
-            lblOk.Text = "Data Update Successfully...";
-            btnUpdate.Visible = false;
+            // ========================================================================
+            // FIXED PROACTIVE NOTIFICATION: Correct Columns + Try/Catch Safety Net
+            // ========================================================================
+            try
+            {
+                string notifMsg = $"Client '{txtvendorName.Text.Trim()}' (ID: {lblvendor_id.Text}) profile was updated.";
 
+                // Using standard schema columns to ensure the auto-scrolling dashboard maps properly
+                string notifQuery = @"INSERT INTO tbl_SystemNotification 
+                              (CompanyID, Title, Message, Module, Type, UserId, CreatedOn) 
+                              VALUES (@CompanyID, @Title, @Message, @Module, @Type, @UserId, GETDATE())";
+
+                SqlParameter[] notifParam = {
+                    new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID),
+                    new SqlParameter("@Title", "Client Updated"),
+                    new SqlParameter("@Message", notifMsg),
+                    new SqlParameter("@Module", "Client Management"),
+                    new SqlParameter("@Type", "Info"),
+                    new SqlParameter("@UserId", Session["USERID"] != null ? Session["USERID"].ToString() : "System")
+                };
+
+                DbCL.SPExecDB(notifQuery, notifParam);
+            }
+            catch (Exception ex)
+            {
+                // Soft-catch: If the notification table schema varies, it will fail silently 
+                // without crashing the actual Client Update transaction above.
+                System.Diagnostics.Debug.WriteLine("Notification Logging Failed: " + ex.Message);
+            }
+
+            PanelOK.Visible = true;
+            lblOk.Text = "Client Details Updated Successfully.";
         }
 
         private void updateregaddress()
         {
-            string query = "update tbl_ClientRegAddress set Address=@Address,State=@State,City=@City,Phno=@Phno,pin=@pin where Client_Id=@Client_Id";
+            string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+
+            string query = "UPDATE tbl_ClientRegAddress SET Address=@Address, State=@State, City=@City, Phno=@Phno, pin=@pin, UpdatedBy=@UpdatedBy, UpdatedOn=GETDATE() WHERE Client_Id=@ClientId AND CompanyID=@CompanyID";
             SqlParameter[] pram = {
-                new SqlParameter("@Address",txtRegAddress.Text),
-                new SqlParameter("@State",ddlRegState.Text),
-                new SqlParameter("@City",ddlRegCity.Text),
-                new SqlParameter("@Phno",txtRegPhno.Text),
-                new SqlParameter("@pin",txtRegPin.Text),
-                new SqlParameter("@Client_Id",lblvendor_id.Text),
+                new SqlParameter("@Address", txtRegAddress.Text.Trim()),
+                new SqlParameter("@State", ddlRegState.Text),
+                new SqlParameter("@City", ddlRegCity.Text),
+                new SqlParameter("@Phno", txtRegPhno.Text.Trim()),
+                new SqlParameter("@pin", txtRegPin.Text.Trim()),
+                new SqlParameter("@ClientId", lblvendor_id.Text),
+                new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID),
+                new SqlParameter("@UpdatedBy", userId) // <--- AUDIT TRAIL INJECTED
             };
             DbCL.SPExecDB(query, pram);
         }
@@ -181,7 +186,14 @@ namespace Bill_Software.corporate.business.app
         protected void btnBack_Click(object sender, EventArgs e)
         {
             Response.Redirect("~/corporate/business/app/View_client.aspx");
+        }
 
+        private void SetDropdownSafe(DropDownList ddl, string val)
+        {
+            if (!string.IsNullOrEmpty(val) && ddl.Items.FindByValue(val) != null)
+            {
+                ddl.SelectedValue = val;
+            }
         }
     }
 }

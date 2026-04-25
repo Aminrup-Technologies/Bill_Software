@@ -21,6 +21,7 @@ namespace Bill_Software.corporate.business.app
             if (HttpContext.Current.Session["USERID"] == null)
             {
                 Response.Redirect("~/index.aspx");
+                return;
             }
 
             if (!IsPostBack)
@@ -34,11 +35,10 @@ namespace Bill_Software.corporate.business.app
                     int visitId;
                     if (int.TryParse(Request.QueryString["visitId"], out visitId))
                     {
-                        // 1. Store the VisitId in a HiddenField so it survives postbacks 
-                        //    and can be inserted into tbl_Quotation upon saving.
+                        // 1. Store the VisitId in a HiddenField
                         hfVisitId.Value = visitId.ToString();
 
-                        // 2. Fetch the customer from the visit to save the salesperson time
+                        // 2. Fetch the customer from the visit
                         PreFillClientFromVisit(visitId);
                     }
                 }
@@ -51,19 +51,21 @@ namespace Bill_Software.corporate.business.app
             try
             {
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-                using (System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(connStr))
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    // Assuming tbl_SalesVisitReport holds CustomerName.
-                    string query = "SELECT CustomerName FROM tbl_SalesVisitReport WHERE Id = @Id";
-                    using (System.Data.SqlClient.SqlCommand cmd = new System.Data.SqlClient.SqlCommand(query, conn))
+                    // Full-Stack CompanyContext segregation fix: Ensure Visit Report matches Company
+                    string query = "SELECT CustomerName FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         conn.Open();
                         object result = cmd.ExecuteScalar();
 
                         if (result != null)
                         {
                             string customerName = result.ToString();
+                            // Logic to auto-select client dropdown goes here if needed
                         }
                     }
                 }
@@ -76,7 +78,48 @@ namespace Bill_Software.corporate.business.app
 
         private void BindDropdowns()
         {
-            DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+
+                // 1. GLOBAL RESOURCE: Sales Persons (Uncommented and Active!)
+                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 and (User_Id NOT IN ('admin', 'AT01')) ORDER BY Id";
+                using (SqlCommand cmd = new SqlCommand(salesQuery, conn))
+                {
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        DataTable dtSales = new DataTable();
+                        da.Fill(dtSales);
+
+                        cmbSalesPerson.DataSource = dtSales;
+                        cmbSalesPerson.DataTextField = "DisplayName"; // Shows: Anish Dwivedi [FLM03]
+                        cmbSalesPerson.DataValueField = "Id";         // Stores: 3 (The PK)
+                        cmbSalesPerson.DataBind();
+                        cmbSalesPerson.Items.Insert(0, new ListItem("-- Select Sales Person --", "0"));
+                    }
+                }
+
+                // 2. ISOLATED RESOURCE: Clients (Strictly Filtered by CompanyContext)
+                string clientQuery = "SELECT Client_Id, Client_Name FROM tbl_Client WHERE CompanyID = @CompanyID ORDER BY Id";
+                using (SqlCommand cmd = new SqlCommand(clientQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        DataTable dtClients = new DataTable();
+                        da.Fill(dtClients);
+
+                        cmbClient.DataSource = dtClients;
+                        cmbClient.DataTextField = "Client_Name";
+                        cmbClient.DataValueField = "Client_Id"; // Must be Client_Id, not Client_Name
+                        cmbClient.DataBind();
+                        cmbClient.Items.Insert(0, new ListItem("--Select--", "0"));
+                    }
+                }
+            }
+
+            // Place of supply
             DbCL.FillCombo(ddlPlaceOfSupply, "Select City_Name from tbl_City order by City_Name asc");
         }
 
@@ -93,16 +136,61 @@ namespace Bill_Software.corporate.business.app
         protected void btnNext1_Click(object sender, EventArgs e)
         {
             PanelGlobalAlert.Visible = false;
-            if (hdnRefOption.Value == "Yes")
+
+            // ==========================================
+            // STRICT SERVER-SIDE VALIDATION
+            // ==========================================
+            if (cmbClient.SelectedValue == "0" || string.IsNullOrWhiteSpace(cmbClient.SelectedValue))
+            {
+                ShowAlert("Please select a valid Client before proceeding.", true);
+                return;
+            }
+            if (cmbSalesPerson.SelectedValue == "0" || string.IsNullOrWhiteSpace(cmbSalesPerson.SelectedValue))
+            {
+                ShowAlert("Please assign a Sales Person before proceeding.", true);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(txtquotationDate.Text))
+            {
+                ShowAlert("Quotation Date is mandatory.", true);
+                return;
+            }
+            if (ddlPlaceOfSupply.SelectedValue == "0" || string.IsNullOrWhiteSpace(ddlPlaceOfSupply.SelectedValue))
+            {
+                ShowAlert("Place of Supply is mandatory.", true);
+                return;
+            }
+
+            // STRICT CHECK: GST Type
+            if (RadioButtonGst.SelectedIndex == -1)
+            {
+                ShowAlert("Please select a GST Type (CGST/SGST or IGST) before proceeding.", true);
+                return;
+            }
+
+            // STRICT CHECK: Record Type
+            if (!rbQt.Checked && !rbPo.Checked)
+            {
+                ShowAlert("Please select a Record Type (Quotation or Purchase Order) before proceeding.", true);
+                return;
+            }
+
+            // ==========================================
+
+            // Existing Reference Details Validation
+            if (rbYes.Checked) // Or hdnRefOption.Value == "Yes" depending on your exact markup
             {
                 if (string.IsNullOrWhiteSpace(txt_clientrefname.Text) || string.IsNullOrWhiteSpace(txt_clientrefid.Text) || string.IsNullOrWhiteSpace(txt_clientrefdate.Text))
                 {
-                    ShowAlert("Please fill all reference details.", true);
+                    ShowAlert("Please fill all reference details, or select 'No' to disable them.", true);
                     return;
                 }
             }
 
+            // Existing Duplicate Check
             if (IsPurchaseOrderDuplicate()) return;
+
+            // Proceed to Step 2
             BindListitemNew();
             BindclientID();
             WizardMultiView.ActiveViewIndex = 1;
@@ -113,8 +201,12 @@ namespace Bill_Software.corporate.business.app
         protected void Button2_Click(object sender, EventArgs e)
         {
             PanelCatalogGrid.Visible = true;
-            string cmdstring = "select Id, Product_code, ProductID, ProductOrServiceCat, Brand, ProductName, Specification, Type,Sail_Rate,Tax_Rate,Unit from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat order by Id,ProductName";
-            SqlParameter[] pram = { new SqlParameter("@ProductOrServiceCat", cmbproduct_service.Text) };
+            // Full-Stack CompanyContext segregation fix: Added CompanyID to Product search
+            string cmdstring = "select Id, Product_code, ProductID, ProductOrServiceCat, Brand, ProductName, Specification, Type,Sail_Rate,Tax_Rate,Unit from tbl_NewProduct where ProductOrServiceCat=@ProductOrServiceCat AND CompanyID = @CompanyID order by Id,ProductName";
+            SqlParameter[] pram = {
+                new SqlParameter("@ProductOrServiceCat", cmbproduct_service.Text),
+                new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
+            };
             DataTable dtproductWithCat = DbCL.SPreturn_dt(cmdstring, pram);
             if (dtproductWithCat.Rows.Count > 0)
             {
@@ -304,12 +396,13 @@ namespace Bill_Software.corporate.business.app
 
         private void BindclientID()
         {
-            string query = "SELECT Client_Id FROM tbl_Client WHERE Client_Name = @ClientName";
+            string query = "SELECT Client_Id FROM tbl_Client WHERE Client_Name = @ClientName AND CompanyID = @CompanyID";
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@ClientName", cmbClient.Text);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     con.Open();
                     object result = cmd.ExecuteScalar();
                     if (result != null) lblclientID.Text = result.ToString();
@@ -319,12 +412,13 @@ namespace Bill_Software.corporate.business.app
 
         private void BindListitemNew()
         {
-            string cmdstring = "select ProductOrServiceCat from tbl_NewparentProduct order by ProductOrServiceCat";
+            string cmdstring = "select ProductOrServiceCat from tbl_NewparentProduct WHERE CompanyID = @CompanyID order by ProductOrServiceCat";
             cmbproduct_service.Items.Clear();
             cmbproduct_service.Items.Add("--Select--");
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(cmdstring, con))
             {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 con.Open();
                 using (SqlDataReader re = cmd.ExecuteReader())
                 {
@@ -401,6 +495,7 @@ namespace Bill_Software.corporate.business.app
             string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
             DataTable dt1 = (DataTable)ViewState["PhaseProductData"];
             decimal new_sub_total = 0, new_total_Service = 0, new_Gross_amount = 0;
+
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ToString()))
             {
                 conn.Open();
@@ -444,8 +539,6 @@ namespace Bill_Software.corporate.business.app
                         {
                             cmd.Parameters.AddWithValue("@Sl_no", h);
                             cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
-
-                            // SWAPPED MAPPING RESOLVED HERE
                             cmd.Parameters.AddWithValue("@Product_id", row["Product_code"]);
                             cmd.Parameters.AddWithValue("@Product_Code", row["ProductId"]);
                             cmd.Parameters.AddWithValue("@Product_name", row["ProductName"]);
@@ -498,15 +591,19 @@ namespace Bill_Software.corporate.business.app
                     decimal final_net_amount = Math.Round(new_Gross_amount, 2);
                     decimal final_service_tax = Math.Round(new_total_Service, 2);
 
-                    // --- INJECTION 2: Inserting the active CompanyID when creating the new Quotation/PO ---
+                    // (Assuming cmbSalesPerson exists in ASPX to assign SalesPersonId)
+                    string assignedSalesPerson = string.Empty;
+                    // assignedSalesPerson = cmbSalesPerson.SelectedValue;
+
+                    // --- INJECTION 2: Inserting the active CompanyID & SalesPersonId when creating the new Quotation/PO ---
                     using (SqlCommand cmd = new SqlCommand(@"INSERT INTO tbl_Quotation 
-                    (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount, VisitId, CompanyID)
+                    (Quotation_no, Quotation_date, Client_Id, Gross, Service_tax, Net_amount, Status1, Status2, Sl_no, status3, service_tax1, sub_total, cgstOrsgst, igst, PlaceofSupply, PaymentStatus, ReferenceData, ReferenceName, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, RecordType, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, AddedById, DiscountView, TCS_Amount, TCS_Percent, Freight_Amount, Freight_VAT_Percent, OtherCharge_Name, OtherCharge_Amount, VisitId, SalesPersonId, CompanyID)
                     VALUES (@Quotation_no, @Quotation_date, @Client_Id, @Gross, @Service_tax, @Net_amount, 'No', 'No', @Sl_no, 'No', @service_tax1, @sub_total, @cgstOrsgst, 
-                    @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView, @TCS_Amount, @TCS_Percent, @Freight_Amount, @Freight_VAT_Percent, @OtherCharge_Name, @OtherCharge_Amount, @VisitId, @CompanyID)", conn, trans))
+                    @igst, @PlaceofSupply, 'No', @ReferenceData, @ReferenceName, @ReferenceId, @ReferenceDate, @ValidityDays, @DeliveryTenure, @PackingCharges, @Remarks, @DetailedView, @RecordType, @DO_Number, @PO_Number, @PO_Date, @Validity_StartDate, @Validity_EndDate, @AddedById, @DiscountView, @TCS_Amount, @TCS_Percent, @Freight_Amount, @Freight_VAT_Percent, @OtherCharge_Name, @OtherCharge_Amount, @VisitId, @SalesPersonId, @CompanyID)", conn, trans))
                     {
                         cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
                         cmd.Parameters.AddWithValue("@Quotation_date", txtquotationDate.Text);
-                        cmd.Parameters.AddWithValue("@Client_Id", lblclientID.Text);
+                        cmd.Parameters.AddWithValue("@Client_Id", lblPreviewERPCode.Text);
                         cmd.Parameters.AddWithValue("@Gross", final_net_amount);
                         cmd.Parameters.AddWithValue("@Service_tax", final_service_tax);
                         cmd.Parameters.AddWithValue("@Net_amount", final_net_amount);
@@ -539,11 +636,24 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Freight_VAT_Percent", freightPercent);
                         cmd.Parameters.AddWithValue("@OtherCharge_Name", TextBox1.Text);
                         cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
+
                         if (!string.IsNullOrEmpty(hfVisitId.Value))
                             cmd.Parameters.AddWithValue("@VisitId", Convert.ToInt32(hfVisitId.Value));
                         else
                             cmd.Parameters.AddWithValue("@VisitId", DBNull.Value);
 
+                        // Uncomment this when cmbSalesPerson is on ASPX
+                        // cmd.Parameters.AddWithValue("@SalesPersonId", string.IsNullOrEmpty(assignedSalesPerson) ? DBNull.Value : (object)assignedSalesPerson);
+                        //cmd.Parameters.AddWithValue("@SalesPersonId", DBNull.Value);
+                        // 2. Map the Sales Person Dropdown (safely handling default "0" selection)
+                        if (cmbSalesPerson.SelectedValue == "0" || string.IsNullOrEmpty(cmbSalesPerson.SelectedValue))
+                        {
+                            cmd.Parameters.AddWithValue("@SalesPersonId", DBNull.Value);
+                        }
+                        else
+                        {
+                            cmd.Parameters.AddWithValue("@SalesPersonId", cmbSalesPerson.SelectedValue);
+                        }
                         cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
                         cmd.ExecuteNonQuery();
@@ -551,6 +661,12 @@ namespace Bill_Software.corporate.business.app
 
                     insertPaymentPhaseNew(lblqno.Text, conn, trans);
                     insertprimaryServiceNew(lblqno.Text, conn, trans);
+
+                    // --- CORE RULE: PROACTIVE NOTIFICATION LOGGING ---
+                    InsertSystemNotification(trans, conn,
+                        "Document Generated",
+                        $"Document {lblqno.Text} has been successfully generated.",
+                        "SALES", "SUCCESS");
 
                     trans.Commit();
                     ShowAlert("Document Saved Successfully! ID: " + lblqno.Text, false);
@@ -647,7 +763,7 @@ namespace Bill_Software.corporate.business.app
             using (SqlCommand cmd = new SqlCommand("select Sl_no from tbl_Quotation where ID=(select max(ID) from tbl_Quotation where cast(Quotation_date as datetime) between '" + d5 + "' and '" + d6 + "' AND CompanyID = " + CompanyContext.CurrentCompanyID + ")", DbCL.Conn))
             using (SqlDataReader re = cmd.ExecuteReader())
             {
-                if (re.Read()) b = Convert.ToInt32(re["Sl_no"]);
+                if (re.Read() && re["Sl_no"] != DBNull.Value) b = Convert.ToInt32(re["Sl_no"]);
             }
             DbCL.Conn.Close(); return b;
         }
@@ -732,12 +848,13 @@ namespace Bill_Software.corporate.business.app
         {
             foreach (GridViewRow r in GridView3.Rows)
             {
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO tbl_QutPaymentPhase(qut_no, phase_type, PhaseDesc, amountper) VALUES (@qut_no, @pt, @pd, @ap)", conn, trans))
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO tbl_QutPaymentPhase(qut_no, phase_type, PhaseDesc, amountper, TimeStamp, CompanyID) VALUES (@qut_no, @pt, @pd, @ap, GETDATE(), @CompanyID)", conn, trans))
                 {
                     cmd.Parameters.AddWithValue("@qut_no", qutno);
                     cmd.Parameters.AddWithValue("@pt", ((Label)r.Cells[1].FindControl("PaymentPhase")).Text);
                     cmd.Parameters.AddWithValue("@pd", ((TextBox)r.Cells[2].FindControl("PhaseDesc")).Text);
                     cmd.Parameters.AddWithValue("@ap", GridView3.Rows.Count == 1 ? "100" : ((TextBox)r.Cells[0].FindControl("AmountPer")).Text);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -750,10 +867,12 @@ namespace Bill_Software.corporate.business.app
             foreach (GridViewRow r in gridps.Rows)
             {
                 string pc = ((Label)r.Cells[0].FindControl("ProductCatagory")).Text;
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO tbl_QutPrimaryService(qut_no, PrimaryService) VALUES (@q, @ps)", conn, trans))
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO tbl_QutPrimaryService(qut_no, PrimaryService, TimeStamp, CompanyID) VALUES (@q, @ps, GETDATE(), @CompanyID)", conn, trans))
                 {
                     cmd.Parameters.AddWithValue("@q", qutno);
-                    cmd.Parameters.AddWithValue("@ps", pc); cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@ps", pc);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.ExecuteNonQuery();
                 }
 
                 using (SqlCommand cmd = new SqlCommand("SELECT PrimaryServiceTerms FROM tbl_PrimaryServiceTerms WHERE PrimaryService=@p", conn, trans))
@@ -765,8 +884,14 @@ namespace Bill_Software.corporate.business.app
                         da.Fill(dt);
                         foreach (DataRow dr in dt.Rows)
                         {
-                            using (SqlCommand c = new SqlCommand("INSERT INTO tbl_QuoPserTerm (qutno, PServiceName, PSerTer) VALUES (@q, @pn, @pt)", conn, trans))
-                            { c.Parameters.AddWithValue("@q", qutno); c.Parameters.AddWithValue("@pn", pc); c.Parameters.AddWithValue("@pt", dr[0]); c.ExecuteNonQuery(); }
+                            using (SqlCommand c = new SqlCommand("INSERT INTO tbl_QuoPserTerm (qutno, PServiceName, PSerTer, TimeStamp, CompanyID) VALUES (@q, @pn, @pt, GETDATE(), @CompanyID)", conn, trans))
+                            {
+                                c.Parameters.AddWithValue("@q", qutno);
+                                c.Parameters.AddWithValue("@pn", pc);
+                                c.Parameters.AddWithValue("@pt", dr[0]);
+                                c.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                c.ExecuteNonQuery();
+                            }
                         }
                     }
                 }
@@ -778,10 +903,116 @@ namespace Bill_Software.corporate.business.app
             }
             if (!string.IsNullOrEmpty(ps))
             {
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO tbl_QuoPriSerTogather (qutno, PServiceName) VALUES (@q, @ps)", conn, trans))
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO tbl_QuoPriSerTogather (qutno, PServiceName, TimeStamp, CompanyID) VALUES (@q, @ps, GETDATE(), @CompanyID)", conn, trans))
                 {
                     cmd.Parameters.AddWithValue("@q", qutno);
-                    cmd.Parameters.AddWithValue("@ps", ps); cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@ps", ps);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        // --- CORE RULE: PROACTIVE NOTIFICATION HELPER ---
+        private void InsertSystemNotification(SqlTransaction trans, SqlConnection conn, string title, string message, string moduleCode, string severity)
+        {
+            string sql = @"INSERT INTO tbl_SystemNotification 
+                           (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CreatedOn, CompanyID) 
+                           VALUES 
+                           (@Title, @Message, @ModuleCode, @Severity, GETDATE(), DATEADD(day, 7, GETDATE()), 1, @CreatedBy, GETDATE(), @CompanyID)";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@Title", title);
+                cmd.Parameters.AddWithValue("@Message", message);
+                cmd.Parameters.AddWithValue("@ModuleCode", moduleCode);
+                cmd.Parameters.AddWithValue("@Severity", severity);
+                cmd.Parameters.AddWithValue("@CreatedBy", Session["USERID"]?.ToString() ?? "System");
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        protected void cmbClient_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Hide preview if they revert to "--Select--"
+            if (cmbClient.SelectedValue == "0" || string.IsNullOrEmpty(cmbClient.SelectedValue))
+            {
+                pnlClientPreview.Visible = false;
+                return;
+            }
+
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                // Safe parameterized query perfectly mapped to your sample schema
+                string query = @"SELECT Client_Id, Client_Name, Address1, City, pin, State, 
+                                Service_tax_no, Pan_no, PlaceofSupply 
+                         FROM tbl_Client 
+                         WHERE (Client_Id = @ClientParam OR Client_Name = @ClientParam) 
+                         AND CompanyID = @CompanyID";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ClientParam", cmbClient.SelectedValue);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            // Basic Info
+                            lblPreviewName.Text = dr["Client_Name"]?.ToString();
+
+                            // Capture Client_Id securely
+                            string clientId = dr["Client_Id"]?.ToString();
+                            lblPreviewERPCode.Text = clientId;
+
+                            // ---- NEW: Set the Dynamic Modify Link ----
+                            lnkModifyClient.NavigateUrl = $"~/corporate/business/app/Update_client.aspx?Client_Id={clientId}";
+
+                            // Address Formatting (Skipping blank fields)
+                            System.Collections.Generic.List<string> addressParts = new System.Collections.Generic.List<string>();
+                            if (dr["Address1"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["Address1"].ToString()))
+                                addressParts.Add(dr["Address1"].ToString().Trim());
+                            if (dr["City"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["City"].ToString()))
+                                addressParts.Add(dr["City"].ToString().Trim());
+
+                            string zipCode = dr["pin"] != DBNull.Value ? dr["pin"].ToString().Trim() : "";
+                            string finalAddress = string.Join(", ", addressParts);
+                            if (!string.IsNullOrWhiteSpace(zipCode)) finalAddress += " - " + zipCode;
+
+                            lblPreviewAddress.Text = string.IsNullOrWhiteSpace(finalAddress) ? "Address not provided." : finalAddress;
+
+                            // Geography Details
+                            lblPreviewState.Text = dr["State"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["State"].ToString()) ? dr["State"].ToString() : "N/A";
+                            lblPreviewPOS.Text = dr["PlaceofSupply"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["PlaceofSupply"].ToString()) ? dr["PlaceofSupply"].ToString() : "N/A";
+
+                            // Taxation Details (Service_tax_no stores the GSTIN)
+                            lblPreviewGST.Text = dr["Service_tax_no"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["Service_tax_no"].ToString()) ? dr["Service_tax_no"].ToString() : "N/A";
+                            lblPreviewPAN.Text = dr["Pan_no"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["Pan_no"].ToString()) ? dr["Pan_no"].ToString() : "N/A";
+
+                            // Auto-Select the Place of Supply Dropdown
+                            string placeOfSupply = dr["PlaceofSupply"] != DBNull.Value ? dr["PlaceofSupply"].ToString().Trim() : "";
+                            if (!string.IsNullOrEmpty(placeOfSupply))
+                            {
+                                ListItem posItem = ddlPlaceOfSupply.Items.FindByText(placeOfSupply);
+                                if (posItem != null)
+                                {
+                                    ddlPlaceOfSupply.ClearSelection();
+                                    posItem.Selected = true;
+                                }
+                            }
+
+                            // Show the Preview Card
+                            pnlClientPreview.Visible = true;
+                        }
+                        else
+                        {
+                            pnlClientPreview.Visible = false;
+                        }
+                    }
                 }
             }
         }

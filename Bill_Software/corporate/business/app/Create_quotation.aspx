@@ -105,7 +105,7 @@
                 background: #ff9999;
                 color: darkred;
             }
-            /* Horizontal Scroll & Frozen Column CSS */
+        /* Horizontal Scroll & Frozen Column CSS */
         .cart-grid-wrapper {
             width: 100%;
             max-height: 500px;
@@ -113,41 +113,106 @@
             overflow-y: auto;
             border: 1px solid #ccc;
         }
-        
-        .cart-grid-wrapper table {
-            width: 100%;
-            min-width: 1800px; /* Forces horizontal scrolling */
-            border-collapse: separate;
-            border-spacing: 0;
-        }
 
-        .cart-grid-wrapper th {
-            position: sticky;
-            top: 0;
-            background-color: #006699;
-            color: white;
-            z-index: 20; 
-            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.4);
-            white-space: nowrap;
-            padding: 8px;
-        }
+            .cart-grid-wrapper table {
+                width: 100%;
+                min-width: 1800px; /* Forces horizontal scrolling */
+                border-collapse: separate;
+                border-spacing: 0;
+            }
 
-        .cart-grid-wrapper td { white-space: nowrap; background-color: inherit; }
+            .cart-grid-wrapper th {
+                position: sticky;
+                top: 0;
+                background-color: #006699;
+                color: white;
+                z-index: 20;
+                box-shadow: 0 2px 2px -1px rgba(0,0,0,0.4);
+                white-space: nowrap;
+                padding: 8px;
+            }
+
+            .cart-grid-wrapper td {
+                white-space: nowrap;
+                background-color: inherit;
+            }
 
         /* Freeze Left Identifiers */
-        .col-frozen-action { position: sticky; left: 0; z-index: 10; background-color: #fff; width: 80px; min-width: 80px; text-align: center;}
-        .col-frozen-sl { position: sticky; left: 80px; z-index: 10; background-color: #fff; width: 40px; min-width: 40px; text-align: center; }
-        .col-frozen-name { position: sticky; left: 120px; z-index: 10; background-color: #fff; border-right: 2px solid #444; width: 220px; min-width: 220px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
-        
-        .cart-grid-wrapper th.col-frozen-action, 
-        .cart-grid-wrapper th.col-frozen-sl, 
-        .cart-grid-wrapper th.col-frozen-name { z-index: 30; }
-        
-        .grid-footer td.col-frozen-action, 
-        .grid-footer td.col-frozen-sl, 
-        .grid-footer td.col-frozen-name { z-index: 30; background-color: #e9ecef; }
+        .col-frozen-action {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: #fff;
+            width: 80px;
+            min-width: 80px;
+            text-align: center;
+        }
 
-        .col-editable { background-color: #fbfcff; }
+        .col-frozen-sl {
+            position: sticky;
+            left: 80px;
+            z-index: 10;
+            background-color: #fff;
+            width: 40px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .col-frozen-name {
+            position: sticky;
+            left: 120px;
+            z-index: 10;
+            background-color: #fff;
+            border-right: 2px solid #444;
+            width: 220px;
+            min-width: 220px;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cart-grid-wrapper th.col-frozen-action,
+        .cart-grid-wrapper th.col-frozen-sl,
+        .cart-grid-wrapper th.col-frozen-name {
+            z-index: 30;
+        }
+
+        .grid-footer td.col-frozen-action,
+        .grid-footer td.col-frozen-sl,
+        .grid-footer td.col-frozen-name {
+            z-index: 30;
+            background-color: #e9ecef;
+        }
+
+        .col-editable {
+            background-color: #fbfcff;
+        }
+
+        /* --- Select2 Custom Styling to Match FLMX Theme --- */
+        .select2-container .select2-selection--single {
+            height: 30px !important;
+            border: 1px solid #ccc !important;
+            border-radius: 4px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px !important;
+            font-size: 12px;
+            color: #333 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 28px !important;
+        }
+        /* Fix invisible text on hover */
+        .select2-results__option {
+            color: #333333 !important;
+        }
+        /* FLMX Branded Highlight */
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #19658A !important;
+            color: white !important;
+        }
     </style>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -191,6 +256,28 @@
 
                 row.style.display = (textMatch && stateMatch) ? '' : 'none';
             }
+        }
+
+        // Function to initialize the searchable dropdowns
+        function InitializeSelect2() {
+            $('.select2-search').select2({
+                placeholder: "-- Select --",
+                allowClear: true,
+                width: '100%' // Ensures it doesn't break your table layout
+            });
+        }
+
+        // 1. Fire on initial page load
+        $(document).ready(function () {
+            InitializeSelect2();
+        });
+
+        // 2. Fire after every ASP.NET AJAX UpdatePanel postback
+        var prm = Sys.WebForms.PageRequestManager.getInstance();
+        if (prm != null) {
+            prm.add_endRequest(function (sender, e) {
+                InitializeSelect2();
+            });
         }
 
         function calculateCart() {
@@ -258,12 +345,6 @@
                     rows[i].style.backgroundColor = "";
                 }
             }
-            return true;
-        }
-
-        function ValidateField() {
-            if (document.getElementById('<%=cmbClient.ClientID%>').value == "") { alert("Select Client."); return false; }
-            if (document.getElementById('<%=ddlPlaceOfSupply.ClientID%>').value == "") { alert("Select Place of Supply."); return false; }
             return true;
         }
 
@@ -363,7 +444,7 @@
                 ddlDeliveryTerms.focus(); return false;
             }
 
-                    // 3. Dependent Manual Inputs
+            // 3. Dependent Manual Inputs
             if (ddlDeliveryTerms && ddlDeliveryTerms.value === "4") {
                 var manualInput = document.getElementById('<%= txt_deltrms.ClientID %>');
                 if (manualInput && manualInput.value.trim() === "") {
@@ -373,31 +454,31 @@
             }
 
             var ddlPkgFrwd = document.getElementById('<%= DDL_pkgfrwd.ClientID %>');
-                    if (ddlPkgFrwd && ddlPkgFrwd.value === "0") {
-                        alert("Please select a Package Forwarding option.");
-                        ddlPkgFrwd.focus(); return false;
-                    }
+            if (ddlPkgFrwd && ddlPkgFrwd.value === "0") {
+                alert("Please select a Package Forwarding option.");
+                ddlPkgFrwd.focus(); return false;
+            }
 
-                    if (ddlPkgFrwd && ddlPkgFrwd.value === "3") {
-                        var pkgInput = document.getElementById('<%= txt_pkgfrwd.ClientID %>');
+            if (ddlPkgFrwd && ddlPkgFrwd.value === "3") {
+                var pkgInput = document.getElementById('<%= txt_pkgfrwd.ClientID %>');
                 if (pkgInput && pkgInput.value.trim() === "") {
                     alert("Please enter manual package forwarding details.");
                     pkgInput.focus(); return false;
                 }
             }
 
-                    // 4. Other Charges Logic
+            // 4. Other Charges Logic
             var elOtherAmt = document.getElementById('<%= txt_othr_amnt.ClientID %>');
-                    var elOtherName = document.getElementById('<%= TextBox1.ClientID %>');
-                    if (elOtherAmt && parseFloat(elOtherAmt.value) > 0) {
-                        if (elOtherName && elOtherName.value.trim() === "") {
-                            alert("You entered an Other Charges Amount. Please provide a Name for this charge.");
-                            elOtherName.focus(); return false;
-                        }
-                    }
+            var elOtherName = document.getElementById('<%= TextBox1.ClientID %>');
+            if (elOtherAmt && parseFloat(elOtherAmt.value) > 0) {
+                if (elOtherName && elOtherName.value.trim() === "") {
+                    alert("You entered an Other Charges Amount. Please provide a Name for this charge.");
+                    elOtherName.focus(); return false;
+                }
+            }
 
-                    // Disable button to prevent double-click submissions
-                    var btn = document.getElementById('<%= Button3.ClientID %>');
+            // Disable button to prevent double-click submissions
+            var btn = document.getElementById('<%= Button3.ClientID %>');
             if (btn) {
                 btn.value = "Saving...";
                 btn.style.backgroundColor = "#666";
@@ -408,7 +489,63 @@
             return true;
         }
 
-        window.onload = function () { togglePanel(); };
+        function ValidateField() {
+            // Get the values of the mandatory dropdowns and textboxes
+            var client = document.getElementById('<%= cmbClient.ClientID %>').value;
+            var salesPerson = document.getElementById('<%= cmbSalesPerson.ClientID %>').value;
+            var docDate = document.getElementById('<%= txtquotationDate.ClientID %>').value;
+            var pos = document.getElementById('<%= ddlPlaceOfSupply.ClientID %>').value;
+
+            // 1. Validate Client
+            if (client === "0" || client === "") {
+                alert("⚠️ Please select a Client from the list.");
+                return false;
+            }
+            // 2. Validate Sales Person
+            if (salesPerson === "0" || salesPerson === "") {
+                alert("⚠️ Please assign a Sales Person.");
+                return false;
+            }
+            // 3. Validate Date
+            if (docDate.trim() === "") {
+                alert("⚠️ Please enter the Document Date.");
+                return false;
+            }
+            // 4. Validate Place of Supply
+            if (pos === "0" || pos === "--Select--" || pos === "") {
+                alert("⚠️ Please select a Place Of Supply.");
+                return false;
+            }
+
+            // 5. Validate GST Type (Checks if any radio button in the list is checked)
+            var gstSelected = document.querySelector('input[name$="RadioButtonGst"]:checked');
+            if (!gstSelected) {
+                alert("⚠️ Please select a GST Type (CGST/SGST or IGST).");
+                return false;
+            }
+
+            // 6. Validate Record Type
+            var isQt = document.getElementById('<%= rbQt.ClientID %>').checked;
+            var isPo = document.getElementById('<%= rbPo.ClientID %>').checked;
+            if (!isQt && !isPo) {
+                alert("⚠️ Please select a Record Type (Quotation or Purchase Order).");
+                return false;
+            }
+
+            // If PO is selected, validate PO fields (Optional based on your rules)
+            var rbPo = document.getElementById('<%= rbPo.ClientID %>');
+            if (rbPo && rbPo.checked) {
+                var poNo = document.getElementById('<%= txb_ponumber.ClientID %>').value;
+        if (poNo.trim() === "") {
+            alert("⚠️ Reference Contract/PO No is mandatory for Purchase Orders.");
+            return false;
+        }
+    }
+
+    return true; // All good, proceed to server-side!
+}
+
+window.onload = function () { togglePanel(); };
     </script>
 
     <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
@@ -424,14 +561,63 @@
 
         <asp:View ID="View1_BasicDetails" runat="server">
             <div class="wizard-steps">Step 1 of 4: Document & Client Details</div>
+
+            <asp:HiddenField ID="HiddenField1" runat="server" />
+
             <table cellpadding="3" cellspacing="2" class="auto-style1">
                 <tr>
-                    <td width="20%" align="right"><span style="color: red">*</span> Select Client:</td>
-                    <td width="30%">
-                        <asp:DropDownList ID="cmbClient" runat="server" CssClass="dropdown_style" Width="100%"></asp:DropDownList></td>
+                    <td width="20%" align="right" valign="top"><span style="color: red">*</span> Select Client:</td>
+                    <td width="30%" valign="top">
+                        <asp:DropDownList ID="cmbClient" runat="server" CssClass="dropdown_style select2-search" Width="100%" AutoPostBack="True" OnSelectedIndexChanged="cmbClient_SelectedIndexChanged"></asp:DropDownList>
+
+                        <asp:Panel ID="pnlClientPreview" runat="server" Visible="false" Style="margin-top: 10px; padding: 10px; background: #eef7f9; border: 1px solid #19658A; border-radius: 4px; font-size: 11px; text-align: left; line-height: 1.6;">
+                            <div style="margin-bottom: 5px;">
+                                <span style="font-size: 13px; color: #19658A;"><strong>
+                                    <asp:Label ID="lblPreviewName" runat="server"></asp:Label></strong></span>
+                                <span style="color: #666;">[ERP Code: <strong>
+                                    <asp:Label ID="lblPreviewERPCode" runat="server"></asp:Label></strong>]</span>
+                            </div>
+
+                            <asp:Label ID="lblPreviewAddress" runat="server"></asp:Label><br />
+
+                            <div style="margin-top: 5px; padding-top: 5px; border-top: 1px dashed #b5c7d3;">
+                                <strong>State:</strong>
+                                <asp:Label ID="lblPreviewState" runat="server"></asp:Label>
+                                &nbsp;|&nbsp; 
+        <strong>POS:</strong>
+                                <asp:Label ID="lblPreviewPOS" runat="server"></asp:Label><br />
+                                <strong>GSTIN:</strong>
+                                <asp:Label ID="lblPreviewGST" runat="server"></asp:Label>
+                                &nbsp;|&nbsp; 
+        <strong>PAN:</strong>
+                                <asp:Label ID="lblPreviewPAN" runat="server"></asp:Label><br />
+                                <strong>Contact:</strong>
+                                <asp:Label ID="lblPreviewContact" runat="server"></asp:Label>
+                            </div>
+
+                            <div style="margin-top: 8px; text-align: right;">
+                                <asp:HyperLink ID="lnkModifyClient" runat="server" Target="_blank"
+                                    Style="color: #d9534f; font-weight: bold; text-decoration: underline;">
+        ✎ Modify Client Details
+                                </asp:HyperLink>
+                            </div>
+                        </asp:Panel>
+                    </td>
+                    </td>
                     <td width="20%" align="right"><span style="color: red">*</span> Place Of Supply:</td>
                     <td width="30%">
-                        <asp:DropDownList ID="ddlPlaceOfSupply" runat="server" CssClass="dropdown_style" Width="100%"></asp:DropDownList></td>
+                        <asp:DropDownList ID="ddlPlaceOfSupply" runat="server" CssClass="dropdown_style" Width="100%"></asp:DropDownList>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right"><span style="color: red">*</span> Assigned Sales Person:</td>
+                    <td>
+                        <asp:DropDownList ID="cmbSalesPerson" runat="server" CssClass="dropdown_style select2-search" Width="100%"></asp:DropDownList>
+                    </td>
+                    <td align="right"><span style="color: red">*</span> Quotation Date:</td>
+                    <td>
+                        <asp:TextBox ID="txtquotationDate" runat="server" CssClass="textbox_style datepicker" Width="110px"></asp:TextBox>
+                    </td>
                 </tr>
                 <tr>
                     <td align="right">Enable Reference Details:</td>
@@ -439,35 +625,33 @@
                         <asp:RadioButton ID="rbYes" runat="server" GroupName="referenceOption" Text="Yes" Checked="true" onclick="toggleReferenceFields('Yes')" />
                         <asp:RadioButton ID="rbNo" runat="server" GroupName="referenceOption" Text="No" onclick="toggleReferenceFields('No')" />
                     </td>
-                    <td align="right"><span style="color: red">*</span> Quotation Date:</td>
-                    <td>
-                        <asp:TextBox ID="txtquotationDate" runat="server" CssClass="textbox_style datepicker" Width="110px"></asp:TextBox></td>
-                </tr>
-                <tr>
-                    <td align="right">Reference Name:</td>
-                    <td>
-                        <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style"></asp:TextBox></td>
-                    <td align="right">Reference ID:</td>
-                    <td>
-                        <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style"></asp:TextBox></td>
-                </tr>
-                <tr>
-                    <td align="right">Reference Date:</td>
-                    <td>
-                        <asp:TextBox ID="txt_clientrefdate" runat="server" CssClass="textbox_style datepicker"></asp:TextBox></td>
                     <td align="right">GST Type:</td>
                     <td>
                         <asp:RadioButtonList ID="RadioButtonGst" runat="server" RepeatDirection="Horizontal">
-                            <asp:ListItem Value="1" Selected="True"> CGST/SGST </asp:ListItem>
+                            <asp:ListItem Value="1"> CGST/SGST </asp:ListItem>
                             <asp:ListItem Value="0"> IGST </asp:ListItem>
                         </asp:RadioButtonList>
                     </td>
                 </tr>
                 <tr>
+                    <td align="right">Reference Name:</td>
+                    <td>
+                        <asp:TextBox ID="txt_clientrefname" runat="server" CssClass="textbox_style"></asp:TextBox>
+                    </td>
+                    <td align="right">Reference ID:</td>
+                    <td>
+                        <asp:TextBox ID="txt_clientrefid" runat="server" CssClass="textbox_style"></asp:TextBox>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">Reference Date:</td>
+                    <td>
+                        <asp:TextBox ID="txt_clientrefdate" runat="server" CssClass="textbox_style datepicker"></asp:TextBox>
+                    </td>
                     <td align="right">Record Type:</td>
-                    <td colspan="3">
-                        <asp:RadioButton ID="rbQt" runat="server" GroupName="recordOption" Text="Quotation" Checked="true" onclick="togglePanel()" />&nbsp;&nbsp;
-                        <asp:RadioButton ID="rbPo" runat="server" GroupName="recordOption" Text="Purchase Order" onclick="togglePanel()" />
+                    <td>
+                        <asp:RadioButton ID="rbQt" runat="server" GroupName="recordOption" Text="Quotation" onclick="togglePanel()" />&nbsp;&nbsp;
+                <asp:RadioButton ID="rbPo" runat="server" GroupName="recordOption" Text="Purchase Order" onclick="togglePanel()" />
                     </td>
                 </tr>
                 <tr>
@@ -477,23 +661,28 @@
                                 <tr>
                                     <td width="25%" align="right">Delivery Order No:</td>
                                     <td width="25%">
-                                        <asp:TextBox ID="txb_donumber" runat="server" CssClass="textbox_style"></asp:TextBox></td>
+                                        <asp:TextBox ID="txb_donumber" runat="server" CssClass="textbox_style"></asp:TextBox>
+                                    </td>
                                     <td width="25%" align="right">Ref. Contract No:</td>
                                     <td width="25%">
-                                        <asp:TextBox ID="txb_ponumber" runat="server" CssClass="textbox_style"></asp:TextBox></td>
+                                        <asp:TextBox ID="txb_ponumber" runat="server" CssClass="textbox_style"></asp:TextBox>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td align="right">PO Date:</td>
                                     <td>
-                                        <asp:TextBox ID="txb_podate" runat="server" CssClass="textbox_style datepicker"></asp:TextBox></td>
+                                        <asp:TextBox ID="txb_podate" runat="server" CssClass="textbox_style datepicker"></asp:TextBox>
+                                    </td>
                                     <td align="right">Val. Start Date:</td>
                                     <td>
-                                        <asp:TextBox ID="txb_strtdt" runat="server" CssClass="textbox_style datepicker"></asp:TextBox></td>
+                                        <asp:TextBox ID="txb_strtdt" runat="server" CssClass="textbox_style datepicker"></asp:TextBox>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td align="right">Val. End Date:</td>
                                     <td>
-                                        <asp:TextBox ID="txb_enddt" runat="server" CssClass="textbox_style datepicker"></asp:TextBox></td>
+                                        <asp:TextBox ID="txb_enddt" runat="server" CssClass="textbox_style datepicker"></asp:TextBox>
+                                    </td>
                                     <td colspan="2"></td>
                                 </tr>
                             </table>
@@ -501,6 +690,7 @@
                     </td>
                 </tr>
             </table>
+
             <div style="text-align: center; margin-top: 20px;">
                 <asp:Button ID="btnNext1" runat="server" Text="Next: Select Catalog ➔" CssClass="btn_style" Width="250px" OnClientClick="return ValidateField();" OnClick="btnNext1_Click" />
             </div>
@@ -540,33 +730,41 @@
                         <Columns>
                             <asp:TemplateField HeaderText="Select" HeaderStyle-Width="5%">
                                 <HeaderTemplate>
-                                    <asp:CheckBox ID="checkAll" runat="server" onclick="checkAll(this);" /></HeaderTemplate>
+                                    <asp:CheckBox ID="checkAll" runat="server" onclick="checkAll(this);" />
+                                </HeaderTemplate>
                                 <ItemTemplate>
-                                    <asp:CheckBox ID="chkdtp" runat="server" onclick="Check_Click(this)" /></ItemTemplate>
+                                    <asp:CheckBox ID="chkdtp" runat="server" onclick="Check_Click(this)" />
+                                </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderText="ID">
                                 <ItemTemplate>
-                                    <asp:Label ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:Label></ItemTemplate>
+                                    <asp:Label ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:Label>
+                                </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderText="Name">
                                 <ItemTemplate>
-                                    <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label></ItemTemplate>
+                                    <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
+                                </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderText="Brand">
                                 <ItemTemplate>
-                                    <asp:Label ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:Label></ItemTemplate>
+                                    <asp:Label ID="Brand" runat="server" Text='<%# Bind("Brand") %>'></asp:Label>
+                                </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderText="Unit">
                                 <ItemTemplate>
-                                    <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label></ItemTemplate>
+                                    <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label>
+                                </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderText="Rate">
                                 <ItemTemplate>
-                                    <asp:Label ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>'></asp:Label></ItemTemplate>
+                                    <asp:Label ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>'></asp:Label>
+                                </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderText="GST %">
                                 <ItemTemplate>
-                                    <asp:Label ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>'></asp:Label></ItemTemplate>
+                                    <asp:Label ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>'></asp:Label>
+                                </ItemTemplate>
                             </asp:TemplateField>
 
                             <asp:TemplateField Visible="false">
@@ -608,101 +806,141 @@
                             </ItemTemplate>
                             <FooterTemplate><b>TOTAL:</b></FooterTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Sel" Visible="false">
-                            <ItemTemplate><asp:CheckBox ID="chk" runat="server" Checked="true"/></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:CheckBox ID="chk" runat="server" Checked="true" />
+                            </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="SL" HeaderStyle-CssClass="col-frozen-sl" ItemStyle-CssClass="col-frozen-sl" FooterStyle-CssClass="col-frozen-sl">
-                            <ItemTemplate><asp:TextBox ID="txtOrder" runat="server" Width="100%" CssClass="center textbox_style sl-input" ReadOnly="true" /></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="txtOrder" runat="server" Width="100%" CssClass="center textbox_style sl-input" ReadOnly="true" />
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Product Name" HeaderStyle-CssClass="col-frozen-name" ItemStyle-CssClass="col-frozen-name" FooterStyle-CssClass="col-frozen-name">
-                            <ItemTemplate><asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="ProductName" runat="server" Text='<%# Bind("ProductName") %>'></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Qty" ItemStyle-CssClass="col-editable" HeaderStyle-Width="6%">
-                            <ItemTemplate><asp:TextBox ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>' CssClass="center textbox_style qty-input" Width="60px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>' CssClass="center textbox_style qty-input" Width="60px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                            </ItemTemplate>
                             <FooterTemplate><span id="ftr-qty">0</span></FooterTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Unit">
-                            <ItemTemplate><asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Rate" ItemStyle-CssClass="col-editable" HeaderStyle-Width="8%">
-                            <ItemTemplate><asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="80px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="80px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Disc %" ItemStyle-CssClass="col-editable" HeaderStyle-Width="5%">
-                            <ItemTemplate><asp:TextBox ID="Discount_Rate" runat="server" Text="0" CssClass="center textbox_style disc-input" Width="50px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="Discount_Rate" runat="server" Text="0" CssClass="center textbox_style disc-input" Width="50px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="GST %">
-                            <ItemTemplate><asp:Label ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>' CssClass="tax-lbl"></asp:Label></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>' CssClass="tax-lbl"></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Taxable Amt">
                             <ItemTemplate><span class="lbl-taxable">0.00</span></ItemTemplate>
                             <FooterTemplate><span id="ftr-taxable">0.00</span></FooterTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Tax Amt">
                             <ItemTemplate><span class="lbl-taxamt">0.00</span></ItemTemplate>
                             <FooterTemplate><span id="ftr-tax">0.00</span></FooterTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Net Amt">
                             <ItemTemplate><strong class="lbl-net">0.00</strong></ItemTemplate>
-                            <FooterTemplate><span id="ftr-net" style="font-size:14px; color:darkgreen;">0.00</span></FooterTemplate>
+                            <FooterTemplate><span id="ftr-net" style="font-size: 14px; color: darkgreen;">0.00</span></FooterTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Make/Brand" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="Brand" runat="server" CssClass="textbox_style" Width="120px" Text='<%# Bind("Brand") %>'></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="Brand" runat="server" CssClass="textbox_style" Width="120px" Text='<%# Bind("Brand") %>'></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Specification" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="Specification" runat="server" CssClass="textbox_style" Width="150px" Text='<%# Bind("Specification") %>'></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="Specification" runat="server" CssClass="textbox_style" Width="150px" Text='<%# Bind("Specification") %>'></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Pack" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="PackSize" runat="server" CssClass="textbox_style" Width="60px"></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="PackSize" runat="server" CssClass="textbox_style" Width="60px"></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Item No" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="ItemNo" runat="server" CssClass="textbox_style" Width="80px"></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="ItemNo" runat="server" CssClass="textbox_style" Width="80px"></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Material No" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="MaterialNo" runat="server" CssClass="textbox_style" Width="80px"></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="MaterialNo" runat="server" CssClass="textbox_style" Width="80px"></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Remarks" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="ItemRemarks" runat="server" CssClass="textbox_style" Width="150px"></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="ItemRemarks" runat="server" CssClass="textbox_style" Width="150px"></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="PRD ID">
-                            <ItemTemplate><asp:Label ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:Label></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="ProductID" runat="server" Text='<%# Bind("ProductID") %>'></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="HSN Code">
-                            <ItemTemplate><asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Product_code" runat="server" Text='<%# Bind("Product_code") %>'></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Category">
-                            <ItemTemplate><asp:Label ID="ProductOrServiceCat" runat="server" Text='<%# Bind("ProductOrServiceCat") %>'></asp:Label></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="ProductOrServiceCat" runat="server" Text='<%# Bind("ProductOrServiceCat") %>'></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Type">
-                            <ItemTemplate><asp:Label ID="Type" runat="server" Text='<%# Bind("Type") %>'></asp:Label></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:Label ID="Type" runat="server" Text='<%# Bind("Type") %>'></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Del. Date" Visible="false" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker textbox_style" Width="90px" Text='<%# Bind("DeliveryDate") %>'></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="DeliveryDate" runat="server" CssClass="datepicker textbox_style" Width="90px" Text='<%# Bind("DeliveryDate") %>'></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
-                        
+
                         <asp:TemplateField HeaderText="Dept" Visible="false" ItemStyle-CssClass="col-editable">
-                            <ItemTemplate><asp:TextBox ID="Department" runat="server" CssClass="textbox_style" Width="80px" Text='<%# Bind("Department") %>'></asp:TextBox></ItemTemplate>
+                            <ItemTemplate>
+                                <asp:TextBox ID="Department" runat="server" CssClass="textbox_style" Width="80px" Text='<%# Bind("Department") %>'></asp:TextBox>
+                            </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>
                 </asp:GridView>
@@ -732,15 +970,18 @@
                                         <Columns>
                                             <asp:TemplateField HeaderText="Payment %">
                                                 <ItemTemplate>
-                                                    <asp:TextBox ID="AmountPer" runat="server" AutoPostBack="true" Text='<%# Bind("AmountPer") %>' Width="80%" CssClass="textbox_style" OnTextChanged="AmountPer_TextChanged"></asp:TextBox></ItemTemplate>
+                                                    <asp:TextBox ID="AmountPer" runat="server" AutoPostBack="true" Text='<%# Bind("AmountPer") %>' Width="80%" CssClass="textbox_style" OnTextChanged="AmountPer_TextChanged"></asp:TextBox>
+                                                </ItemTemplate>
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Phase Term">
                                                 <ItemTemplate>
-                                                    <asp:Label ID="PaymentPhase" runat="server" Text='<%# Bind("PaymentPhase") %>'></asp:Label></ItemTemplate>
+                                                    <asp:Label ID="PaymentPhase" runat="server" Text='<%# Bind("PaymentPhase") %>'></asp:Label>
+                                                </ItemTemplate>
                                             </asp:TemplateField>
                                             <asp:TemplateField HeaderText="Description">
                                                 <ItemTemplate>
-                                                    <asp:TextBox ID="PhaseDesc" runat="server" Text='<%# Bind("PhaseDesc") %>' Width="90%" TextMode="MultiLine" CssClass="textbox_style"></asp:TextBox></ItemTemplate>
+                                                    <asp:TextBox ID="PhaseDesc" runat="server" Text='<%# Bind("PhaseDesc") %>' Width="90%" TextMode="MultiLine" CssClass="textbox_style"></asp:TextBox>
+                                                </ItemTemplate>
                                             </asp:TemplateField>
                                             <asp:CommandField ShowDeleteButton="True" />
                                         </Columns>
@@ -844,7 +1085,8 @@
                     <Columns>
                         <asp:TemplateField>
                             <ItemTemplate>
-                                <asp:Label ID="ProductCatagory" runat="server" Text='<%# Bind("ProductCatagory") %>'></asp:Label></ItemTemplate>
+                                <asp:Label ID="ProductCatagory" runat="server" Text='<%# Bind("ProductCatagory") %>'></asp:Label>
+                            </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>
                 </asp:GridView>
