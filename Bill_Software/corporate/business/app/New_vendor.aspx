@@ -2,14 +2,65 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style>
-        .box-panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .section-title { font-size: 16px; font-weight: bold; color: #19658A; border-bottom: 2px solid #19658A; padding-bottom: 5px; margin-bottom: 15px; margin-top: 10px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { font-weight: bold; display: block; margin-bottom: 5px; }
-        .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-primary { background: #19658A; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-secondary { background: #6c757d; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
-        .req { color: red; }
+        .box-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #19658A;
+            border-bottom: 2px solid #19658A;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background: #19658A;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .req {
+            color: red;
+        }
     </style>
     <script type="text/javascript">
         function ValidateField() {
@@ -19,8 +70,51 @@
             if (document.getElementById('<%=txtPin.ClientID%>').value == "") { alert("Provide PIN Code."); return false; }
             return true;
         }
-        function validateNumber(key) {
-            var keycode = (key.which) ? key.which : key.keyCode;
+        function ValidateVendorData() {
+            // 1. Basic Empty Checks
+            if (document.getElementById('<%=txtvendorName.ClientID%>').value.trim() == "") { alert("Provide Vendor Name."); return false; }
+            if (document.getElementById('<%=txtAddress1.ClientID%>').value.trim() == "") { alert("Provide Vendor Address 1."); return false; }
+            if (document.getElementById('<%=cmbState.ClientID%>').selectedIndex == 0) { alert("Please Select State."); return false; }
+            if (document.getElementById('<%=txtPin.ClientID%>').value.trim() == "") { alert("Provide Vendor PIN."); return false; }
+
+            // 2. Email Format Validation (If provided)
+            var email = document.getElementById('<%=txtEmail.ClientID%>').value.trim();
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email !== "" && !emailRegex.test(email)) {
+                alert("Please enter a valid Company Email ID (e.g., info@company.com).");
+                return false;
+            }
+
+            // 3. Phone/Mobile Validation (10 to 15 digits)
+            var phone = document.getElementById('<%=txtPhone.ClientID%>').value.trim();
+            var phoneRegex = /^\d{10,15}$/;
+            if (phone !== "" && !phoneRegex.test(phone)) {
+                alert("Please enter a valid Phone Number (10 to 15 digits, no spaces or dashes).");
+                return false;
+            }
+
+            // 4. PAN Number Validation (Indian Standard: 5 Letters, 4 Numbers, 1 Letter)
+            var pan = document.getElementById('<%=txtpanNo.ClientID%>').value.trim().toUpperCase();
+            var panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+            if (pan !== "" && !panRegex.test(pan)) {
+                alert("Invalid PAN Number format. Example: ABCDE1234F");
+                return false;
+            }
+
+                // 5. GSTIN Validation (Indian Standard: 15 alphanumeric characters)
+            var gst = document.getElementById('<%=txtservicetaxNo.ClientID%>').value.trim().toUpperCase();
+            var gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            if (gst !== "" && !gstRegex.test(gst)) {
+                alert("Invalid GSTIN format. Please check the 15-character code.");
+                return false;
+            }
+
+            return true; // All validations passed!
+        }
+
+        // Ensures only numbers can be typed in numeric fields
+        function validateNumber(event) {
+            var keycode = (event.which) ? event.which : event.keyCode;
             if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) return false;
             return true;
         }
@@ -29,10 +123,11 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div class="box-panel">
-        <h3 style="color: #19658A; margin-top:0;">Create New Vendor (Principle)</h3>
-        
-        <asp:Panel ID="PanelOK" runat="server" BackColor="#D4EDDA" BorderColor="#C3E6CB" BorderStyle="Solid" BorderWidth="1px" Visible="False" style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #155724;">
-            <strong>Success:</strong> <asp:Label ID="lblOk" runat="server"></asp:Label>
+        <h3 style="color: #19658A; margin-top: 0;">Create New Vendor (Principle)</h3>
+
+        <asp:Panel ID="PanelOK" runat="server" BackColor="#D4EDDA" BorderColor="#C3E6CB" BorderStyle="Solid" BorderWidth="1px" Visible="False" Style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #155724;">
+            <strong>Success:</strong>
+            <asp:Label ID="lblOk" runat="server"></asp:Label>
         </asp:Panel>
 
         <div class="section-title">Primary Details</div>
@@ -132,7 +227,7 @@
         </div>
 
         <div style="text-align: right; margin-top: 20px;">
-            <asp:Button ID="btnSave" runat="server" CssClass="btn-primary" OnClick="btnSave_Click" Text="Save Vendor" OnClientClick="return ValidateField();" />
+            <asp:Button ID="btnSave" runat="server" CssClass="btn-primary" OnClick="btnSave_Click" Text="Save Vendor" OnClientClick="if(ValidateVendorData()) { this.value='Saving...'; this.style.pointerEvents='none'; this.style.opacity='0.7'; return true; } else { return false; }" />
             <asp:Button ID="btnReset" runat="server" CssClass="btn-secondary" OnClick="btnReset_Click" Text="Reset" CausesValidation="false" />
         </div>
     </div>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.Web;
 using System.Web.UI.WebControls;
 
@@ -39,6 +40,7 @@ namespace Bill_Software.corporate.business.app
 
             // SECURED: Full-Stack Tenant Segregation
             string cmdstring = "SELECT * FROM tbl_Vendor WHERE Vendor_Id = @VendorId AND CompanyID = @CompanyID";
+
             using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
                 cmd.Parameters.AddWithValue("@VendorId", lblvendor_id.Text);
@@ -93,31 +95,44 @@ namespace Bill_Software.corporate.business.app
                                     UpdatedBy=@UpdatedBy, UpdatedOn=GETDATE()
                                  WHERE Vendor_Id=@Vendor_Id AND CompanyID=@CompanyID";
 
+            string cleanVendorName = SanitizeTitleCase(txtvendorName.Text);
+            string cleanCity = SanitizeTitleCase(cmbcity.SelectedItem.Text);
+            string cleanRepName = SanitizeTitleCase(txtRepresentativeName.Text);
+            string cleanAccName = SanitizeTitleCase(txt_accholdername.Text);
+
+            string cleanEmail = SanitizeEmail(txtEmail.Text);
+            string cleanRepEmail = SanitizeEmail(txtRepresentativeEmail.Text);
+
+            string cleanPAN = SanitizeUpperCase(txtpanNo.Text);
+            string cleanGST = SanitizeUpperCase(txtservicetaxNo.Text);
+            string cleanIFSC = SanitizeUpperCase(txt_ifsc.Text);
+            string cleanPVC = SanitizeUpperCase(txt_pvc.Text);
+
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                cmd.Parameters.AddWithValue("@Vendor_Name", txtvendorName.Text.Trim());
+                cmd.Parameters.AddWithValue("@Vendor_Name", cleanVendorName);
                 cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text.Trim());
                 cmd.Parameters.AddWithValue("@Address2", txtAddress2.Text.Trim());
-                cmd.Parameters.AddWithValue("@City", cmbcity.Text);
+                cmd.Parameters.AddWithValue("@City", cleanCity);
                 cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
                 cmd.Parameters.AddWithValue("@State", cmbState.Text);
-                cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text.Trim());
-                cmd.Parameters.AddWithValue("@Com_email", txtEmail.Text.Trim());
+                cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text.Trim().ToLower());
+                cmd.Parameters.AddWithValue("@Com_email", cleanEmail);
                 cmd.Parameters.AddWithValue("@Com_phone", txtPhone.Text.Trim());
                 cmd.Parameters.AddWithValue("@Com_Fax", txtFax.Text.Trim());
-                cmd.Parameters.AddWithValue("@Rep_Name", txtRepresentativeName.Text.Trim());
-                cmd.Parameters.AddWithValue("@Rep_Desig", txtRepresantativeDesig.Text.Trim());
+                cmd.Parameters.AddWithValue("@Rep_Name", cleanRepName);
+                cmd.Parameters.AddWithValue("@Rep_Desig", SanitizeTitleCase(txtRepresantativeDesig.Text));
                 cmd.Parameters.AddWithValue("@Rep_phone", txtRepresentativePhone.Text.Trim());
-                cmd.Parameters.AddWithValue("@Rep_email", txtRepresentativeEmail.Text.Trim());
-                cmd.Parameters.AddWithValue("@Service_tax_No", txtservicetaxNo.Text.Trim());
-                cmd.Parameters.AddWithValue("@Pan_No", txtpanNo.Text.Trim());
-                cmd.Parameters.AddWithValue("@Vat_No", txtvat.Text.Trim());
-                cmd.Parameters.AddWithValue("@PrincipleVndrCode", txt_pvc.Text.Trim());
-                cmd.Parameters.AddWithValue("@BankAccNo", txt_vndr_bankacc.Text.Trim());
-                cmd.Parameters.AddWithValue("@BankIfscCode", txt_ifsc.Text.Trim());
-                cmd.Parameters.AddWithValue("@AccountName", txt_accholdername.Text.Trim());
+                cmd.Parameters.AddWithValue("@Rep_email", cleanRepEmail);
+                cmd.Parameters.AddWithValue("@Service_tax_No", cleanGST);
+                cmd.Parameters.AddWithValue("@Pan_No", cleanPAN);
+                cmd.Parameters.AddWithValue("@Vat_No", string.Empty);
+                cmd.Parameters.AddWithValue("@PrincipleVndrCode", cleanPVC);
+                cmd.Parameters.AddWithValue("@BankAccNo", txt_vndr_bankacc.Text.Trim()); // Banks stay exactly as typed
+                cmd.Parameters.AddWithValue("@BankIfscCode", cleanIFSC);
+                cmd.Parameters.AddWithValue("@AccountName", cleanAccName);
 
                 cmd.Parameters.AddWithValue("@UpdatedBy", userId);
                 cmd.Parameters.AddWithValue("@Vendor_Id", lblvendor_id.Text);
@@ -165,6 +180,26 @@ namespace Bill_Software.corporate.business.app
             {
                 ddl.SelectedValue = val;
             }
+        }
+
+        // --- DATA SANITIZATION HELPERS ---
+        private string SanitizeTitleCase(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            TextInfo textInfo = new CultureInfo("en-IN", false).TextInfo;
+            return textInfo.ToTitleCase(input.Trim().ToLower()); // "tata STEEL" -> "Tata Steel"
+        }
+
+        private string SanitizeUpperCase(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            return input.Trim().ToUpper(); // "abcde1234f" -> "ABCDE1234F"
+        }
+
+        private string SanitizeEmail(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            return input.Trim().ToLower(); // "Info@Company.COM" -> "info@company.com"
         }
     }
 }

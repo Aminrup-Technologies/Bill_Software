@@ -100,7 +100,8 @@ namespace Bill_Software.corporate.business.app
             DbCL.ConnectDb();
 
             string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
-
+            string cleanClientName = SanitizeName(txtvendorName.Text);
+            string cleanGST = txtservicetax_no.Text.Trim().ToUpper();
             string cmdstring = @"UPDATE tbl_Client SET 
                      Client_Name=@Client_Name, Address1=@Address1, City=@City, pin=@pin, State=@State, 
                      Com_web_site=@Com_web_site, Com_email=@Com_email, Com_phone=@Com_phone, Com_Fax=@Com_Fax, 
@@ -110,7 +111,7 @@ namespace Bill_Software.corporate.business.app
 
             using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                cmd.Parameters.AddWithValue("@Client_Name", txtvendorName.Text.Trim());
+                cmd.Parameters.AddWithValue("@Client_Name", cleanClientName.ToString());
                 cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text.Trim());
                 cmd.Parameters.AddWithValue("@City", cmbcity.Text);
                 cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
@@ -119,7 +120,7 @@ namespace Bill_Software.corporate.business.app
                 cmd.Parameters.AddWithValue("@Com_email", txtEmail.Text.Trim());
                 cmd.Parameters.AddWithValue("@Com_phone", txtPhone.Text.Trim());
                 cmd.Parameters.AddWithValue("@Com_Fax", txtFax.Text.Trim());
-                cmd.Parameters.AddWithValue("@Service_tax_no", txtservicetax_no.Text.Trim());
+                cmd.Parameters.AddWithValue("@Service_tax_no", cleanGST.ToString());
                 cmd.Parameters.AddWithValue("@Pan_no", txtpanno.Text.Trim());
                 cmd.Parameters.AddWithValue("@Industry", cmbIndustry.Text);
                 cmd.Parameters.AddWithValue("@ClientId", lblvendor_id.Text);
@@ -194,6 +195,16 @@ namespace Bill_Software.corporate.business.app
             {
                 ddl.SelectedValue = val;
             }
+        }
+
+        // Helper Method to Format Text
+        private string SanitizeName(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+
+            // Trim spaces and convert to Title Case (e.g., "tata steel" -> "Tata Steel")
+            input = input.Trim().ToLower();
+            return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
         }
     }
 }

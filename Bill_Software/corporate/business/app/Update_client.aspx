@@ -2,14 +2,66 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style>
-        .box-panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .section-title { font-size: 16px; font-weight: bold; color: #19658A; border-bottom: 2px solid #19658A; padding-bottom: 5px; margin-bottom: 15px; margin-top: 10px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { font-weight: bold; display: block; margin-bottom: 5px; }
-        .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-primary { background: #19658A; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-secondary { background: #6c757d; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-left: 10px; text-decoration: none; }
-        .req { color: red; }
+        .box-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #19658A;
+            border-bottom: 2px solid #19658A;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background: #19658A;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            text-decoration: none;
+        }
+
+        .req {
+            color: red;
+        }
     </style>
     <script type="text/javascript">
         function ValidateField() {
@@ -24,18 +76,55 @@
             if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) return false;
             return true;
         }
+        function ValidateClientData() {
+            var name = document.getElementById('<%=txtvendorName.ClientID%>').value.trim();
+            var phone = document.getElementById('<%=txtPhone.ClientID%>').value.trim();
+            var email = document.getElementById('<%=txtEmail.ClientID%>').value.trim();
+            var gst = document.getElementById('<%=txtservicetax_no.ClientID%>').value.trim();
+
+            // 1. Name Check
+            if (name === "") {
+                alert("Client Name is required.");
+                return false;
+            }
+
+            // 2. Phone Check (Indian 10-digit mobile)
+            var phoneRegex = /^[6-9]\d{9}$/;
+            if (phone !== "" && !phoneRegex.test(phone)) {
+                alert("Please enter a valid 10-digit Phone Number.");
+                return false;
+            }
+
+            // 3. Email Check
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email !== "" && !emailRegex.test(email)) {
+                alert("Please enter a valid Email Address.");
+                return false;
+            }
+
+            // 4. GSTIN Check (Indian Format: 22AAAAA0000A1Z5)
+            var gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            if (gst !== "" && !gstRegex.test(gst.toUpperCase())) {
+                alert("Please enter a valid 15-character GST Number.");
+                return false;
+            }
+
+            return true; // All good!
+        }
     </script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div class="box-panel">
-        <h3 style="color: #19658A; margin-top:0; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color: #19658A; margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
             <span>Update Client Details</span>
-            <span style="font-size: 14px; color: #FF6600; background: #fff3e0; padding: 4px 10px; border-radius: 4px;">Client ID: <asp:Label ID="lblvendor_id" runat="server"></asp:Label></span>
+            <span style="font-size: 14px; color: #FF6600; background: #fff3e0; padding: 4px 10px; border-radius: 4px;">Client ID:
+                <asp:Label ID="lblvendor_id" runat="server"></asp:Label></span>
         </h3>
-        
-        <asp:Panel ID="PanelOK" runat="server" BackColor="#D4EDDA" BorderColor="#C3E6CB" BorderStyle="Solid" BorderWidth="1px" Visible="False" style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #155724;">
-            <strong>Success:</strong> <asp:Label ID="lblOk" runat="server"></asp:Label>
+
+        <asp:Panel ID="PanelOK" runat="server" BackColor="#D4EDDA" BorderColor="#C3E6CB" BorderStyle="Solid" BorderWidth="1px" Visible="False" Style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #155724;">
+            <strong>Success:</strong>
+            <asp:Label ID="lblOk" runat="server"></asp:Label>
         </asp:Panel>
 
         <div class="section-title">Primary Details</div>
@@ -124,7 +213,10 @@
 
         <div style="text-align: right; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
             <asp:Button ID="btnBack" runat="server" Text="← Back to List" CssClass="btn-secondary" OnClick="btnBack_Click" />
-            <asp:Button ID="btnUpdate" runat="server" CssClass="btn-primary" OnClick="btnUpdate_Click" Text="Update Client" OnClientClick="return ValidateField();" />
+
+            <asp:Button ID="btnUpdate" runat="server" CssClass="btn-primary" OnClick="btnUpdate_Click" Text="Update Client"
+                UseSubmitBehavior="false"
+                OnClientClick="if(ValidateClientData()){ this.value='Updating...'; this.style.pointerEvents='none'; this.style.opacity='0.7'; } else { return false; }" />
         </div>
     </div>
 </asp:Content>
