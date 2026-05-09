@@ -2,69 +2,92 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
-        /* --- Layout Styles --- */
-        .section-header { background-color: #19658A; color: white; padding: 10px; font-weight: bold; font-size: 14px; margin-bottom: 15px; border-radius: 4px; }
-        .box-panel { background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .box-title { font-size: 16px; font-weight: bold; color: #19658A; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 15px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        /* --- Layout Styles (Synced with Add_Invoice) --- */
+        .section-header { background-color: #19658A; color: white; padding: 12px 15px; font-weight: bold; font-size: 16px; margin-bottom: 20px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .box-panel { border: 1px solid #d1d9e0; border-radius: 6px; padding: 20px; background: #ffffff; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .box-title { margin-top: 0; font-size: 15px; color: #006699; border-bottom: 2px solid #f0f4f8; padding-bottom: 8px; margin-bottom: 18px; font-weight: bold; }
         
+        .form-grid-5 { display: grid; grid-template-columns: 2fr 2.5fr 1.5fr 1.5fr 1fr; gap: 15px; margin-bottom: 15px; align-items: end; }
         .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 15px; align-items: end; }
         .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; align-items: end; }
         .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 15px; }
-        .form-label { font-size: 12px; font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
-
-        .form-control { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-family: Arial, sans-serif; font-size: 13px; box-sizing: border-box; }
-        .btn-nav { padding: 8px 15px; background-color: #006699; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 12px; border-radius: 3px; }
+        
+        .form-label { display: block; font-weight: bold; margin-bottom: 6px; color: #444; font-size: 12px; text-transform: uppercase; }
+        .form-control { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; }
+        
+        .btn-nav { padding: 9px 20px; background-color: #006699; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 13px; border-radius: 4px; }
         .btn-nav:hover { background-color: #004d73; }
         .btn-secondary { background-color: #6c757d; }
         .btn-secondary:hover { background-color: #5a6268; }
+        .btn-del { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
 
         .btn-filter { padding: 6px 12px; border: 1px solid #ccc; background-color: #e9ecef; cursor: pointer; font-size: 12px; margin-right: 4px; border-radius: 4px; transition: all 0.2s ease; }
         .btn-filter:hover { background-color: #dde2e6; }
         .btn-filter.active { background-color: #19658A; color: white; border-color: #19658A; box-shadow: inset 0 3px 5px rgba(0,0,0,0.12); }
 
-        .Grid { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; }
-        .Grid th { background-color: #006699; color: white; padding: 8px; border: 1px solid #333; text-align: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 2px rgba(0,0,0,0.1); }
-        .Grid td { padding: 5px; border: 1px solid #ccc; text-align: center; vertical-align: middle; }
+        /* --- Grid & Totals --- */
+        .Grid { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .Grid th { background-color: #006699; color: white; padding: 10px; border: 1px solid #004d73; text-align: center; position: sticky; top: 0; z-index: 10; }
+        .Grid td { padding: 8px; border: 1px solid #ddd; text-align: center; vertical-align: middle; }
 
         .cmd-btn { text-decoration: none; font-size: 14px; margin: 0 4px; font-weight: bold; display: inline-block; width: 15px; }
         .cmd-up { color: #006699; }
         .cmd-del { color: red; }
 
-        .total-box { margin-top: 20px; padding: 20px; background-color: #fcfcfc; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); float: right; width: 400px; }
-        .lbl-grand { font-size: 18px; font-weight: bold; color: #28a745; }
+        .total-box { margin-top: 20px; padding: 20px; background-color: #f9fbfd; border: 1px solid #d1d9e0; border-radius: 6px; float: right; width: 400px; }
+        .lbl-grand { font-size: 20px; font-weight: bold; color: #28a745; }
 
+        /* --- Select2 Overrides --- */
+        .select2-container--default .select2-selection--single { height: 34px; border: 1px solid #ccc; border-radius: 4px; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 32px; font-size: 13px; color: #333 !important; }
+        .ui-datepicker { z-index: 9999 !important; }
         .select2-results__option { color: #333 !important; background-color: #fff !important; }
-        .select2-results__option--highlighted { background-color: #007bff !important; color: #fff !important; }
-        .select2-container--default .select2-selection--single .select2-selection__rendered { color: #333 !important; line-height: 28px; }
-        .select2-search__field { color: #333 !important; }
+        .select2-results__option--highlighted { background-color: #006699 !important; color: #fff !important; }
+
         .clearfix::after { content: ""; clear: both; display: table; }
     </style>
 
-    <script src="calender/jquery-1.7.1.js" type="text/javascript"></script>
-    <script src="calender/jquery.ui.core.js" type="text/javascript"></script>
-    <script src="calender/jquery.ui.widget.js" type="text/javascript"></script>
-    <script src="calender/jquery.ui.datepicker.js" type="text/javascript"></script>
     <link href="calender/jquery.ui.all.css" rel="stylesheet" type="text/css" />
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="calender/jquery.ui.core.js"></script>
+    <script src="calender/jquery.ui.widget.js"></script>
+    <script src="calender/jquery.ui.datepicker.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <script type="text/javascript">
-        var prm = Sys.WebForms.PageRequestManager.getInstance();
-        prm.add_pageLoaded(function () {
+        // jQuery UI Compat
+        jQuery.browser = {};
+        (function () {
+            jQuery.browser.msie = false;
+            jQuery.browser.version = 0;
+            if (navigator.userAgent.match(/MSIE ([0-9]+)\./)) {
+                jQuery.browser.msie = true;
+                jQuery.browser.version = RegExp.$1;
+            }
+        })();
+
+        // Robust Initialization (Using specific ClientIDs)
+        function initScripts() {
             $(".datepicker").datepicker({ dateFormat: 'dd-M-yy', changeMonth: true, changeYear: true });
-        });
 
-        function initSelect2() {
-            var $ddlClient = $('#cmbClient');
+            var $ddlClient = $('#<%= cmbClient.ClientID %>');
             if ($ddlClient.hasClass("select2-hidden-accessible")) { $ddlClient.select2('destroy'); }
-            $ddlClient.select2({ placeholder: "Select a Client", allowClear: true, width: '100%' });
+            $ddlClient.select2({ placeholder: "Search Client (Optional)", allowClear: true, width: '100%' });
 
-            var $ddlSales = $('#cmbSalesPerson');
+            var $ddlSales = $('#<%= cmbSalesPerson.ClientID %>');
             if ($ddlSales.hasClass("select2-hidden-accessible")) { $ddlSales.select2('destroy'); }
             $ddlSales.select2({ placeholder: "Search Sales Person...", allowClear: true, width: '100%' });
         }
 
+        // Run on load and after UpdatePanel PostBack
+        $(document).ready(function () { initScripts(); });
+        function pageLoad() { initScripts(); }
+
+        // --- STEP 1: VALIDATION ---
         function validateSetupStep() {
             var taxRadios = document.getElementsByName('<%= rbTaxType.UniqueID %>');
             var isTaxSelected = false;
@@ -73,19 +96,18 @@
             }
             if (!isTaxSelected) { alert("Action Blocked: Please select a Tax Type (Intra or Inter)."); return false; }
 
-            var salesDropdown = document.getElementById('cmbSalesPerson');
+            var salesDropdown = document.getElementById('<%= cmbSalesPerson.ClientID %>');
             if (salesDropdown && salesDropdown.value === "") { alert("Action Blocked: Please select a Sales Person."); return false; }
 
             return true; 
         }
 
-        $(document).ready(function () { initSelect2(); });
-        prm.add_endRequest(function () { initSelect2(); });
-
+        // --- STEP 2: SEARCH LOGIC ---
         function FilterGrid() {
             var input = document.getElementById("txtSearchProduct");
             var filter = input.value.toUpperCase();
             var table = document.getElementById("<%= gridProdWithCat.ClientID %>");
+            if (!table) return;
             var tr = table.getElementsByTagName("tr");
             for (var i = 1; i < tr.length; i++) {
                 var td = tr[i].getElementsByTagName("td")[3];
@@ -98,10 +120,11 @@
 
         function FilterSelection(mode) {
             var table = document.getElementById("<%= gridProdWithCat.ClientID %>");
+            if (!table) return;
             var tr = table.getElementsByTagName("tr");
             var btns = document.getElementsByClassName('btn-filter');
             for (var b = 0; b < btns.length; b++) { btns[b].classList.remove('active'); }
-            event.target.classList.add('active');
+            if (event && event.target) { event.target.classList.add('active'); }
 
             for (var i = 1; i < tr.length; i++) {
                 var chk = tr[i].querySelector("input[type='checkbox']");
@@ -113,6 +136,7 @@
             }
         }
 
+        // --- STEP 3: LIVE MATH ---
         function CalculateRow(input, trigger) {
             var row = input.parentNode.parentNode;
             var txtQty = row.querySelector("input[id*='txtQty']");
@@ -184,7 +208,6 @@
             if (outTax) outTax.innerText = totalTax.toFixed(2);
             if (outGrand) outGrand.innerText = finalGrandTotal.toFixed(2);
 
-            // --- ZERO TOTAL VALIDATION ---
             var btnSubmit = document.getElementById("<%= btnSave.ClientID %>");
             var warningMsg = document.getElementById("zeroTotalWarning");
 
@@ -222,32 +245,32 @@
                     <div class="box-title">1. Invoice Master Details</div>
                     <div class="form-grid-4">
                         <div>
-                            <label class="form-label">Client Name <span style="color:red">*</span></label>
+                            <label class="form-label">Client Name <span style="color: red">*</span></label>
                             <asp:DropDownList ID="cmbClient" runat="server" CssClass="form-control select-search" AutoPostBack="true" OnSelectedIndexChanged="cmbClient_SelectedIndexChanged" ClientIDMode="Static"></asp:DropDownList>
                             <asp:Label ID="lblClientID" runat="server" Visible="false"></asp:Label>
                         </div>
                         <div>
-                            <label class="form-label">Invoice Date <span style="color:red">*</span></label>
+                            <label class="form-label">Invoice Date <span style="color: red">*</span></label>
                             <asp:TextBox ID="txtInvoiceDate" runat="server" CssClass="form-control datepicker"></asp:TextBox>
                         </div>
                         <div>
-                            <label class="form-label">Tax Type <span style="color:red">*</span></label>
+                            <label class="form-label">Tax Type <span style="color: red">*</span></label>
                             <asp:RadioButtonList ID="rbTaxType" runat="server" RepeatDirection="Horizontal" CellPadding="5">
                                 <asp:ListItem Value="1" Selected="True">Intra (CGST/SGST)</asp:ListItem>
                                 <asp:ListItem Value="0">Inter (IGST)</asp:ListItem>
                             </asp:RadioButtonList>
                         </div>
                         <div>
-                            <label class="form-label">Sales Person <span style="color:red">*</span></label>
+                            <label class="form-label">Sales Person <span style="color: red">*</span></label>
                             <asp:DropDownList ID="cmbSalesPerson" runat="server" CssClass="form-control select-search" ClientIDMode="Static"></asp:DropDownList>
                         </div>
                     </div>
 
                     <div class="form-grid-2">
                         <div>
-                            <label class="form-label">Billing & Delivery Addresses <span style="color:red">*</span></label>
+                            <label class="form-label">Billing & Delivery Addresses <span style="color: red">*</span></label>
                             <asp:ListBox ID="lstAddresses" runat="server" SelectionMode="Multiple" Height="90px" CssClass="form-control"></asp:ListBox>
-                            <div style="font-size:10px; color:#888; margin-top:4px;">Hold CTRL to select multiple addresses.</div>
+                            <div style="font-size: 10px; color: #888; margin-top: 4px;">Hold CTRL to select multiple addresses.</div>
                         </div>
                         <div>
                             <div style="margin-bottom: 15px;">
@@ -313,7 +336,7 @@
                                 </asp:TemplateField>
                             </Columns>
                             <EmptyDataTemplate>
-                                <div style="padding: 15px; color: #777; text-align:center;"><i>No products found for this category.</i></div>
+                                <div style="padding: 15px; color: #777; text-align: center;"><i>No products found for this category.</i></div>
                             </EmptyDataTemplate>
                         </asp:GridView>
                     </div>
@@ -329,14 +352,16 @@
             <asp:View ID="vReview" runat="server">
                 <div class="box-panel">
                     <div class="box-title">3. Review & Finalize Manual Invoice</div>
-                    
+
                     <div style="margin-bottom: 15px; color: #555; font-size: 13px;">
-                        Billing to: <strong style="color: #006699;"><asp:Label ID="lblClientDisplay" runat="server"></asp:Label></strong> | 
-                        Tax Mode: <strong><asp:Label ID="lblTaxModeDisplay" runat="server"></asp:Label></strong>
+                        Billing to: <strong style="color: #006699;">
+                            <asp:Label ID="lblClientDisplay" runat="server"></asp:Label></strong> | 
+                        Tax Mode: <strong>
+                            <asp:Label ID="lblTaxModeDisplay" runat="server"></asp:Label></strong>
                     </div>
 
                     <div style="overflow-x: auto; border: 1px solid #e2e8f0;">
-                        <asp:GridView ID="gd_Cart" runat="server" AutoGenerateColumns="False" CssClass="Grid" style="min-width: 1300px; white-space: nowrap;" OnRowCommand="gd_Cart_RowCommand">
+                        <asp:GridView ID="gd_Cart" runat="server" AutoGenerateColumns="False" CssClass="Grid" Style="min-width: 1300px; white-space: nowrap;" OnRowCommand="gd_Cart_RowCommand">
                             <Columns>
                                 <asp:TemplateField HeaderText="Act" ItemStyle-Width="70px">
                                     <ItemTemplate>
@@ -345,7 +370,7 @@
                                         <asp:LinkButton ID="btnDel" runat="server" CommandName="Remove" CommandArgument='<%# Container.DataItemIndex %>' CssClass="cmd-btn cmd-del" ToolTip="Remove" OnClientClick="return confirm('Remove row?');">✖</asp:LinkButton>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                
+
                                 <asp:BoundField DataField="ProductID" HeaderText="ID" ReadOnly="true" />
                                 <asp:BoundField DataField="ProductName" HeaderText="Product" ReadOnly="true" ItemStyle-HorizontalAlign="Left" />
                                 <asp:BoundField DataField="Product_code" HeaderText="HSN" ReadOnly="true" ItemStyle-Width="60px" />
@@ -411,7 +436,7 @@
                                 </asp:TemplateField>
                             </Columns>
                             <EmptyDataTemplate>
-                                <div style="padding: 15px; color: red; font-weight: bold; text-align:center;">Cart is Empty. Please go back and add products.</div>
+                                <div style="padding: 15px; color: red; font-weight: bold; text-align: center;">Cart is Empty. Please go back and add products.</div>
                             </EmptyDataTemplate>
                         </asp:GridView>
                     </div>
@@ -430,22 +455,28 @@
                                     <asp:TextBox ID="txtOtherCharge" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onkeyup="RecalculateFooter()"></asp:TextBox>
                                 </td>
                             </tr>
-                            <tr><td colspan="2"><hr style="border-top: 1px dashed #ccc;" /></td></tr>
+                            <tr>
+                                <td colspan="2">
+                                    <hr style="border-top: 1px dashed #ccc;" />
+                                </td>
+                            </tr>
                             <tr>
                                 <td align="right" style="color: #555;">Total Tax:</td>
-                                <td align="right"><asp:Label ID="lblFooterTax" runat="server" Text="0.00" Font-Bold="true"></asp:Label></td>
+                                <td align="right">
+                                    <asp:Label ID="lblFooterTax" runat="server" Text="0.00" Font-Bold="true"></asp:Label></td>
                             </tr>
                             <tr>
                                 <td align="right" style="font-size: 16px;"><strong>Grand Total:</strong></td>
-                                <td align="right"><asp:Label ID="lblFooterGrand" runat="server" Text="0.00" CssClass="lbl-grand"></asp:Label></td>
+                                <td align="right">
+                                    <asp:Label ID="lblFooterGrand" runat="server" Text="0.00" CssClass="lbl-grand"></asp:Label></td>
                             </tr>
                         </table>
                     </div>
                     <div class="clearfix"></div>
 
                     <div style="text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                        
-                        <div id="zeroTotalWarning" style="display:none; color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 15px; background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 4px;">
+
+                        <div id="zeroTotalWarning" style="display: none; color: #dc3545; font-weight: bold; font-size: 15px; margin-bottom: 15px; background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 4px;">
                             Cannot generate an invoice with a Grand Total of ₹0.00. Please allocate quantities or charges to proceed.
                         </div>
 

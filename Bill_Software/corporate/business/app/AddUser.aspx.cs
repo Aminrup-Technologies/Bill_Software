@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
+using System.Web;
 using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
@@ -114,36 +115,79 @@ namespace Bill_Software.corporate.business.app
                 byte[] passwordSalt;
                 CreatePasswordHash(tempPassword, out passwordHash, out passwordSalt);
 
-                string query = @"INSERT INTO tbl_login 
-                        (User_Id, Name, Phone_no, Email, PasswordHash, PasswordSalt, 
-                         MustChangePassword, EmailVerified, IsActive, CreatedAt, 
-                         RoleId, DepartmentID, DesignationID, ReportingManagerId) 
-                         VALUES 
-                        (@User_Id, @Name, @Phone_no, @Email, @PasswordHash, @PasswordSalt, 
-                         1, 0, 1, sysutcdatetime(), 
-                         @RoleId, @DeptId, @DesigId, @ManagerId)";
-
+                // 1. Database Transaction (Wrap in using to ensure cleanup)
                 using (var cn = new SqlConnection(ConnString))
                 {
-                    using (var cmd = new SqlCommand(query, cn))
+                    cn.Open();
+
+                    // We use a Transaction so if the Leave Allocation fails, the User isn't created half-baked
+                    using (SqlTransaction tran = cn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@User_Id", idvalue);
-                        cmd.Parameters.AddWithValue("@Name", txtEmployee.Text.Trim());
+                        try
+                        {
+                            // --- FIX 1: Added CompanyID to the INSERT statement ---
+                            string query = @"INSERT INTO tbl_login 
+                            (User_Id, Name, Phone_no, Email, PasswordHash, PasswordSalt, 
+                             MustChangePassword, EmailVerified, IsActive, CreatedAt, 
+                             RoleId, DepartmentID, DesignationID, ReportingManagerId, CompanyID) 
+                             VALUES 
+                            (@User_Id, @Name, @Phone_no, @Email, @PasswordHash, @PasswordSalt, 
+                             1, 0, 1, sysutcdatetime(), 
+                             @RoleId, @DeptId, @DesigId, @ManagerId, @CompanyID)";
 
-                        // Use the cleaned phone number here!
-                        cmd.Parameters.AddWithValue("@Phone_no", cleanPhone);
+                            using (var cmd = new SqlCommand(query, cn, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@User_Id", idvalue);
+                                cmd.Parameters.AddWithValue("@Name", txtEmployee.Text.Trim());
+                                cmd.Parameters.AddWithValue("@Phone_no", cleanPhone);
+                                cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
+                                cmd.Parameters.Add("@PasswordHash", SqlDbType.VarBinary, 256).Value = passwordHash;
+                                cmd.Parameters.Add("@PasswordSalt", SqlDbType.VarBinary, 128).Value = passwordSalt;
+                                cmd.Parameters.AddWithValue("@RoleId", ddlRole.SelectedValue);
+                                cmd.Parameters.AddWithValue("@DeptId", string.IsNullOrEmpty(ddlDepartment.SelectedValue) ? (object)DBNull.Value : ddlDepartment.SelectedValue);
+                                cmd.Parameters.AddWithValue("@DesigId", string.IsNullOrEmpty(ddlDesignation.SelectedValue) ? (object)DBNull.Value : ddlDesignation.SelectedValue);
+                                cmd.Parameters.AddWithValue("@ManagerId", string.IsNullOrEmpty(ddlManager.SelectedValue) ? (object)DBNull.Value : ddlManager.SelectedValue);
 
-                        cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
-                        cmd.Parameters.Add("@PasswordHash", SqlDbType.VarBinary, 256).Value = passwordHash;
-                        cmd.Parameters.Add("@PasswordSalt", SqlDbType.VarBinary, 128).Value = passwordSalt;
+                                // Strict Tenant Segregation
+                                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
-                        cmd.Parameters.AddWithValue("@RoleId", ddlRole.SelectedValue);
-                        cmd.Parameters.AddWithValue("@DeptId", string.IsNullOrEmpty(ddlDepartment.SelectedValue) ? (object)DBNull.Value : ddlDepartment.SelectedValue);
-                        cmd.Parameters.AddWithValue("@DesigId", string.IsNullOrEmpty(ddlDesignation.SelectedValue) ? (object)DBNull.Value : ddlDesignation.SelectedValue);
-                        cmd.Parameters.AddWithValue("@ManagerId", string.IsNullOrEmpty(ddlManager.SelectedValue) ? (object)DBNull.Value : ddlManager.SelectedValue);
+                                cmd.ExecuteNonQuery();
+                            }
 
-                        cn.Open();
-                        cmd.ExecuteNonQuery();
+                            // --- 2. Allocate Leaves (Calendar Year) ---
+                            int currentYear = DateTime.Now.Year;
+                            using (SqlCommand cmdLeave = new SqlCommand("sp_AllocateEmployeeLeaves", cn, tran))
+                            {
+                                cmdLeave.CommandType = CommandType.StoredProcedure;
+                                cmdLeave.Parameters.AddWithValue("@UserCode", idvalue);
+                                cmdLeave.Parameters.AddWithValue("@FinancialYear", currentYear);
+                                cmdLeave.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                cmdLeave.ExecuteNonQuery();
+                            }
+
+                            // --- FIX 2: Proactive Notification Logging ---
+                            string notifQuery = @"INSERT INTO tbl_SystemNotification 
+                                        (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CompanyID)
+                                        VALUES 
+                                        ('New User Created', 'Account created for ' + @EmpName + ' (' + @EmpId + ')', 'Admin/Users', 'Success', GETDATE(), DATEADD(day, 30, GETDATE()), 1, @AdminId, @CompanyID)";
+
+                            using (SqlCommand cmdNotif = new SqlCommand(notifQuery, cn, tran))
+                            {
+                                cmdNotif.Parameters.AddWithValue("@EmpName", txtEmployee.Text.Trim());
+                                cmdNotif.Parameters.AddWithValue("@EmpId", idvalue);
+                                cmdNotif.Parameters.AddWithValue("@AdminId", HttpContext.Current.Session["USERID"].ToString());
+                                cmdNotif.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                cmdNotif.ExecuteNonQuery();
+                            }
+
+                            // Commit the transaction if all 3 queries succeed
+                            tran.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            tran.Rollback();
+                            throw new Exception("Transaction failed: " + ex.Message);
+                        }
                     }
                 }
 

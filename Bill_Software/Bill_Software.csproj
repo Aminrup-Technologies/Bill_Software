@@ -250,6 +250,7 @@
     <Content Include="Content\themes\base\tooltip.css" />
     <Content Include="corporate\business\app\AdminApprovalDashboard.aspx" />
     <Content Include="corporate\business\app\AdminLeaveSetup.aspx" />
+    <Content Include="corporate\business\app\AdminOverride.aspx" />
     <Content Include="corporate\business\app\AdminShiftSetup.aspx" />
     <Content Include="corporate\business\app\Approve_PR.aspx" />
     <Content Include="corporate\business\app\attendance.aspx" />
@@ -282,6 +283,7 @@
     <Content Include="corporate\business\app\PaymentMail.aspx" />
     <Content Include="corporate\business\app\productparent.aspx" />
     <Content Include="corporate\business\app\ProformaMail.aspx" />
+    <Content Include="corporate\business\app\QuickAction.aspx" />
     <Content Include="corporate\business\app\RequisitionManual.aspx" />
     <Content Include="corporate\business\app\RequisitionNew.aspx" />
     <Content Include="corporate\business\app\RequisitionView.aspx" />
@@ -699,6 +701,13 @@
     <Compile Include="corporate\business\app\AdminLeaveSetup.aspx.designer.cs">
       <DependentUpon>AdminLeaveSetup.aspx</DependentUpon>
     </Compile>
+    <Compile Include="corporate\business\app\AdminOverride.aspx.cs">
+      <DependentUpon>AdminOverride.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminOverride.aspx.designer.cs">
+      <DependentUpon>AdminOverride.aspx</DependentUpon>
+    </Compile>
     <Compile Include="corporate\business\app\AdminShiftSetup.aspx.cs">
       <DependentUpon>AdminShiftSetup.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -729,6 +738,7 @@
     <Compile Include="corporate\business\app\clientHandlerAdmin.ashx.cs">
       <DependentUpon>clientHandlerAdmin.ashx</DependentUpon>
     </Compile>
+    <Compile Include="corporate\business\app\CommunicationGateway.cs" />
     <Compile Include="corporate\business\app\CreateHydrentQuatation.aspx.cs">
       <DependentUpon>CreateHydrentQuatation.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -900,6 +910,13 @@
     <Compile Include="corporate\business\app\ProformaMail.aspx.designer.cs">
       <DependentUpon>ProformaMail.aspx</DependentUpon>
     </Compile>
+    <Compile Include="corporate\business\app\QuickAction.aspx.cs">
+      <DependentUpon>QuickAction.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\QuickAction.aspx.designer.cs">
+      <DependentUpon>QuickAction.aspx</DependentUpon>
+    </Compile>
     <Compile Include="corporate\business\app\RequisitionManual.aspx.cs">
       <DependentUpon>RequisitionManual.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -956,6 +973,7 @@
     <Compile Include="corporate\business\app\Search_purchaseorder.aspx.designer.cs">
       <DependentUpon>Search_purchaseorder.aspx</DependentUpon>
     </Compile>
+    <Compile Include="corporate\business\app\SecurityHelper.cs" />
     <Compile Include="corporate\business\app\settings.aspx.cs">
       <DependentUpon>settings.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

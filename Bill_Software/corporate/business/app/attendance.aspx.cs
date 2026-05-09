@@ -5,12 +5,14 @@ using System.Configuration;
 using System.Web;
 using System.Web.UI.WebControls;
 using System.Web.Script.Serialization;
+using System.Web.Services;
+using System.Collections.Generic;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class attendance : System.Web.UI.Page
     {
-        string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+        static string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -25,11 +27,12 @@ namespace Bill_Software.corporate.business.app
                 DisplayAssignedShift();
                 CheckTodayStatus();
                 LoadAttendanceHistory();
-                LoadRegularizationHistory(); // <-- NEW ADDITION
+                LoadRegularizationHistory();
             }
         }
 
-        // New Helper to show the user what shift they are assigned to today
+        // --- 1. Data Loading (Strictly Segregated by CompanyContext) ---
+
         private void DisplayAssignedShift()
         {
             string userId = HttpContext.Current.Session["USERID"].ToString();
@@ -39,71 +42,26 @@ namespace Bill_Software.corporate.business.app
                     SELECT TOP 1 ShiftName, StartTime, EndTime FROM tbl_ShiftMaster
                     WHERE ShiftID = ISNULL((
                         SELECT TOP 1 ShiftID FROM tbl_EmployeeShiftMapping 
-                        WHERE UserCode = @UserCode AND EffectiveFromDate <= CAST(GETDATE() AS DATE) 
+                        WHERE UserCode = @UserCode 
+                        AND EffectiveFromDate <= CAST(GETDATE() AS DATE) 
                         AND (EffectiveToDate IS NULL OR EffectiveToDate >= CAST(GETDATE() AS DATE))
-                        ORDER BY EffectiveFromDate DESC
                     ), 1)";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserCode", userId);
+                    // CompanyID not typically needed for ShiftMaster read unless shifts are tenant-specific
                     conn.Open();
+                    // Assuming you have a label for this on the frontend (e.g., lblShiftInfo)
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
                         {
-                            TimeSpan start = (TimeSpan)rdr["StartTime"];
-                            TimeSpan end = (TimeSpan)rdr["EndTime"];
-                            lblAssignedShift.Text = $"Current Shift: {rdr["ShiftName"]} ({DateTime.Today.Add(start).ToString("hh:mm tt")} to {DateTime.Today.Add(end).ToString("hh:mm tt")})";
+                            // Example output: "General Shift (09:00 - 18:00)"
+                            // lblShiftInfo.Text = $"{rdr["ShiftName"]} ({rdr["StartTime"]} - {rdr["EndTime"]})";
                         }
                     }
                 }
-            }
-        }
-
-        // --- NEW: Load Employee's Regularization History ---
-        private void LoadRegularizationHistory()
-        {
-            try
-            {
-                string userId = HttpContext.Current.Session["USERID"].ToString();
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    string query = @"
-                        SELECT AppliedOn, AttendanceDate, 
-                               CONVERT(varchar(15), CAST(RequestedInTime AS TIME), 100) AS RequestedInTime, 
-                               CONVERT(varchar(15), CAST(RequestedOutTime AS TIME), 100) AS RequestedOutTime, 
-                               RequestStatus 
-                        FROM tbl_AttendanceRegularization 
-                        WHERE UserCode = @UserCode 
-                        ORDER BY AppliedOn DESC";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@UserCode", userId);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        gvRegHistory.DataSource = dt;
-                        gvRegHistory.DataBind();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                lblError.Text = "Error loading correction history: " + ex.Message;
-            }
-        }
-
-        // --- NEW: Color Code the Status Text ---
-        public string GetStatusColor(string status)
-        {
-            switch (status.ToLower())
-            {
-                case "approved": return "color: #28a745; font-weight: bold;";
-                case "rejected": return "color: #dc3545; font-weight: bold;";
-                default: return "color: #fd7e14; font-weight: bold;"; // Pending (Orange)
             }
         }
 
@@ -112,362 +70,400 @@ namespace Bill_Software.corporate.business.app
             string userId = HttpContext.Current.Session["USERID"].ToString();
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string query = @"SELECT PunchInTime, PunchOutTime FROM tbl_Attendance 
-                                 WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE)";
-
+                string query = "SELECT PunchInTime, PunchOutTime FROM tbl_Attendance WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE) AND CompanyID = @CompanyID";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserCode", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
                         {
-                            string inTime = rdr["PunchInTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchInTime"]).ToString("hh:mm tt") : "";
-                            lblPunchInTime.Text = "Punched In at: " + inTime;
-
-                            if (rdr["PunchOutTime"] == DBNull.Value)
-                            {
-                                lblStatusBadge.Text = "Status: Punched IN (Active Shift)";
-                                lblStatusBadge.CssClass = "status-badge status-in";
-                                btnHtmlPunchIn.Disabled = true;
-                                btnHtmlPunchOut.Disabled = false;
-                            }
-                            else
-                            {
-                                string outTime = Convert.ToDateTime(rdr["PunchOutTime"]).ToString("hh:mm tt");
-                                lblPunchOutTime.Text = "Punched Out at: " + outTime;
-                                lblStatusBadge.Text = "Status: Shift Completed";
-                                lblStatusBadge.CssClass = "status-badge status-completed";
-                                btnHtmlPunchIn.Disabled = true;
-                                btnHtmlPunchOut.Disabled = true;
-                            }
-                        }
-                        else
-                        {
-                            lblStatusBadge.Text = "Status: Not Punched In";
-                            lblStatusBadge.CssClass = "status-badge status-out";
-                            lblPunchInTime.Text = "";
-                            lblPunchOutTime.Text = "";
-                            btnHtmlPunchIn.Disabled = false;
-                            btnHtmlPunchOut.Disabled = true;
+                            if (rdr["PunchInTime"] != DBNull.Value) btnHtmlPunchIn.Disabled = true;
+                            if (rdr["PunchOutTime"] != DBNull.Value) btnHtmlPunchOut.Disabled = true;
                         }
                     }
                 }
-            }
-        }
-
-        protected void btnProcessServerPunch_Click(object sender, EventArgs e)
-        {
-            lblError.Text = "";
-            string action = hfPunchAction.Value; // "IN" or "OUT"
-            string lat = hfLatitude.Value;
-            string lon = hfLongitude.Value;
-            string userId = HttpContext.Current.Session["USERID"].ToString();
-
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    conn.Open();
-
-                    if (action == "IN")
-                    {
-                        // 1. Determine which shift rule applies to them today
-                        string shiftQuery = @"
-                            SELECT TOP 1 ShiftID FROM tbl_ShiftMaster
-                            WHERE ShiftID = ISNULL((
-                                SELECT TOP 1 ShiftID FROM tbl_EmployeeShiftMapping 
-                                WHERE UserCode = @UserCode AND EffectiveFromDate <= CAST(GETDATE() AS DATE) 
-                                AND (EffectiveToDate IS NULL OR EffectiveToDate >= CAST(GETDATE() AS DATE))
-                                ORDER BY EffectiveFromDate DESC
-                            ), 1)";
-
-                        int appliedShiftId = 1; // Default
-                        using (SqlCommand cmdShift = new SqlCommand(shiftQuery, conn))
-                        {
-                            cmdShift.Parameters.AddWithValue("@UserCode", userId);
-                            object result = cmdShift.ExecuteScalar();
-                            if (result != null) appliedShiftId = Convert.ToInt32(result);
-                        }
-
-                        // 2. Insert Punch IN with the AppliedShiftID
-                        string query = @"INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, AppliedShiftID, SystemCalculatedStatus) 
-                                         VALUES (@UserCode, CAST(GETDATE() AS DATE), GETDATE(), @Lat, @Lon, @ShiftId, 'In-Progress')";
-                        using (SqlCommand cmd = new SqlCommand(query, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@UserCode", userId);
-                            cmd.Parameters.AddWithValue("@Lat", string.IsNullOrEmpty(lat) ? (object)DBNull.Value : Convert.ToDecimal(lat));
-                            cmd.Parameters.AddWithValue("@Lon", string.IsNullOrEmpty(lon) ? (object)DBNull.Value : Convert.ToDecimal(lon));
-                            cmd.Parameters.AddWithValue("@ShiftId", appliedShiftId);
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-                    else if (action == "OUT")
-                    {
-                        // 1. Gather IN data and Shift Rules for calculation
-                        DateTime punchInTime = DateTime.Now;
-                        int appliedShiftId = 1;
-
-                        string getDataQuery = "SELECT PunchInTime, AppliedShiftID FROM tbl_Attendance WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE)";
-                        using (SqlCommand cmdGet = new SqlCommand(getDataQuery, conn))
-                        {
-                            cmdGet.Parameters.AddWithValue("@UserCode", userId);
-                            using (SqlDataReader rdr = cmdGet.ExecuteReader())
-                            {
-                                if (rdr.Read())
-                                {
-                                    punchInTime = Convert.ToDateTime(rdr["PunchInTime"]);
-                                    appliedShiftId = rdr["AppliedShiftID"] != DBNull.Value ? Convert.ToInt32(rdr["AppliedShiftID"]) : 1;
-                                }
-                            }
-                        }
-
-                        // 2. Fetch the rules for this specific shift
-                        TimeSpan startTime = new TimeSpan(9, 30, 0);
-                        TimeSpan endTime = new TimeSpan(17, 30, 0);
-                        int graceLate = 15, graceEarly = 15;
-                        decimal halfDayHrs = 4.0m, fullDayHrs = 8.0m;
-
-                        string ruleQuery = "SELECT StartTime, EndTime, GracePeriodLateInMins, GracePeriodEarlyOutMins, HalfDayWorkingHours, FullDayWorkingHours FROM tbl_ShiftMaster WHERE ShiftID = @ShiftID";
-                        using (SqlCommand cmdRule = new SqlCommand(ruleQuery, conn))
-                        {
-                            cmdRule.Parameters.AddWithValue("@ShiftID", appliedShiftId);
-                            using (SqlDataReader rdr = cmdRule.ExecuteReader())
-                            {
-                                if (rdr.Read())
-                                {
-                                    startTime = (TimeSpan)rdr["StartTime"];
-                                    endTime = (TimeSpan)rdr["EndTime"];
-                                    graceLate = Convert.ToInt32(rdr["GracePeriodLateInMins"]);
-                                    graceEarly = Convert.ToInt32(rdr["GracePeriodEarlyOutMins"]);
-                                    halfDayHrs = Convert.ToDecimal(rdr["HalfDayWorkingHours"]);
-                                    fullDayHrs = Convert.ToDecimal(rdr["FullDayWorkingHours"]);
-                                }
-                            }
-                        }
-
-                        // 3. Perform Calculations in C#
-                        DateTime punchOutTime = DateTime.Now;
-                        TimeSpan timeWorked = punchOutTime - punchInTime;
-                        decimal totalHours = (decimal)timeWorked.TotalHours;
-
-                        int lateByMins = 0;
-                        if (punchInTime.TimeOfDay > startTime.Add(TimeSpan.FromMinutes(graceLate)))
-                        {
-                            lateByMins = (int)(punchInTime.TimeOfDay - startTime).TotalMinutes;
-                        }
-
-                        int earlyOutMins = 0;
-                        if (punchOutTime.TimeOfDay < endTime.Subtract(TimeSpan.FromMinutes(graceEarly)))
-                        {
-                            earlyOutMins = (int)(endTime - punchOutTime.TimeOfDay).TotalMinutes;
-                        }
-
-                        int overTimeMins = 0;
-                        if (punchOutTime.TimeOfDay > endTime)
-                        {
-                            overTimeMins = (int)(punchOutTime.TimeOfDay - endTime).TotalMinutes;
-                        }
-
-                        // Logic for final Status String
-                        string finalStatus = "Present";
-                        if (totalHours < halfDayHrs)
-                            finalStatus = "Absent (Short Hours)";
-                        else if (totalHours < fullDayHrs)
-                            finalStatus = "Half-Day";
-
-                        if (lateByMins > 0 && finalStatus == "Present")
-                            finalStatus = "Present (Late)";
-
-                        // 4. Update the Record
-                        string updateQuery = @"
-                            UPDATE tbl_Attendance 
-                            SET PunchOutTime = @OutTime, EndLatitude = @Lat, EndLongitude = @Lon, 
-                                TotalHoursWorked = @TotalHrs, LateByMins = @LateMins, EarlyOutByMins = @EarlyMins, 
-                                OvertimeMins = @OTMins, SystemCalculatedStatus = @FinalStatus 
-                            WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE)";
-
-                        using (SqlCommand cmdUpdate = new SqlCommand(updateQuery, conn))
-                        {
-                            cmdUpdate.Parameters.AddWithValue("@OutTime", punchOutTime);
-                            cmdUpdate.Parameters.AddWithValue("@Lat", string.IsNullOrEmpty(lat) ? (object)DBNull.Value : Convert.ToDecimal(lat));
-                            cmdUpdate.Parameters.AddWithValue("@Lon", string.IsNullOrEmpty(lon) ? (object)DBNull.Value : Convert.ToDecimal(lon));
-                            cmdUpdate.Parameters.AddWithValue("@TotalHrs", totalHours);
-                            cmdUpdate.Parameters.AddWithValue("@LateMins", lateByMins);
-                            cmdUpdate.Parameters.AddWithValue("@EarlyMins", earlyOutMins);
-                            cmdUpdate.Parameters.AddWithValue("@OTMins", overTimeMins);
-                            cmdUpdate.Parameters.AddWithValue("@FinalStatus", finalStatus);
-                            cmdUpdate.Parameters.AddWithValue("@UserCode", userId);
-                            cmdUpdate.ExecuteNonQuery();
-                        }
-                    }
-                }
-
-                CheckTodayStatus();
-                LoadAttendanceHistory();
-            }
-            catch (Exception ex)
-            {
-                lblError.Text = "An error occurred capturing attendance: " + ex.Message;
             }
         }
 
         private void LoadAttendanceHistory()
         {
-            try
-            {
-                string userId = HttpContext.Current.Session["USERID"].ToString();
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    // Updated to fetch the newly calculated columns
-                    string query = @"SELECT Id, ActivityDate, PunchInTime, PunchOutTime, TotalHoursWorked, LateByMins, SystemCalculatedStatus 
-                                     FROM tbl_Attendance 
-                                     WHERE UserCode = @UserCode 
-                                     ORDER BY ActivityDate DESC";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@UserCode", userId);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        gvAttendanceHistory.DataSource = dt;
-                        gvAttendanceHistory.DataBind();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                lblError.Text = "Error loading history: " + ex.Message;
-            }
-        }
-
-        [System.Web.Services.WebMethod(EnableSession = true)]
-        public static string GetAttendanceDetails(int id)
-        {
-            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-            using (SqlConnection conn = new SqlConnection(connStr))
-            {
-                string query = "SELECT ActivityDate, PunchInTime, PunchOutTime, StartLatitude, StartLongitude, EndLatitude, EndLongitude FROM tbl_Attendance WHERE Id = @Id";
-
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    conn.Open();
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        if (rdr.Read())
-                        {
-                            var details = new
-                            {
-                                Date = Convert.ToDateTime(rdr["ActivityDate"]).ToString("dd-MMM-yyyy"),
-                                InTime = rdr["PunchInTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchInTime"]).ToString("hh:mm tt") : "-",
-                                OutTime = rdr["PunchOutTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchOutTime"]).ToString("hh:mm tt") : "-",
-                                InLat = rdr["StartLatitude"] != DBNull.Value ? rdr["StartLatitude"].ToString() : "",
-                                InLon = rdr["StartLongitude"] != DBNull.Value ? rdr["StartLongitude"].ToString() : "",
-                                OutLat = rdr["EndLatitude"] != DBNull.Value ? rdr["EndLatitude"].ToString() : "",
-                                OutLon = rdr["EndLongitude"] != DBNull.Value ? rdr["EndLongitude"].ToString() : ""
-                            };
-
-                            JavaScriptSerializer js = new JavaScriptSerializer();
-                            return js.Serialize(details);
-                        }
-                    }
-                }
-            }
-            return "{}";
-        }
-
-        // 1. Updated class to include the record ID
-        public class CalendarEvent
-        {
-            public int id { get; set; } // NEW: Used to fetch details on click
-            public string title { get; set; }
-            public string start { get; set; }
-            public string color { get; set; }
-            public string description { get; set; }
-        }
-
-        // 2. Updated WebMethod
-        [System.Web.Services.WebMethod(EnableSession = true)]
-        public static string GetMonthlyCalendarData(int month, int year)
-        {
-            if (HttpContext.Current.Session["USERID"] == null) return "[]";
-
             string userId = HttpContext.Current.Session["USERID"].ToString();
-            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-
-            System.Collections.Generic.List<CalendarEvent> events = new System.Collections.Generic.List<CalendarEvent>();
-
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                // NEW: Added 'Id' to the SELECT statement
-                string query = @"
-                    SELECT Id, ActivityDate, SystemCalculatedStatus, TotalHoursWorked 
-                    FROM tbl_Attendance 
-                    WHERE UserCode = @UserCode 
-                    AND MONTH(ActivityDate) = @Month 
-                    AND YEAR(ActivityDate) = @Year";
+                // FIX: Added LateByMins, EarlyOutByMins, and OvertimeMins to the SELECT list
+                string query = @"SELECT TOP 30 
+                            Id,
+                            ActivityDate, 
+                            PunchInTime, 
+                            PunchOutTime, 
+                            TotalHoursWorked, 
+                            LateByMins, 
+                            EarlyOutByMins, 
+                            OvertimeMins, 
+                            SystemCalculatedStatus 
+                         FROM tbl_Attendance 
+                         WHERE UserCode = @UserCode AND CompanyID = @CompanyID
+                         ORDER BY ActivityDate DESC";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserCode", userId);
-                    cmd.Parameters.AddWithValue("@Month", month);
-                    cmd.Parameters.AddWithValue("@Year", year);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
-                    conn.Open();
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    gvAttendanceHistory.DataSource = dt;
+                    gvAttendanceHistory.DataBind(); // This will now find 'LateByMins' successfully
+                }
+            }
+        }
+
+        private void LoadRegularizationHistory()
+        {
+            string userId = HttpContext.Current.Session["USERID"].ToString();
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"SELECT TOP 10 AttendanceDate, RequestedInTime, RequestedOutTime, RequestStatus, AppliedOn 
+                                 FROM tbl_AttendanceRegularization 
+                                 WHERE UserCode = @UserCode AND CompanyID = @CompanyID
+                                 ORDER BY AppliedOn DESC";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserCode", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    gvRegHistory.DataSource = dt;
+                    gvRegHistory.DataBind();
+                }
+            }
+        }
+
+        // --- 2. Daily Punches (Silent & Secured) ---
+
+        protected void btnProcessServerPunch_Click(object sender, EventArgs e)
+        {
+            string userId = HttpContext.Current.Session["USERID"].ToString();
+            string action = hfPunchAction.Value; // Expected "IN" or "OUT"
+            decimal lat = 0;
+            decimal lon = 0;
+            decimal.TryParse(hfLatitude.Value, out lat);
+            decimal.TryParse(hfLongitude.Value, out lon);
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+                string query = "";
+
+                if (action == "IN")
+                {
+                    query = @"IF NOT EXISTS (SELECT 1 FROM tbl_Attendance WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE) AND CompanyID = @CompanyID)
+                              BEGIN
+                                  INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID, SystemCalculatedStatus)
+                                  VALUES (@UserCode, CAST(GETDATE() AS DATE), GETDATE(), @Lat, @Lon, @CompanyID, 'Present');
+                              END";
+                }
+                else if (action == "OUT")
+                {
+                    query = @"UPDATE tbl_Attendance 
+                              SET PunchOutTime = GETDATE(), EndLatitude = @Lat, EndLongitude = @Lon, 
+                                  TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, GETDATE()) / 60.0 AS DECIMAL(5,2))
+                              WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE) AND CompanyID = @CompanyID";
+                }
+
+                if (!string.IsNullOrEmpty(query))
+                {
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        while (rdr.Read())
-                        {
-                            DateTime actDate = Convert.ToDateTime(rdr["ActivityDate"]);
-                            string status = rdr["SystemCalculatedStatus"].ToString();
-                            decimal hours = rdr["TotalHoursWorked"] != DBNull.Value ? Convert.ToDecimal(rdr["TotalHoursWorked"]) : 0;
-
-                            CalendarEvent ev = new CalendarEvent();
-                            ev.id = Convert.ToInt32(rdr["Id"]); // NEW: Assign the ID
-                            ev.start = actDate.ToString("yyyy-MM-dd");
-
-                            if (status.Contains("Present"))
-                            {
-                                ev.color = status.Contains("Late") ? "#fd7e14" : "#28a745";
-                                ev.title = $"Present ({hours:F1}h)";
-                            }
-                            else if (status.Contains("Half-Day"))
-                            {
-                                ev.color = "#ffc107";
-                                ev.title = $"Half-Day ({hours:F1}h)";
-                            }
-                            else
-                            {
-                                ev.color = "#dc3545";
-                                ev.title = status;
-                            }
-
-                            events.Add(ev);
-                        }
+                        cmd.Parameters.AddWithValue("@UserCode", userId);
+                        cmd.Parameters.AddWithValue("@Lat", lat);
+                        cmd.Parameters.AddWithValue("@Lon", lon);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID); // STRICT ISOLATION
+                        cmd.ExecuteNonQuery();
                     }
                 }
             }
 
-            JavaScriptSerializer js = new JavaScriptSerializer();
-            return js.Serialize(events);
+            CheckTodayStatus();
+            LoadAttendanceHistory();
         }
 
+        // --- 3. Exception WebMethods (Transactions, Notifications & Gateway) ---
 
-        // --- NEW: APIs for Leave and Regularization ---
+        [WebMethod(EnableSession = true)]
+        public static string SubmitRegularization(string reqDate, string inTime, string outTime, string reason)
+        {
+            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
 
-        [System.Web.Services.WebMethod(EnableSession = true)]
+            string empId = HttpContext.Current.Session["USERID"].ToString();
+            int companyId = CompanyContext.CurrentCompanyID;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"
+                        BEGIN TRY
+                            BEGIN TRANSACTION;
+
+                            -- 1. Insert Request
+                            INSERT INTO tbl_AttendanceRegularization (UserCode, AttendanceDate, RequestedInTime, RequestedOutTime, Reason, RequestStatus, AppliedOn, CompanyID)
+                            VALUES (@UserCode, @Date, @InTime, @OutTime, @Reason, 'Pending', GETDATE(), @CompanyID);
+
+                            -- Capture the newly created RequestID immediately
+                            DECLARE @NewReqID INT = SCOPE_IDENTITY();
+
+                            -- 2. Fetch Schema-Aligned Manager Details
+                            DECLARE @ManagerID varchar(50), @ManagerEmail varchar(150), @ManagerMobile varchar(20), @EmpName varchar(50);
+                            DECLARE @SendEmail bit, @SendWA bit;
+
+                            SELECT @ManagerID = ReportingManagerId, @EmpName = Name 
+                            FROM tbl_login WHERE User_Id = @UserCode AND CompanyID = @CompanyID;
+
+                            SELECT 
+                                @ManagerEmail = Email, 
+                                @ManagerMobile = Phone_no,
+                                @SendEmail = EnableEmailAlerts,
+                                @SendWA = EnableWhatsAppAlerts
+                            FROM tbl_login 
+                            WHERE User_Id = @ManagerID AND CompanyID = @CompanyID AND IsActive = 1;
+
+                            -- 3. Proactive UI Notification Logging (Aligned to your exact schema)
+                            IF @ManagerID IS NOT NULL
+                            BEGIN
+                                INSERT INTO tbl_SystemNotification 
+                                    (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CompanyID)
+                                VALUES 
+                                    ('Attendance Correction', 
+                                     @EmpName + ' requested regularization for ' + CONVERT(varchar, CAST(@Date AS DATE), 106), 
+                                     'HR/Attendance', 
+                                     'Info', 
+                                     GETDATE(), 
+                                     DATEADD(day, 30, GETDATE()), 
+                                     1, 
+                                     @ManagerID, 
+                                     @CompanyID);
+                            END
+
+                            -- 4. Output Manager Data for External API
+                            SELECT 
+                                @ManagerEmail AS ManagerEmail, 
+                                @ManagerMobile AS ManagerMobile, 
+                                @EmpName AS EmpName, 
+                                @SendEmail AS SendEmail, 
+                                @SendWA AS SendWA,
+                                @ManagerID AS ManagerID,
+                                @NewReqID AS NewRequestID;
+
+                            COMMIT TRANSACTION;
+                        END TRY
+                        BEGIN CATCH
+                            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+                            THROW;
+                        END CATCH;
+                    ";
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserCode", empId);
+                        cmd.Parameters.AddWithValue("@Date", Convert.ToDateTime(reqDate));
+                        cmd.Parameters.AddWithValue("@InTime", inTime);
+                        cmd.Parameters.AddWithValue("@OutTime", outTime);
+                        cmd.Parameters.AddWithValue("@Reason", reason);
+                        cmd.Parameters.AddWithValue("@CompanyID", companyId);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                // 1. Extract Contact & Preference Info
+                                string mEmail = reader["ManagerEmail"]?.ToString();
+                                string mMobile = reader["ManagerMobile"]?.ToString();
+                                string empName = reader["EmpName"]?.ToString();
+
+                                bool sendEmail = reader["SendEmail"] != DBNull.Value && Convert.ToBoolean(reader["SendEmail"]);
+                                bool sendWA = reader["SendWA"] != DBNull.Value && Convert.ToBoolean(reader["SendWA"]);
+
+                                // 2. Extract IDs for the Security Token
+                                string managerId = reader["ManagerID"]?.ToString();
+                                string newRequestID = reader["NewRequestID"]?.ToString();
+
+                                // 3. Generate the Secure Payloads (Notice Type=Reg)
+                                string rawApprove = $"ReqID={newRequestID}&Type=Reg&Action=Approve&ManagerID={managerId}&CompanyID={companyId}";
+                                string rawReject = $"ReqID={newRequestID}&Type=Reg&Action=Reject&ManagerID={managerId}&CompanyID={companyId}";
+
+                                string tokenApprove = SecurityHelper.EncryptToUrlToken(rawApprove);
+                                string tokenReject = SecurityHelper.EncryptToUrlToken(rawReject);
+
+                                string baseUrl = "https://exc.aagroupindia.com/corporate/business/app/";
+                                string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
+                                string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+
+                                // 4. Build the Rich HTML Email
+                                string subject = $"Action Required: Attendance Regularization ({empName})";
+                                string htmlMessage = $@"
+                                <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; border-radius: 8px;'>
+                                    <h2 style='color: #19658A;'>Attendance Regularization Request</h2>
+                                    <p><strong>{empName}</strong> has requested a correction to their attendance.</p>
+                                    <table style='background: white; padding: 15px; border-radius: 5px; width: 100%; border: 1px solid #ddd; margin-bottom: 20px;'>
+                                        <tr><td style='padding: 5px 0;'><strong>Date:</strong></td><td>{Convert.ToDateTime(reqDate):dd-MMM-yyyy}</td></tr>
+                                        <tr><td style='padding: 5px 0;'><strong>Requested In-Time:</strong></td><td>{inTime}</td></tr>
+                                        <tr><td style='padding: 5px 0;'><strong>Requested Out-Time:</strong></td><td>{outTime}</td></tr>
+                                        <tr><td style='padding: 5px 0;'><strong>Reason:</strong></td><td>{reason}</td></tr>
+                                    </table>
+                                    
+                                    <div style='margin-top: 20px;'>
+                                        <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block;'>✅ Approve Correction</a>
+                                        <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>❌ Reject</a>
+                                    </div>
+                                    <p style='font-size: 12px; color: #777; margin-top: 30px;'>You can approve or reject directly from this email without logging in.</p>
+                                </div>";
+
+                                string targetEmail = sendEmail ? mEmail : null;
+                                string targetMobile = sendWA ? mMobile : null;
+
+                                if (!string.IsNullOrEmpty(targetEmail) || !string.IsNullOrEmpty(targetMobile))
+                                {
+                                    CommunicationGateway.SendAlertsAsync(targetEmail, targetMobile, subject, htmlMessage);
+                                }
+                            }
+                        }
+                    }
+                    return "Success";
+                }
+            }
+            catch (Exception ex)
+            {
+                return "Error: " + ex.Message;
+            }
+        }
+
+        [WebMethod(EnableSession = true)]
+        public static string SubmitLeave(string reqDate, int leaveId, string reason)
+        {
+            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
+
+            string empId = HttpContext.Current.Session["USERID"].ToString();
+            int companyId = CompanyContext.CurrentCompanyID;
+            DateTime targetDate = Convert.ToDateTime(reqDate);
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"
+                        BEGIN TRY
+                            BEGIN TRANSACTION;
+
+                            -- 1. Insert Leave (Quick 1-Day Leave from Calendar)
+                            INSERT INTO tbl_LeaveRequests (UserCode, LeaveID, StartDate, EndDate, TotalDays, Reason, RequestStatus, AppliedOn, CompanyID)
+                            VALUES (@UserCode, @LeaveID, @Date, @Date, 1.0, @Reason, 'Pending', GETDATE(), @CompanyID);
+
+                            -- 2. Fetch Schema-Aligned Manager Details
+                            DECLARE @ManagerID varchar(50), @ManagerEmail varchar(150), @ManagerMobile varchar(20), @EmpName varchar(50);
+                            DECLARE @SendEmail bit, @SendWA bit;
+
+                            SELECT @ManagerID = ReportingManagerId, @EmpName = Name 
+                            FROM tbl_login WHERE User_Id = @UserCode AND CompanyID = @CompanyID;
+
+                            SELECT 
+                                @ManagerEmail = Email, 
+                                @ManagerMobile = Phone_no,
+                                @SendEmail = EnableEmailAlerts,
+                                @SendWA = EnableWhatsAppAlerts
+                            FROM tbl_login 
+                            WHERE User_Id = @ManagerID AND CompanyID = @CompanyID AND IsActive = 1;
+
+                            -- 3. Proactive UI Notification Logging
+                            IF @ManagerID IS NOT NULL
+                            BEGIN
+                                INSERT INTO tbl_SystemNotification (Title, Message, Module, Type, UserID, CreatedDate, IsRead, CompanyID)
+                                VALUES ('Quick Leave Request', @EmpName + ' applied for leave on ' + CONVERT(varchar, CAST(@Date AS DATE), 106), 'HR/Leave', 'Info', @ManagerID, GETDATE(), 0, @CompanyID);
+                            END
+
+                            -- 4. Output Manager Data
+                            SELECT @ManagerEmail AS ManagerEmail, @ManagerMobile AS ManagerMobile, @EmpName AS EmpName, @SendEmail AS SendEmail, @SendWA AS SendWA;
+
+                            COMMIT TRANSACTION;
+                        END TRY
+                        BEGIN CATCH
+                            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+                            THROW;
+                        END CATCH;
+                    ";
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserCode", empId);
+                        cmd.Parameters.AddWithValue("@LeaveID", leaveId);
+                        cmd.Parameters.AddWithValue("@Date", targetDate);
+                        cmd.Parameters.AddWithValue("@Reason", reason);
+                        cmd.Parameters.AddWithValue("@CompanyID", companyId);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string mEmail = reader["ManagerEmail"]?.ToString();
+                                string mMobile = reader["ManagerMobile"]?.ToString();
+                                string empName = reader["EmpName"]?.ToString();
+
+                                bool sendEmail = reader["SendEmail"] != DBNull.Value && Convert.ToBoolean(reader["SendEmail"]);
+                                bool sendWA = reader["SendWA"] != DBNull.Value && Convert.ToBoolean(reader["SendWA"]);
+
+                                string subject = $"Leave Request Action Required: {empName}";
+                                string message = $"Hello Manager, {empName} has requested a leave for {targetDate:dd-MMM}. Please log in to approve or reject.";
+
+                                string targetEmail = sendEmail ? mEmail : null;
+                                string targetMobile = sendWA ? mMobile : null;
+
+                                if (!string.IsNullOrEmpty(targetEmail) || !string.IsNullOrEmpty(targetMobile))
+                                {
+                                    CommunicationGateway.SendAlertsAsync(targetEmail, targetMobile, subject, message);
+                                }
+                            }
+                        }
+                    }
+                    return "Success";
+                }
+            }
+            catch (Exception ex)
+            {
+                return "Error: " + ex.Message;
+            }
+        }
+
+        // Called by the ASPX GridView to color-code attendance statuses
+        public string GetStatusColor(string status)
+        {
+            if (string.IsNullOrEmpty(status)) return "color: #333;";
+
+            string s = status.ToLower();
+            if (s.Contains("present"))
+                return "color: #28a745; font-weight: bold;"; // Green
+            if (s.Contains("absent"))
+                return "color: #dc3545; font-weight: bold;"; // Red
+            if (s.Contains("half") || s.Contains("short"))
+                return "color: #fd7e14; font-weight: bold;"; // Orange
+            if (s.Contains("leave"))
+                return "color: #17a2b8; font-weight: bold;"; // Blue
+
+            return "color: #333;"; // Default Dark Gray
+        }
+
+        [WebMethod]
         public static string GetActiveLeaveTypes()
         {
-            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-            System.Collections.Generic.List<object> leaves = new System.Collections.Generic.List<object>();
-
+            List<object> leaves = new List<object>();
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                // Fetch active leave types to populate the dropdown
                 string query = "SELECT LeaveID, LeaveName FROM tbl_LeaveMaster WHERE IsActive = 1";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
@@ -476,7 +472,7 @@ namespace Bill_Software.corporate.business.app
                     {
                         while (rdr.Read())
                         {
-                            leaves.Add(new { ID = rdr["LeaveID"], Name = rdr["LeaveName"].ToString() });
+                            leaves.Add(new { id = rdr["LeaveID"], name = rdr["LeaveName"].ToString() });
                         }
                     }
                 }
@@ -484,120 +480,58 @@ namespace Bill_Software.corporate.business.app
             return new JavaScriptSerializer().Serialize(leaves);
         }
 
-        [System.Web.Services.WebMethod(EnableSession = true)]
-        public static string SubmitRegularization(string reqDate, string inTime, string outTime, string reason)
+        [WebMethod(EnableSession = true)]
+        public static object GetMonthlyCalendarData()
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
-
-            try
-            {
-                string userId = HttpContext.Current.Session["USERID"].ToString();
-                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    string query = @"INSERT INTO tbl_AttendanceRegularization 
-                                     (UserCode, AttendanceDate, RequestedInTime, RequestedOutTime, Reason, RequestStatus) 
-                                     VALUES (@UserCode, @Date, @InTime, @OutTime, @Reason, 'Pending')";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@UserCode", userId);
-                        cmd.Parameters.AddWithValue("@Date", Convert.ToDateTime(reqDate));
-                        // Handling optional times (e.g., if they only forgot to punch out)
-                        cmd.Parameters.AddWithValue("@InTime", string.IsNullOrEmpty(inTime) ? (object)DBNull.Value : TimeSpan.Parse(inTime));
-                        cmd.Parameters.AddWithValue("@OutTime", string.IsNullOrEmpty(outTime) ? (object)DBNull.Value : TimeSpan.Parse(outTime));
-                        cmd.Parameters.AddWithValue("@Reason", reason);
-
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-                return "Success";
-            }
-            catch (Exception ex)
-            {
-                return "Error: " + ex.Message;
-            }
-        }
-
-        [System.Web.Services.WebMethod(EnableSession = true)]
-        public static string SubmitLeave(string reqDate, int leaveId, string reason)
-        {
-            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
-
-            try
-            {
-                string userId = HttpContext.Current.Session["USERID"].ToString();
-                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    string query = @"INSERT INTO tbl_LeaveRequests 
-                                     (UserCode, LeaveID, StartDate, EndDate, TotalDays, Reason, RequestStatus) 
-                                     VALUES (@UserCode, @LeaveID, @Date, @Date, 1.0, @Reason, 'Pending')";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@UserCode", userId);
-                        cmd.Parameters.AddWithValue("@LeaveID", leaveId);
-                        cmd.Parameters.AddWithValue("@Date", Convert.ToDateTime(reqDate));
-                        cmd.Parameters.AddWithValue("@Reason", reason);
-
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-                return "Success";
-            }
-            catch (Exception ex)
-            {
-                return "Error: " + ex.Message;
-            }
-        }
-
-        [System.Web.Services.WebMethod(EnableSession = true)]
-        public static string GetShiftTimings(string reqDate)
-        {
-            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+            if (HttpContext.Current.Session["USERID"] == null) return null;
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
-            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            int companyId = CompanyContext.CurrentCompanyID;
+            List<object> events = new List<object>();
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                // Find the shift mapped to this user on this specific date (fallback to ShiftID 1)
+                // Fetch Attendance and Leave Statuses
                 string query = @"
-                    SELECT TOP 1 StartTime, EndTime FROM tbl_ShiftMaster
-                    WHERE ShiftID = ISNULL((
-                        SELECT TOP 1 ShiftID FROM tbl_EmployeeShiftMapping 
-                        WHERE UserCode = @UserCode AND EffectiveFromDate <= @Date 
-                        AND (EffectiveToDate IS NULL OR EffectiveToDate >= @Date)
-                        ORDER BY EffectiveFromDate DESC
-                    ), 1)";
+                    SELECT ActivityDate as StartDate, SystemCalculatedStatus as Status, 
+                           PunchInTime, PunchOutTime 
+                    FROM tbl_Attendance 
+                    WHERE UserCode = @UserCode AND CompanyID = @CompanyID";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserCode", userId);
-                    cmd.Parameters.AddWithValue("@Date", Convert.ToDateTime(reqDate));
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
                     conn.Open();
-
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        if (rdr.Read())
+                        while (rdr.Read())
                         {
-                            // HTML <input type="time"> expects 24-hour HH:mm format
-                            var timings = new
+                            string status = rdr["Status"].ToString();
+                            string color = "#6c757d"; // Default Gray
+
+                            if (status.Contains("Present")) color = "#28a745";
+                            else if (status.Contains("Absent")) color = "#dc3545";
+                            else if (status.Contains("Leave")) color = "#17a2b8";
+                            else if (status.Contains("Half")) color = "#fd7e14";
+
+                            events.Add(new
                             {
-                                InTime = ((TimeSpan)rdr["StartTime"]).ToString(@"hh\:mm"),
-                                OutTime = ((TimeSpan)rdr["EndTime"]).ToString(@"hh\:mm")
-                            };
-                            return new JavaScriptSerializer().Serialize(timings);
+                                title = status,
+                                start = Convert.ToDateTime(rdr["StartDate"]).ToString("yyyy-MM-dd"),
+                                backgroundColor = color,
+                                borderColor = color,
+                                extendedProps = new
+                                {
+                                    punchIn = rdr["PunchInTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchInTime"]).ToString("HH:mm") : "N/A",
+                                    punchOut = rdr["PunchOutTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchOutTime"]).ToString("HH:mm") : "N/A"
+                                }
+                            });
                         }
                     }
                 }
             }
-            return "{}";
+            return events;
         }
     }
 }

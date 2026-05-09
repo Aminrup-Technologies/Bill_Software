@@ -221,8 +221,10 @@
                                     </div>
 
                                     <div style="display: flex; flex-direction: column; text-align: right; line-height: 1.3;">
-                                        <div style="color: white; font-size: 15px;">Hi,
-                                            <asp:Label ID="lblName" runat="server" Font-Bold="true"></asp:Label></div>
+                                        <div style="color: white; font-size: 15px;">
+                                            Hi,
+                                            <asp:Label ID="lblName" runat="server" Font-Bold="true"></asp:Label>
+                                        </div>
                                         <asp:Label ID="lblRole" runat="server" Font-Size="12px" ForeColor="#e0e0e0" Font-Italic="true"></asp:Label>
                                     </div>
 
@@ -269,6 +271,13 @@
                                     <li id="Service_Tax_Master" runat="server"><a href="Service_Tax_Master.aspx">Service Tax Master</a></li>
                                     <li id="PrimaryServiceTerms" runat="server"><a href="PrimaryServiceTerms.aspx">Specific Terms</a></li>
                                     <li id="Expenses_Head" runat="server"><a href="Expenses_Head.aspx">Expense Head</a></li>
+                                    <li id="EmpConfig" runat="server"><a href="#">Employee Config</a>
+                                        <ul class="nav first1">
+                                            <li id="AdminLeaveSetup" runat="server"><a href="AdminLeaveSetup.aspx">Leave Setup</a></li>
+                                            <li id="AdminShiftSetup" runat="server"><a href="AdminShiftSetup.aspx">Shift Setup</a></li>
+                                            <li id="AdminOverride" runat="server"><a href="AdminOverride.aspx">Admin Override</a></li>
+                                        </ul>
+                                    </li>
                                 </ul>
                             </li>
                             <li id="Vendor" runat="server">Principle
@@ -401,6 +410,7 @@
                                         <li id="visit_planner" runat="server"><a href="visit_planner.aspx">Visit Planner</a></li>
                                         <li id="daily_reporting" runat="server"><a href="daily_rpt.aspx">Daily Reporting</a></li>
                                         <li id="vw_dailyrpts" runat="server"><a href="vw_dailyrpts.aspx">View Daily Reporting</a></li>
+                                        <li id="AdminApprovalDashboard" runat="server"><a href="AdminApprovalDashboard.aspx">Approvals</a></li>
                                         <li id="srch_dailyrpts" runat="server"><a href="srch_dailyrpts.aspx">Search Daily Reports</a></li>
                                     </ul>
                             </li>

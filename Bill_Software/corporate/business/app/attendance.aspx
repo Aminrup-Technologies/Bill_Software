@@ -245,7 +245,7 @@
         </div>
 
         <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
-            
+
             <div class="history-section" style="flex: 2; min-width: 400px;">
                 <h3 style="color: #19658A; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 5px;">📅 My Recent Attendance</h3>
                 <asp:GridView ID="gvAttendanceHistory" runat="server" AutoGenerateColumns="False" CssClass="grid-style" EmptyDataText="No attendance records found." GridLines="None">
@@ -256,7 +256,7 @@
                         <asp:BoundField DataField="TotalHoursWorked" HeaderText="Total Hrs" DataFormatString="{0:F2}" NullDisplayText="-" />
                         <asp:BoundField DataField="LateByMins" HeaderText="Late (Mins)" NullDisplayText="0" />
                         <asp:BoundField DataField="SystemCalculatedStatus" HeaderText="Status" ItemStyle-Font-Bold="true" />
-                        
+
                         <asp:TemplateField HeaderText="Location">
                             <ItemTemplate>
                                 <button type="button" onclick="viewAttendanceMap('<%# Eval("Id") %>');" style="background-color: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
@@ -405,7 +405,7 @@
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function () {
 
-            // --- NEW: Pre-load Leave Types on page load ---
+            // --- 1. Pre-load Leave Types on page load ---
             fetch('attendance.aspx/GetActiveLeaveTypes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json; charset=utf-8' }
@@ -416,11 +416,13 @@
                 var ddl = document.getElementById('ddlLeaveTypes');
                 leaves.forEach(function (leave) {
                     var option = document.createElement("option");
-                    option.value = leave.ID;
-                    option.text = leave.Name;
+                    // FIX: Case-sensitivity matters in JS. The C# returns lowercase 'id' and 'name'
+                    option.value = leave.id;
+                    option.text = leave.name;
                     ddl.appendChild(option);
                 });
-            });
+            })
+            .catch(err => console.error("Error loading leaves:", err));
             // ----------------------------------------------
 
 
@@ -437,77 +439,34 @@
                 firstDay: 1,
 
                 events: function (fetchInfo, successCallback, failureCallback) {
-                    var midDate = new Date((fetchInfo.start.getTime() + fetchInfo.end.getTime()) / 2);
-                    var queryMonth = midDate.getMonth() + 1;
-                    var queryYear = midDate.getFullYear();
-
+                    // FIX: C# GetMonthlyCalendarData takes no parameters. Sending month/year caused the 500 Error.
                     fetch('attendance.aspx/GetMonthlyCalendarData', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                        body: JSON.stringify({ month: queryMonth, year: queryYear })
+                        body: "{}"
                     })
                     .then(response => response.json())
                     .then(data => {
-                        var parsedEvents = JSON.parse(data.d);
-                        successCallback(parsedEvents);
+                        // FIX: ASP.NET auto-serializes generic Lists. data.d is ALREADY an array.
+                        // Using JSON.parse(data.d) here was causing the SyntaxError crash.
+                        successCallback(data.d);
                     })
                     .catch(error => failureCallback(error));
                 },
 
-                // Modified Event Click
-                //eventClick: function (info) {
-                //    var recordId = info.event.id;
-                //    var clickedDate = info.event.start;
-
-                //    // Reset modal state
-                //    hideForms();
-                //    document.getElementById('hfClickedDate').value = info.event.startStr;
-                //    document.getElementById('modalDateHeader').innerText = clickedDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
-
-                //    document.getElementById('modalEventStatus').innerText = info.event.title;
-                //    document.getElementById('modalEventStatus').style.color = info.event.backgroundColor;
-
-                //    fetch('attendance.aspx/GetAttendanceDetails', {
-                //        method: 'POST',
-                //        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                //        body: JSON.stringify({ id: parseInt(recordId) })
-                //    })
-                //    .then(response => response.json())
-                //    .then(data => {
-                //        var details = JSON.parse(data.d);
-                //        document.getElementById('modalPunchIn').innerText = details.InTime;
-                //        document.getElementById('modalPunchOut').innerText = details.OutTime;
-
-                //        document.getElementById('btnViewMapFromModal').onclick = function () {
-                //            document.getElementById('dateDetailsModal').style.display = 'none';
-                //            viewAttendanceMap(recordId);
-                //        };
-
-                //        document.getElementById('modalExistingRecordInfo').style.display = 'block';
-                //        document.getElementById('modalEmptyRecordInfo').style.display = 'none';
-                //        document.getElementById('dateDetailsModal').style.display = 'block';
-                //    });
-                //},
-
-                //// Modified Date Click
-                //dateClick: function (info) {
-                //    var clickedDate = new Date(info.dateStr);
-                //    if (clickedDate > new Date()) return; // Prevent clicking future dates for now
-
-                //    // Reset modal state
-                //    hideForms();
-                //    document.getElementById('hfClickedDate').value = info.dateStr;
-                //    document.getElementById('modalDateHeader').innerText = clickedDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
-
-                //    document.getElementById('modalExistingRecordInfo').style.display = 'none';
-                //    document.getElementById('modalEmptyRecordInfo').style.display = 'block';
-                //    document.getElementById('dateDetailsModal').style.display = 'block';
-                //}
+                // FIX: Restored the custom tag styling logic so statuses look like bubbles
+                eventContent: function (arg) {
+                    let arrayOfDomNodes = [];
+                    let titleEl = document.createElement('div');
+                    titleEl.innerHTML = '<span class="calendar-tag" style="background:' + arg.event.backgroundColor + '; padding: 2px 5px; border-radius: 4px; color: white; font-size: 11px; display: block; text-align: center;">' + arg.event.title + '</span>';
+                    arrayOfDomNodes.push(titleEl);
+                    return { domNodes: arrayOfDomNodes };
+                },
 
                 eventClick: function (info) {
                     var recordId = info.event.id;
                     var clickedDate = info.event.start;
-                    var dateStr = info.event.startStr; // Get the YYYY-MM-DD string
+                    var dateStr = info.event.startStr;
 
                     // Reset modal state
                     hideForms();
@@ -517,7 +476,7 @@
                     document.getElementById('modalEventStatus').innerText = info.event.title;
                     document.getElementById('modalEventStatus').style.color = info.event.backgroundColor;
 
-                    // NEW: Prefill the form inputs with expected shift timings
+                    // Prefill the form inputs with expected shift timings
                     prefillShiftTimings(dateStr);
 
                     fetch('attendance.aspx/GetAttendanceDetails', {
@@ -533,13 +492,16 @@
 
                         document.getElementById('btnViewMapFromModal').onclick = function () {
                             document.getElementById('dateDetailsModal').style.display = 'none';
-                            viewAttendanceMap(recordId);
+                            if (typeof viewAttendanceMap === "function") {
+                                viewAttendanceMap(recordId);
+                            }
                         };
 
                         document.getElementById('modalExistingRecordInfo').style.display = 'block';
                         document.getElementById('modalEmptyRecordInfo').style.display = 'none';
                         document.getElementById('dateDetailsModal').style.display = 'block';
-                    });
+                    })
+                    .catch(err => console.error("Error fetching details:", err));
                 },
 
                 dateClick: function (info) {
@@ -551,7 +513,7 @@
                     document.getElementById('hfClickedDate').value = info.dateStr;
                     document.getElementById('modalDateHeader').innerText = clickedDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
 
-                    // NEW: Prefill the form inputs with expected shift timings
+                    // Prefill the form inputs with expected shift timings
                     prefillShiftTimings(info.dateStr);
 
                     document.getElementById('modalExistingRecordInfo').style.display = 'none';
@@ -563,13 +525,12 @@
             calendar.render();
         });
 
-        // --- NEW: Helper Functions for the UI ---
+        // --- Helper Functions for the UI ---
 
         function hideForms() {
             document.getElementById('regForm').style.display = 'none';
             document.getElementById('leaveForm').style.display = 'none';
 
-            // Clear inputs EXCEPT for the prefilled IN/OUT times
             document.getElementById('txtRegReason').value = '';
             document.getElementById('ddlLeaveTypes').selectedIndex = 0;
             document.getElementById('txtLeaveReason').value = '';
@@ -581,7 +542,6 @@
         }
 
         function prefillShiftTimings(dateStr) {
-            // Show a loading state briefly
             document.getElementById('txtRegIn').value = "";
             document.getElementById('txtRegOut').value = "";
 
@@ -623,7 +583,8 @@
                 } else {
                     alert(data.d);
                 }
-            });
+            })
+            .catch(err => alert("Communication error submitting request."));
         }
 
         function submitLeave() {
@@ -649,7 +610,8 @@
                 } else {
                     alert(data.d);
                 }
-            });
+            })
+            .catch(err => alert("Communication error submitting request."));
         }
     </script>
 </asp:Content>
