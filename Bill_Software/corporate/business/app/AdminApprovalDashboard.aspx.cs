@@ -80,7 +80,6 @@ namespace Bill_Software.corporate.business.app
         }
 
         // --- 2. Handle Regularization Actions ---
-
         protected void gvRegularizations_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             int requestId = Convert.ToInt32(e.CommandArgument);
@@ -92,7 +91,6 @@ namespace Bill_Software.corporate.business.app
         }
 
         // --- 3. Handle Leave Actions ---
-
         protected void gvLeaves_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             int requestId = Convert.ToInt32(e.CommandArgument);
@@ -104,24 +102,23 @@ namespace Bill_Software.corporate.business.app
         }
 
         // --- 4. The Master Execution Workflow ---
-
         private void ExecuteWorkflowTransaction(string reqType, string status, int reqId, string managerId)
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
                 string query = @"
-                    SET NOCOUNT ON;   -- <--- THIS IS THE MAGIC FIX
+                    SET NOCOUNT ON;   
 
                     BEGIN TRY
                         BEGIN TRANSACTION;
 
                         DECLARE @EmpID varchar(50);
-                        
+                
                         -- A. Update the Request Status
                         " + (reqType == "Leave"
-                            ? "UPDATE tbl_LeaveRequests SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID; SELECT @EmpID = UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID;"
-                            : "UPDATE tbl_AttendanceRegularization SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID; SELECT @EmpID = UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID;") + @"
+                                    ? "UPDATE tbl_LeaveRequests SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID; SELECT @EmpID = UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID;"
+                                    : "UPDATE tbl_AttendanceRegularization SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID; SELECT @EmpID = UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID;") + @"
 
                         -- B. Execute Business Logic if APPROVED
                         IF @Status = 'Approved'
@@ -166,10 +163,10 @@ namespace Bill_Software.corporate.business.app
                             ") + @"
                         END
 
-                        // C. Fetch Employee Contact Info & Manager's Email (for CC)
+                        -- C. Fetch Employee Contact Info & Manager's Email (for CC)
                         DECLARE @EmpEmail varchar(150), @EmpMobile varchar(20), @EmpName varchar(50);
                         DECLARE @SendEmail bit, @SendWA bit;
-                        DECLARE @MgrEmail varchar(150); -- <-- NEW
+                        DECLARE @MgrEmail varchar(150); 
 
                         SELECT 
                             @EmpName = e.Name,
@@ -177,7 +174,7 @@ namespace Bill_Software.corporate.business.app
                             @EmpMobile = e.Phone_no,
                             @SendEmail = e.EnableEmailAlerts,
                             @SendWA = e.EnableWhatsAppAlerts,
-                            @MgrEmail = m.Email  -- <-- NEW: Get Manager Email
+                            @MgrEmail = m.Email  
                         FROM tbl_login e
                         LEFT JOIN tbl_login m ON e.ReportingManagerId = m.User_Id
                         WHERE e.User_Id = @EmpID AND e.CompanyID = @CompID AND e.IsActive = 1;
@@ -230,7 +227,7 @@ namespace Bill_Software.corporate.business.app
                             string eEmail = reader["EmpEmail"]?.ToString();
                             string eMobile = reader["EmpMobile"]?.ToString();
                             string empName = reader["EmpName"]?.ToString();
-                            string mgrEmail = reader["MgrEmail"]?.ToString(); // <-- NEW
+                            string mgrEmail = reader["MgrEmail"]?.ToString();
 
                             bool sendEmail = reader["SendEmail"] != DBNull.Value && Convert.ToBoolean(reader["SendEmail"]);
                             bool sendWA = reader["SendWA"] != DBNull.Value && Convert.ToBoolean(reader["SendWA"]);

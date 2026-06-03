@@ -236,7 +236,7 @@
                 box-shadow: 0 2px 4px rgba(25,101,138,0.3);
             }
 
-            @keyframes fadeSlideIn {
+        @keyframes fadeSlideIn {
             from {
                 opacity: 0;
                 transform: translateY(-20px);
@@ -248,7 +248,7 @@
             }
         }
 
-            /* Beautiful Modal Table Styling */
+        /* Beautiful Modal Table Styling */
         .modal-table-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -266,45 +266,66 @@
             margin: 0;
         }
 
-        .beautiful-grid thead th {
-            background-color: #f4f7f9; /* Soft tech-gray background */
-            color: #153e75;           /* Deep navy text */
-            padding: 14px 16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #e1e8f0;
+            .beautiful-grid thead th {
+                background-color: #f4f7f9; /* Soft tech-gray background */
+                color: #153e75; /* Deep navy text */
+                padding: 14px 16px;
+                font-weight: 700;
+                text-transform: uppercase;
+                font-size: 11px;
+                letter-spacing: 0.5px;
+                border-bottom: 2px solid #e1e8f0;
+            }
+
+            .beautiful-grid tbody td {
+                padding: 14px 16px;
+                border-bottom: 1px solid #f0f4f8;
+                color: #444;
+                vertical-align: middle;
+                line-height: 1.5;
+            }
+
+            /* Remove border from the very last row so it doesn't double-up with the wrapper */
+            .beautiful-grid tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            /* Smooth hover effect */
+            .beautiful-grid tbody tr {
+                transition: background-color 0.2s ease;
+            }
+
+                .beautiful-grid tbody tr:hover {
+                    background-color: #f8fbfd;
+                }
+
+        .geo-btn {
+            background-color: #f8f9fa;
+            color: #19658A;
+            border: 1px solid #19658A;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .beautiful-grid tbody td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #f0f4f8;
-            color: #444;
-            vertical-align: middle;
-            line-height: 1.5;
-        }
-
-        /* Remove border from the very last row so it doesn't double-up with the wrapper */
-        .beautiful-grid tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Smooth hover effect */
-        .beautiful-grid tbody tr {
-            transition: background-color 0.2s ease;
-        }
-
-        .beautiful-grid tbody tr:hover {
-            background-color: #f8fbfd;
-        }
+            .geo-btn:hover {
+                background-color: #19658A;
+                color: #ffffff;
+                box-shadow: 0 4px 8px rgba(25, 101, 138, 0.2);
+            }
     </style>
 
     <script type="text/javascript">
         function confirmSendCredentials() {
             return confirm("Are you sure you want to generate a new temporary password and email it to this user?");
         }
-    
+
         function showSessionHistory(userId, userName) {
             document.getElementById('sessionModalName').innerText = userName;
 
@@ -354,6 +375,8 @@
             });
         }
     </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -460,6 +483,15 @@
                                     <asp:LinkButton ID="lnkReset" runat="server" CommandName="ResetPassword" CommandArgument='<%# Eval("Id") %>' OnClientClick="return confirmSendCredentials();" CssClass="action-btn btn-primary">Email Access</asp:LinkButton>
                                     <asp:LinkButton ID="lnkLock" runat="server" CommandName="ToggleLock" CommandArgument='<%# Eval("Id") %>' CssClass="action-btn"></asp:LinkButton>
                                     <asp:LinkButton ID="lnkMenuEdit" runat="server" CommandName="MenuEdit" CommandArgument='<%# Eval("Id") %>' CssClass="action-btn btn-primary">Menu</asp:LinkButton>
+
+                                    <button type="button"
+                                        class="action-btn"
+                                        style="background-color: #f8f9fa; color: #19658A; border: 1px solid #19658A;"
+                                        title="Set Geo-Fence Boundaries"
+                                        onclick="openGeoFenceModal('<%# Eval("Id") %>', '<%# Eval("GeoFenceLat") %>', '<%# Eval("GeoFenceLng") %>', '<%# Eval("GeoFenceRadius") %>')">
+                                        📍 Geo-Fence
+   
+                                    </button>
                                 </div>
                             </div>
                         </ItemTemplate>
@@ -662,10 +694,178 @@
                             </tr>
                         </thead>
                         <tbody id="sessionTableBody">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+
+    <div id="geoFenceModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99999;">
+        <div style="background: #fff; width: 90%; max-width: 600px; margin: 5% auto; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <div style="background: #19658A; color: #fff; padding: 15px; font-weight: bold; display: flex; justify-content: space-between;">
+                <span>📍 Set Geo-Fence for Employee</span>
+                <span style="cursor: pointer;" onclick="closeGeoFenceModal()">✖</span>
+            </div>
+
+            <div style="padding: 15px;">
+                <input type="hidden" id="hfGeoUserId" />
+
+                <div style="margin-bottom: 10px; display: flex; gap: 8px;">
+                    <input type="text" id="txtSearchLocation" placeholder="Search city, area, or landmark..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" onkeypress="if(event.keyCode==13) { searchLocation(); return false; }" />
+                    <button type="button" onclick="searchLocation()" style="background: #19658A; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" title="Search">🔍 Search</button>
+                    <button type="button" onclick="getCurrentLocation()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" title="My Current Location">🎯</button>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="font-weight: bold; font-size: 13px; color: #333;">Allowed Radius: <span id="lblRadius" style="color: #19658A; font-size: 16px;">100</span> meters</label>
+                    <input type="range" id="rngRadius" min="10" max="1000" value="100" style="width: 100%; margin-top: 5px;" oninput="updateMapCircle()" />
+                </div>
+
+                <div id="map" style="height: 300px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"></div>
+
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <input type="text" id="txtLat" placeholder="Latitude" readonly style="flex: 1; padding: 8px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px;" />
+                    <input type="text" id="txtLng" placeholder="Longitude" readonly style="flex: 1; padding: 8px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px;" />
+                </div>
+
+                <div style="margin-top: 15px; text-align: right;">
+                    <button type="button" onclick="saveGeoFence()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Save Geo-Fence</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var map, marker, circle;
+
+        function openGeoFenceModal(userId, currentLat, currentLng, currentRadius) {
+            document.getElementById('geoFenceModal').style.display = 'block';
+            document.getElementById('hfGeoUserId').value = userId;
+
+            // Clear search box on open
+            document.getElementById('txtSearchLocation').value = '';
+
+            // Default to Jamshedpur/Kolkata area if no data exists
+            var lat = currentLat || 22.8046;
+            var lng = currentLng || 86.2029;
+            var radius = currentRadius || 100;
+
+            document.getElementById('txtLat').value = lat;
+            document.getElementById('txtLng').value = lng;
+            document.getElementById('rngRadius').value = radius;
+            document.getElementById('lblRadius').innerText = radius;
+
+            if (!map) {
+                map = L.map('map').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                map.on('click', function (e) {
+                    updatePin(e.latlng.lat, e.latlng.lng);
+                });
+            } else {
+                map.setView([lat, lng], 16);
+            }
+
+            updatePin(lat, lng);
+            setTimeout(function () { map.invalidateSize(); }, 200);
+        }
+
+        function updatePin(lat, lng) {
+            document.getElementById('txtLat').value = lat;
+            document.getElementById('txtLng').value = lng;
+            var radius = parseInt(document.getElementById('rngRadius').value);
+
+            if (marker) map.removeLayer(marker);
+            if (circle) map.removeLayer(circle);
+
+            marker = L.marker([lat, lng]).addTo(map);
+            circle = L.circle([lat, lng], { radius: radius, color: '#19658A', fillOpacity: 0.3 }).addTo(map);
+        }
+
+        function updateMapCircle() {
+            var r = document.getElementById('rngRadius').value;
+            document.getElementById('lblRadius').innerText = r;
+            var lat = document.getElementById('txtLat').value;
+            var lng = document.getElementById('txtLng').value;
+            if (lat && lng) {
+                updatePin(lat, lng);
+            }
+        }
+
+        // --- NEW: HTML5 Geolocation ---
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                document.getElementById('txtSearchLocation').value = "Locating...";
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+                    map.setView([lat, lng], 17);
+                    updatePin(lat, lng);
+                    document.getElementById('txtSearchLocation').value = "Current Location";
+                }, function (error) {
+                    alert("Error getting location: Please ensure location services are allowed in your browser.");
+                    document.getElementById('txtSearchLocation').value = "";
+                }, { enableHighAccuracy: true });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // --- NEW: OpenStreetMap Nominatim Search ---
+        function searchLocation() {
+            var query = document.getElementById('txtSearchLocation').value.trim();
+            if (!query || query === "Locating..." || query === "Current Location") return;
+
+            // Using free OSM geocoding
+            var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        var lat = parseFloat(data[0].lat);
+                        var lng = parseFloat(data[0].lon);
+                        map.setView([lat, lng], 15);
+                        updatePin(lat, lng);
+                    } else {
+                        alert("Location not found. Try adding a city name.");
+                    }
+                })
+                .catch(err => {
+                    alert("Error searching location. Please check your network.");
+                    console.error(err);
+                });
+        }
+
+        function closeGeoFenceModal() {
+            document.getElementById('geoFenceModal').style.display = 'none';
+        }
+
+        function saveGeoFence() {
+            var userId = document.getElementById('hfGeoUserId').value;
+            var lat = document.getElementById('txtLat').value;
+            var lng = document.getElementById('txtLng').value;
+            var radius = document.getElementById('rngRadius').value;
+
+            fetch('ViewUser.aspx/SaveGeoFence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: parseInt(userId), lat: parseFloat(lat), lng: parseFloat(lng), radius: parseInt(radius) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.d === "Success") {
+                    alert("Geo-Fence saved successfully!");
+                    closeGeoFenceModal();
+                    // Optional: trigger a postback here if you want the grid to refresh immediately
+                    // __doPostBack('UpdatePanel1', ''); 
+                } else {
+                    alert("Error: " + data.d);
+                }
+            });
+        }
+    </script>
 </asp:Content>

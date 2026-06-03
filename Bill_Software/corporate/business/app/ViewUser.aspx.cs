@@ -8,6 +8,8 @@ using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web.UI.WebControls;
+using System.Web.Services;
+using System.Web;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -76,25 +78,104 @@ namespace Bill_Software.corporate.business.app
             BindGrid();
         }
 
-        // FIX 1: C# 5.0 Compatible Event Handlers
         protected void ddlEmpId_SelectedIndexChanged(object sender, EventArgs e) { BindGrid(); }
         protected void btnRefresh_Click(object sender, EventArgs e) { BindGrid(); }
 
         private void BindGrid()
         {
+            // 1. Check the logged-in User ID from Session
+            string loggedInUser = Session["USERID"] != null ? Session["USERID"].ToString() : "";
+
+            // 2. Base Query strictly enforcing CompanyContext
             string sql = @"SELECT u.Id, u.User_Id, u.Name, u.Email, u.Phone_no, u.IsActive, u.LockoutEnd, 
                           u.LastLogin, u.CreatedAt, u.MustChangePassword, u.EmailVerified,
                           u.ProfilePictureUrl, u.RoleId, r.RoleName, u.RequireGeoTagging, u.EnableEmailAlerts, u.EnableWhatsAppAlerts,
                           u.DepartmentID, d.DepartmentName, 
                           u.DesignationID, des.DesignationName, 
                           u.ReportingManagerId, mgr.Name AS ManagerName,
+                            u.GeoFenceLat, u.GeoFenceLng, u.GeoFenceRadius,
                           (SELECT TOP 1 LastHeartbeat FROM ActiveSessions s WHERE s.UserId = u.Id ORDER BY LastHeartbeat DESC) AS LatestHeartbeat
                    FROM dbo.tbl_login u
                    LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
                    LEFT JOIN dbo.tbl_Departments d ON u.DepartmentID = d.DepartmentID
                    LEFT JOIN dbo.tbl_Designations des ON u.DesignationID = des.DesignationID
                    LEFT JOIN dbo.tbl_login mgr ON u.ReportingManagerId = mgr.User_Id
-                   WHERE (u.User_Id NOT IN ('admin', 'AT01')) ";
+                   WHERE u.CompanyID = @CompanyID ";
+
+            // 3. Dynamic Admin Filter
+            if (!loggedInUser.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                // Hide super accounts from normal users/managers
+                sql += " AND u.User_Id NOT IN ('admin', 'AT01') ";
+            }
+
+            // 4. Status Filter Logic
+            string currentFilter = ViewState["CurrentFilter"] as string;
+            if (currentFilter == "Active")
+            {
+                sql += " AND u.IsActive = 1 ";
+            }
+            else if (currentFilter == "Inactive")
+            {
+                sql += " AND u.IsActive = 0 ";
+            }
+            else if (currentFilter == "Locked")
+            {
+                sql += " AND (u.LockoutEnd IS NOT NULL AND u.LockoutEnd > SYSDATETIMEOFFSET()) ";
+            }
+
+            // 5. Search Box Filter Logic
+            string searchTerm = txtSearch.Text.Trim();
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                sql += @" AND (
+                    u.User_Id LIKE '%' + @SearchTerm + '%' OR 
+                    u.Name LIKE '%' + @SearchTerm + '%' OR 
+                    u.Email LIKE '%' + @SearchTerm + '%' OR 
+                    u.Phone_no LIKE '%' + @SearchTerm + '%'
+                  ) ";
+            }
+
+            sql += " ORDER BY u.Id";
+
+            using (var cn = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand(sql, cn))
+            {
+                // 6. Parameter Injection
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    cmd.Parameters.AddWithValue("@SearchTerm", searchTerm);
+                }
+
+                var dt = new DataTable();
+                var da = new SqlDataAdapter(cmd);
+                da.Fill(dt);
+
+                lvUsers.DataSource = dt;
+                lvUsers.DataBind();
+            }
+        }
+
+        private void BindGrid_OLD()
+        {
+            // NEW: Geo-Fence columns added to SELECT, and CompanyContext applied to WHERE
+            string sql = @"SELECT u.Id, u.User_Id, u.Name, u.Email, u.Phone_no, u.IsActive, u.LockoutEnd, 
+                                  u.LastLogin, u.CreatedAt, u.MustChangePassword, u.EmailVerified,
+                                  u.ProfilePictureUrl, u.RoleId, r.RoleName, u.RequireGeoTagging, u.EnableEmailAlerts, u.EnableWhatsAppAlerts,
+                                  u.DepartmentID, d.DepartmentName, 
+                                  u.DesignationID, des.DesignationName, 
+                                  u.ReportingManagerId, mgr.Name AS ManagerName,
+                                  u.GeoFenceLat, u.GeoFenceLng, u.GeoFenceRadius,
+                                  (SELECT TOP 1 LastHeartbeat FROM ActiveSessions s WHERE s.UserId = u.Id ORDER BY LastHeartbeat DESC) AS LatestHeartbeat
+                           FROM dbo.tbl_login u
+                           LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
+                           LEFT JOIN dbo.tbl_Departments d ON u.DepartmentID = d.DepartmentID
+                           LEFT JOIN dbo.tbl_Designations des ON u.DesignationID = des.DesignationID
+                           LEFT JOIN dbo.tbl_login mgr ON u.ReportingManagerId = mgr.User_Id
+                           WHERE (u.User_Id NOT IN ('admin', 'AT01')) 
+                             AND u.CompanyID = @CompanyID ";
 
             string currentFilter = ViewState["CurrentFilter"] as string;
             if (currentFilter == "Active")
@@ -126,6 +207,8 @@ namespace Bill_Software.corporate.business.app
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(sql, cn))
             {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
                     cmd.Parameters.AddWithValue("@SearchTerm", searchTerm);
@@ -159,7 +242,6 @@ namespace Bill_Software.corporate.business.app
             int id = Convert.ToInt32(lvUsers.DataKeys[e.ItemIndex].Value);
             ListViewItem item = lvUsers.Items[e.ItemIndex];
 
-            // FIX 2: Cleaned up duplicate variable declarations
             TextBox txtName = item.FindControl("txtName") as TextBox;
             TextBox txtEmail = item.FindControl("txtEmail") as TextBox;
             TextBox txtPhone = item.FindControl("txtPhone") as TextBox;
@@ -197,16 +279,14 @@ namespace Bill_Software.corporate.business.app
                              RoleId = @RoleId, RequireGeoTagging = @RequireGeoTagging, 
                              EnableEmailAlerts = @EnableEmailAlerts, EnableWhatsAppAlerts = @EnableWhatsAppAlerts,
                              DepartmentID = @DeptId, DesignationID = @DesigId, ReportingManagerId = @ManagerId
-                         WHERE Id = @Id";
+                         WHERE Id = @Id AND CompanyID = @CompanyID"; // COMPANYCONTEXT SHIELD
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(updateSql, cn))
             {
-                // FIX 3: Safe DBNull conversion to prevent the Unique Constraint Crash!
                 cmd.Parameters.AddWithValue("@Name", string.IsNullOrWhiteSpace(newName) ? DBNull.Value : (object)newName);
                 cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(newEmail) ? DBNull.Value : (object)newEmail);
 
-                // Optional: Strip spaces/dashes to ensure strict E.164 WhatsApp format on save
                 string cleanPhone = newPhone.Replace(" ", "").Replace("-", "");
                 cmd.Parameters.AddWithValue("@Phone", string.IsNullOrWhiteSpace(cleanPhone) ? DBNull.Value : (object)cleanPhone);
 
@@ -221,9 +301,15 @@ namespace Bill_Software.corporate.business.app
                 cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails);
                 cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp);
                 cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
                 cn.Open();
-                cmd.ExecuteNonQuery();
+                int rows = cmd.ExecuteNonQuery();
+
+                if (rows > 0)
+                {
+                    InsertSystemNotification("User Profile Updated", $"Profile updated for User: {newName}.", "User Management", "Info", Session["USERID"]?.ToString() ?? "System");
+                }
             }
 
             ShowOk("User details updated successfully.");
@@ -242,6 +328,9 @@ namespace Bill_Software.corporate.business.app
                 {
                     using (var cn = new SqlConnection(ConnString))
                     {
+                        // Secure Dropdown Lookups using CompanyContext
+                        int compId = CompanyContext.CurrentCompanyID;
+
                         DropDownList ddlGridRole = e.Item.FindControl("ddlGridRole") as DropDownList;
                         HiddenField hfCurrentRoleId = e.Item.FindControl("hfCurrentRoleId") as HiddenField;
 
@@ -250,8 +339,7 @@ namespace Bill_Software.corporate.business.app
                             using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
                             {
                                 var dt = new DataTable();
-                                var da = new SqlDataAdapter(cmd);
-                                da.Fill(dt);
+                                new SqlDataAdapter(cmd).Fill(dt);
                                 ddlGridRole.DataSource = dt;
                                 ddlGridRole.DataTextField = "RoleName";
                                 ddlGridRole.DataValueField = "RoleId";
@@ -269,8 +357,9 @@ namespace Bill_Software.corporate.business.app
                         HiddenField hfDeptId = e.Item.FindControl("hfDeptId") as HiddenField;
                         if (ddlDept != null)
                         {
-                            using (var cmdD = new SqlCommand("SELECT DepartmentID, DepartmentName FROM tbl_Departments WHERE IsActive = 1", cn))
+                            using (var cmdD = new SqlCommand("SELECT DepartmentID, DepartmentName FROM tbl_Departments WHERE IsActive = 1 AND CompanyID = @CompID", cn))
                             {
+                                cmdD.Parameters.AddWithValue("@CompID", compId);
                                 var dtD = new DataTable();
                                 new SqlDataAdapter(cmdD).Fill(dtD);
                                 ddlDept.DataSource = dtD;
@@ -279,16 +368,16 @@ namespace Bill_Software.corporate.business.app
                                 ddlDept.DataBind();
                             }
                             ddlDept.Items.Insert(0, new ListItem("-- Select Dept --", ""));
-                            if (hfDeptId != null && !string.IsNullOrEmpty(hfDeptId.Value))
-                                ddlDept.SelectedValue = hfDeptId.Value;
+                            if (hfDeptId != null && !string.IsNullOrEmpty(hfDeptId.Value)) ddlDept.SelectedValue = hfDeptId.Value;
                         }
 
                         DropDownList ddlDesig = e.Item.FindControl("ddlDesignation") as DropDownList;
                         HiddenField hfDesigId = e.Item.FindControl("hfDesigId") as HiddenField;
                         if (ddlDesig != null)
                         {
-                            using (var cmdD = new SqlCommand("SELECT DesignationID, DesignationName FROM tbl_Designations WHERE IsActive = 1", cn))
+                            using (var cmdD = new SqlCommand("SELECT DesignationID, DesignationName FROM tbl_Designations WHERE IsActive = 1 AND CompanyID = @CompID", cn))
                             {
+                                cmdD.Parameters.AddWithValue("@CompID", compId);
                                 var dtD = new DataTable();
                                 new SqlDataAdapter(cmdD).Fill(dtD);
                                 ddlDesig.DataSource = dtD;
@@ -297,16 +386,28 @@ namespace Bill_Software.corporate.business.app
                                 ddlDesig.DataBind();
                             }
                             ddlDesig.Items.Insert(0, new ListItem("-- Select Desig --", ""));
-                            if (hfDesigId != null && !string.IsNullOrEmpty(hfDesigId.Value))
-                                ddlDesig.SelectedValue = hfDesigId.Value;
+                            if (hfDesigId != null && !string.IsNullOrEmpty(hfDesigId.Value)) ddlDesig.SelectedValue = hfDesigId.Value;
                         }
 
                         DropDownList ddlManager = e.Item.FindControl("ddlManager") as DropDownList;
                         HiddenField hfManagerId = e.Item.FindControl("hfManagerId") as HiddenField;
                         if (ddlManager != null)
                         {
-                            using (var cmdM = new SqlCommand("SELECT User_Id, Name FROM tbl_login WHERE IsActive = 1 AND User_Id NOT IN ('admin', 'AT01')", cn))
+                            // Get the logged-in user to determine access level
+                            string loggedInUser = Session["USERID"] != null ? Session["USERID"].ToString() : "";
+
+                            // Base query restricted by CompanyContext
+                            string managerSql = "SELECT User_Id, Name FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompID";
+
+                            // Append exclusion if the current user is NOT admin
+                            if (!loggedInUser.Equals("admin", StringComparison.OrdinalIgnoreCase))
                             {
+                                managerSql += " AND User_Id NOT IN ('admin', 'AT01')";
+                            }
+
+                            using (var cmdM = new SqlCommand(managerSql, cn))
+                            {
+                                cmdM.Parameters.AddWithValue("@CompID", CompanyContext.CurrentCompanyID);
                                 var dtM = new DataTable();
                                 new SqlDataAdapter(cmdM).Fill(dtM);
                                 ddlManager.DataSource = dtM;
@@ -314,17 +415,18 @@ namespace Bill_Software.corporate.business.app
                                 ddlManager.DataValueField = "User_Id";
                                 ddlManager.DataBind();
                             }
+
                             ddlManager.Items.Insert(0, new ListItem("-- No Manager --", ""));
                             if (hfManagerId != null && !string.IsNullOrEmpty(hfManagerId.Value))
+                            {
                                 ddlManager.SelectedValue = hfManagerId.Value;
+                            }
                         }
                     }
-
                     return;
                 }
 
                 bool isActive = !drv.Row.IsNull("IsActive") && Convert.ToBoolean(drv["IsActive"]);
-
                 bool isLocked = false;
                 if (!drv.Row.IsNull("LockoutEnd"))
                 {
@@ -373,9 +475,10 @@ namespace Bill_Software.corporate.business.app
         private string GetUserIdById(int id)
         {
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT User_Id FROM dbo.tbl_login WHERE Id = @Id", cn))
+            using (var cmd = new SqlCommand("SELECT User_Id FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID", cn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 cn.Open();
                 var obj = cmd.ExecuteScalar();
                 return obj == null ? "" : obj.ToString();
@@ -385,52 +488,64 @@ namespace Bill_Software.corporate.business.app
         private void ToggleActive(int id)
         {
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("UPDATE dbo.tbl_login SET IsActive = CASE WHEN IsActive = 1 THEN 0 ELSE 1 END WHERE Id = @Id", cn))
+            using (var cmd = new SqlCommand("UPDATE dbo.tbl_login SET IsActive = CASE WHEN IsActive = 1 THEN 0 ELSE 1 END WHERE Id = @Id AND CompanyID = @CompanyID", cn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 cn.Open();
-                cmd.ExecuteNonQuery();
-                ShowOk("User active status updated.");
+                int rows = cmd.ExecuteNonQuery();
+
+                if (rows > 0)
+                {
+                    InsertSystemNotification("User Status Changed", $"An employee account status was toggled.", "User Management", "Warning", Session["USERID"]?.ToString() ?? "System");
+                    ShowOk("User active status updated.");
+                }
             }
         }
 
         private void ToggleLock(int id)
         {
-            const string sqlSelect = "SELECT LockoutEnd FROM dbo.tbl_login WHERE Id = @Id";
+            const string sqlSelect = "SELECT LockoutEnd FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID";
             using (SqlConnection cn = new SqlConnection(ConnString))
-            using (SqlCommand cmd = new SqlCommand(sqlSelect, cn))
             {
-                cmd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
                 cn.Open();
-                object obj = cmd.ExecuteScalar();
-
                 bool currentlyLocked = false;
-                if (obj != null && obj != DBNull.Value)
+
+                using (SqlCommand cmd = new SqlCommand(sqlSelect, cn))
                 {
-                    if (obj is DateTimeOffset)
-                        currentlyLocked = ((DateTimeOffset)obj) > DateTimeOffset.Now;
-                    else
-                        currentlyLocked = Convert.ToDateTime(obj) > DateTime.UtcNow;
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    object obj = cmd.ExecuteScalar();
+
+                    if (obj != null && obj != DBNull.Value)
+                    {
+                        if (obj is DateTimeOffset) currentlyLocked = ((DateTimeOffset)obj) > DateTimeOffset.UtcNow;
+                        else currentlyLocked = Convert.ToDateTime(obj) > DateTime.UtcNow;
+                    }
                 }
 
                 if (currentlyLocked)
                 {
-                    using (var upd = new SqlCommand("UPDATE dbo.tbl_login SET LockoutEnd = NULL, FailedAccessCount = 0 WHERE Id = @Id", cn))
+                    using (var upd = new SqlCommand("UPDATE dbo.tbl_login SET LockoutEnd = NULL, FailedAccessCount = 0 WHERE Id = @Id AND CompanyID = @CompanyID", cn))
                     {
-                        upd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                        upd.Parameters.AddWithValue("@Id", id);
+                        upd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         upd.ExecuteNonQuery();
                     }
+                    InsertSystemNotification("User Unlocked", $"An employee account was manually unlocked.", "Security", "Info", Session["USERID"]?.ToString() ?? "System");
                     ShowOk("User unlocked.");
                 }
                 else
                 {
                     DateTimeOffset lockUntil = DateTimeOffset.UtcNow.AddYears(100);
-                    using (var upd = new SqlCommand("UPDATE dbo.tbl_login SET LockoutEnd = @LockoutEnd WHERE Id = @Id", cn))
+                    using (var upd = new SqlCommand("UPDATE dbo.tbl_login SET LockoutEnd = @LockoutEnd WHERE Id = @Id AND CompanyID = @CompanyID", cn))
                     {
-                        upd.Parameters.Add("@LockoutEnd", SqlDbType.DateTimeOffset).Value = lockUntil;
-                        upd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                        upd.Parameters.AddWithValue("@LockoutEnd", lockUntil);
+                        upd.Parameters.AddWithValue("@Id", id);
+                        upd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         upd.ExecuteNonQuery();
                     }
+                    InsertSystemNotification("User Locked", $"An employee account was manually locked.", "Security", "Danger", Session["USERID"]?.ToString() ?? "System");
                     ShowOk("User locked.");
                 }
             }
@@ -439,13 +554,18 @@ namespace Bill_Software.corporate.business.app
         private void DeleteUser(int id)
         {
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("DELETE FROM dbo.tbl_login WHERE Id = @Id", cn))
+            using (var cmd = new SqlCommand("DELETE FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID", cn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 cn.Open();
                 int rows = cmd.ExecuteNonQuery();
-                if (rows > 0) ShowOk("User deleted.");
-                else ShowError("User not found.");
+                if (rows > 0)
+                {
+                    InsertSystemNotification("User Deleted", $"An employee account was deleted from the system.", "User Management", "Danger", Session["USERID"]?.ToString() ?? "System");
+                    ShowOk("User deleted.");
+                }
+                else ShowError("User not found or access denied.");
             }
         }
 
@@ -458,13 +578,18 @@ namespace Bill_Software.corporate.business.app
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(@"UPDATE dbo.tbl_login 
                                               SET PasswordHash = @Hash, PasswordSalt = @Salt, MustChangePassword = 1
-                                              WHERE Id = @Id", cn))
+                                              WHERE Id = @Id AND CompanyID = @CompanyID", cn))
             {
                 cmd.Parameters.AddWithValue("@Hash", hash);
                 cmd.Parameters.AddWithValue("@Salt", salt);
                 cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 cn.Open();
-                cmd.ExecuteNonQuery();
+
+                if (cmd.ExecuteNonQuery() > 0)
+                {
+                    InsertSystemNotification("Password Reset", $"Admin triggered a password reset for an employee.", "Security", "Warning", Session["USERID"]?.ToString() ?? "System");
+                }
             }
 
             string userId, email;
@@ -495,11 +620,12 @@ namespace Bill_Software.corporate.business.app
             email = string.Empty;
             isFirstTime = true;
 
-            const string sql = "SELECT User_Id, Email, LastLogin FROM dbo.tbl_login WHERE Id = @Id";
+            const string sql = "SELECT User_Id, Email, LastLogin FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID";
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(sql, cn))
             {
-                cmd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 cn.Open();
                 using (var rdr = cmd.ExecuteReader(CommandBehavior.SingleRow))
                 {
@@ -529,17 +655,11 @@ namespace Bill_Software.corporate.business.app
 
             int smtpPortApp = 587;
             int p;
-            if (int.TryParse(ConfigurationManager.AppSettings["SmtpPort"], out p))
-            {
-                smtpPortApp = p;
-            }
+            if (int.TryParse(ConfigurationManager.AppSettings["SmtpPort"], out p)) smtpPortApp = p;
 
             bool smtpEnableSsl = true;
             bool s;
-            if (bool.TryParse(ConfigurationManager.AppSettings["SmtpEnableSsl"], out s))
-            {
-                smtpEnableSsl = s;
-            }
+            if (bool.TryParse(ConfigurationManager.AppSettings["SmtpEnableSsl"], out s)) smtpEnableSsl = s;
 
             string fromAddress = !string.IsNullOrWhiteSpace(fromApp) ? fromApp : smtpUserApp;
             string subject = isFirstTime ? "Welcome to Flame-Ex ERP - Your Login Credentials" : "Password Reset for your Flame-Ex ERP Account";
@@ -588,21 +708,14 @@ namespace Bill_Software.corporate.business.app
                 return "<span class='badge' style='background:#f1f3f5; color:#666; border:1px solid #ddd;'>⚪ Offline</span>";
 
             DateTime utcHeartbeat;
-            if (heartbeatObj is DateTimeOffset)
-            {
-                utcHeartbeat = ((DateTimeOffset)heartbeatObj).UtcDateTime;
-            }
+            if (heartbeatObj is DateTimeOffset) utcHeartbeat = ((DateTimeOffset)heartbeatObj).UtcDateTime;
             else
             {
                 utcHeartbeat = Convert.ToDateTime(heartbeatObj);
-                if (utcHeartbeat.Kind == DateTimeKind.Unspecified)
-                    utcHeartbeat = DateTime.SpecifyKind(utcHeartbeat, DateTimeKind.Utc);
+                if (utcHeartbeat.Kind == DateTimeKind.Unspecified) utcHeartbeat = DateTime.SpecifyKind(utcHeartbeat, DateTimeKind.Utc);
             }
 
-            if (utcHeartbeat > DateTime.UtcNow.AddMinutes(5))
-            {
-                utcHeartbeat = utcHeartbeat.AddHours(-5).AddMinutes(-30);
-            }
+            if (utcHeartbeat > DateTime.UtcNow.AddMinutes(5)) utcHeartbeat = utcHeartbeat.AddHours(-5).AddMinutes(-30);
 
             TimeSpan diff = DateTime.UtcNow - utcHeartbeat;
 
@@ -720,6 +833,95 @@ namespace Bill_Software.corporate.business.app
                 }
             }
             return res.ToString();
+        }
+
+        [WebMethod]
+        public static string SaveGeoFence(int userId, decimal lat, decimal lng, int radius)
+        {
+            try
+            {
+                int currentCompanyId = CompanyContext.CurrentCompanyID;
+                string currentUserId = HttpContext.Current.Session["USERID"] != null ? HttpContext.Current.Session["USERID"].ToString() : "System";
+
+                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string query = @"
+                UPDATE tbl_login 
+                SET GeoFenceLat = @Lat, 
+                    GeoFenceLng = @Lng, 
+                    GeoFenceRadius = @Radius,
+                    RequireGeoTagging = 1
+                WHERE Id = @UserId 
+                  AND CompanyID = @CompanyID";
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Lat", lat);
+                        cmd.Parameters.AddWithValue("@Lng", lng);
+                        cmd.Parameters.AddWithValue("@Radius", radius);
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId); // The Shield
+
+                        conn.Open();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            InsertSystemNotification(
+                                "Geo-Fence Configured",
+                                $"A new Geo-Fence radius of {radius}m was configured for Employee ID: {userId}.",
+                                "Attendance Settings",
+                                "Info",
+                                currentUserId
+                            );
+
+                            return "Success";
+                        }
+                        else
+                        {
+                            return "Update failed. User not found or belongs to a different Company.";
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
+        private static void InsertSystemNotification(string title, string message, string moduleCode, string severity, string userId)
+        {
+            // 1. Enforce Multi-Tenant Isolation
+            int currentCompanyId = CompanyContext.CurrentCompanyID;
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                // 2. Aligned to exact LIVE database schema for tbl_SystemNotification
+                string query = @"INSERT INTO tbl_SystemNotification 
+                            (Title, Message, ModuleCode, Severity, CreatedBy, StartDate, EndDate, IsActive, CompanyID) 
+                         VALUES 
+                            (@Title, @Message, @ModuleCode, @Severity, @CreatedBy, GETDATE(), DATEADD(day, 30, GETDATE()), 1, @CompanyID)";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Title", title);
+                    cmd.Parameters.AddWithValue("@Message", message);
+                    cmd.Parameters.AddWithValue("@ModuleCode", moduleCode);
+                    cmd.Parameters.AddWithValue("@Severity", severity); // e.g., 'Info', 'Success', 'Warning', 'Danger'
+
+                    // Handle potentially null user IDs gracefully
+                    cmd.Parameters.AddWithValue("@CreatedBy", string.IsNullOrEmpty(userId) ? (object)DBNull.Value : userId);
+
+                    // Securely lock the notification to the active Company
+                    cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
         #endregion
     }

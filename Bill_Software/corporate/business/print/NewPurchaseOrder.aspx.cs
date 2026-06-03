@@ -100,12 +100,22 @@ namespace Bill_Software.corporate.business.print
                 lbl_refid.Text = refid;
                 lbl_refdate.Text = formattedRefDate;
 
+                //if (string.IsNullOrEmpty(refname) || refname == "N/A")
+                //    lbl_refname.Visible = false;
+                //if (string.IsNullOrEmpty(refid) || refid == "N/A")
+                //    Tr2.Visible = false;
+                //if (string.IsNullOrEmpty(formattedRefDate) || formattedRefDate == "No Data")
+                //    Tr3.Visible = false;
+
                 if (string.IsNullOrEmpty(refname) || refname == "N/A")
                     lbl_refname.Visible = false;
-                if (string.IsNullOrEmpty(refid) || refid == "N/A")
+
+                // Since Ref ID & Ref Date share the same row (Tr2) in the new layout,
+                // we hide Tr2 only if BOTH are missing. Tr3 has been removed.
+                if ((string.IsNullOrEmpty(refid) || refid == "N/A") && (string.IsNullOrEmpty(formattedRefDate) || formattedRefDate == "No Data"))
+                {
                     Tr2.Visible = false;
-                if (string.IsNullOrEmpty(formattedRefDate) || formattedRefDate == "No Data")
-                    Tr3.Visible = false;
+                }
 
                 lbl_deliverytrms.Text = dtmain.Rows[0]["DeliveryTenure"].ToString();
                 lbl_pkging.Text = dtmain.Rows[0]["PackingCharges"].ToString();

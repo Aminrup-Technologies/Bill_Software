@@ -19,6 +19,7 @@ namespace Bill_Software.corporate.business.app
             if (HttpContext.Current.Session["USERID"] == null)
             {
                 Response.Redirect("~/index.aspx");
+                return;
             }
 
             if (!IsPostBack)
@@ -40,9 +41,9 @@ namespace Bill_Software.corporate.business.app
             {
                 string query = @"
                     SELECT TOP 1 ShiftName, StartTime, EndTime FROM tbl_ShiftMaster
-                    WHERE ShiftID = ISNULL((
+                    WHERE CompanyID = @CompanyID AND ShiftID = ISNULL((
                         SELECT TOP 1 ShiftID FROM tbl_EmployeeShiftMapping 
-                        WHERE UserCode = @UserCode 
+                        WHERE UserCode = @UserCode AND CompanyID = @CompanyID
                         AND EffectiveFromDate <= CAST(GETDATE() AS DATE) 
                         AND (EffectiveToDate IS NULL OR EffectiveToDate >= CAST(GETDATE() AS DATE))
                     ), 1)";
@@ -50,15 +51,18 @@ namespace Bill_Software.corporate.business.app
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserCode", userId);
-                    // CompanyID not typically needed for ShiftMaster read unless shifts are tenant-specific
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
-                    // Assuming you have a label for this on the frontend (e.g., lblShiftInfo)
+
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
                         {
-                            // Example output: "General Shift (09:00 - 18:00)"
-                            // lblShiftInfo.Text = $"{rdr["ShiftName"]} ({rdr["StartTime"]} - {rdr["EndTime"]})";
+                            lblAssignedShift.Text = $"Shift: {rdr["ShiftName"]} ({rdr["StartTime"]} - {rdr["EndTime"]})";
+                        }
+                        else
+                        {
+                            lblAssignedShift.Text = "Shift: Not Assigned";
                         }
                     }
                 }
@@ -80,8 +84,20 @@ namespace Bill_Software.corporate.business.app
                     {
                         if (rdr.Read())
                         {
-                            if (rdr["PunchInTime"] != DBNull.Value) btnHtmlPunchIn.Disabled = true;
-                            if (rdr["PunchOutTime"] != DBNull.Value) btnHtmlPunchOut.Disabled = true;
+                            if (rdr["PunchInTime"] != DBNull.Value)
+                            {
+                                btnHtmlPunchIn.Disabled = true;
+                                lblPunchInTime.Text = "Punched IN at: " + Convert.ToDateTime(rdr["PunchInTime"]).ToString("hh:mm tt");
+                                lblStatusBadge.CssClass = "status-badge status-in";
+                                lblStatusBadge.Text = "Status: Punched IN";
+                            }
+                            if (rdr["PunchOutTime"] != DBNull.Value)
+                            {
+                                btnHtmlPunchOut.Disabled = true;
+                                lblPunchOutTime.Text = "Punched OUT at: " + Convert.ToDateTime(rdr["PunchOutTime"]).ToString("hh:mm tt");
+                                lblStatusBadge.CssClass = "status-badge status-completed";
+                                lblStatusBadge.Text = "Status: Shift Completed";
+                            }
                         }
                     }
                 }
@@ -93,17 +109,9 @@ namespace Bill_Software.corporate.business.app
             string userId = HttpContext.Current.Session["USERID"].ToString();
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                // FIX: Added LateByMins, EarlyOutByMins, and OvertimeMins to the SELECT list
                 string query = @"SELECT TOP 30 
-                            Id,
-                            ActivityDate, 
-                            PunchInTime, 
-                            PunchOutTime, 
-                            TotalHoursWorked, 
-                            LateByMins, 
-                            EarlyOutByMins, 
-                            OvertimeMins, 
-                            SystemCalculatedStatus 
+                            Id, ActivityDate, PunchInTime, PunchOutTime, TotalHoursWorked, 
+                            LateByMins, EarlyOutByMins, OvertimeMins, SystemCalculatedStatus 
                          FROM tbl_Attendance 
                          WHERE UserCode = @UserCode AND CompanyID = @CompanyID
                          ORDER BY ActivityDate DESC";
@@ -117,7 +125,7 @@ namespace Bill_Software.corporate.business.app
                     DataTable dt = new DataTable();
                     da.Fill(dt);
                     gvAttendanceHistory.DataSource = dt;
-                    gvAttendanceHistory.DataBind(); // This will now find 'LateByMins' successfully
+                    gvAttendanceHistory.DataBind();
                 }
             }
         }
@@ -144,53 +152,165 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        // --- 2. Daily Punches (Silent & Secured) ---
+        // --- 2. AJAX Form Endpoints (Calendar & Maps) ---
 
-        protected void btnProcessServerPunch_Click(object sender, EventArgs e)
+        [WebMethod(EnableSession = true)]
+        public static string GetActiveLeaveTypes()
         {
-            string userId = HttpContext.Current.Session["USERID"].ToString();
-            string action = hfPunchAction.Value; // Expected "IN" or "OUT"
-            decimal lat = 0;
-            decimal lon = 0;
-            decimal.TryParse(hfLatitude.Value, out lat);
-            decimal.TryParse(hfLongitude.Value, out lon);
+            if (HttpContext.Current.Session["USERID"] == null) return "[]";
 
+            List<object> leaves = new List<object>();
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                conn.Open();
-                string query = "";
-
-                if (action == "IN")
+                string query = "SELECT LeaveID, LeaveName FROM tbl_LeaveMaster WHERE IsActive = 1 AND CompanyID = @CompanyID";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    query = @"IF NOT EXISTS (SELECT 1 FROM tbl_Attendance WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE) AND CompanyID = @CompanyID)
-                              BEGIN
-                                  INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID, SystemCalculatedStatus)
-                                  VALUES (@UserCode, CAST(GETDATE() AS DATE), GETDATE(), @Lat, @Lon, @CompanyID, 'Present');
-                              END";
-                }
-                else if (action == "OUT")
-                {
-                    query = @"UPDATE tbl_Attendance 
-                              SET PunchOutTime = GETDATE(), EndLatitude = @Lat, EndLongitude = @Lon, 
-                                  TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, GETDATE()) / 60.0 AS DECIMAL(5,2))
-                              WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE) AND CompanyID = @CompanyID";
-                }
-
-                if (!string.IsNullOrEmpty(query))
-                {
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        cmd.Parameters.AddWithValue("@UserCode", userId);
-                        cmd.Parameters.AddWithValue("@Lat", lat);
-                        cmd.Parameters.AddWithValue("@Lon", lon);
-                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID); // STRICT ISOLATION
-                        cmd.ExecuteNonQuery();
+                        while (rdr.Read())
+                        {
+                            leaves.Add(new { id = rdr["LeaveID"], name = rdr["LeaveName"].ToString() });
+                        }
                     }
                 }
             }
+            return new JavaScriptSerializer().Serialize(leaves);
+        }
 
-            CheckTodayStatus();
-            LoadAttendanceHistory();
+        [WebMethod(EnableSession = true)]
+        public static string GetAttendanceDetails(int id)
+        {
+            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"SELECT ActivityDate, PunchInTime, PunchOutTime, StartLatitude, StartLongitude, EndLatitude, EndLongitude
+                                 FROM tbl_Attendance
+                                 WHERE Id = @Id AND UserCode = @UserId AND CompanyID = @CompanyID";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.Parameters.AddWithValue("@UserId", HttpContext.Current.Session["USERID"].ToString());
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        if (rdr.Read())
+                        {
+                            var details = new
+                            {
+                                Date = Convert.ToDateTime(rdr["ActivityDate"]).ToString("dd-MMM-yyyy"),
+                                InTime = rdr["PunchInTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchInTime"]).ToString("hh:mm tt") : "N/A",
+                                OutTime = rdr["PunchOutTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchOutTime"]).ToString("hh:mm tt") : "N/A",
+                                InLat = rdr["StartLatitude"] != DBNull.Value ? rdr["StartLatitude"].ToString() : "",
+                                InLon = rdr["StartLongitude"] != DBNull.Value ? rdr["StartLongitude"].ToString() : "",
+                                OutLat = rdr["EndLatitude"] != DBNull.Value ? rdr["EndLatitude"].ToString() : "",
+                                OutLon = rdr["EndLongitude"] != DBNull.Value ? rdr["EndLongitude"].ToString() : ""
+                            };
+                            return new JavaScriptSerializer().Serialize(details);
+                        }
+                    }
+                }
+            }
+            return "{}";
+        }
+
+        [WebMethod(EnableSession = true)]
+        public static string GetShiftTimings(string reqDate)
+        {
+            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+
+            string userId = HttpContext.Current.Session["USERID"].ToString();
+            DateTime date = Convert.ToDateTime(reqDate);
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"
+                    SELECT TOP 1 StartTime, EndTime FROM tbl_ShiftMaster
+                    WHERE CompanyID = @CompanyID AND ShiftID = ISNULL((
+                        SELECT TOP 1 ShiftID FROM tbl_EmployeeShiftMapping
+                        WHERE UserCode = @UserCode AND CompanyID = @CompanyID
+                        AND EffectiveFromDate <= @ReqDate
+                        AND (EffectiveToDate IS NULL OR EffectiveToDate >= @ReqDate)
+                    ), 1)";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserCode", userId);
+                    cmd.Parameters.AddWithValue("@ReqDate", date);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        if (rdr.Read())
+                        {
+                            var timings = new
+                            {
+                                InTime = rdr["StartTime"].ToString(),
+                                OutTime = rdr["EndTime"].ToString()
+                            };
+                            return new JavaScriptSerializer().Serialize(timings);
+                        }
+                    }
+                }
+            }
+            return "{}";
+        }
+
+        [WebMethod(EnableSession = true)]
+        public static object GetMonthlyCalendarData()
+        {
+            if (HttpContext.Current.Session["USERID"] == null) return null;
+
+            string userId = HttpContext.Current.Session["USERID"].ToString();
+            int companyId = CompanyContext.CurrentCompanyID;
+            List<object> events = new List<object>();
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"
+                    SELECT Id, ActivityDate as StartDate, SystemCalculatedStatus as Status, 
+                           PunchInTime, PunchOutTime 
+                    FROM tbl_Attendance 
+                    WHERE UserCode = @UserCode AND CompanyID = @CompanyID";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserCode", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                    conn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            string status = rdr["Status"].ToString();
+                            string color = "#6c757d";
+
+                            if (status.Contains("Present")) color = "#28a745";
+                            else if (status.Contains("Absent")) color = "#dc3545";
+                            else if (status.Contains("Leave")) color = "#17a2b8";
+                            else if (status.Contains("Half")) color = "#fd7e14";
+
+                            events.Add(new
+                            {
+                                id = rdr["Id"].ToString(),
+                                title = status,
+                                start = Convert.ToDateTime(rdr["StartDate"]).ToString("yyyy-MM-dd"),
+                                backgroundColor = color,
+                                borderColor = color,
+                                extendedProps = new
+                                {
+                                    punchIn = rdr["PunchInTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchInTime"]).ToString("HH:mm") : "N/A",
+                                    punchOut = rdr["PunchOutTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchOutTime"]).ToString("HH:mm") : "N/A"
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            return events;
         }
 
         // --- 3. Exception WebMethods (Transactions, Notifications & Gateway) ---
@@ -216,7 +336,6 @@ namespace Bill_Software.corporate.business.app
                             INSERT INTO tbl_AttendanceRegularization (UserCode, AttendanceDate, RequestedInTime, RequestedOutTime, Reason, RequestStatus, AppliedOn, CompanyID)
                             VALUES (@UserCode, @Date, @InTime, @OutTime, @Reason, 'Pending', GETDATE(), @CompanyID);
 
-                            -- Capture the newly created RequestID immediately
                             DECLARE @NewReqID INT = SCOPE_IDENTITY();
 
                             -- 2. Fetch Schema-Aligned Manager Details
@@ -234,20 +353,20 @@ namespace Bill_Software.corporate.business.app
                             FROM tbl_login 
                             WHERE User_Id = @ManagerID AND CompanyID = @CompanyID AND IsActive = 1;
 
-                            -- 3. Proactive UI Notification Logging (Aligned to your exact schema)
+                            -- 3. Proactive UI Notification Logging (FIXED SCHEMA)
                             IF @ManagerID IS NOT NULL
                             BEGIN
                                 INSERT INTO tbl_SystemNotification 
-                                    (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CompanyID)
+                                    (Title, Message, ModuleCode, Severity, CreatedBy, StartDate, EndDate, IsActive, CompanyID)
                                 VALUES 
                                     ('Attendance Correction', 
                                      @EmpName + ' requested regularization for ' + CONVERT(varchar, CAST(@Date AS DATE), 106), 
-                                     'HR/Attendance', 
+                                     'Attendance', 
                                      'Info', 
+                                     @ManagerID, 
                                      GETDATE(), 
                                      DATEADD(day, 30, GETDATE()), 
                                      1, 
-                                     @ManagerID, 
                                      @CompanyID);
                             END
 
@@ -282,7 +401,6 @@ namespace Bill_Software.corporate.business.app
                         {
                             if (reader.Read())
                             {
-                                // 1. Extract Contact & Preference Info
                                 string mEmail = reader["ManagerEmail"]?.ToString();
                                 string mMobile = reader["ManagerMobile"]?.ToString();
                                 string empName = reader["EmpName"]?.ToString();
@@ -290,11 +408,9 @@ namespace Bill_Software.corporate.business.app
                                 bool sendEmail = reader["SendEmail"] != DBNull.Value && Convert.ToBoolean(reader["SendEmail"]);
                                 bool sendWA = reader["SendWA"] != DBNull.Value && Convert.ToBoolean(reader["SendWA"]);
 
-                                // 2. Extract IDs for the Security Token
                                 string managerId = reader["ManagerID"]?.ToString();
                                 string newRequestID = reader["NewRequestID"]?.ToString();
 
-                                // 3. Generate the Secure Payloads (Notice Type=Reg)
                                 string rawApprove = $"ReqID={newRequestID}&Type=Reg&Action=Approve&ManagerID={managerId}&CompanyID={companyId}";
                                 string rawReject = $"ReqID={newRequestID}&Type=Reg&Action=Reject&ManagerID={managerId}&CompanyID={companyId}";
 
@@ -305,7 +421,6 @@ namespace Bill_Software.corporate.business.app
                                 string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
                                 string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
 
-                                // 4. Build the Rich HTML Email
                                 string subject = $"Action Required: Attendance Regularization ({empName})";
                                 string htmlMessage = $@"
                                 <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; border-radius: 8px;'>
@@ -322,7 +437,6 @@ namespace Bill_Software.corporate.business.app
                                         <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block;'>✅ Approve Correction</a>
                                         <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>❌ Reject</a>
                                     </div>
-                                    <p style='font-size: 12px; color: #777; margin-top: 30px;'>You can approve or reject directly from this email without logging in.</p>
                                 </div>";
 
                                 string targetEmail = sendEmail ? mEmail : null;
@@ -362,7 +476,7 @@ namespace Bill_Software.corporate.business.app
                         BEGIN TRY
                             BEGIN TRANSACTION;
 
-                            -- 1. Insert Leave (Quick 1-Day Leave from Calendar)
+                            -- 1. Insert Leave
                             INSERT INTO tbl_LeaveRequests (UserCode, LeaveID, StartDate, EndDate, TotalDays, Reason, RequestStatus, AppliedOn, CompanyID)
                             VALUES (@UserCode, @LeaveID, @Date, @Date, 1.0, @Reason, 'Pending', GETDATE(), @CompanyID);
 
@@ -381,11 +495,21 @@ namespace Bill_Software.corporate.business.app
                             FROM tbl_login 
                             WHERE User_Id = @ManagerID AND CompanyID = @CompanyID AND IsActive = 1;
 
-                            -- 3. Proactive UI Notification Logging
+                            -- 3. Proactive UI Notification Logging (FIXED SCHEMA)
                             IF @ManagerID IS NOT NULL
                             BEGIN
-                                INSERT INTO tbl_SystemNotification (Title, Message, Module, Type, UserID, CreatedDate, IsRead, CompanyID)
-                                VALUES ('Quick Leave Request', @EmpName + ' applied for leave on ' + CONVERT(varchar, CAST(@Date AS DATE), 106), 'HR/Leave', 'Info', @ManagerID, GETDATE(), 0, @CompanyID);
+                                INSERT INTO tbl_SystemNotification 
+                                    (Title, Message, ModuleCode, Severity, CreatedBy, StartDate, EndDate, IsActive, CompanyID)
+                                VALUES 
+                                    ('Quick Leave Request', 
+                                     @EmpName + ' applied for leave on ' + CONVERT(varchar, CAST(@Date AS DATE), 106), 
+                                     'Leave', 
+                                     'Info', 
+                                     @ManagerID, 
+                                     GETDATE(), 
+                                     DATEADD(day, 30, GETDATE()), 
+                                     1, 
+                                     @CompanyID);
                             END
 
                             -- 4. Output Manager Data
@@ -440,98 +564,375 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        // Called by the ASPX GridView to color-code attendance statuses
         public string GetStatusColor(string status)
         {
             if (string.IsNullOrEmpty(status)) return "color: #333;";
 
             string s = status.ToLower();
-            if (s.Contains("present"))
-                return "color: #28a745; font-weight: bold;"; // Green
-            if (s.Contains("absent"))
-                return "color: #dc3545; font-weight: bold;"; // Red
-            if (s.Contains("half") || s.Contains("short"))
-                return "color: #fd7e14; font-weight: bold;"; // Orange
-            if (s.Contains("leave"))
-                return "color: #17a2b8; font-weight: bold;"; // Blue
+            if (s.Contains("present")) return "color: #28a745; font-weight: bold;";
+            if (s.Contains("absent")) return "color: #dc3545; font-weight: bold;";
+            if (s.Contains("half") || s.Contains("short")) return "color: #fd7e14; font-weight: bold;";
+            if (s.Contains("leave")) return "color: #17a2b8; font-weight: bold;";
 
-            return "color: #333;"; // Default Dark Gray
+            return "color: #333;";
         }
 
-        [WebMethod]
-        public static string GetActiveLeaveTypes()
+        #region Geo-Fenced Attendance Logic
+
+        private static double CalculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2)
         {
-            List<object> leaves = new List<object>();
-            using (SqlConnection conn = new SqlConnection(connStr))
-            {
-                string query = "SELECT LeaveID, LeaveName FROM tbl_LeaveMaster WHERE IsActive = 1";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    conn.Open();
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        while (rdr.Read())
-                        {
-                            leaves.Add(new { id = rdr["LeaveID"], name = rdr["LeaveName"].ToString() });
-                        }
-                    }
-                }
-            }
-            return new JavaScriptSerializer().Serialize(leaves);
+            var R = 6371e3; // Earth's radius in meters
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
         }
 
         [WebMethod(EnableSession = true)]
-        public static object GetMonthlyCalendarData()
+        public static string ProcessPunch_OLD(string punchType, double currentLat, double currentLng)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return null;
+            try
+            {
+                if (HttpContext.Current.Session["USERID"] == null) return "Session Expired. Please login again.";
+
+                string userId = HttpContext.Current.Session["USERID"].ToString();
+                int currentCompanyId = CompanyContext.CurrentCompanyID;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string userQuery = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius 
+                                         FROM tbl_login 
+                                         WHERE User_Id = @UserId AND CompanyID = @CompanyID AND IsActive = 1";
+
+                    bool requireGeo = false;
+                    double? targetLat = null;
+                    double? targetLng = null;
+                    int radius = 100;
+
+                    using (SqlCommand cmd = new SqlCommand(userQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+
+                        using (SqlDataReader rdr = cmd.ExecuteReader())
+                        {
+                            if (rdr.Read())
+                            {
+                                requireGeo = Convert.ToBoolean(rdr["RequireGeoTagging"]);
+                                if (rdr["GeoFenceLat"] != DBNull.Value) targetLat = Convert.ToDouble(rdr["GeoFenceLat"]);
+                                if (rdr["GeoFenceLng"] != DBNull.Value) targetLng = Convert.ToDouble(rdr["GeoFenceLng"]);
+                                if (rdr["GeoFenceRadius"] != DBNull.Value) radius = Convert.ToInt32(rdr["GeoFenceRadius"]);
+                            }
+                            else
+                            {
+                                return "Error: User account not found or inactive.";
+                            }
+                        }
+                    }
+
+                    if (requireGeo)
+                    {
+                        if (targetLat == null || targetLng == null)
+                            return "Error: Geo-Fence is required but not configured by Admin. Please contact HR.";
+
+                        double distance = CalculateDistanceInMeters(targetLat.Value, targetLng.Value, currentLat, currentLng);
+
+                        if (distance > radius)
+                        {
+                            //return $"Geo-Fence Violation: You are {Math.Round(distance)} meters away from the allowed location. Limit is {radius} meters.";
+                            return $"Geo-Fence Violation: You are {Math.Round(distance)} meters away from the allowed location.";
+                        }
+                    }
+
+                    string today = DateTime.Now.ToString("yyyy-MM-dd");
+                    int rowsAffected = 0;
+
+                    if (punchType == "IN")
+                    {
+                        string checkQuery = "SELECT Id FROM tbl_Attendance WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID";
+                        using (SqlCommand chkCmd = new SqlCommand(checkQuery, conn))
+                        {
+                            chkCmd.Parameters.AddWithValue("@UserId", userId);
+                            chkCmd.Parameters.AddWithValue("@Today", today);
+                            chkCmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+                            if (chkCmd.ExecuteScalar() != null) return "Error: You have already punched in for today.";
+                        }
+
+                        string insertQuery = @"INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID) 
+                                       VALUES (@UserId, @Today, GETDATE(), @Lat, @Lng, @CompanyID)";
+                        using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@UserId", userId);
+                            cmd.Parameters.AddWithValue("@Today", today);
+                            cmd.Parameters.AddWithValue("@Lat", currentLat);
+                            cmd.Parameters.AddWithValue("@Lng", currentLng);
+                            cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+                            rowsAffected = cmd.ExecuteNonQuery();
+                        }
+                    }
+                    else if (punchType == "OUT")
+                    {
+                        string updateQuery = @"UPDATE tbl_Attendance 
+                                       SET PunchOutTime = GETDATE(), EndLatitude = @Lat, EndLongitude = @Lng,
+                                           TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, GETDATE()) / 60.0 AS DECIMAL(5,2))
+                                       WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID";
+                        using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@UserId", userId);
+                            cmd.Parameters.AddWithValue("@Today", today);
+                            cmd.Parameters.AddWithValue("@Lat", currentLat);
+                            cmd.Parameters.AddWithValue("@Lng", currentLng);
+                            cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+                            rowsAffected = cmd.ExecuteNonQuery();
+                        }
+
+                        if (rowsAffected == 0) return "Error: Could not punch out. You must punch in first.";
+                    }
+
+                    if (rowsAffected > 0)
+                    {
+                        // BUG FIX: Schema aligned Notification query
+                        string query = @"INSERT INTO tbl_SystemNotification 
+                                            (Title, Message, ModuleCode, Severity, CreatedBy, StartDate, EndDate, IsActive, CompanyID) 
+                                         VALUES 
+                                            (@Title, @Message, @ModuleCode, @Severity, @CreatedBy, GETDATE(), DATEADD(day, 30, GETDATE()), 1, @CompanyID)";
+                        using (SqlCommand cmd = new SqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@Title", $"Attendance Punched {punchType}");
+                            cmd.Parameters.AddWithValue("@Message", $"Employee {userId} successfully punched {punchType.ToLower()} from an authorized location.");
+                            cmd.Parameters.AddWithValue("@ModuleCode", "Attendance");
+                            cmd.Parameters.AddWithValue("@Severity", "Success");
+                            cmd.Parameters.AddWithValue("@CreatedBy", userId);
+                            cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+                            cmd.ExecuteNonQuery();
+                        }
+                        return "Success: Attendance recorded securely.";
+                    }
+
+                    return "Error: Database transaction failed.";
+                }
+            }
+            catch (Exception ex)
+            {
+                return "Error: " + ex.Message;
+            }
+        }
+
+        [WebMethod(EnableSession = true)]
+        public static string ProcessPunch(string punchType, double currentLat, double currentLng)
+        {
+            try
+            {
+                if (HttpContext.Current.Session["USERID"] == null) return "Session Expired. Please login again.";
+
+                string userId = HttpContext.Current.Session["USERID"].ToString();
+                int currentCompanyId = CompanyContext.CurrentCompanyID; // Strict Tenant Isolation
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    // 1. Fetch User Geo-Fence Settings strictly for current Company
+                    string userQuery = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius 
+                                 FROM tbl_login 
+                                 WHERE User_Id = @UserId AND CompanyID = @CompanyID AND IsActive = 1";
+
+                    bool requireGeo = false;
+                    double? targetLat = null;
+                    double? targetLng = null;
+                    int radius = 100;
+
+                    using (SqlCommand cmd = new SqlCommand(userQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+
+                        using (SqlDataReader rdr = cmd.ExecuteReader())
+                        {
+                            if (rdr.Read())
+                            {
+                                requireGeo = Convert.ToBoolean(rdr["RequireGeoTagging"]);
+                                if (rdr["GeoFenceLat"] != DBNull.Value) targetLat = Convert.ToDouble(rdr["GeoFenceLat"]);
+                                if (rdr["GeoFenceLng"] != DBNull.Value) targetLng = Convert.ToDouble(rdr["GeoFenceLng"]);
+                                if (rdr["GeoFenceRadius"] != DBNull.Value) radius = Convert.ToInt32(rdr["GeoFenceRadius"]);
+                            }
+                            else
+                            {
+                                return "Error: User account not found or inactive.";
+                            }
+                        }
+                    }
+
+                    // 2. Validate Geo-Fence Limits & Log Failures
+                    if (requireGeo)
+                    {
+                        if (targetLat == null || targetLng == null)
+                        {
+                            InsertSystemNotification("Config Error", $"Employee {userId} attempted to punch, but their Geo-Fence is not configured.", "Attendance", "Warning", userId, currentCompanyId, conn);
+                            return "Error: Geo-Fence is required but not configured by Admin. Please contact HR.";
+                        }
+
+                        double distance = CalculateDistanceInMeters(targetLat.Value, targetLng.Value, currentLat, currentLng);
+
+                        if (distance > radius)
+                        {
+                            // LOG THE FRAUD / FAILURE ATTEMPT
+                            string violationMsg = $"Geo-Fence Violation: {userId} attempted to punch {punchType} from {Math.Round(distance)}m away.";
+                            InsertSystemNotification("Geo-Fence Violation", violationMsg, "Attendance", "Danger", userId, currentCompanyId, conn);
+
+                            return $"Geo-Fence Violation: You are {Math.Round(distance)} meters away from the allowed location. Limit is {radius} meters.";
+                        }
+                    }
+
+                    // 3. Process Attendance
+                    string today = DateTime.Now.ToString("yyyy-MM-dd");
+                    int rowsAffected = 0;
+
+                    if (punchType == "IN")
+                    {
+                        string checkQuery = "SELECT Id FROM tbl_Attendance WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID";
+                        using (SqlCommand chkCmd = new SqlCommand(checkQuery, conn))
+                        {
+                            chkCmd.Parameters.AddWithValue("@UserId", userId);
+                            chkCmd.Parameters.AddWithValue("@Today", today);
+                            chkCmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+                            if (chkCmd.ExecuteScalar() != null)
+                            {
+                                // LOG THE DUPLICATE ATTEMPT
+                                InsertSystemNotification("Duplicate Punch Attempt", $"Employee {userId} attempted to punch IN again.", "Attendance", "Warning", userId, currentCompanyId, conn);
+                                return "Error: You have already punched in for today.";
+                            }
+                        }
+
+                        string insertQuery = @"INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID) 
+                                       VALUES (@UserId, @Today, GETDATE(), @Lat, @Lng, @CompanyID)";
+                        using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@UserId", userId);
+                            cmd.Parameters.AddWithValue("@Today", today);
+                            cmd.Parameters.AddWithValue("@Lat", currentLat);
+                            cmd.Parameters.AddWithValue("@Lng", currentLng);
+                            cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+                            rowsAffected = cmd.ExecuteNonQuery();
+                        }
+                    }
+                    else if (punchType == "OUT")
+                    {
+                        string updateQuery = @"UPDATE tbl_Attendance 
+                                       SET PunchOutTime = GETDATE(), EndLatitude = @Lat, EndLongitude = @Lng,
+                                           TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, GETDATE()) / 60.0 AS DECIMAL(5,2))
+                                       WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID";
+                        using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@UserId", userId);
+                            cmd.Parameters.AddWithValue("@Today", today);
+                            cmd.Parameters.AddWithValue("@Lat", currentLat);
+                            cmd.Parameters.AddWithValue("@Lng", currentLng);
+                            cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId);
+                            rowsAffected = cmd.ExecuteNonQuery();
+                        }
+
+                        if (rowsAffected == 0)
+                        {
+                            InsertSystemNotification("Sequence Error", $"Employee {userId} attempted to punch OUT without punching IN.", "Attendance", "Warning", userId, currentCompanyId, conn);
+                            return "Error: Could not punch out. You must punch in first.";
+                        }
+                    }
+
+                    // 4. Log the Successful Punch
+                    if (rowsAffected > 0)
+                    {
+                        InsertSystemNotification(
+                            $"Attendance Punched {punchType}",
+                            $"Employee {userId} successfully punched {punchType.ToLower()} from an authorized location.",
+                            "Attendance",
+                            "Success",
+                            userId,
+                            currentCompanyId,
+                            conn
+                        );
+                        return "Success: Attendance recorded securely.";
+                    }
+
+                    return "Error: Database transaction failed.";
+                }
+            }
+            catch (Exception ex)
+            {
+                return "Error: " + ex.Message;
+            }
+        }
+
+        [WebMethod(EnableSession = true)]
+        public static string GetMyGeoFence()
+        {
+            if (HttpContext.Current.Session["USERID"] == null) return "{}";
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
-            List<object> events = new List<object>();
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                // Fetch Attendance and Leave Statuses
-                string query = @"
-                    SELECT ActivityDate as StartDate, SystemCalculatedStatus as Status, 
-                           PunchInTime, PunchOutTime 
-                    FROM tbl_Attendance 
-                    WHERE UserCode = @UserCode AND CompanyID = @CompanyID";
+                string query = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius 
+                         FROM tbl_login 
+                         WHERE User_Id = @UserId AND CompanyID = @CompanyID AND IsActive = 1";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@UserCode", userId);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
                     cmd.Parameters.AddWithValue("@CompanyID", companyId);
+
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        while (rdr.Read())
+                        if (rdr.Read())
                         {
-                            string status = rdr["Status"].ToString();
-                            string color = "#6c757d"; // Default Gray
-
-                            if (status.Contains("Present")) color = "#28a745";
-                            else if (status.Contains("Absent")) color = "#dc3545";
-                            else if (status.Contains("Leave")) color = "#17a2b8";
-                            else if (status.Contains("Half")) color = "#fd7e14";
-
-                            events.Add(new
+                            var boundaryData = new
                             {
-                                title = status,
-                                start = Convert.ToDateTime(rdr["StartDate"]).ToString("yyyy-MM-dd"),
-                                backgroundColor = color,
-                                borderColor = color,
-                                extendedProps = new
-                                {
-                                    punchIn = rdr["PunchInTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchInTime"]).ToString("HH:mm") : "N/A",
-                                    punchOut = rdr["PunchOutTime"] != DBNull.Value ? Convert.ToDateTime(rdr["PunchOutTime"]).ToString("HH:mm") : "N/A"
-                                }
-                            });
+                                Required = Convert.ToBoolean(rdr["RequireGeoTagging"]),
+                                Lat = rdr["GeoFenceLat"] != DBNull.Value ? rdr["GeoFenceLat"].ToString() : "",
+                                Lng = rdr["GeoFenceLng"] != DBNull.Value ? rdr["GeoFenceLng"].ToString() : "",
+                                Radius = rdr["GeoFenceRadius"] != DBNull.Value ? rdr["GeoFenceRadius"].ToString() : "100"
+                            };
+                            return new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(boundaryData);
                         }
                     }
                 }
             }
-            return events;
+            return "{}";
         }
+
+        // Helper specific to attendance file mapping (Requires 7 Arguments)
+        private static void InsertSystemNotification(string title, string message, string moduleCode, string severity, string userId, int companyId, SqlConnection conn)
+        {
+            string query = @"INSERT INTO tbl_SystemNotification 
+                        (Title, Message, ModuleCode, Severity, CreatedBy, StartDate, EndDate, IsActive, CompanyID) 
+                     VALUES 
+                        (@Title, @Message, @ModuleCode, @Severity, @CreatedBy, GETDATE(), DATEADD(day, 30, GETDATE()), 1, @CompanyID)";
+
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@Title", title);
+                cmd.Parameters.AddWithValue("@Message", message);
+                cmd.Parameters.AddWithValue("@ModuleCode", moduleCode);
+                cmd.Parameters.AddWithValue("@Severity", severity); // 'Info', 'Success', 'Warning', 'Danger'
+
+                // Handle potentially null user IDs gracefully
+                cmd.Parameters.AddWithValue("@CreatedBy", string.IsNullOrEmpty(userId) ? (object)DBNull.Value : userId);
+
+                cmd.Parameters.AddWithValue("@CompanyID", companyId);
+
+                // Notice: We do NOT call conn.Open() here because 'conn' is already open from ProcessPunch!
+                cmd.ExecuteNonQuery();
+            }
+        }
+        #endregion
     }
 }

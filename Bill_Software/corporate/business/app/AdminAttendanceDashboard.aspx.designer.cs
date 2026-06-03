@@ -10,96 +10,96 @@
 namespace Bill_Software.corporate.business.app {
     
     
-    public partial class attendance {
+    public partial class AdminAttendanceDashboard {
         
         /// <summary>
-        /// lblCurrentDate control.
+        /// ddlEmployee control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblCurrentDate;
+        protected global::System.Web.UI.WebControls.DropDownList ddlEmployee;
         
         /// <summary>
-        /// lblAssignedShift control.
+        /// ddlMonth control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblAssignedShift;
+        protected global::System.Web.UI.WebControls.DropDownList ddlMonth;
         
         /// <summary>
-        /// lblStatusBadge control.
+        /// ddlYear control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblStatusBadge;
+        protected global::System.Web.UI.WebControls.DropDownList ddlYear;
         
         /// <summary>
-        /// lblPunchInTime control.
+        /// btnGenerate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblPunchInTime;
+        protected global::System.Web.UI.WebControls.Button btnGenerate;
         
         /// <summary>
-        /// lblPunchOutTime control.
+        /// btnExport control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblPunchOutTime;
+        protected global::System.Web.UI.WebControls.Button btnExport;
         
         /// <summary>
-        /// btnHtmlPunchIn control.
+        /// lblTotalOffice control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlButton btnHtmlPunchIn;
+        protected global::System.Web.UI.WebControls.Label lblTotalOffice;
         
         /// <summary>
-        /// btnHtmlPunchOut control.
+        /// lblTotalField control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlButton btnHtmlPunchOut;
+        protected global::System.Web.UI.WebControls.Label lblTotalField;
         
         /// <summary>
-        /// lblError control.
+        /// lblTotalVisits control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblError;
+        protected global::System.Web.UI.WebControls.Label lblTotalVisits;
         
         /// <summary>
-        /// gvAttendanceHistory control.
+        /// lblTotalAbsents control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvAttendanceHistory;
+        protected global::System.Web.UI.WebControls.Label lblTotalAbsents;
         
         /// <summary>
-        /// gvRegHistory control.
+        /// gvOmniAttendance control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvRegHistory;
+        protected global::System.Web.UI.WebControls.GridView gvOmniAttendance;
     }
 }

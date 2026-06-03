@@ -109,17 +109,17 @@
                 border-bottom: none;
             }
 
-        .tab-content { 
-            display: none; 
-            padding: 25px; 
-            background: white; 
-            min-height: 400px; 
+        .tab-content {
+            display: none;
+            padding: 25px;
+            background: white;
+            min-height: 400px;
             box-sizing: border-box; /* FIX: Prevents padding from breaking the layout */
         }
 
-        .tab-content.active {
-            display: block;
-        }
+            .tab-content.active {
+                display: block;
+            }
 
         /* Modal Sections & Forms */
         .section-title {
@@ -133,13 +133,13 @@
         }
 
         /* === WHATSAPP STYLE CHAT === */
-        .chat-box { 
+        .chat-box {
             height: 300px; /* FIX: Strict height forces the scrollbar inside this box */
-            overflow-y: auto; 
-            padding: 20px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            background-color: #e5ddd5; 
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #e5ddd5;
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -164,10 +164,18 @@
             background-color: #ffffff;
             border-top-left-radius: 0;
         }
-        .chat-left::before { 
-            content: ''; position: absolute; top: 0; left: -10px; width: 0; height: 0; 
-            border: 10px solid transparent; border-right-color: #ffffff; border-top: 0; 
-        }
+
+            .chat-left::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -10px;
+                width: 0;
+                height: 0;
+                border: 10px solid transparent;
+                border-right-color: #ffffff;
+                border-top: 0;
+            }
 
         /* Manager (Right side - Green Bubble) */
         .chat-right {
@@ -175,10 +183,18 @@
             background-color: #dcf8c6;
             border-top-right-radius: 0;
         }
-        .chat-right::before { 
-            content: ''; position: absolute; top: 0; right: -10px; width: 0; height: 0; 
-            border: 10px solid transparent; border-left-color: #dcf8c6; border-top: 0; 
-        }
+
+            .chat-right::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: -10px;
+                width: 0;
+                height: 0;
+                border: 10px solid transparent;
+                border-left-color: #dcf8c6;
+                border-top: 0;
+            }
 
         .chat-sender {
             font-size: 12px;
@@ -187,7 +203,11 @@
             margin-bottom: 4px;
             display: block;
         }
-        .chat-right .chat-sender { color: #075E54; } /* Darker green for self */
+
+        .chat-right .chat-sender {
+            color: #075E54;
+        }
+        /* Darker green for self */
 
         .chat-time {
             font-size: 10px;
@@ -197,16 +217,30 @@
             right: 8px;
             white-space: nowrap; /* FIX: Prevents the date from wrapping into two lines */
         }
-        
+
         .chat-text {
             color: #303030;
             display: block;
             margin-bottom: 2px; /* Keeps text away from the timestamp */
         }
-        
+
         /* Modernized Chat Input Box */
-        .chat-input-container { display: flex; gap: 10px; margin-top: 10px; background: #f0f0f0; padding: 10px; border-radius: 8px; }
-        .chat-input-box { flex-grow: 1; padding: 12px 15px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .chat-input-box {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
 
         /* Expense Grid inside Modal */
         .exp-grid {
@@ -245,7 +279,73 @@
             padding: 0 5px;
         }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <style type="text/css">
+        /* High-Contrast CSS Fix: Ensures the dropdown doesn't inherit invisible text from the Master Page */
+        .select2-container--default .select2-results__option {
+            color: #333 !important;
+            background-color: #fff !important;
+        }
+
+            .select2-container--default .select2-results__option[aria-selected="true"] {
+                background-color: #f0f0f0 !important;
+                color: #333 !important;
+            }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #19658A !important;
+            color: white !important;
+        }
+
+        /* Input sizing to match standard textboxes */
+        .select2-container .select2-selection--single {
+            height: 34px !important;
+            border: 1px solid #ccc !important;
+            border-radius: 4px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 32px !important;
+            padding-left: 12px !important;
+            color: #333 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 32px !important;
+        }
+    </style>
+
+    <script type="text/javascript">
+        function initSelect2() {
+            var $ddl = $('#<%= cmbvendor.ClientID %>');
+
+        // Prevent duplicate initializations
+        if ($ddl.hasClass("select2-hidden-accessible")) {
+            $ddl.select2('destroy');
+        }
+
+        $ddl.select2({
+            placeholder: "-- Search Employee --",
+            allowClear: true,
+            width: '100%'
+        });
+    }
+
+    // Run on initial page load
+    $(document).ready(function () {
+        initSelect2();
+    });
+
+    // Run on UpdatePanel Postback (if the dropdown is inside an UpdatePanel)
+    if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+        var prm = Sys.WebForms.PageRequestManager.getInstance();
+        prm.add_endRequest(function (sender, e) {
+            initSelect2();
+        });
+    }
+    </script>
     <script type="text/javascript">
         // NEW: Handles clicking between tabs
         function openMegaTab(tabId, btnElement) {
@@ -334,7 +434,7 @@
                     <td style="width: 30%;">
                         <asp:RadioButtonList ID="RadioButtonList1" runat="server" RepeatDirection="Horizontal">
                             <asp:ListItem>Person</asp:ListItem>
-                            <asp:ListItem Selected="True">Date</asp:ListItem>
+                            <asp:ListItem>Date</asp:ListItem>
                             <asp:ListItem>Both</asp:ListItem>
                         </asp:RadioButtonList>
                     </td>
@@ -506,14 +606,14 @@
 
                     <div id="tabAction" class="tab-content" style="display: flex; flex-direction: column; height: auto;">
                         <h4 class="section-title" style="flex: 0 0 auto;">💬 Conversation Thread</h4>
-                        
+
                         <div id="chatContainer" class="chat-box">
                             <asp:Literal ID="litMegaComments" runat="server"></asp:Literal>
                         </div>
-                        
+
                         <div class="chat-input-container" style="flex: 0 0 auto;">
                             <asp:TextBox ID="txtMegaNewComment" runat="server" CssClass="chat-input-box" placeholder="Type a message..."></asp:TextBox>
-                            <asp:Button ID="btnMegaSendChat" runat="server" Text="➤ Send" CssClass="btn_style" OnClick="btnMegaSendChat_Click" style="background:#128C7E; color:white; border:none; border-radius:20px; padding:0 20px; font-weight:bold; font-size: 15px;" />
+                            <asp:Button ID="btnMegaSendChat" runat="server" Text="➤ Send" CssClass="btn_style" OnClick="btnMegaSendChat_Click" Style="background: #128C7E; color: white; border: none; border-radius: 20px; padding: 0 20px; font-weight: bold; font-size: 15px;" />
                         </div>
                     </div>
 

@@ -397,51 +397,51 @@
                                     </ul>
                             </li>
                             <li id="Reports" runat="server">Reports
-                                    <ul class="nav first">
-                                        <li id="product_stock" runat="server"><a href="Product_stock.aspx">Product Stock</a></li>
-                                        <li id="Service_stock" runat="server"><a href="Service_stock.aspx">Service Stock</a></li>
-                                        <li id="Payment_due" runat="server"><a href="Payment_due.aspx">Payments Due</a></li>
-                                        <li id="Purchess_due" runat="server"><a href="Purchess_due.aspx">Purchesse Due</a></li>
-                                        <li id="rpts_vw_qtn_po_counts" runat="server"><a href="rpts_vw_qtn_po_counts.aspx">QTN/ PO Added</a></li>
-                                    </ul>
+                                <ul class="nav first">
+                                    <li id="product_stock" runat="server"><a href="Product_stock.aspx">Product Stock</a></li>
+                                    <li id="Service_stock" runat="server"><a href="Service_stock.aspx">Service Stock</a></li>
+                                    <li id="Payment_due" runat="server"><a href="Payment_due.aspx">Payments Due</a></li>
+                                    <li id="Purchess_due" runat="server"><a href="Purchess_due.aspx">Purchesse Due</a></li>
+                                    <li id="rpts_vw_qtn_po_counts" runat="server"><a href="rpts_vw_qtn_po_counts.aspx">QTN/ PO Added</a></li>
+                                </ul>
                             </li>
                             <li id="SalesTeam" runat="server">Sales Team
-                                    <ul class="nav first">
-                                        <li id="visit_planner" runat="server"><a href="visit_planner.aspx">Visit Planner</a></li>
-                                        <li id="daily_reporting" runat="server"><a href="daily_rpt.aspx">Daily Reporting</a></li>
-                                        <li id="vw_dailyrpts" runat="server"><a href="vw_dailyrpts.aspx">View Daily Reporting</a></li>
-                                        <li id="AdminApprovalDashboard" runat="server"><a href="AdminApprovalDashboard.aspx">Approvals</a></li>
-                                        <li id="srch_dailyrpts" runat="server"><a href="srch_dailyrpts.aspx">Search Daily Reports</a></li>
-                                    </ul>
+                                <ul class="nav first">
+                                    <li id="visit_planner" runat="server"><a href="visit_planner.aspx">Visit Planner</a></li>
+                                    <li id="daily_reporting" runat="server"><a href="daily_rpt.aspx">Daily Reporting</a></li>
+                                    <li id="vw_dailyrpts" runat="server"><a href="vw_dailyrpts.aspx">View Daily Reporting</a></li>
+                                    <li id="AdminApprovalDashboard" runat="server"><a href="AdminApprovalDashboard.aspx">Approvals</a></li>
+                                    <li id="srch_dailyrpts" runat="server"><a href="srch_dailyrpts.aspx">Search Daily Reports</a></li>
+                                </ul>
                             </li>
                             <li id="PurchaseRequisition" runat="server" visible="false">Purchase Requisition
-                                    <ul class="nav first">
-                                        <li id="RequisitionManual" runat="server" visible="false"><a href="RequisitionManual.aspx">Create</a></li>
-                                        <li id="RequisitionManualView" runat="server" visible="false"><a href="RequisitionManualView.aspx">View</a></li>
-                                        <li id="RequisitionManualSearch" runat="server" visible="false"><a href="RequisitionManualSearch.aspx">Search</a></li>
-                                        <li id="RequisitionManualDelete" runat="server" visible="false"><a href="RequisitionManualDelete.aspx">Delete</a></li>
-                                    </ul>
+                                <ul class="nav first">
+                                    <li id="RequisitionManual" runat="server" visible="false"><a href="RequisitionManual.aspx">Create</a></li>
+                                    <li id="RequisitionManualView" runat="server" visible="false"><a href="RequisitionManualView.aspx">View</a></li>
+                                    <li id="RequisitionManualSearch" runat="server" visible="false"><a href="RequisitionManualSearch.aspx">Search</a></li>
+                                    <li id="RequisitionManualDelete" runat="server" visible="false"><a href="RequisitionManualDelete.aspx">Delete</a></li>
+                                </ul>
                             </li>
                             <li id="Users" runat="server">Users
-                                    <ul class="nav first">
-                                        <li id="AddUser" runat="server"><a href="AddUser.aspx">Create</a></li>
-                                        <li id="ViewUser" runat="server"><a href="ViewUser.aspx">View</a></li>
-                                        <li id="ManageRoles" runat="server"><a href="ManageRoles.aspx">Manage Roles</a></li>
-                                        <li id="ManagePermissions" runat="server"><a href="ManagePermissions.aspx">Manage Permissions</a></li>
-                                    </ul>
+                                <ul class="nav first">
+                                    <li id="AddUser" runat="server"><a href="AddUser.aspx">Create</a></li>
+                                    <li id="ViewUser" runat="server"><a href="ViewUser.aspx">View</a></li>
+                                    <li id="ManageRoles" runat="server"><a href="ManageRoles.aspx">Manage Roles</a></li>
+                                    <li id="ManagePermissions" runat="server"><a href="ManagePermissions.aspx">Manage Permissions</a></li>
+                                </ul>
                             </li>
                             <li id="Hydrent" runat="server" visible="false">Quotation
-                                    <ul class="nav first">
-                                        <li id="CreateHydrentQuatation" runat="server"><a href="CreateHydrentQuatation.aspx">Create New Quotation</a></li>
-                                        <li id="ViewHydrentQuatation" runat="server"><a href="ViewHydrentQuatation.aspx">View New Quotation</a></li>
-                                        <li id="SearchHydrentQuatation" runat="server"><a href="SearchHydrentQuatation.aspx">Search New Quotation</a></li>
-                                        <li id="DeleteHydrentQuatation" runat="server"><a href="DeleteHydrentQuatation.aspx">Delete New Quotation</a></li>
-                                        <li id="hydrent_invoice" runat="server"><a href="hydrent_invoice.aspx">Create New Invoice</a></li>
-                                        <li id="Viewhydrent_invoice" runat="server"><a href="Viewhydrent_invoice.aspx">View New Invoice</a></li>
-                                        <li id="Searchhydrent_invoice" runat="server"><a href="Searchhydrent_invoice.aspx">Search New Invoice</a></li>
-                                        <li id="Deletehydrent_invoice" runat="server"><a href="Deletehydrent_invoice.aspx">Delete New Invoice</a></li>
-                                        <li id="Existing_Client" runat="server"><a href="#">Existing Client</a></li>
-                                    </ul>
+                                <ul class="nav first">
+                                    <li id="CreateHydrentQuatation" runat="server"><a href="CreateHydrentQuatation.aspx">Create New Quotation</a></li>
+                                    <li id="ViewHydrentQuatation" runat="server"><a href="ViewHydrentQuatation.aspx">View New Quotation</a></li>
+                                    <li id="SearchHydrentQuatation" runat="server"><a href="SearchHydrentQuatation.aspx">Search New Quotation</a></li>
+                                    <li id="DeleteHydrentQuatation" runat="server"><a href="DeleteHydrentQuatation.aspx">Delete New Quotation</a></li>
+                                    <li id="hydrent_invoice" runat="server"><a href="hydrent_invoice.aspx">Create New Invoice</a></li>
+                                    <li id="Viewhydrent_invoice" runat="server"><a href="Viewhydrent_invoice.aspx">View New Invoice</a></li>
+                                    <li id="Searchhydrent_invoice" runat="server"><a href="Searchhydrent_invoice.aspx">Search New Invoice</a></li>
+                                    <li id="Deletehydrent_invoice" runat="server"><a href="Deletehydrent_invoice.aspx">Delete New Invoice</a></li>
+                                    <li id="Existing_Client" runat="server"><a href="#">Existing Client</a></li>
+                                </ul>
                             </li>
                         </ul>
                     </div>

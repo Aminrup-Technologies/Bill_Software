@@ -1,8 +1,10 @@
 ﻿<%@ Page Title="Daily Attendance" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="attendance.aspx.cs" Inherits="Bill_Software.corporate.business.app.attendance" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
     <style type="text/css">
         /* Keep your existing styles here */
 
@@ -145,80 +147,70 @@
             .grid-style tr:hover {
                 background-color: #f9f9f9;
             }
-    </style>
 
-    <script type="text/javascript">
-        // 1. Capture GPS for Punch IN/OUT
-        function capturePunch(actionType, btnElement) {
-            if (navigator.geolocation) {
-                var originalText = btnElement.innerText;
-                btnElement.innerText = "📍 Acquiring GPS...";
-                btnElement.disabled = true;
+        /* Core Layout Fix: Prevents Master Page responsive styles from fracturing map tile grids */
+        .leaflet-container img {
+            max-width: none !important;
+            max-height: none !important;
+            box-shadow: none !important;
+        }
 
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        document.getElementById('<%= hfLatitude.ClientID %>').value = position.coords.latitude;
-                        document.getElementById('<%= hfLongitude.ClientID %>').value = position.coords.longitude;
-                        document.getElementById('<%= hfPunchAction.ClientID %>').value = actionType;
-                        document.getElementById('<%= btnProcessServerPunch.ClientID %>').click();
-                    },
-                    function (error) {
-                        alert("Geolocation failed: " + error.message + ".\n\nYou must allow location access to mark attendance.");
-                        btnElement.innerText = originalText;
-                        btnElement.disabled = false;
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                );
-            } else {
-                alert("Geolocation is not supported by your browser.");
+        /* Enforce distinct z-indexing for the boundary window map wrapper */
+        #employeeMap {
+            height: 350px !important;
+            width: 100% !important;
+            position: relative !important;
+            display: block !important;
+        }
+
+        /* Optional: Smooth fade styling for modal entry */
+        @keyframes popupFade {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
             }
         }
 
-        // 2. Fetch and Show Maps in Modal
-        function viewAttendanceMap(id) {
-            fetch('attendance.aspx/GetAttendanceDetails', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                body: JSON.stringify({ id: parseInt(id) })
-            })
-            .then(response => response.json())
-            .then(data => {
-                var details = JSON.parse(data.d);
-
-                document.getElementById('lblMapDate').innerText = details.Date;
-                document.getElementById('lblMapInTime').innerText = details.InTime;
-                document.getElementById('lblMapOutTime').innerText = details.OutTime;
-
-                var mapIn = document.getElementById('mapContainerIn');
-                if (details.InLat && details.InLon && details.InLat !== "") {
-                    var urlIn = "https://maps.google.com/maps?q=" + details.InLat + "," + details.InLon + "&hl=en&z=15&output=embed";
-                    mapIn.innerHTML = "<iframe width='100%' height='100%' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='" + urlIn + "'></iframe>";
-                } else {
-                    mapIn.innerHTML = "<span style='color: #888; font-style: italic;'>Location not captured.</span>";
-                }
-
-                var mapOut = document.getElementById('mapContainerOut');
-                if (details.OutLat && details.OutLon && details.OutLat !== "") {
-                    var urlOut = "https://maps.google.com/maps?q=" + details.OutLat + "," + details.OutLon + "&hl=en&z=15&output=embed";
-                    mapOut.innerHTML = "<iframe width='100%' height='100%' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='" + urlOut + "'></iframe>";
-                } else {
-                    mapOut.innerHTML = "<span style='color: #888; font-style: italic;'>Location not captured.</span>";
-                }
-
-                document.getElementById('attendanceMapModal').style.display = 'block';
-            })
-            .catch(error => console.error('Error fetching details:', error));
+        #myBoundaryModal > div {
+            animation: popupFade 0.2s ease-out;
         }
-    </script>
+
+        /* Prevent Leaflet Map from bursting out of the Modal DIV */
+        #employeeMap, #map {
+            box-sizing: border-box !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            position: relative !important;
+            z-index: 1; /* Keeps map controls from floating over the modal header */
+        }
+
+        /* Force the Leaflet engine to respect the parent width */
+        .leaflet-container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Ensure the wrapper doesn't let the map spill */
+        .leaflet-map-pane, .leaflet-tile-pane {
+            max-width: 100% !important;
+        }
+    </style>
+
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div class="dashboard-container">
 
-        <asp:HiddenField ID="hfLatitude" runat="server" />
+        <%--<asp:HiddenField ID="hfLatitude" runat="server" />
         <asp:HiddenField ID="hfLongitude" runat="server" />
         <asp:HiddenField ID="hfPunchAction" runat="server" />
-        <asp:Button ID="btnProcessServerPunch" runat="server" OnClick="btnProcessServerPunch_Click" Style="display: none;" />
+        <asp:Button ID="btnProcessServerPunch" runat="server" OnClick="btnProcessServerPunch_Click" Style="display: none;" />--%>
 
         <div class="status-card">
             <h2 style="color: #19658A; margin-top: 0;">⏱️ Daily Attendance</h2>
@@ -234,6 +226,13 @@
             <div>
                 <button type="button" id="btnHtmlPunchIn" runat="server" class="btn-punch btn-in" onclick="capturePunch('IN', this);">▶️ Punch IN</button>
                 <button type="button" id="btnHtmlPunchOut" runat="server" class="btn-punch btn-out" onclick="capturePunch('OUT', this);">⏹️ Punch OUT</button>
+            </div>
+
+            <div style="margin-top: 20px; padding: 12px 15px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #19658A; font-size: 13px; color: #555; text-align: left; display: inline-block; max-width: 400px;">
+                <span style="display: block; font-weight: bold; color: #19658A; margin-bottom: 4px;">📍 Location Services Required</span>
+                Your GPS coordinates are verified automatically when punching in or out.
+                <br />
+                <a href="javascript:void(0);" onclick="showMyBoundary();" style="color: #007bff; font-weight: bold; text-decoration: underline; display: inline-block; margin-top: 5px;">🗺️ View My Allowed Boundary</a>
             </div>
 
             <asp:Label ID="lblError" runat="server" ForeColor="Red" Font-Bold="true" Style="display: block; margin-top: 15px;"></asp:Label>
@@ -402,7 +401,149 @@
         </div>
     </div>
 
+    <div id="myBoundaryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 99999;">
+        <div style="background: #fff; width: 90%; max-width: 600px; margin: 5% auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); overflow: hidden; font-family: Arial, sans-serif;">
+            <div style="background-color: #19658A; color: white; padding: 15px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between;">
+                <span>🗺️ My Office Boundary</span>
+                <span style="cursor: pointer;" onclick="document.getElementById('myBoundaryModal').style.display='none';">✖</span>
+            </div>
+            <div style="padding: 15px;">
+                <p style="font-size: 13px; color: #555; margin-top: 0;">You must be inside the blue circle to punch your attendance successfully.</p>
+
+                <div id="employeeMap" style="height: 350px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"></div>
+
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript">
+
+        // --- Global SweetAlert2 Toast Helper ---
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        function showNotification(title, text, type) {
+            // Map PNotify types to SweetAlert2 types
+            if (type === 'notice') type = 'warning';
+
+            Toast.fire({
+                icon: type, // 'success', 'error', 'warning', 'info'
+                title: title,
+                text: text
+            });
+        }
+
+        // 1. Capture GPS for Punch IN/OUT
+        function capturePunch(actionType, btnElement) {
+            var originalText = btnElement.innerText;
+            // Grab the ASP.NET Error Label element
+            var errorLabel = document.getElementById('<%= lblError.ClientID %>');
+
+            // Reset UI state
+            btnElement.innerText = "📍 Verifying Location...";
+            btnElement.disabled = true;
+            if (errorLabel) errorLabel.innerText = ""; // Clear any previous errors
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        var lat = position.coords.latitude;
+                        var lng = position.coords.longitude;
+
+                        fetch('attendance.aspx/ProcessPunch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ punchType: actionType, currentLat: lat, currentLng: lng })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.d.includes("Success")) {
+                                showNotification("Attendance Marked", data.d, "success");
+                                // Delay reload so user can read the success message
+                                setTimeout(function () { location.reload(); }, 1500);
+                            } else {
+                                // Geo-Fence Violation or Database Error
+                                showNotification("Punch Failed", data.d, "error");
+
+                                // Push exact error message into the persistent label below buttons
+                                if (errorLabel) errorLabel.innerText = "❌ " + data.d;
+
+                                btnElement.innerText = originalText;
+                                btnElement.disabled = false;
+                            }
+                        })
+                        .catch(err => {
+                            showNotification("Network Error", "Unable to connect to server.", "error");
+                            if (errorLabel) errorLabel.innerText = "❌ Network Error: Unable to reach the server.";
+
+                            btnElement.innerText = originalText;
+                            btnElement.disabled = false;
+                        });
+                    },
+                    function (error) {
+                        var errorMsg = "Geolocation failed: " + error.message + ". Please allow location access in your browser.";
+                        showNotification("Location Required", errorMsg, "warning");
+                        if (errorLabel) errorLabel.innerText = "⚠️ " + errorMsg;
+
+                        btnElement.innerText = originalText;
+                        btnElement.disabled = false;
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            } else {
+                showNotification("Unsupported Browser", "Geolocation is not supported by your browser.", "error");
+                if (errorLabel) errorLabel.innerText = "❌ Geolocation is not supported by this browser.";
+
+                btnElement.innerText = originalText;
+                btnElement.disabled = false;
+            }
+        }
+
+        // 2. Fetch and Show Maps in Modal
+        function viewAttendanceMap(id) {
+            fetch('attendance.aspx/GetAttendanceDetails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                body: JSON.stringify({ id: parseInt(id) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var details = JSON.parse(data.d);
+
+                document.getElementById('lblMapDate').innerText = details.Date;
+                document.getElementById('lblMapInTime').innerText = details.InTime;
+                document.getElementById('lblMapOutTime').innerText = details.OutTime;
+
+                var mapIn = document.getElementById('mapContainerIn');
+                if (details.InLat && details.InLon && details.InLat !== "") {
+                    var urlIn = "https://maps.google.com/maps?q=" + details.InLat + "," + details.InLon + "&hl=en&z=15&output=embed";
+                    mapIn.innerHTML = "<iframe width='100%' height='100%' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='" + urlIn + "'></iframe>";
+                } else {
+                    mapIn.innerHTML = "<span style='color: #888; font-style: italic;'>Location not captured.</span>";
+                }
+
+                var mapOut = document.getElementById('mapContainerOut');
+                if (details.OutLat && details.OutLon && details.OutLat !== "") {
+                    var urlOut = "https://maps.google.com/maps?q=" + details.OutLat + "," + details.OutLon + "&hl=en&z=15&output=embed";
+                    mapOut.innerHTML = "<iframe width='100%' height='100%' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='" + urlOut + "'></iframe>";
+                } else {
+                    mapOut.innerHTML = "<span style='color: #888; font-style: italic;'>Location not captured.</span>";
+                }
+
+                document.getElementById('attendanceMapModal').style.display = 'block';
+            })
+            .catch(error => console.error('Error fetching details:', error));
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
 
             // --- 1. Pre-load Leave Types on page load ---
@@ -559,6 +700,7 @@
             .catch(error => console.error('Error fetching shift timings:', error));
         }
 
+        // 2. Regularization Submission
         function submitRegularization() {
             var date = document.getElementById('hfClickedDate').value;
             var inTime = document.getElementById('txtRegIn').value;
@@ -566,7 +708,7 @@
             var reason = document.getElementById('txtRegReason').value;
 
             if (!reason) {
-                alert("Please provide a reason for the regularization.");
+                showNotification("Missing Information", "Please provide a reason for the regularization.", "warning");
                 return;
             }
 
@@ -578,22 +720,23 @@
             .then(response => response.json())
             .then(data => {
                 if (data.d === "Success") {
-                    alert("Regularization request submitted successfully!");
+                    showNotification("Request Sent", "Regularization request submitted successfully!", "success");
                     document.getElementById('dateDetailsModal').style.display = 'none';
                 } else {
-                    alert(data.d);
+                    showNotification("Submission Failed", data.d, "error");
                 }
             })
-            .catch(err => alert("Communication error submitting request."));
+            .catch(err => showNotification("Network Error", "Communication error submitting request.", "error"));
         }
 
+        // 3. Leave Submission
         function submitLeave() {
             var date = document.getElementById('hfClickedDate').value;
             var leaveId = document.getElementById('ddlLeaveTypes').value;
             var reason = document.getElementById('txtLeaveReason').value;
 
             if (!leaveId || !reason) {
-                alert("Please select a Leave Type and provide a reason.");
+                showNotification("Missing Information", "Please select a Leave Type and provide a reason.", "warning");
                 return;
             }
 
@@ -605,13 +748,83 @@
             .then(response => response.json())
             .then(data => {
                 if (data.d === "Success") {
-                    alert("Leave application submitted successfully!");
+                    showNotification("Leave Applied", "Leave application submitted successfully!", "success");
                     document.getElementById('dateDetailsModal').style.display = 'none';
                 } else {
-                    alert(data.d);
+                    showNotification("Submission Failed", data.d, "error");
                 }
             })
-            .catch(err => alert("Communication error submitting request."));
+            .catch(err => showNotification("Network Error", "Communication error submitting request.", "error"));
+        }
+
+        var empMap, empMarker, empCircle;
+
+        function showMyBoundary() {
+            // 1. Fetch user's geofence boundaries securely
+            fetch('attendance.aspx/GetMyGeoFence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                var geoData = JSON.parse(data.d);
+
+                if (!geoData.Required) {
+                    showNotification("Not Required", "Geo-Fencing is disabled for your account. You can punch from anywhere.", "info");
+                    return;
+                }
+
+                if (!geoData.Lat || !geoData.Lng) {
+                    showNotification("Not Configured", "Your authorized office location has not been set by Admin/HR.", "warning");
+                    return;
+                }
+
+                var lat = parseFloat(geoData.Lat);
+                var lng = parseFloat(geoData.Lng);
+                var radius = parseInt(geoData.Radius);
+
+                // 2. Make modal visible FIRST
+                document.getElementById('myBoundaryModal').style.display = 'block';
+
+                // 3. Wait for the browser to finish drawing the modal
+                setTimeout(function () {
+
+                    // Initialize map ONLY after the container is fully visible
+                    if (!empMap) {
+                        empMap = L.map('employeeMap');
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                            attribution: '© OpenStreetMap'
+                        }).addTo(empMap);
+                    }
+
+                    // Clear pre-existing canvas shapes
+                    if (empMarker) empMap.removeLayer(empMarker);
+                    if (empCircle) empMap.removeLayer(empCircle);
+
+                    // Add shapes and set view
+                    empMarker = L.marker([lat, lng]).addTo(empMap);
+                    empCircle = L.circle([lat, lng], {
+                        radius: radius,
+                        color: '#19658A',
+                        fillColor: '#19658A',
+                        fillOpacity: 0.25,
+                        weight: 2
+                    }).addTo(empMap);
+
+                    empMap.setView([lat, lng], 17);
+
+                    // 4. THE BRUTE-FORCE FIX: 
+                    // Invalidate size and trigger a fake window resize to force tile fetching
+                    empMap.invalidateSize(true);
+                    window.dispatchEvent(new Event('resize'));
+
+                }, 350); // Slightly increased buffer to beat any CSS animations
+            })
+            .catch(err => {
+                showNotification("Data Error", "Could not load authorized location tracking data.", "error");
+                console.error(err);
+            });
         }
     </script>
 </asp:Content>

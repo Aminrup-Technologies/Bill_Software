@@ -21,17 +21,113 @@ namespace Bill_Software.corporate.business.app
             if (HttpContext.Current.Session["USERID"] == null)
             {
                 Response.Redirect("~/index.aspx");
+                return;
             }
+
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbvendor, "select Name from tbl_login order by Name");
-                txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
-                txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                // 1. Synchronized Dropdown Binding (Name + Code)
+                string empQuery = @"
+            SELECT User_Id, Name + ' [' + User_Id + ']' AS DisplayName 
+            FROM tbl_login 
+            WHERE CompanyID = @CompanyID 
+              AND IsActive = 1 
+              AND User_Id NOT IN ('admin', 'AT01') 
+            ORDER BY Name";
 
-                // Load data initially
-                Binder();
+                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    using (SqlCommand cmd = new SqlCommand(empQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        cmbvendor.DataSource = dt;
+                        cmbvendor.DataTextField = "DisplayName";
+                        cmbvendor.DataValueField = "User_Id"; // Value is now the ID, not the Name!
+                        cmbvendor.DataBind();
+                    }
+                }
+
+                // 2. REQUIRED FOR SELECT2: Insert an empty item at index 0 for the Placeholder
+                cmbvendor.Items.Insert(0, new ListItem("", ""));
+
+                // 3. Optimized Deep-Link Logic (From Attendance Dashboard)
+                if (Request.QueryString["emp"] != null && Request.QueryString["dt"] != null)
+                {
+                    string empId = Request.QueryString["emp"];
+                    DateTime targetDate;
+
+                    if (DateTime.TryParse(Request.QueryString["dt"], out targetDate))
+                    {
+                        txtfromDate.Text = targetDate.ToString("dd-MMM-yyyy");
+                        txttodate.Text = targetDate.ToString("dd-MMM-yyyy");
+
+                        // HUGE OPTIMIZATION: We can select by Value directly now!
+                        cmbvendor.ClearSelection();
+                        if (cmbvendor.Items.FindByValue(empId) != null)
+                        {
+                            cmbvendor.Items.FindByValue(empId).Selected = true;
+                        }
+
+                        // --- NEW LOGIC: Set RadioButton to "Both" (Index 2) ---
+                        RadioButtonList1.ClearSelection();
+                        RadioButtonList1.SelectedIndex = 2;
+                    }
+                }
+                else
+                {
+                    // Default load (No URL parameters)
+                    txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                    txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+
+                    // Optional: Default to 'Date' or 'Person' if you prefer when loading normally
+                    // RadioButtonList1.SelectedIndex = 1; 
+                }
+
+                Binder(); // Fire the grid fetch
             }
         }
+
+        // Add this quick helper method to resolve the ID to the Name for the Dropdown
+        private string ResolveUserIdToName(string userId)
+        {
+            string name = "";
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = "SELECT Name FROM tbl_login WHERE User_Id = @UserId AND CompanyID = @CompanyID";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null) name = result.ToString();
+                }
+            }
+            return name;
+        }
+
+        //protected void Page_Load(object sender, EventArgs e)
+        //{
+        //    if (HttpContext.Current.Session["USERID"] == null)
+        //    {
+        //        Response.Redirect("~/index.aspx");
+        //    }
+        //    if (!IsPostBack)
+        //    {
+        //        DbCL.FillCombo(cmbvendor, "select Name from tbl_login order by Name");
+        //        txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+        //        txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+
+        //        // Load data initially
+        //        Binder();
+        //    }
+        //}
 
         // ==========================================
         // MAIN SEARCH & GRID BINDING
@@ -49,20 +145,42 @@ namespace Bill_Software.corporate.business.app
 
         private void Binder()
         {
+            // 1. Fetch raw strings
+            string fromDateStr = txtfromDate.Text.Trim();
+            string toDateStr = txttodate.Text.Trim();
+
+            // 2. BULLETPROOFING: Ensure FromDate is ALWAYS <= ToDate
+            DateTime dtFrom, dtTo;
+            if (DateTime.TryParse(fromDateStr, out dtFrom) && DateTime.TryParse(toDateStr, out dtTo))
+            {
+                if (dtFrom > dtTo)
+                {
+                    // The user put them in backwards! Let's silently swap them for the SQL query
+                    DateTime temp = dtFrom;
+                    dtFrom = dtTo;
+                    dtTo = temp;
+                }
+
+                // Format them safely for SQL
+                fromDateStr = dtFrom.ToString("dd-MMM-yyyy");
+                toDateStr = dtTo.ToString("dd-MMM-yyyy");
+            }
+
             string cmdstring = "";
+            int companyId = CompanyContext.CurrentCompanyID; // Strict Tenant Security
+            string selectedUser = cmbvendor.SelectedValue;
+
             if (RadioButtonList1.SelectedIndex == 0) // Only Person
             {
-                BuindCompanyId();
-                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE Salesperson='" + cmbvendor.SelectedItem.Text + "' ORDER BY CAST(VisitDate as date) DESC";
+                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = " + companyId + " AND CreatedByCode = '" + selectedUser + "' ORDER BY CAST(VisitDate as date) DESC";
             }
             else if (RadioButtonList1.SelectedIndex == 1) // Only Date
             {
-                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE VisitDate BETWEEN '" + txttodate.Text + "' AND '" + txtfromDate.Text + "' ORDER BY CAST(VisitDate as date) DESC";
+                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = " + companyId + " AND CAST(VisitDate as date) BETWEEN '" + fromDateStr + "' AND '" + toDateStr + "' ORDER BY CAST(VisitDate as date) DESC";
             }
             else // Person & Date
             {
-                BuindCompanyId();
-                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE Salesperson='" + cmbvendor.SelectedItem.Text + "' AND VisitDate BETWEEN '" + txttodate.Text + "' AND '" + txtfromDate.Text + "' ORDER BY CAST(VisitDate as date) DESC";
+                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = " + companyId + " AND CreatedByCode = '" + selectedUser + "' AND CAST(VisitDate as date) BETWEEN '" + fromDateStr + "' AND '" + toDateStr + "' ORDER BY CAST(VisitDate as date) DESC";
             }
 
             try
