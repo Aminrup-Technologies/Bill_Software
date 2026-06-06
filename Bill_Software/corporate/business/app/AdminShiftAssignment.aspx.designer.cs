@@ -10,159 +10,114 @@
 namespace Bill_Software.corporate.business.app {
     
     
-    public partial class AdminShiftSetup {
+    public partial class AdminShiftAssignment {
         
         /// <summary>
-        /// lblMessage control.
+        /// ScriptManager1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblMessage;
+        protected global::System.Web.UI.ScriptManager ScriptManager1;
         
         /// <summary>
-        /// txtShiftName control.
+        /// upRoster control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtShiftName;
+        protected global::System.Web.UI.UpdatePanel upRoster;
         
         /// <summary>
-        /// txtStartTime control.
+        /// ddlEmployee control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtStartTime;
+        protected global::System.Web.UI.WebControls.ListBox ddlEmployee;
         
         /// <summary>
-        /// txtEndTime control.
+        /// ddlMonth control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtEndTime;
+        protected global::System.Web.UI.WebControls.DropDownList ddlMonth;
         
         /// <summary>
-        /// txtGraceLate control.
+        /// ddlYear control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtGraceLate;
+        protected global::System.Web.UI.WebControls.DropDownList ddlYear;
         
         /// <summary>
-        /// txtGraceEarly control.
+        /// ddlShift control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtGraceEarly;
+        protected global::System.Web.UI.WebControls.DropDownList ddlShift;
         
         /// <summary>
-        /// txtHalfDayHours control.
+        /// btnViewAssignment control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtHalfDayHours;
+        protected global::System.Web.UI.WebControls.Button btnViewAssignment;
         
         /// <summary>
-        /// txtFullDayHours control.
+        /// btnAssignShift control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtFullDayHours;
+        protected global::System.Web.UI.WebControls.Button btnAssignShift;
         
         /// <summary>
-        /// txtMaxLateDays control.
+        /// lblCurrentMonth control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtMaxLateDays;
+        protected global::System.Web.UI.WebControls.Label lblCurrentMonth;
         
         /// <summary>
-        /// ddlLatePenalty control.
+        /// btnForceSync control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlLatePenalty;
+        protected global::System.Web.UI.WebControls.Button btnForceSync;
         
         /// <summary>
-        /// txtMaxEarlyDays control.
+        /// btnRefreshGrid control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtMaxEarlyDays;
+        protected global::System.Web.UI.WebControls.Button btnRefreshGrid;
         
         /// <summary>
-        /// ddlEarlyPenalty control.
+        /// gvAssignments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlEarlyPenalty;
-        
-        /// <summary>
-        /// chkAutoRegularize control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.CheckBox chkAutoRegularize;
-        
-        /// <summary>
-        /// chkOutPunchMandatory control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.CheckBox chkOutPunchMandatory;
-        
-        /// <summary>
-        /// btnCancelEdit control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnCancelEdit;
-        
-        /// <summary>
-        /// btnSaveShift control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnSaveShift;
-        
-        /// <summary>
-        /// gvShifts control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvShifts;
+        protected global::System.Web.UI.WebControls.GridView gvAssignments;
     }
 }

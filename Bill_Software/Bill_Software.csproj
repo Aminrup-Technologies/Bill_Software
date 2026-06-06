@@ -252,6 +252,7 @@
     <Content Include="corporate\business\app\AdminAttendanceDashboard.aspx" />
     <Content Include="corporate\business\app\AdminLeaveSetup.aspx" />
     <Content Include="corporate\business\app\AdminOverride.aspx" />
+    <Content Include="corporate\business\app\AdminShiftAssignment.aspx" />
     <Content Include="corporate\business\app\AdminShiftSetup.aspx" />
     <Content Include="corporate\business\app\Approve_PR.aspx" />
     <Content Include="corporate\business\app\attendance.aspx" />
@@ -715,6 +716,13 @@
     </Compile>
     <Compile Include="corporate\business\app\AdminOverride.aspx.designer.cs">
       <DependentUpon>AdminOverride.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminShiftAssignment.aspx.cs">
+      <DependentUpon>AdminShiftAssignment.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminShiftAssignment.aspx.designer.cs">
+      <DependentUpon>AdminShiftAssignment.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\AdminShiftSetup.aspx.cs">
       <DependentUpon>AdminShiftSetup.aspx</DependentUpon>

@@ -13,6 +13,51 @@ namespace Bill_Software.corporate.business.app {
     public partial class AdminAttendanceDashboard {
         
         /// <summary>
+        /// ScriptManager1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.ScriptManager ScriptManager1;
+        
+        /// <summary>
+        /// upDashboard control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel upDashboard;
+        
+        /// <summary>
+        /// hdnTargetUser control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hdnTargetUser;
+        
+        /// <summary>
+        /// hdnTargetDate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hdnTargetDate;
+        
+        /// <summary>
+        /// hdnActionType control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hdnActionType;
+        
+        /// <summary>
         /// ddlEmployee control.
         /// </summary>
         /// <remarks>
@@ -58,40 +103,67 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Button btnExport;
         
         /// <summary>
-        /// lblTotalOffice control.
+        /// SummaryPanel control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblTotalOffice;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl SummaryPanel;
         
         /// <summary>
-        /// lblTotalField control.
+        /// lblTotalDays control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblTotalField;
+        protected global::System.Web.UI.WebControls.Label lblTotalDays;
         
         /// <summary>
-        /// lblTotalVisits control.
+        /// lblPayableDays control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblTotalVisits;
+        protected global::System.Web.UI.WebControls.Label lblPayableDays;
         
         /// <summary>
-        /// lblTotalAbsents control.
+        /// lblPresent control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblTotalAbsents;
+        protected global::System.Web.UI.WebControls.Label lblPresent;
+        
+        /// <summary>
+        /// lblHalfDays control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblHalfDays;
+        
+        /// <summary>
+        /// lblAbsent control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblAbsent;
+        
+        /// <summary>
+        /// lblOffs control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblOffs;
         
         /// <summary>
         /// gvOmniAttendance control.
@@ -101,5 +173,32 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.GridView gvOmniAttendance;
+        
+        /// <summary>
+        /// txtManualOutTime control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtManualOutTime;
+        
+        /// <summary>
+        /// txtAdminRemarks control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtAdminRemarks;
+        
+        /// <summary>
+        /// btnConfirmAction control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnConfirmAction;
     }
 }
