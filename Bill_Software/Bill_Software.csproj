@@ -404,6 +404,7 @@
     <Content Include="corporate\business\print\NewChhalanTriplicate.aspx" />
     <Content Include="corporate\business\print\NewInvoice.aspx" />
     <Content Include="corporate\business\print\NewInvoiceDuplicate.aspx" />
+    <Content Include="corporate\business\print\NewInvoice_v2.aspx" />
     <Content Include="corporate\business\print\NewPaymentInvoice.aspx" />
     <Content Include="corporate\business\print\NewPaymentInvoiceDuplicate.aspx" />
     <Content Include="corporate\business\print\NewProformaInvoice.aspx" />
@@ -1759,6 +1760,13 @@
     </Compile>
     <Compile Include="corporate\business\print\NewInvoiceDuplicate.aspx.designer.cs">
       <DependentUpon>NewInvoiceDuplicate.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\print\NewInvoice_v2.aspx.cs">
+      <DependentUpon>NewInvoice_v2.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\print\NewInvoice_v2.aspx.designer.cs">
+      <DependentUpon>NewInvoice_v2.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\print\NewPaymentInvoice.aspx.cs">
       <DependentUpon>NewPaymentInvoice.aspx</DependentUpon>
