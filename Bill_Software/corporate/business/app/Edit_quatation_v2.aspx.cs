@@ -782,16 +782,16 @@ namespace Bill_Software.corporate.business.app
                             hCmd.Parameters.AddWithValue("@RefD", rbYes.Checked ? "Yes" : "No");
                             hCmd.Parameters.AddWithValue("@RefN", rbYes.Checked ? txt_clientrefname.Text : "N/A");
                             hCmd.Parameters.AddWithValue("@RefI", rbYes.Checked ? txt_clientrefid.Text : "N/A");
-                            hCmd.Parameters.AddWithValue("@RefDt", rbYes.Checked ? GetSafeDate(txt_clientrefdate.Text) : (object)"1900-01-01");
+                            hCmd.Parameters.AddWithValue("@RefDt", rbYes.Checked ? GetSafeDateNew(txt_clientrefdate.Text) : (object)"1900-01-01");
                             hCmd.Parameters.AddWithValue("@Remarks", txt_remarks.Text);
                             hCmd.Parameters.AddWithValue("@DView", DDL_ItemViewType.SelectedItem.Text);
                             hCmd.Parameters.AddWithValue("@DiscView", DDL_DiscountView.SelectedItem.Text);
                             hCmd.Parameters.AddWithValue("@RType", rbPo.Checked ? "Purchase Order" : "Quotation");
                             hCmd.Parameters.AddWithValue("@DONum", rbPo.Checked ? txb_donumber.Text : "N/A");
                             hCmd.Parameters.AddWithValue("@PONum", rbPo.Checked ? txb_ponumber.Text : "N/A");
-                            hCmd.Parameters.AddWithValue("@PODt", rbPo.Checked ? GetSafeDate(txb_podate.Text) : (object)"1900-01-01");
-                            hCmd.Parameters.AddWithValue("@VStart", rbPo.Checked ? GetSafeDate(txb_strtdt.Text) : (object)"1900-01-01");
-                            hCmd.Parameters.AddWithValue("@VEnd", rbPo.Checked ? GetSafeDate(txb_enddt.Text) : (object)"1900-01-01");
+                            hCmd.Parameters.AddWithValue("@PODt", rbPo.Checked ? GetSafeDateNew(txb_podate.Text) : (object)"1900-01-01");
+                            hCmd.Parameters.AddWithValue("@VStart", rbPo.Checked ? GetSafeDateNew(txb_strtdt.Text) : (object)"1900-01-01");
+                            hCmd.Parameters.AddWithValue("@VEnd", rbPo.Checked ? GetSafeDateNew(txb_enddt.Text) : (object)"1900-01-01");
                             hCmd.Parameters.AddWithValue("@TCSA", tcsAmount);
                             hCmd.Parameters.AddWithValue("@TCSP", tcsPercent);
                             hCmd.Parameters.AddWithValue("@FrA", deliveryAmount);
@@ -951,7 +951,7 @@ namespace Bill_Software.corporate.business.app
                     VALUES (@QNo, @QDate, @CId, @Gross, @STax, @Net, 'No', 'No', @Sl, 'No', @STax1, @Sub, @CGST, @IGST, @POS, 'No', @RefD, @RefN, @RefI, @RefDt, @VDays, @DTenure, @PCharge, @Rem, @DView, @RType, @DO, @PO, @PODate, @VStart, @VEnd, @UserId, @DiscView, @TCSA, @TCSP, @FrA, @FrP, @OthN, @OthA, 1, 1, @SalesPersonId, @CompanyID)", conn, trans))
                     {
                         cmd.Parameters.AddWithValue("@QNo", newRecordID);
-                        cmd.Parameters.AddWithValue("@QDate", GetSafeDate(txtquotationDate.Text));
+                        cmd.Parameters.AddWithValue("@QDate", GetSafeDateNew(txtquotationDate.Text));
                         cmd.Parameters.AddWithValue("@CId", cmbClient.SelectedValue);
                         cmd.Parameters.AddWithValue("@Gross", Math.Round(new_Gross_amount, 2));
                         cmd.Parameters.AddWithValue("@STax", Math.Round(new_total_Service, 2));
@@ -965,7 +965,7 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@RefD", rbYes.Checked ? "Yes" : "No");
                         cmd.Parameters.AddWithValue("@RefN", rbYes.Checked ? txt_clientrefname.Text : "N/A");
                         cmd.Parameters.AddWithValue("@RefI", rbYes.Checked ? txt_clientrefid.Text : "N/A");
-                        cmd.Parameters.AddWithValue("@RefDt", rbYes.Checked ? GetSafeDate(txt_clientrefdate.Text) : (object)"1900-01-01");
+                        cmd.Parameters.AddWithValue("@RefDt", rbYes.Checked ? GetSafeDateNew(txt_clientrefdate.Text) : (object)"1900-01-01");
                         cmd.Parameters.AddWithValue("@VDays", txt_valdays.Text);
                         cmd.Parameters.AddWithValue("@DTenure", DDL_DeliveryTerms.SelectedValue == "4" ? txt_deltrms.Text : DDL_DeliveryTerms.SelectedItem.Text);
                         cmd.Parameters.AddWithValue("@PCharge", DDL_pkgfrwd.SelectedValue == "3" ? txt_pkgfrwd.Text : DDL_pkgfrwd.SelectedItem.Text);
@@ -974,9 +974,9 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@RType", rbPo.Checked ? "Purchase Order" : "Quotation");
                         cmd.Parameters.AddWithValue("@DO", rbPo.Checked ? txb_donumber.Text : "N/A");
                         cmd.Parameters.AddWithValue("@PO", rbPo.Checked ? txb_ponumber.Text : "N/A");
-                        cmd.Parameters.AddWithValue("@PODate", rbPo.Checked ? GetSafeDate(txb_podate.Text) : (object)"1900-01-01");
-                        cmd.Parameters.AddWithValue("@VStart", rbPo.Checked ? GetSafeDate(txb_strtdt.Text) : (object)"1900-01-01");
-                        cmd.Parameters.AddWithValue("@VEnd", rbPo.Checked ? GetSafeDate(txb_enddt.Text) : (object)"1900-01-01");
+                        cmd.Parameters.AddWithValue("@PODate", rbPo.Checked ? GetSafeDateNew(txb_podate.Text) : (object)"1900-01-01");
+                        cmd.Parameters.AddWithValue("@VStart", rbPo.Checked ? GetSafeDateNew(txb_strtdt.Text) : (object)"1900-01-01");
+                        cmd.Parameters.AddWithValue("@VEnd", rbPo.Checked ? GetSafeDateNew(txb_enddt.Text) : (object)"1900-01-01");
                         cmd.Parameters.AddWithValue("@UserId", userId);
                         cmd.Parameters.AddWithValue("@DiscView", DDL_DiscountView.SelectedItem.Text);
                         cmd.Parameters.AddWithValue("@TCSA", tcsAmount);
@@ -1022,6 +1022,28 @@ namespace Bill_Software.corporate.business.app
             decimal val;
             if (decimal.TryParse(text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val)) return val;
             return 0m;
+        }
+
+        private string GetSafeDateNew(string dateText)
+        {
+            DateTime dt;
+
+            if (DateTime.TryParseExact(
+                    dateText,
+                    "dd-MMM-yyyy",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out dt))
+            {
+                return dt.ToString("dd-MMM-yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (DateTime.TryParse(dateText, out dt))
+            {
+                return dt.ToString("dd-MMM-yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            return "01-Jan-1900";
         }
 
         private object GetSafeDate(string dateText)

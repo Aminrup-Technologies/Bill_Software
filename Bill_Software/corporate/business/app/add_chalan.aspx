@@ -500,8 +500,39 @@
                                 </tr>
                             </table>
                         </asp:Panel>
+
+                        <br />
+                        <!-- Contextual Audit Trail for Past Deliveries -->
+                        <asp:Panel ID="pnlPastChallans" runat="server" Visible="false" Style="margin-top: 25px; border: 1px solid #e0e0e0; padding: 15px; border-radius: 5px; background-color: #fcfcfc;">
+                            <h4 style="color: #006699; margin-top: 0; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; font-family: 'Segoe UI', Tahoma, sans-serif;">📦 Previous Deliveries against this Document
+                            </h4>
+                            <asp:GridView ID="gvPastChallans" runat="server" AutoGenerateColumns="False" Width="100%" CssClass="Grid" GridLines="Both">
+                                <Columns>
+                                    <asp:BoundField DataField="Sl" HeaderText="Sl No." ItemStyle-Width="5%" ItemStyle-HorizontalAlign="Center" />
+
+                                    <asp:TemplateField HeaderText="Challan Number" ItemStyle-Width="35%">
+                                        <ItemStyle HorizontalAlign="Center" Font-Bold="true" />
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblPastChallanNo" runat="server" Text='<%# Eval("Chalan_No") %>' ForeColor="#0033cc" />
+
+                                            <!-- Print Consignee Copy Icon Hyperlink -->
+                                            <a href="#" title="Print Consignee Copy..." onclick="window.open('/corporate/business/print/NewChhalan.aspx?Chalan_No=<%# DataBinder.Eval(Container.DataItem,"Chalan_No")%>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return false;" style="margin-left: 12px; vertical-align: middle;">
+                                                <img alt="View" height="22px" src="../WebImages/viewicon.png" style="border: 0; cursor: pointer;" />
+                                            </a>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+
+                                    <asp:BoundField DataField="Chalan_Date" HeaderText="Delivery Date" ItemStyle-Width="30%" ItemStyle-HorizontalAlign="Center" />
+                                    <asp:BoundField DataField="TotalQtyDelivered" HeaderText="Total Qty Delivered" ItemStyle-Width="30%" ItemStyle-HorizontalAlign="Center" ItemStyle-Font-Bold="true" ItemStyle-ForeColor="#009900" />
+                                </Columns>
+                                <HeaderStyle BackColor="#E8F1F5" ForeColor="#333333" Font-Bold="True" Height="30px" HorizontalAlign="Center" />
+                                <RowStyle BackColor="White" Height="30px" />
+                            </asp:GridView>
+                        </asp:Panel>
                     </td>
                     <td>&nbsp;</td>
+
+
                 </tr>
             </table>
         </ContentTemplate>

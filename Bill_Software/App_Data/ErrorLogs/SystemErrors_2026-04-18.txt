@@ -1,4 +1,0 @@
-[17:34:00] Message: WhatsApp API Failed: {"status":"fail","hasError":true,"errors":"Unauthorized","code":"401","apiError":"418"}
-StackTrace: 
-InnerException: 
---------------------------
