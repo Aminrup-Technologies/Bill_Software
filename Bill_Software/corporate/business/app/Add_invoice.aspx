@@ -311,6 +311,10 @@
             if ($ddlSales.hasClass("select2-hidden-accessible")) { $ddlSales.select2('destroy'); }
             $ddlSales.select2({ placeholder: "Search Sales Person...", allowClear: true, width: '100%' });
             updateDocPlaceholder();
+
+            // The jQuery UI datepicker bypasses native "change" events on direct click selection,
+            // so we bind explicitly here to keep the Ext. ERP Date in sync when "Same as Inv. Date" is ticked.
+            $('#<%= txtinvoiceDate.ClientID %>').off('change', syncExtDate).change(syncExtDate);
         }
 
         $(document).ready(function () { initScripts(); });
@@ -384,6 +388,9 @@
 
             var extNo = document.getElementById('<%= txtExtInvoiceNo.ClientID %>').value;
             if (extNo.trim() === "") { Swal.fire('Action Blocked', 'Please provide the External ERP No.', 'warning'); return false; }
+
+            var extDate = document.getElementById('<%= txtExtInvoiceDate.ClientID %>').value;
+            if (extDate.trim() === "") { Swal.fire('Action Blocked', 'Please provide the Ext. ERP Date.', 'warning'); return false; }
 
             var salesPerson = document.getElementById('<%= cmbSalesPerson.ClientID %>').value;
             if (salesPerson === "") { Swal.fire('Action Blocked', 'Please select a Sales Person.', 'warning'); return false; }
@@ -644,6 +651,16 @@
             }
         }
 
+        function syncExtDate() {
+            var chk = document.getElementById('chkSameAsInvDate');
+            var txtInvDate = document.getElementById('<%= txtinvoiceDate.ClientID %>');
+            var txtExtDate = document.getElementById('<%= txtExtInvoiceDate.ClientID %>');
+
+            if (chk && chk.checked && txtInvDate && txtExtDate) {
+                txtExtDate.value = txtInvDate.value;
+            }
+        }
+
         // Run once on page load to set the initial state
         window.onload = updateDocPlaceholder;
     </script>
@@ -873,7 +890,13 @@
                                     <asp:TextBox ID="txtExtInvoiceNo" runat="server" CssClass="form-control" placeholder="Enter ERP No..."></asp:TextBox>
                                 </div>
                                 <div>
-                                    <label class="form-label">Ext. ERP Date</label>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <label class="form-label" style="margin-bottom:0;">Ext. ERP Date <span style="color: red">*</span></label>
+                                        <div>
+                                            <input type="checkbox" id="chkSameAsInvDate" onclick="syncExtDate()" style="vertical-align: middle; cursor: pointer;" />
+                                            <label for="chkSameAsInvDate" style="font-size:10px; cursor: pointer; color: #006699; font-weight: bold;">Same as Inv. Date</label>
+                                        </div>
+                                    </div>
                                     <asp:TextBox ID="txtExtInvoiceDate" runat="server" CssClass="form-control datepicker" placeholder="Select Date..."></asp:TextBox>
                                 </div>
                                 <div>
