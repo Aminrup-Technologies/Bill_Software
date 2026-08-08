@@ -903,7 +903,7 @@
                                                     | Q: <strong><%# Eval("QuotedQty") %></strong> | I: <span style="color: #dc3545; font-weight: bold;"><%# Eval("InvoicedQty") %></span></span>
                                                 <div style="display: flex; align-items: center; gap: 5px;">
                                                     <span style="font-size: 11px; font-weight: bold; color: #444;">Bill Qty:</span>
-                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onkeyup="CalculateRow(this, 'MAIN')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onchange="CalculateRow(this, 'MAIN')"></asp:TextBox>
                                                 </div>
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
@@ -919,7 +919,7 @@
                                                 </span>
                                                 <div style="display: flex; align-items: center; gap: 5px;">
                                                     <span style="font-size:11px; font-weight:bold; color:#444;">Bill Qty:</span>
-                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onkeyup="CalculateRow(this, 'MAIN')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onchange="CalculateRow(this, 'MAIN')"></asp:TextBox>
                                                 </div>
                                             </ItemTemplate>
                                         </asp:TemplateField>
@@ -927,14 +927,14 @@
                                         <%--<asp:TemplateField HeaderText="Pricing & Discounts" ItemStyle-CssClass="stack-cell" ItemStyle-Width="180px">
                                             <ItemTemplate>
                                                 <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:11px;">
-                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:80px; text-align:right; padding:2px;" onkeyup="CalculateRow(this, 'MAIN')"></asp:TextBox></span>
+                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:80px; text-align:right; padding:2px;" onchange="CalculateRow(this, 'MAIN')"></asp:TextBox></span>
                                                     <span>Gross: <asp:Label ID="lblGross" runat="server" Text="0.00" Font-Bold="true"></asp:Label></span>
                                                 </div>
                                                 <div style="display:flex; gap: 5px; align-items:center;">
                                                     <span style="font-size:10px; color:#666;">Disc%:</span>
-                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:50px; padding:2px;" onkeyup="CalculateRow(this, 'PER')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:50px; padding:2px;" onchange="CalculateRow(this, 'PER')"></asp:TextBox>
                                                     <span style="font-size:10px; color:#666;">Amt:</span>
-                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:65px; padding:2px;" onkeyup="CalculateRow(this, 'AMT')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:65px; padding:2px;" onchange="CalculateRow(this, 'AMT')"></asp:TextBox>
                                                 </div>
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
@@ -942,19 +942,19 @@
                                         <asp:TemplateField HeaderText="Pricing & Discounts" ItemStyle-CssClass="stack-cell" ItemStyle-Width="260px">
                                             <ItemTemplate>
                                                 <div style="display:flex; justify-content:space-between; margin-bottom: 3px; font-size:11px;">
-                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:70px; text-align:right; padding:2px;" onkeyup="CalculateRow(this, 'RATE')"></asp:TextBox></span>
+                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:70px; text-align:right; padding:2px;" onchange="CalculateRow(this, 'RATE')"></asp:TextBox></span>
                                                     <span>Gross: <asp:Label ID="lblGross" runat="server" Text="0.00" Font-Bold="true"></asp:Label></span>
                                                 </div>
         
                                                 <div style="display:flex; gap: 4px; align-items:center; margin-bottom: 3px; font-size:10px;">
                                                     <span>Disc%:</span>
-                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:38px; padding:2px;" onkeyup="CalculateRow(this, 'PER')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:38px; padding:2px;" onchange="CalculateRow(this, 'PER')"></asp:TextBox>
             
                                                     <span>Unit ₹:</span>
-                                                    <asp:TextBox ID="txtUnitDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:50px; padding:2px;" onkeyup="CalculateRow(this, 'UNIT_AMT')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtUnitDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:50px; padding:2px;" onchange="CalculateRow(this, 'UNIT_AMT')"></asp:TextBox>
 
                                                     <span>Total ₹:</span>
-                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:60px; padding:2px;" onkeyup="CalculateRow(this, 'TOTAL_AMT')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:60px; padding:2px;" onchange="CalculateRow(this, 'TOTAL_AMT')"></asp:TextBox>
                                                 </div>
 
                                                 <div style="display:flex; justify-content:space-between; font-size:11px; background:#f8fafc; padding:3px 5px; border-radius:3px; border:1px dashed #cbd5e1;">
@@ -1000,7 +1000,7 @@
                                     <tr>
                                         <td style="color: #555; font-weight: bold;">Freight Charges (+)</td>
                                         <td width="120px">
-                                            <asp:TextBox ID="txt_delivery_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onkeyup="RecalculateFooter()"></asp:TextBox></td>
+                                            <asp:TextBox ID="txt_delivery_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onchange="RecalculateFooter()"></asp:TextBox></td>
                                         <td style="color: #555; font-weight: bold;">Total Tax</td>
                                         <td width="120px">
                                             <asp:Label ID="lblFooterTax" runat="server" Text="0.00" Font-Bold="true"></asp:Label></td>
@@ -1009,7 +1009,7 @@
                                         <td>
                                             <asp:TextBox ID="TextBox1" runat="server" CssClass="form-control" placeholder="Other Charge Name" Style="max-width: 150px; float: right;"></asp:TextBox></td>
                                         <td>
-                                            <asp:TextBox ID="txt_othr_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onkeyup="RecalculateFooter()"></asp:TextBox></td>
+                                            <asp:TextBox ID="txt_othr_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onchange="RecalculateFooter()"></asp:TextBox></td>
                                         <td style="font-size: 16px;"><strong>Grand Total</strong></td>
                                         <td>
                                             <asp:Label ID="lblFooterGrand" runat="server" Text="0.00" CssClass="lbl-grand"></asp:Label></td>
