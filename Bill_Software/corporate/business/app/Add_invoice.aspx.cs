@@ -867,6 +867,8 @@ namespace Bill_Software.corporate.business.app
             {
                 SyncGridToTable((DataTable)ViewState["InvoiceItems"]);
 
+                if (string.IsNullOrEmpty(txtExtInvoiceDate.Text)) { ShowMsg("Action Blocked: Please provide an Ext. ERP Date.", false); return; }
+
                 string uid = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
                 string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
