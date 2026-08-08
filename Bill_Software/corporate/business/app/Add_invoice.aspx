@@ -389,6 +389,9 @@
             var extNo = document.getElementById('<%= txtExtInvoiceNo.ClientID %>').value;
             if (extNo.trim() === "") { Swal.fire('Action Blocked', 'Please provide the External ERP No.', 'warning'); return false; }
 
+            var extDate = document.getElementById('<%= txtExtInvoiceDate.ClientID %>').value;
+            if (extDate.trim() === "") { Swal.fire('Action Blocked', 'Please provide the Ext. ERP Date.', 'warning'); return false; }
+
             var salesPerson = document.getElementById('<%= cmbSalesPerson.ClientID %>').value;
             if (salesPerson === "") { Swal.fire('Action Blocked', 'Please select a Sales Person.', 'warning'); return false; }
             
