@@ -873,7 +873,13 @@
                                     <asp:TextBox ID="txtExtInvoiceNo" runat="server" CssClass="form-control" placeholder="Enter ERP No..."></asp:TextBox>
                                 </div>
                                 <div>
-                                    <label class="form-label">Ext. ERP Date</label>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <label class="form-label" style="margin-bottom:0;">Ext. ERP Date <span style="color: red">*</span></label>
+                                        <div>
+                                            <input type="checkbox" id="chkSameAsInvDate" onclick="syncExtDate()" style="vertical-align: middle; cursor: pointer;" />
+                                            <label for="chkSameAsInvDate" style="font-size:10px; cursor: pointer; color: #006699; font-weight: bold;">Same as Inv. Date</label>
+                                        </div>
+                                    </div>
                                     <asp:TextBox ID="txtExtInvoiceDate" runat="server" CssClass="form-control datepicker" placeholder="Select Date..."></asp:TextBox>
                                 </div>
                                 <div>
