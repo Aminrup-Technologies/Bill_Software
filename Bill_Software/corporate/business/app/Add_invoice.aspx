@@ -466,14 +466,12 @@
 
             if (!txtQty || !txtRate || !lblGross) return;
 
+            // Soft-Cap Bill Qty: never touch the raw keystroke, only cap the math + flag visually
             var maxQty = parseFloat(txtQty.getAttribute('data-max')) || 0;
-            var qty = parseFloat(txtQty.value);
-            if (isNaN(qty)) qty = 0;
-
-            if (qty > maxQty) {
-                Swal.fire({ title: 'Quantity Exceeded', text: "Bill Qty cannot exceed Pending Qty of " + maxQty + ".", icon: 'warning', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
-                qty = maxQty; txtQty.value = maxQty;
-            } else if (qty < 0) { qty = 0; txtQty.value = 0; }
+            var rawQty = parseFloat(txtQty.value);
+            if (isNaN(rawQty)) rawQty = 0;
+            var qty = Math.max(0, Math.min(rawQty, maxQty));
+            txtQty.style.color = (rawQty > maxQty) ? '#dc3545' : '';
 
             var rate = Math.max(0, parseFloat(txtRate.value) || 0);
             var gst = Math.max(0, parseFloat(lblGst ? lblGst.innerText : 0) || 0);
@@ -486,16 +484,20 @@
 
             // 2. Bidirectional syncing depending on what the user edited
             if (trigger === 'PER') {
-                discPer = Math.max(0, parseFloat(txtDiscPer.value) || 0);
-                if (discPer > 100) { discPer = 100; txtDiscPer.value = 100; }
+                // Soft-Cap Disc%: never touch the raw keystroke, only cap the math + flag visually
+                var rawDiscPer = Math.max(0, parseFloat(txtDiscPer.value) || 0);
+                discPer = Math.min(rawDiscPer, 100);
+                txtDiscPer.style.color = (rawDiscPer > 100) ? '#dc3545' : '';
                 unitDisc = (rate * discPer) / 100;
                 totalDisc = unitDisc * qty;
                 if (txtUnitDiscAmt) txtUnitDiscAmt.value = unitDisc.toFixed(2);
                 if (txtDiscAmt) txtDiscAmt.value = totalDisc.toFixed(2);
             }
             else if (trigger === 'UNIT_AMT') {
-                unitDisc = Math.max(0, parseFloat(txtUnitDiscAmt.value) || 0);
-                if (unitDisc > rate) { unitDisc = rate; txtUnitDiscAmt.value = unitDisc.toFixed(2); }
+                // Soft-Cap Unit Discount Amount: never touch the raw keystroke, only cap the math + flag visually
+                var rawUnitDisc = Math.max(0, parseFloat(txtUnitDiscAmt.value) || 0);
+                unitDisc = Math.min(rawUnitDisc, rate);
+                txtUnitDiscAmt.style.color = (rawUnitDisc > rate) ? '#dc3545' : '';
                 discPer = rate > 0 ? (unitDisc / rate) * 100 : 0;
                 totalDisc = unitDisc * qty;
                 if (txtDiscPer) txtDiscPer.value = discPer.toFixed(2);
@@ -511,7 +513,7 @@
             }
             else {
                 // Default sync from Disc% when Quantity or Rate changes
-                discPer = Math.max(0, parseFloat(txtDiscPer ? txtDiscPer.value : 0) || 0);
+                discPer = Math.min(Math.max(0, parseFloat(txtDiscPer ? txtDiscPer.value : 0) || 0), 100);
                 unitDisc = (rate * discPer) / 100;
                 totalDisc = unitDisc * qty;
                 if (txtUnitDiscAmt) txtUnitDiscAmt.value = unitDisc.toFixed(2);
