@@ -432,15 +432,38 @@
                     }
                 }
             }
-            
+
+            // Gatekeeper Modal Summary: pull the key invoice data points so the user can review
+            // everything at a glance before physical stock is deducted.
+            var clientName = document.getElementById('<%= lblConfirmClient.ClientID %>').innerText;
+            var salesPersonDropdown = document.getElementById('<%= cmbSalesPerson.ClientID %>');
+            var salesPersonName = salesPersonDropdown.options[salesPersonDropdown.selectedIndex].text;
+            var totalTax = document.getElementById('<%= lblFooterTax.ClientID %>').innerText;
+            var grandTotal = document.getElementById('<%= lblFooterGrand.ClientID %>').innerText;
+
             Swal.fire({
-                title: 'Confirm Generation?', 
-                text: "Physical stock will be deducted.", 
-                icon: 'question', 
-                showCancelButton: true, 
-                confirmButtonColor: '#28a745', 
-                cancelButtonColor: '#6c757d', 
-                confirmButtonText: 'Yes, Generate Invoice!'
+                title: 'Review Invoice Details',
+                html: `
+                    <div style="text-align:left; font-size:13px; line-height:1.6;">
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:15px;">
+                            <tr style="border-bottom:1px solid #eee;"><td style="padding:6px 0;"><strong>Client:</strong></td><td style="text-align:right; color:#006699; font-weight:bold;">${clientName}</td></tr>
+                            <tr style="border-bottom:1px solid #eee;"><td style="padding:6px 0;"><strong>Invoice Date:</strong></td><td style="text-align:right;">${invDate}</td></tr>
+                            <tr style="border-bottom:1px solid #eee;"><td style="padding:6px 0;"><strong>Ext. ERP Date:</strong></td><td style="text-align:right;">${extDate}</td></tr>
+                            <tr style="border-bottom:1px solid #eee;"><td style="padding:6px 0;"><strong>Sales Person:</strong></td><td style="text-align:right;">${salesPersonName}</td></tr>
+                            <tr style="border-bottom:1px dashed #ccc;"><td style="padding:6px 0;"><strong>Total Tax:</strong></td><td style="text-align:right; color:#dc3545;">₹${totalTax}</td></tr>
+                            <tr><td style="padding:8px 0; font-size:15px;"><strong>Grand Total:</strong></td><td style="text-align:right; color:#28a745; font-size:16px; font-weight:bold;">₹${grandTotal}</td></tr>
+                        </table>
+                        <div style="padding:10px; background:#fff3cd; color:#856404; border-left:4px solid #ffeeba; border-radius:3px;">
+                            <strong>⚠️ Warning:</strong> Confirming this will generate the Tax Invoice and deduct physical stock from inventory.
+                        </div>
+                    </div>
+                `,
+                icon: 'info',
+                width: 450,
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '✓ Yes, Generate Invoice'
             }).then((result) => { 
                 if (result.isConfirmed) { 
                     btn.dataset.confirmed = 'true'; 
