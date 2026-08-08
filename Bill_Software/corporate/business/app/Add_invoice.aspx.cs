@@ -923,7 +923,7 @@ namespace Bill_Software.corporate.business.app
                         string intra = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
                         string inter = RadioButtonGst.SelectedIndex == 1 ? "YES" : "";
 
-                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1_name, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, ExtInvoiceNo, BillingAddress) VALUES (@Inv, @Date, @PO, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @OthName, @Oth, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @ExtNo, @BillingAddress)";
+                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1_name, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, ExtInvoiceNo, ExtInvoiceDate, BillingAddress) VALUES (@Inv, @Date, @PO, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @OthName, @Oth, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @ExtNo, @ExtDate, @BillingAddress)";
                         SqlCommand cmdH = new SqlCommand(sqlH, conn, tran);
                         cmdH.Parameters.AddWithValue("@Inv", invNo);
                         cmdH.Parameters.AddWithValue("@Date", txtinvoiceDate.Text);
@@ -944,6 +944,7 @@ namespace Bill_Software.corporate.business.app
                         cmdH.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         cmdH.Parameters.AddWithValue("@SalesPerson", cmbSalesPerson.SelectedValue);
                         cmdH.Parameters.AddWithValue("@ExtNo", string.IsNullOrWhiteSpace(txtExtInvoiceNo.Text) ? (object)DBNull.Value : txtExtInvoiceNo.Text.Trim());
+                        cmdH.Parameters.AddWithValue("@ExtDate", string.IsNullOrWhiteSpace(txtExtInvoiceDate.Text) ? (object)DBNull.Value : txtExtInvoiceDate.Text.Trim());
                         cmdH.Parameters.AddWithValue("@BillingAddress", List_BillingAddress.SelectedItem != null ? List_BillingAddress.SelectedItem.Text : "N/A");
                         cmdH.ExecuteNonQuery();
 
@@ -1046,7 +1047,7 @@ namespace Bill_Software.corporate.business.app
                         ViewState["RemovedItems"] = null;
                         GridView1.DataSource = null;
                         GridView1.DataBind();
-                        txt_delivery_amnt.Text = "0"; txt_othr_amnt.Text = "0"; TextBox1.Text = ""; cmbSalesPerson.SelectedIndex = -1; txtExtInvoiceNo.Text = "";
+                        txt_delivery_amnt.Text = "0"; txt_othr_amnt.Text = "0"; TextBox1.Text = ""; cmbSalesPerson.SelectedIndex = -1; txtExtInvoiceNo.Text = ""; txtExtInvoiceDate.Text = "";
                         btnRestore.Visible = false;
                         mvInvoice.ActiveViewIndex = 0;
                     }
