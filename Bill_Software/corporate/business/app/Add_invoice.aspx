@@ -54,6 +54,14 @@
             align-items: end;
         }
 
+        .form-grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 15px;
+            align-items: end;
+        }
+
         .form-label {
             display: block;
             font-weight: bold;
@@ -822,7 +830,7 @@
 
                         <div class="box-panel">
                             <div class="box-title">Invoice Master Details</div>
-                            <div class="form-grid-4">
+                            <div class="form-grid-5">
                                 <div>
                                     <label class="form-label">Invoice Date <span style="color: red">*</span></label>
                                     <asp:TextBox ID="txtinvoiceDate" runat="server" CssClass="form-control datepicker"></asp:TextBox>
@@ -830,6 +838,10 @@
                                 <div>
                                     <label class="form-label">External ERP No. <span style="color: red">*</span></label>
                                     <asp:TextBox ID="txtExtInvoiceNo" runat="server" CssClass="form-control" placeholder="Enter ERP No..."></asp:TextBox>
+                                </div>
+                                <div>
+                                    <label class="form-label">Ext. ERP Date</label>
+                                    <asp:TextBox ID="txtExtInvoiceDate" runat="server" CssClass="form-control datepicker" placeholder="Select Date..."></asp:TextBox>
                                 </div>
                                 <div>
                                     <label class="form-label">Tax Type <span style="color: red">*</span></label>
