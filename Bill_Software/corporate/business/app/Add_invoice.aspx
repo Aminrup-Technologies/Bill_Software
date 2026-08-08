@@ -394,6 +394,37 @@
                 Swal.fire('Action Blocked', 'Please explicitly select a Tax Type (Intra or Inter).', 'warning'); 
                 return false; 
             }
+
+            // Pre-Submit Hard Correction: force-clamp any row values that still exceed their allowed
+            // limits (Bill Qty > Pending Qty, Disc% > 100, Unit Discount Amt > Rate) so the backend
+            // always receives clean, validated data, regardless of what is visually shown mid-typing.
+            var grid = document.getElementById('<%= GridView1.ClientID %>');
+            if (grid) {
+                var gridRows = grid.getElementsByTagName('tr');
+                for (var i = 1; i < gridRows.length; i++) {
+                    var inputQty = gridRows[i].querySelector("input[id*='txtqnty']");
+                    var inputRate = gridRows[i].querySelector("input[id*='txtsailrate']");
+                    var inputDiscPer = gridRows[i].querySelector("input[id*='txtDiscPer']");
+                    var inputUnitDiscAmt = gridRows[i].querySelector("input[id*='txtUnitDiscAmt']");
+
+                    if (inputQty) {
+                        var maxQty = parseFloat(inputQty.getAttribute('data-max')) || 0;
+                        var qtyVal = parseFloat(inputQty.value) || 0;
+                        if (qtyVal > maxQty) inputQty.value = maxQty;
+                    }
+
+                    if (inputDiscPer) {
+                        var discPerVal = parseFloat(inputDiscPer.value) || 0;
+                        if (discPerVal > 100) inputDiscPer.value = 100;
+                    }
+
+                    if (inputUnitDiscAmt && inputRate) {
+                        var rateVal = parseFloat(inputRate.value) || 0;
+                        var unitDiscVal = parseFloat(inputUnitDiscAmt.value) || 0;
+                        if (unitDiscVal > rateVal) inputUnitDiscAmt.value = rateVal.toFixed(2);
+                    }
+                }
+            }
             
             Swal.fire({
                 title: 'Confirm Generation?', 
@@ -435,14 +466,12 @@
 
             if (!txtQty || !txtRate || !lblGross) return;
 
+            // Soft-Cap Bill Qty: never touch the raw keystroke, only cap the math + flag visually
             var maxQty = parseFloat(txtQty.getAttribute('data-max')) || 0;
-            var qty = parseFloat(txtQty.value);
-            if (isNaN(qty)) qty = 0;
-
-            if (qty > maxQty) {
-                Swal.fire({ title: 'Quantity Exceeded', text: "Bill Qty cannot exceed Pending Qty of " + maxQty + ".", icon: 'warning', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
-                qty = maxQty; txtQty.value = maxQty;
-            } else if (qty < 0) { qty = 0; txtQty.value = 0; }
+            var rawQty = parseFloat(txtQty.value);
+            if (isNaN(rawQty)) rawQty = 0;
+            var qty = Math.max(0, Math.min(rawQty, maxQty));
+            txtQty.style.color = (rawQty > maxQty) ? '#dc3545' : '';
 
             var rate = Math.max(0, parseFloat(txtRate.value) || 0);
             var gst = Math.max(0, parseFloat(lblGst ? lblGst.innerText : 0) || 0);
@@ -455,16 +484,20 @@
 
             // 2. Bidirectional syncing depending on what the user edited
             if (trigger === 'PER') {
-                discPer = Math.max(0, parseFloat(txtDiscPer.value) || 0);
-                if (discPer > 100) { discPer = 100; txtDiscPer.value = 100; }
+                // Soft-Cap Disc%: never touch the raw keystroke, only cap the math + flag visually
+                var rawDiscPer = Math.max(0, parseFloat(txtDiscPer.value) || 0);
+                discPer = Math.min(rawDiscPer, 100);
+                txtDiscPer.style.color = (rawDiscPer > 100) ? '#dc3545' : '';
                 unitDisc = (rate * discPer) / 100;
                 totalDisc = unitDisc * qty;
                 if (txtUnitDiscAmt) txtUnitDiscAmt.value = unitDisc.toFixed(2);
                 if (txtDiscAmt) txtDiscAmt.value = totalDisc.toFixed(2);
             }
             else if (trigger === 'UNIT_AMT') {
-                unitDisc = Math.max(0, parseFloat(txtUnitDiscAmt.value) || 0);
-                if (unitDisc > rate) { unitDisc = rate; txtUnitDiscAmt.value = unitDisc.toFixed(2); }
+                // Soft-Cap Unit Discount Amount: never touch the raw keystroke, only cap the math + flag visually
+                var rawUnitDisc = Math.max(0, parseFloat(txtUnitDiscAmt.value) || 0);
+                unitDisc = Math.min(rawUnitDisc, rate);
+                txtUnitDiscAmt.style.color = (rawUnitDisc > rate) ? '#dc3545' : '';
                 discPer = rate > 0 ? (unitDisc / rate) * 100 : 0;
                 totalDisc = unitDisc * qty;
                 if (txtDiscPer) txtDiscPer.value = discPer.toFixed(2);
@@ -480,7 +513,7 @@
             }
             else {
                 // Default sync from Disc% when Quantity or Rate changes
-                discPer = Math.max(0, parseFloat(txtDiscPer ? txtDiscPer.value : 0) || 0);
+                discPer = Math.min(Math.max(0, parseFloat(txtDiscPer ? txtDiscPer.value : 0) || 0), 100);
                 unitDisc = (rate * discPer) / 100;
                 totalDisc = unitDisc * qty;
                 if (txtUnitDiscAmt) txtUnitDiscAmt.value = unitDisc.toFixed(2);
@@ -903,7 +936,7 @@
                                                     | Q: <strong><%# Eval("QuotedQty") %></strong> | I: <span style="color: #dc3545; font-weight: bold;"><%# Eval("InvoicedQty") %></span></span>
                                                 <div style="display: flex; align-items: center; gap: 5px;">
                                                     <span style="font-size: 11px; font-weight: bold; color: #444;">Bill Qty:</span>
-                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onchange="CalculateRow(this, 'MAIN')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onkeyup="CalculateRow(this, 'MAIN')"></asp:TextBox>
                                                 </div>
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
@@ -919,7 +952,7 @@
                                                 </span>
                                                 <div style="display: flex; align-items: center; gap: 5px;">
                                                     <span style="font-size:11px; font-weight:bold; color:#444;">Bill Qty:</span>
-                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onchange="CalculateRow(this, 'MAIN')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtqnty" runat="server" Text='<%# Bind("PendingQty") %>' data-max='<%# Eval("PendingQty") %>' CssClass="form-control" Style="text-align: center; font-weight: bold; color: #006699; padding: 4px;" onkeyup="CalculateRow(this, 'MAIN')"></asp:TextBox>
                                                 </div>
                                             </ItemTemplate>
                                         </asp:TemplateField>
@@ -927,14 +960,14 @@
                                         <%--<asp:TemplateField HeaderText="Pricing & Discounts" ItemStyle-CssClass="stack-cell" ItemStyle-Width="180px">
                                             <ItemTemplate>
                                                 <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:11px;">
-                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:80px; text-align:right; padding:2px;" onchange="CalculateRow(this, 'MAIN')"></asp:TextBox></span>
+                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:80px; text-align:right; padding:2px;" onkeyup="CalculateRow(this, 'MAIN')"></asp:TextBox></span>
                                                     <span>Gross: <asp:Label ID="lblGross" runat="server" Text="0.00" Font-Bold="true"></asp:Label></span>
                                                 </div>
                                                 <div style="display:flex; gap: 5px; align-items:center;">
                                                     <span style="font-size:10px; color:#666;">Disc%:</span>
-                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:50px; padding:2px;" onchange="CalculateRow(this, 'PER')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:50px; padding:2px;" onkeyup="CalculateRow(this, 'PER')"></asp:TextBox>
                                                     <span style="font-size:10px; color:#666;">Amt:</span>
-                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:65px; padding:2px;" onchange="CalculateRow(this, 'AMT')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:65px; padding:2px;" onkeyup="CalculateRow(this, 'AMT')"></asp:TextBox>
                                                 </div>
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
@@ -942,19 +975,19 @@
                                         <asp:TemplateField HeaderText="Pricing & Discounts" ItemStyle-CssClass="stack-cell" ItemStyle-Width="260px">
                                             <ItemTemplate>
                                                 <div style="display:flex; justify-content:space-between; margin-bottom: 3px; font-size:11px;">
-                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:70px; text-align:right; padding:2px;" onchange="CalculateRow(this, 'RATE')"></asp:TextBox></span>
+                                                    <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:70px; text-align:right; padding:2px;" onkeyup="CalculateRow(this, 'RATE')"></asp:TextBox></span>
                                                     <span>Gross: <asp:Label ID="lblGross" runat="server" Text="0.00" Font-Bold="true"></asp:Label></span>
                                                 </div>
         
                                                 <div style="display:flex; gap: 4px; align-items:center; margin-bottom: 3px; font-size:10px;">
                                                     <span>Disc%:</span>
-                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:38px; padding:2px;" onchange="CalculateRow(this, 'PER')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscPer" runat="server" Text='<%# Bind("discountRate") %>' CssClass="form-control" Style="text-align: center; width:38px; padding:2px;" onkeyup="CalculateRow(this, 'PER')"></asp:TextBox>
             
                                                     <span>Unit ₹:</span>
-                                                    <asp:TextBox ID="txtUnitDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:50px; padding:2px;" onchange="CalculateRow(this, 'UNIT_AMT')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtUnitDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:50px; padding:2px;" onkeyup="CalculateRow(this, 'UNIT_AMT')"></asp:TextBox>
 
                                                     <span>Total ₹:</span>
-                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:60px; padding:2px;" onchange="CalculateRow(this, 'TOTAL_AMT')"></asp:TextBox>
+                                                    <asp:TextBox ID="txtDiscAmt" runat="server" Text="0.00" CssClass="form-control" Style="text-align: right; width:60px; padding:2px;" onkeyup="CalculateRow(this, 'TOTAL_AMT')"></asp:TextBox>
                                                 </div>
 
                                                 <div style="display:flex; justify-content:space-between; font-size:11px; background:#f8fafc; padding:3px 5px; border-radius:3px; border:1px dashed #cbd5e1;">
@@ -1000,7 +1033,7 @@
                                     <tr>
                                         <td style="color: #555; font-weight: bold;">Freight Charges (+)</td>
                                         <td width="120px">
-                                            <asp:TextBox ID="txt_delivery_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onchange="RecalculateFooter()"></asp:TextBox></td>
+                                            <asp:TextBox ID="txt_delivery_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onkeyup="RecalculateFooter()"></asp:TextBox></td>
                                         <td style="color: #555; font-weight: bold;">Total Tax</td>
                                         <td width="120px">
                                             <asp:Label ID="lblFooterTax" runat="server" Text="0.00" Font-Bold="true"></asp:Label></td>
@@ -1009,7 +1042,7 @@
                                         <td>
                                             <asp:TextBox ID="TextBox1" runat="server" CssClass="form-control" placeholder="Other Charge Name" Style="max-width: 150px; float: right;"></asp:TextBox></td>
                                         <td>
-                                            <asp:TextBox ID="txt_othr_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onchange="RecalculateFooter()"></asp:TextBox></td>
+                                            <asp:TextBox ID="txt_othr_amnt" runat="server" Text="0" CssClass="form-control" Style="text-align: right;" onkeyup="RecalculateFooter()"></asp:TextBox></td>
                                         <td style="font-size: 16px;"><strong>Grand Total</strong></td>
                                         <td>
                                             <asp:Label ID="lblFooterGrand" runat="server" Text="0.00" CssClass="lbl-grand"></asp:Label></td>
