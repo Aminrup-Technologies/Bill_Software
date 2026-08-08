@@ -311,6 +311,10 @@
             if ($ddlSales.hasClass("select2-hidden-accessible")) { $ddlSales.select2('destroy'); }
             $ddlSales.select2({ placeholder: "Search Sales Person...", allowClear: true, width: '100%' });
             updateDocPlaceholder();
+
+            // The jQuery UI datepicker bypasses native "change" events on direct click selection,
+            // so we bind explicitly here to keep the Ext. ERP Date in sync when "Same as Inv. Date" is ticked.
+            $('#<%= txtinvoiceDate.ClientID %>').off('change', syncExtDate).change(syncExtDate);
         }
 
         $(document).ready(function () { initScripts(); });
@@ -641,6 +645,16 @@
                 } else {
                     lstShip.disabled = false;
                 }
+            }
+        }
+
+        function syncExtDate() {
+            var chk = document.getElementById('chkSameAsInvDate');
+            var txtInvDate = document.getElementById('<%= txtinvoiceDate.ClientID %>');
+            var txtExtDate = document.getElementById('<%= txtExtInvoiceDate.ClientID %>');
+
+            if (chk && chk.checked && txtInvDate && txtExtDate) {
+                txtExtDate.value = txtInvDate.value;
             }
         }
 
