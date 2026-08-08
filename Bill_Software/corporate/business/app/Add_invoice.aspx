@@ -394,6 +394,37 @@
                 Swal.fire('Action Blocked', 'Please explicitly select a Tax Type (Intra or Inter).', 'warning'); 
                 return false; 
             }
+
+            // Pre-Submit Hard Correction: force-clamp any row values that still exceed their allowed
+            // limits (Bill Qty > Pending Qty, Disc% > 100, Unit Discount Amt > Rate) so the backend
+            // always receives clean, validated data, regardless of what is visually shown mid-typing.
+            var grid = document.getElementById('<%= GridView1.ClientID %>');
+            if (grid) {
+                var gridRows = grid.getElementsByTagName('tr');
+                for (var i = 1; i < gridRows.length; i++) {
+                    var inputQty = gridRows[i].querySelector("input[id*='txtqnty']");
+                    var inputRate = gridRows[i].querySelector("input[id*='txtsailrate']");
+                    var inputDiscPer = gridRows[i].querySelector("input[id*='txtDiscPer']");
+                    var inputUnitDiscAmt = gridRows[i].querySelector("input[id*='txtUnitDiscAmt']");
+
+                    if (inputQty) {
+                        var maxQty = parseFloat(inputQty.getAttribute('data-max')) || 0;
+                        var qtyVal = parseFloat(inputQty.value) || 0;
+                        if (qtyVal > maxQty) inputQty.value = maxQty;
+                    }
+
+                    if (inputDiscPer) {
+                        var discPerVal = parseFloat(inputDiscPer.value) || 0;
+                        if (discPerVal > 100) inputDiscPer.value = 100;
+                    }
+
+                    if (inputUnitDiscAmt && inputRate) {
+                        var rateVal = parseFloat(inputRate.value) || 0;
+                        var unitDiscVal = parseFloat(inputUnitDiscAmt.value) || 0;
+                        if (unitDiscVal > rateVal) inputUnitDiscAmt.value = rateVal.toFixed(2);
+                    }
+                }
+            }
             
             Swal.fire({
                 title: 'Confirm Generation?', 
