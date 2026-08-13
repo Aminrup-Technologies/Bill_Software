@@ -438,23 +438,36 @@ namespace Bill_Software.corporate.business.app
 
                     if (rowsAffected > 0)
                     {
+                        // ==========================================
+                        // INSTANT RULES ENGINE SYNC
+                        // Immediately calculate Grace Periods, Penalties, and Payable Days
+                        // so the employee's UI updates perfectly in real-time!
+                        // ==========================================
                         using (SqlCommand engineCmd = new SqlCommand("sp_RunAttendanceRulesEngine", conn))
                         {
                             engineCmd.CommandType = CommandType.StoredProcedure;
-                            engineCmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
+                            engineCmd.Parameters.AddWithValue("@CompanyID", companyId); // Strict Tenant Segregation
                             engineCmd.Parameters.AddWithValue("@Month", DateTime.Now.Month);
                             engineCmd.Parameters.AddWithValue("@Year", DateTime.Now.Year);
-                            engineCmd.Parameters.AddWithValue("@UserCodeList", userId);
+                            engineCmd.Parameters.AddWithValue("@UserCodeList", userId); // Run ONLY for this specific user
 
                             engineCmd.ExecuteNonQuery();
                         }
 
+                        // ==========================================
+                        // PROACTIVE NOTIFICATION LOGGING
+                        // ==========================================
                         InsertSystemNotification(
                             $"Attendance Punched {action}",
                             $"Employee {userId} successfully punched {action.ToLower()} from an authorized location.",
-                            "Attendance", "Success", userId, companyId, conn);
+                            "Attendance",
+                            "Success",
+                            userId,
+                            companyId,
+                            conn
+                        );
 
-                        return PunchJson("success", "Punch recorded successfully!");
+                        return PunchJson("success", "Punch recorded and rules calculated successfully!");
                     }
 
                     return PunchJson("error", "Database transaction failed.");
