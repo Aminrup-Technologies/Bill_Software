@@ -479,6 +479,9 @@
             if (errorLabel) errorLabel.innerText = "";
 
             if (navigator.geolocation) {
+                // Force hardware GPS over cellular triangulation; never reuse a cached fix
+                var geoOptions = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
                 navigator.geolocation.getCurrentPosition(
                     function (position) {
                         fetch('attendance.aspx/ProcessPunch', {
@@ -511,7 +514,7 @@
                         btnElement.innerText = originalText;
                         btnElement.disabled = false;
                     },
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                    geoOptions
                 );
             } else {
                 showNotification("Unsupported Browser", "Geolocation is not supported by your browser.", "error");

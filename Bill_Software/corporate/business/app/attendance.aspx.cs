@@ -321,7 +321,7 @@ namespace Bill_Software.corporate.business.app
         public static string ProcessPunch(string action, double lat, double lng, string address)
         {
             if (HttpContext.Current.Session["USERID"] == null)
-                return "{\"status\": \"error\", \"message\": \"Session expired.\"}";
+                return PunchJson("error", "Session expired.");
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -333,7 +333,7 @@ namespace Bill_Software.corporate.business.app
                 {
                     conn.Open();
 
-                    // 1. Fetch Geo-Rules
+                    // 1. Fetch Geo-Rules (multi-tenant isolated)
                     string geoQuery = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius, 
                                    ISNULL(IsOfficePunchInMandatory, 1) AS IsOfficePunchInMandatory, 
                                    ISNULL(AllowRemotePunchOut, 0) AS AllowRemotePunchOut
@@ -342,13 +342,13 @@ namespace Bill_Software.corporate.business.app
                     bool requireGeoTagging = false;
                     bool isOfficeInMandatory = true;
                     bool allowRemoteOut = false;
-                    double officeLat = 0, officeLng = 0;
+                    double officeLat = 0.0, officeLng = 0.0;
                     int allowedRadius = 50;
 
                     using (SqlCommand cmdGeo = new SqlCommand(geoQuery, conn))
                     {
                         cmdGeo.Parameters.AddWithValue("@UserId", userId);
-                        cmdGeo.Parameters.AddWithValue("@CompanyID", companyId);
+                        cmdGeo.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
                         using (SqlDataReader reader = cmdGeo.ExecuteReader())
                         {
                             if (reader.Read())
@@ -357,7 +357,6 @@ namespace Bill_Software.corporate.business.app
                                 isOfficeInMandatory = Convert.ToBoolean(reader["IsOfficePunchInMandatory"]);
                                 allowRemoteOut = Convert.ToBoolean(reader["AllowRemotePunchOut"]);
 
-                                // FIX: Use the correct schema column names
                                 if (reader["GeoFenceLat"] != DBNull.Value) officeLat = Convert.ToDouble(reader["GeoFenceLat"]);
                                 if (reader["GeoFenceLng"] != DBNull.Value) officeLng = Convert.ToDouble(reader["GeoFenceLng"]);
                                 if (reader["GeoFenceRadius"] != DBNull.Value) allowedRadius = Convert.ToInt32(reader["GeoFenceRadius"]);
@@ -368,19 +367,28 @@ namespace Bill_Software.corporate.business.app
                     // 2. Validate GPS Restrictions
                     if (requireGeoTagging)
                     {
-                        if (lat == 0 || lng == 0) return "{\"status\": \"error\", \"message\": \"Location data is required for your profile.\"}";
+                        if (lat == 0 || lng == 0) return PunchJson("error", "Location data is required for your profile.");
 
-                        double distance = CalculateDistance(lat, lng, officeLat, officeLng);
+                        double distance = CalculateDistanceInMeters(lat, lng, officeLat, officeLng);
+                        int distanceMeters = (int)Math.Round(distance, MidpointRounding.AwayFromZero);
 
                         if (action == "IN" && isOfficeInMandatory && distance > allowedRadius)
                         {
-                            InsertSystemNotification("Unauthorized Punch-In Attempt", $"User {userId} attempted to punch IN from outside the authorized geo-fence ({Math.Round(distance)}m away).", "Attendance", "Danger", userId, companyId, conn);
-                            return "{\"status\": \"error\", \"message\": \"Punch-In Rejected. You must be at the Authorized Office Location.\"}";
+                            InsertSystemNotification(
+                                "Unauthorized Punch-In Attempt",
+                                $"User {userId} attempted to punch IN from outside the authorized geo-fence ({distanceMeters}m away).",
+                                "Attendance", "Danger", userId, companyId, conn);
+                            return PunchJson("error",
+                                $"Punch-In Rejected. You are currently {distanceMeters} meters away from the authorized zone. Limit is {allowedRadius} meters.");
                         }
                         if (action == "OUT" && !allowRemoteOut && distance > allowedRadius)
                         {
-                            InsertSystemNotification("Unauthorized Punch-Out Attempt", $"User {userId} attempted to punch OUT from outside the authorized geo-fence ({Math.Round(distance)}m away).", "Attendance", "Danger", userId, companyId, conn);
-                            return "{\"status\": \"error\", \"message\": \"Punch-Out Rejected. You are not authorized to Punch-Out from a remote location.\"}";
+                            InsertSystemNotification(
+                                "Unauthorized Punch-Out Attempt",
+                                $"User {userId} attempted to punch OUT from outside the authorized geo-fence ({distanceMeters}m away).",
+                                "Attendance", "Danger", userId, companyId, conn);
+                            return PunchJson("error",
+                                $"Punch-Out Rejected. You are currently {distanceMeters} meters away from the authorized zone. Limit is {allowedRadius} meters.");
                         }
                     }
 
@@ -393,8 +401,8 @@ namespace Bill_Software.corporate.business.app
                         {
                             chkCmd.Parameters.AddWithValue("@UserId", userId);
                             chkCmd.Parameters.AddWithValue("@Today", today);
-                            chkCmd.Parameters.AddWithValue("@CompanyID", companyId);
-                            if (chkCmd.ExecuteScalar() != null) return "{\"status\": \"error\", \"message\": \"You have already punched in for today.\"}";
+                            chkCmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
+                            if (chkCmd.ExecuteScalar() != null) return PunchJson("error", "You have already punched in for today.");
                         }
 
                         string insertQuery = @"INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID) 
@@ -405,7 +413,7 @@ namespace Bill_Software.corporate.business.app
                             cmd.Parameters.AddWithValue("@Today", today);
                             cmd.Parameters.AddWithValue("@Lat", lat);
                             cmd.Parameters.AddWithValue("@Lng", lng);
-                            cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                            cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
                             rowsAffected = cmd.ExecuteNonQuery();
                         }
                     }
@@ -421,45 +429,41 @@ namespace Bill_Software.corporate.business.app
                             cmd.Parameters.AddWithValue("@Today", today);
                             cmd.Parameters.AddWithValue("@Lat", lat);
                             cmd.Parameters.AddWithValue("@Lng", lng);
-                            cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                            cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
                             rowsAffected = cmd.ExecuteNonQuery();
                         }
 
-                        if (rowsAffected == 0) return "{\"status\": \"error\", \"message\": \"Could not punch out. You must punch in first.\"}";
+                        if (rowsAffected == 0) return PunchJson("error", "Could not punch out. You must punch in first.");
                     }
 
                     if (rowsAffected > 0)
                     {
-                        // ==========================================
-                        // NEW: INSTANT RULES ENGINE SYNC
-                        // Immediately calculate Grace Periods, Penalties, and Payable Days
-                        // so the employee's UI updates perfectly in real-time!
-                        // ==========================================
                         using (SqlCommand engineCmd = new SqlCommand("sp_RunAttendanceRulesEngine", conn))
                         {
                             engineCmd.CommandType = CommandType.StoredProcedure;
-                            engineCmd.Parameters.AddWithValue("@CompanyID", companyId);
+                            engineCmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
                             engineCmd.Parameters.AddWithValue("@Month", DateTime.Now.Month);
                             engineCmd.Parameters.AddWithValue("@Year", DateTime.Now.Year);
-                            engineCmd.Parameters.AddWithValue("@UserCodeList", userId); // Run ONLY for this user!
+                            engineCmd.Parameters.AddWithValue("@UserCodeList", userId);
 
                             engineCmd.ExecuteNonQuery();
                         }
 
-                        // Log the success notification
-                        InsertSystemNotification($"Attendance Punched {action}", $"Employee {userId} successfully punched {action.ToLower()} from an authorized location.", "Attendance", "Success", userId, companyId, conn);
+                        InsertSystemNotification(
+                            $"Attendance Punched {action}",
+                            $"Employee {userId} successfully punched {action.ToLower()} from an authorized location.",
+                            "Attendance", "Success", userId, companyId, conn);
 
-                        return "{\"status\": \"success\", \"message\": \"Punch recorded successfully!\"}";
+                        return PunchJson("success", "Punch recorded successfully!");
                     }
 
-                    return "{\"status\": \"error\", \"message\": \"Database transaction failed.\"}";
+                    return PunchJson("error", "Database transaction failed.");
                 }
             }
             catch (Exception ex)
             {
-                // Clean the exception message so it doesn't break the JSON format
                 string safeError = ex.Message.Replace("\"", "'").Replace("\r", " ").Replace("\n", " ");
-                return "{\"status\": \"error\", \"message\": \"System Error: " + safeError + "\"}";
+                return PunchJson("error", "System Error: " + safeError);
             }
         }
 
@@ -839,19 +843,35 @@ namespace Bill_Software.corporate.business.app
         // ==========================================
         // UTILITY METHODS
         // ==========================================
+        private static string PunchJson(string status, string message)
+        {
+            return new JavaScriptSerializer().Serialize(new { status = status, message = message });
+        }
+
         private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
         {
-            if (lat1 == 0 || lon1 == 0 || lat2 == 0 || lon2 == 0) return double.MaxValue;
+            return CalculateDistanceInMeters(lat1, lon1, lat2, lon2);
+        }
 
-            var R = 6371000.0; // Radius of Earth in Meters
-            var dLat = (lat2 - lat1) * Math.PI / 180.0;
-            var dLon = (lon2 - lon1) * Math.PI / 180.0;
+        private static double CalculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2)
+        {
+            if (lat1 == 0.0 || lon1 == 0.0 || lat2 == 0.0 || lon2 == 0.0) return double.MaxValue;
 
-            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                    Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0) *
-                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            double earthRadiusMeters = 6371000.0;
+            double dLat = DegreesToRadians(lat2 - lat1);
+            double dLon = DegreesToRadians(lon2 - lon1);
 
-            return R * (2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a)));
+            double a = Math.Sin(dLat / 2.0) * Math.Sin(dLat / 2.0) +
+                       Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                       Math.Sin(dLon / 2.0) * Math.Sin(dLon / 2.0);
+
+            double c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
+            return earthRadiusMeters * c;
+        }
+
+        private static double DegreesToRadians(double degrees)
+        {
+            return degrees * Math.PI / 180.0;
         }
 
         private static void InsertSystemNotification(string title, string message, string moduleCode, string severity, string userId, int companyId, SqlConnection conn)
