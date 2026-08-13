@@ -189,6 +189,95 @@
         #myBoundaryModal > div {
             animation: popupFade 0.2s ease-out;
         }
+
+        .calendar-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: #444;
+            font-weight: 600;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.04);
+        }
+
+        .legend-present { background: #28a745; }
+        .legend-absent { background: #dc3545; }
+        .legend-halfday { background: #ffc107; }
+        .legend-leave { background: #6f42c1; }
+        .legend-holiday { background: #0d6efd; }
+
+        .fc-event-tooltip {
+            position: absolute;
+            z-index: 100000;
+            background: #1f2a37;
+            color: #fff;
+            padding: 7px 11px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: none;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.28);
+            white-space: nowrap;
+            display: none;
+        }
+
+        .day-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .day-detail-card {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .day-detail-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .day-detail-label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #888;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+        }
+
+        .day-detail-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #19658A;
+        }
+
+        #modalPunchIn { color: #28a745; }
+        #modalPunchOut { color: #dc3545; }
+        #modalPayableDays { color: #28a745; }
+        #modalLateMins { color: #dc3545; }
+        #modalTotalHours { color: #19658A; }
     </style>
 </asp:Content>
 
@@ -251,6 +340,13 @@
 
         <div class="section-card">
             <h3 class="section-title">🗓️ Monthly Visual Calendar</h3>
+            <div class="calendar-legend">
+                <span class="legend-item"><span class="legend-dot legend-present"></span> Present</span>
+                <span class="legend-item"><span class="legend-dot legend-absent"></span> Absent / No Data</span>
+                <span class="legend-item"><span class="legend-dot legend-halfday"></span> Half-Day / Late</span>
+                <span class="legend-item"><span class="legend-dot legend-leave"></span> Leave</span>
+                <span class="legend-item"><span class="legend-dot legend-holiday"></span> Holiday</span>
+            </div>
             <div id="attendanceCalendar"></div>
         </div>
 
@@ -349,11 +445,36 @@
                 <input type="hidden" id="hfClickedDate" />
 
                 <div id="modalExistingRecordInfo" style="display: none;">
-                    <p><b>Status:</b> <span id="modalEventStatus" style="font-weight: bold;"></span></p>
-                    <p><b>Punch IN:</b> <span id="modalPunchIn" style="color: #28a745; font-weight: bold;"></span></p>
-                    <p><b>Punch OUT:</b> <span id="modalPunchOut" style="color: #dc3545; font-weight: bold;"></span></p>
+                    <p style="margin: 0 0 14px 0;"><b>Status:</b> <span id="modalEventStatus" style="font-weight: bold;"></span></p>
 
-                    <button type="button" id="btnViewMapFromModal" style="margin-top: 15px; background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                    <div class="day-detail-grid">
+                        <div class="day-detail-card full-width">
+                            <span class="day-detail-label">Assigned Shift</span>
+                            <span class="day-detail-value" id="modalAssignedShift">-</span>
+                        </div>
+                        <div class="day-detail-card">
+                            <span class="day-detail-label">Punch IN</span>
+                            <span class="day-detail-value" id="modalPunchIn">-</span>
+                        </div>
+                        <div class="day-detail-card">
+                            <span class="day-detail-label">Punch OUT</span>
+                            <span class="day-detail-value" id="modalPunchOut">-</span>
+                        </div>
+                        <div class="day-detail-card">
+                            <span class="day-detail-label">Total Hours</span>
+                            <span class="day-detail-value" id="modalTotalHours">-</span>
+                        </div>
+                        <div class="day-detail-card">
+                            <span class="day-detail-label">Late Minutes</span>
+                            <span class="day-detail-value" id="modalLateMins">0</span>
+                        </div>
+                        <div class="day-detail-card full-width">
+                            <span class="day-detail-label">Payable Days</span>
+                            <span class="day-detail-value" id="modalPayableDays">0.0</span>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnViewMapFromModal" style="margin-top: 5px; background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
                         📍 View Map Details
                     </button>
 
@@ -676,23 +797,39 @@
                 eventContent: function (arg) {
                     let arrayOfDomNodes = [];
                     let titleEl = document.createElement('div');
-                    titleEl.innerHTML = '<span class="calendar-tag" style="background:' + arg.event.backgroundColor + '; padding: 3px 6px; border-radius: 4px; color: white; font-size: 11px; display: block; text-align: center; white-space: normal; line-height: 1.2;">' + arg.event.title + '</span>';
+                    var tagColor = (arg.event.backgroundColor || '').toLowerCase() === '#ffc107' ? '#333' : 'white';
+                    titleEl.innerHTML = '<span class="calendar-tag" style="background:' + arg.event.backgroundColor + '; padding: 3px 6px; border-radius: 4px; color: ' + tagColor + '; font-size: 11px; display: block; text-align: center; white-space: normal; line-height: 1.2;">' + arg.event.title + '</span>';
                     arrayOfDomNodes.push(titleEl);
                     return { domNodes: arrayOfDomNodes };
+                },
+                eventMouseEnter: function (info) {
+                    var props = info.event.extendedProps || {};
+                    var inTime = props.punchIn || '-';
+                    var outTime = props.punchOut || '-';
+                    var label = 'IN: ' + inTime + ' | OUT: ' + outTime;
+                    info.el.setAttribute('title', label);
+                    showCalendarTooltip(label, info.jsEvent);
+                },
+                eventMouseLeave: function () {
+                    hideCalendarTooltip();
                 },
                 eventClick: function (info) {
                     var clickedDate = info.event.start;
                     var dateStr = info.event.startStr;
+                    var props = info.event.extendedProps || {};
 
                     hideForms();
+                    hideCalendarTooltip();
                     document.getElementById('hfClickedDate').value = dateStr;
                     document.getElementById('modalDateHeader').innerText = clickedDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
 
-                    // Load Rich Tooltip Data into Modal
-                    document.getElementById('modalEventStatus').innerHTML = info.event.extendedProps.description || info.event.title;
-
-                    document.getElementById('modalPunchIn').innerText = "-";
-                    document.getElementById('modalPunchOut').innerText = "-";
+                    document.getElementById('modalEventStatus').innerText = props.systemStatus || info.event.title;
+                    document.getElementById('modalPunchIn').innerText = props.punchIn || '-';
+                    document.getElementById('modalPunchOut').innerText = props.punchOut || '-';
+                    document.getElementById('modalTotalHours').innerText = props.totalHours || '-';
+                    document.getElementById('modalLateMins').innerText = (props.lateMins != null && props.lateMins !== '') ? props.lateMins : '0';
+                    document.getElementById('modalPayableDays').innerText = props.payableDays || '0.0';
+                    document.getElementById('modalAssignedShift').innerText = '-';
 
                     prefillShiftTimings(dateStr);
 
@@ -732,6 +869,32 @@
             document.getElementById('txtLeaveReason').value = '';
         }
 
+        function showCalendarTooltip(text, jsEvent) {
+            var tip = document.getElementById('fcEventTooltip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'fcEventTooltip';
+                tip.className = 'fc-event-tooltip';
+                document.body.appendChild(tip);
+            }
+            tip.innerText = text;
+            tip.style.display = 'block';
+            if (jsEvent) {
+                tip.style.left = (jsEvent.pageX + 12) + 'px';
+                tip.style.top = (jsEvent.pageY + 12) + 'px';
+            }
+            document.onmousemove = function (e) {
+                tip.style.left = (e.pageX + 12) + 'px';
+                tip.style.top = (e.pageY + 12) + 'px';
+            };
+        }
+
+        function hideCalendarTooltip() {
+            var tip = document.getElementById('fcEventTooltip');
+            if (tip) tip.style.display = 'none';
+            document.onmousemove = null;
+        }
+
         function toggleForm(formId) {
             hideForms();
             document.getElementById(formId).style.display = 'block';
@@ -740,6 +903,8 @@
         function prefillShiftTimings(dateStr) {
             document.getElementById('txtRegIn').value = "";
             document.getElementById('txtRegOut').value = "";
+            var shiftLabel = document.getElementById('modalAssignedShift');
+            if (shiftLabel) shiftLabel.innerText = '-';
             fetch('attendance.aspx/GetShiftTimings', {
                 method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' },
                 body: JSON.stringify({ reqDate: dateStr })
@@ -749,6 +914,14 @@
                 var timings = JSON.parse(data.d);
                 if (timings.InTime) document.getElementById('txtRegIn').value = timings.InTime;
                 if (timings.OutTime) document.getElementById('txtRegOut').value = timings.OutTime;
+                if (shiftLabel) {
+                    var name = timings.ShiftName || 'Assigned Shift';
+                    if (timings.InTime || timings.OutTime) {
+                        shiftLabel.innerText = name + ' (' + (timings.InTime || '-') + ' - ' + (timings.OutTime || '-') + ')';
+                    } else if (timings.ShiftName) {
+                        shiftLabel.innerText = timings.ShiftName;
+                    }
+                }
             }).catch(error => console.error(error));
         }
 
