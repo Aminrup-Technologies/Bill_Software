@@ -810,17 +810,31 @@
                 setTimeout(function () {
                     if (!empMap) {
                         empMap = L.map('employeeMap');
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OSMap' }).addTo(empMap);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                            attribution: '© OpenStreetMap'
+                        }).addTo(empMap);
                     }
+
+                    // Clear pre-existing canvas shapes
                     if (empMarker) empMap.removeLayer(empMarker);
                     if (empCircle) empMap.removeLayer(empCircle);
 
+                    // Add shapes
                     empMarker = L.marker([lat, lng]).addTo(empMap);
-                    empCircle = L.circle([lat, lng], { radius: radius, color: '#19658A', fillColor: '#19658A', fillOpacity: 0.25, weight: 2 }).addTo(empMap);
-                    empMap.setView([lat, lng], 17);
+                    empCircle = L.circle([lat, lng], {
+                        radius: radius,
+                        color: '#19658A',
+                        fillColor: '#19658A',
+                        fillOpacity: 0.25,
+                        weight: 2
+                    }).addTo(empMap);
 
+                    // Invalidate size BEFORE setting the view so a display:none modal measures correctly
                     empMap.invalidateSize(true);
+                    empMap.setView([lat, lng], 17);
                     window.dispatchEvent(new Event('resize'));
+
                 }, 350);
             }).catch(err => showNotification("Data Error", "Could not load location data.", "error"));
         }

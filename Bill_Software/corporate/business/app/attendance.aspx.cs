@@ -576,9 +576,10 @@ namespace Bill_Software.corporate.business.app
         {
             if (HttpContext.Current.Session["USERID"] == null) return "{}";
 
+            int companyId = CompanyContext.CurrentCompanyID;
+
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                // FIX: Use the correct schema column names
                 string query = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius 
                                  FROM tbl_login 
                                  WHERE User_Id = @UserId AND CompanyID = @CompanyID AND IsActive = 1";
@@ -586,7 +587,7 @@ namespace Bill_Software.corporate.business.app
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", HttpContext.Current.Session["USERID"].ToString());
-                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
 
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
