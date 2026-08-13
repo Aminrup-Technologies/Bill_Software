@@ -198,6 +198,7 @@ namespace Bill_Software.corporate.business.app
                         d.CalDate AS ActivityDate,
                         DATENAME(weekday, d.CalDate) AS DayOfWeek,
                         oa.AttendanceID, oa.PunchInTime, oa.PunchOutTime, oa.TotalHoursWorked,
+                        oa.SystemCalculatedStatus,
                         ISNULL(oa.AttendanceCode, '-') AS AttendanceCode,
                         ISNULL(oa.PayableDay, 0.0) AS PayableDay,
                         ISNULL(oa.LateByMins, 0) AS LateByMins,
@@ -226,7 +227,7 @@ namespace Bill_Software.corporate.business.app
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", userId);
-                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
                     cmd.Parameters.AddWithValue("@Month", month);
                     cmd.Parameters.AddWithValue("@Year", year);
 
@@ -252,6 +253,11 @@ namespace Bill_Software.corporate.business.app
                             int earlyMins = reader["EarlyOutByMins"] != DBNull.Value ? Convert.ToInt32(reader["EarlyOutByMins"]) : 0;
                             int otMins = reader["OvertimeMins"] != DBNull.Value ? Convert.ToInt32(reader["OvertimeMins"]) : 0;
                             string attId = reader["AttendanceID"] != DBNull.Value ? reader["AttendanceID"].ToString() : "";
+                            string hoursStr = reader["TotalHoursWorked"] != DBNull.Value ? Convert.ToDecimal(reader["TotalHoursWorked"]).ToString("F2") : "-";
+                            string sysStatus = reader["SystemCalculatedStatus"] != DBNull.Value && !string.IsNullOrWhiteSpace(reader["SystemCalculatedStatus"].ToString())
+                                ? reader["SystemCalculatedStatus"].ToString()
+                                : status;
+                            string payableStr = payable.ToString("0.0");
 
                             if (status != "Upcoming")
                             {
@@ -264,11 +270,7 @@ namespace Bill_Software.corporate.business.app
                                 else if (status.Contains("Off") || status.Contains("Holiday") || attCode == "L") offCount++;
                             }
 
-                            string color = "#19658A";
-                            if (status.Contains("Present") || status.Contains("Working")) color = "#28a745";
-                            else if (status.Contains("Half-Day")) color = "#ff9800";
-                            else if (status.Contains("Absent")) color = "#dc3545";
-                            else if (status.Contains("Leave")) color = "#9c27b0";
+                            string color = GetAttendanceEventColor(attCode, status);
 
                             string desc = $"<b>Status:</b> {status}<br/><b>In:</b> {inTime} &nbsp;|&nbsp; <b>Out:</b> {outTime}<br/>";
                             if (lateMins > 0) desc += $"<span style='color:#dc3545;'>Late: {lateMins}m</span><br/>";
@@ -280,7 +282,19 @@ namespace Bill_Software.corporate.business.app
                                 start = date.ToString("yyyy-MM-dd"),
                                 backgroundColor = color,
                                 borderColor = color,
-                                description = desc
+                                textColor = string.Equals(color, "#ffc107", StringComparison.OrdinalIgnoreCase) ? "#333333" : "#ffffff",
+                                description = desc,
+                                extendedProps = new
+                                {
+                                    punchIn = inTime,
+                                    punchOut = outTime,
+                                    totalHours = hoursStr,
+                                    lateMins = lateMins,
+                                    payableDays = payableStr,
+                                    attendanceCode = attCode,
+                                    systemStatus = sysStatus,
+                                    description = desc
+                                }
                             });
 
                             gridRows.Add(new
@@ -289,10 +303,10 @@ namespace Bill_Software.corporate.business.app
                                 Day = reader["DayOfWeek"].ToString(),
                                 Status = status,
                                 Code = attCode,
-                                Payable = payable.ToString("0.0"),
+                                Payable = payableStr,
                                 In = inTime,
                                 Out = outTime,
-                                Hrs = reader["TotalHoursWorked"] != DBNull.Value ? Convert.ToDecimal(reader["TotalHoursWorked"]).ToString("F2") : "-",
+                                Hrs = hoursStr,
                                 Late = lateMins,
                                 Early = earlyMins,
                                 OT = otMins,
@@ -311,6 +325,12 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
             }
+        }
+
+        [WebMethod(EnableSession = true)]
+        public static string GetCalendarData(int month, int year)
+        {
+            return GetMonthlyData(month, year);
         }
 
 
@@ -557,7 +577,7 @@ namespace Bill_Software.corporate.business.app
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-                    SELECT TOP 1 StartTime, EndTime FROM tbl_ShiftMaster
+                    SELECT TOP 1 ShiftName, StartTime, EndTime FROM tbl_ShiftMaster
                     WHERE CompanyID = @CompanyID AND ShiftID = ISNULL((
                         SELECT TOP 1 ShiftID FROM tbl_EmployeeShiftMapping
                         WHERE UserCode = @UserCode AND CompanyID = @CompanyID
@@ -569,13 +589,18 @@ namespace Bill_Software.corporate.business.app
                 {
                     cmd.Parameters.AddWithValue("@UserCode", userId);
                     cmd.Parameters.AddWithValue("@ReqDate", date);
-                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
                         {
-                            var timings = new { InTime = rdr["StartTime"].ToString(), OutTime = rdr["EndTime"].ToString() };
+                            var timings = new
+                            {
+                                ShiftName = rdr["ShiftName"] != DBNull.Value ? rdr["ShiftName"].ToString() : "Assigned Shift",
+                                InTime = rdr["StartTime"].ToString(),
+                                OutTime = rdr["EndTime"].ToString()
+                            };
                             return new JavaScriptSerializer().Serialize(timings);
                         }
                     }
@@ -860,6 +885,30 @@ namespace Bill_Software.corporate.business.app
         private static string PunchJson(string status, string message)
         {
             return new JavaScriptSerializer().Serialize(new { status = status, message = message });
+        }
+
+        private static string GetAttendanceEventColor(string attendanceCode, string status)
+        {
+            string code = (attendanceCode ?? string.Empty).Trim().ToUpperInvariant();
+            string statusText = status ?? string.Empty;
+
+            if (code == "P" || code == "NHP" || code == "FLP") return "#28a745";
+            if (code == "A" || code == "LWP") return "#dc3545";
+            if (code == "HD") return "#ffc107";
+            if (code == "L" || code == "CL" || code == "SL" || code == "PL" || code == "EL") return "#6f42c1";
+
+            if (statusText.IndexOf("Present", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Working", StringComparison.OrdinalIgnoreCase) >= 0) return "#28a745";
+            if (statusText.IndexOf("Half-Day", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Late", StringComparison.OrdinalIgnoreCase) >= 0) return "#ffc107";
+            if (statusText.IndexOf("Absent", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Not Punched", StringComparison.OrdinalIgnoreCase) >= 0) return "#dc3545";
+            if (statusText.IndexOf("Leave", StringComparison.OrdinalIgnoreCase) >= 0) return "#6f42c1";
+            if (statusText.IndexOf("Holiday", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Weekly Off", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Off", StringComparison.OrdinalIgnoreCase) >= 0) return "#0d6efd";
+
+            return "#6c757d";
         }
 
         private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
