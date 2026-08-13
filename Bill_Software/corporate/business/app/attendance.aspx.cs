@@ -338,7 +338,7 @@ namespace Bill_Software.corporate.business.app
         // 3. GEO-FENCE & PUNCH LOGIC 
         // ==========================================
         [WebMethod(EnableSession = true)]
-        public static string ProcessPunch(string action, double lat, double lng, string address)
+        public static string ProcessPunch(string punchType, double currentLat, double currentLng, string locationType = "", string overrideReason = "")
         {
             if (HttpContext.Current.Session["USERID"] == null)
                 return PunchJson("error", "Session expired.");
@@ -346,6 +346,27 @@ namespace Bill_Software.corporate.business.app
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
             string today = DateTime.Now.ToString("yyyy-MM-dd");
+            locationType = (locationType ?? string.Empty).Trim();
+            overrideReason = (overrideReason ?? string.Empty).Trim();
+            bool isOverride = !string.IsNullOrEmpty(locationType);
+
+            if (isOverride)
+            {
+                string[] allowedTypes = { "GPS Error at Office", "Client Site", "Home Office", "Transit" };
+                bool typeAllowed = false;
+                foreach (string allowed in allowedTypes)
+                {
+                    if (string.Equals(allowed, locationType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        locationType = allowed;
+                        typeAllowed = true;
+                        break;
+                    }
+                }
+                if (!typeAllowed) return PunchJson("error", "Invalid location type for geo-fence override.");
+                if (string.IsNullOrEmpty(overrideReason)) return PunchJson("error", "A reason is required to override the geo-fence.");
+                if (overrideReason.Length > 500) overrideReason = overrideReason.Substring(0, 500);
+            }
 
             try
             {
@@ -384,15 +405,15 @@ namespace Bill_Software.corporate.business.app
                         }
                     }
 
-                    // 2. Validate GPS Restrictions
-                    if (requireGeoTagging)
+                    // 2. Validate GPS Restrictions (skipped when a geo-fence override is submitted)
+                    if (requireGeoTagging && !isOverride)
                     {
-                        if (lat == 0 || lng == 0) return PunchJson("error", "Location data is required for your profile.");
+                        if (currentLat == 0 || currentLng == 0) return PunchJson("error", "Location data is required for your profile.");
 
-                        double distance = CalculateDistanceInMeters(lat, lng, officeLat, officeLng);
+                        double distance = CalculateDistanceInMeters(currentLat, currentLng, officeLat, officeLng);
                         int distanceMeters = (int)Math.Round(distance, MidpointRounding.AwayFromZero);
 
-                        if (action == "IN" && isOfficeInMandatory && distance > allowedRadius)
+                        if (punchType == "IN" && isOfficeInMandatory && distance > allowedRadius)
                         {
                             InsertSystemNotification(
                                 "Unauthorized Punch-In Attempt",
@@ -401,7 +422,7 @@ namespace Bill_Software.corporate.business.app
                             return PunchJson("error",
                                 $"Punch-In Rejected. You are currently {distanceMeters} meters away from the authorized zone. Limit is {allowedRadius} meters.");
                         }
-                        if (action == "OUT" && !allowRemoteOut && distance > allowedRadius)
+                        if (punchType == "OUT" && !allowRemoteOut && distance > allowedRadius)
                         {
                             InsertSystemNotification(
                                 "Unauthorized Punch-Out Attempt",
@@ -414,7 +435,7 @@ namespace Bill_Software.corporate.business.app
 
                     // 3. Process the DB Update
                     int rowsAffected = 0;
-                    if (action == "IN")
+                    if (punchType == "IN")
                     {
                         string checkQuery = "SELECT Id FROM tbl_Attendance WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID";
                         using (SqlCommand chkCmd = new SqlCommand(checkQuery, conn))
@@ -425,31 +446,50 @@ namespace Bill_Software.corporate.business.app
                             if (chkCmd.ExecuteScalar() != null) return PunchJson("error", "You have already punched in for today.");
                         }
 
-                        string insertQuery = @"INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID) 
-                                               VALUES (@UserId, @Today, GETDATE(), @Lat, @Lng, @CompanyID)";
+                        string insertQuery = isOverride
+                            ? @"INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID, IsGeoFenceOverridden, LocationTypeOverride, OverrideReason) 
+                                VALUES (@UserId, @Today, GETDATE(), @Lat, @Lng, @CompanyID, 1, @LocType, @Reason)"
+                            : @"INSERT INTO tbl_Attendance (UserCode, ActivityDate, PunchInTime, StartLatitude, StartLongitude, CompanyID) 
+                                VALUES (@UserId, @Today, GETDATE(), @Lat, @Lng, @CompanyID)";
                         using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
                         {
                             cmd.Parameters.AddWithValue("@UserId", userId);
                             cmd.Parameters.AddWithValue("@Today", today);
-                            cmd.Parameters.AddWithValue("@Lat", lat);
-                            cmd.Parameters.AddWithValue("@Lng", lng);
+                            cmd.Parameters.AddWithValue("@Lat", currentLat);
+                            cmd.Parameters.AddWithValue("@Lng", currentLng);
                             cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
+                            if (isOverride)
+                            {
+                                cmd.Parameters.AddWithValue("@LocType", locationType);
+                                cmd.Parameters.AddWithValue("@Reason", overrideReason);
+                            }
                             rowsAffected = cmd.ExecuteNonQuery();
                         }
                     }
-                    else if (action == "OUT")
+                    else if (punchType == "OUT")
                     {
-                        string updateQuery = @"UPDATE tbl_Attendance 
-                                               SET PunchOutTime = GETDATE(), EndLatitude = @Lat, EndLongitude = @Lng,
-                                                   TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, GETDATE()) / 60.0 AS DECIMAL(5,2))
-                                               WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID AND PunchOutTime IS NULL";
+                        string updateQuery = isOverride
+                            ? @"UPDATE tbl_Attendance 
+                                SET PunchOutTime = GETDATE(), EndLatitude = @Lat, EndLongitude = @Lng,
+                                    TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, GETDATE()) / 60.0 AS DECIMAL(5,2)),
+                                    IsGeoFenceOverridden = 1, LocationTypeOverride = @LocType, OverrideReason = @Reason
+                                WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID AND PunchOutTime IS NULL"
+                            : @"UPDATE tbl_Attendance 
+                                SET PunchOutTime = GETDATE(), EndLatitude = @Lat, EndLongitude = @Lng,
+                                    TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, GETDATE()) / 60.0 AS DECIMAL(5,2))
+                                WHERE UserCode = @UserId AND ActivityDate = @Today AND CompanyID = @CompanyID AND PunchOutTime IS NULL";
                         using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
                         {
                             cmd.Parameters.AddWithValue("@UserId", userId);
                             cmd.Parameters.AddWithValue("@Today", today);
-                            cmd.Parameters.AddWithValue("@Lat", lat);
-                            cmd.Parameters.AddWithValue("@Lng", lng);
+                            cmd.Parameters.AddWithValue("@Lat", currentLat);
+                            cmd.Parameters.AddWithValue("@Lng", currentLng);
                             cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
+                            if (isOverride)
+                            {
+                                cmd.Parameters.AddWithValue("@LocType", locationType);
+                                cmd.Parameters.AddWithValue("@Reason", overrideReason);
+                            }
                             rowsAffected = cmd.ExecuteNonQuery();
                         }
 
@@ -458,36 +498,43 @@ namespace Bill_Software.corporate.business.app
 
                     if (rowsAffected > 0)
                     {
-                        // ==========================================
-                        // INSTANT RULES ENGINE SYNC
-                        // Immediately calculate Grace Periods, Penalties, and Payable Days
-                        // so the employee's UI updates perfectly in real-time!
-                        // ==========================================
                         using (SqlCommand engineCmd = new SqlCommand("sp_RunAttendanceRulesEngine", conn))
                         {
                             engineCmd.CommandType = CommandType.StoredProcedure;
-                            engineCmd.Parameters.AddWithValue("@CompanyID", companyId); // Strict Tenant Segregation
+                            engineCmd.Parameters.AddWithValue("@CompanyID", companyId);
                             engineCmd.Parameters.AddWithValue("@Month", DateTime.Now.Month);
                             engineCmd.Parameters.AddWithValue("@Year", DateTime.Now.Year);
-                            engineCmd.Parameters.AddWithValue("@UserCodeList", userId); // Run ONLY for this specific user
+                            engineCmd.Parameters.AddWithValue("@UserCodeList", userId);
 
                             engineCmd.ExecuteNonQuery();
                         }
 
-                        // ==========================================
-                        // PROACTIVE NOTIFICATION LOGGING
-                        // ==========================================
-                        InsertSystemNotification(
-                            $"Attendance Punched {action}",
-                            $"Employee {userId} successfully punched {action.ToLower()} from an authorized location.",
-                            "Attendance",
-                            "Success",
-                            userId,
-                            companyId,
-                            conn
-                        );
+                        if (isOverride)
+                        {
+                            InsertSystemNotification(
+                                "Geo-Fence Override Used",
+                                $"Employee {userId} used a Geo-Fence Override ({locationType}) to Punch {punchType}. Reason: {overrideReason}",
+                                "Attendance",
+                                "Warning",
+                                userId,
+                                companyId,
+                                conn);
+                        }
+                        else
+                        {
+                            InsertSystemNotification(
+                                $"Attendance Punched {punchType}",
+                                $"Employee {userId} successfully punched {punchType.ToLower()} from an authorized location.",
+                                "Attendance",
+                                "Success",
+                                userId,
+                                companyId,
+                                conn);
+                        }
 
-                        return PunchJson("success", "Punch recorded and rules calculated successfully!");
+                        return PunchJson("success", isOverride
+                            ? "Punch recorded with geo-fence override and rules calculated successfully!"
+                            : "Punch recorded and rules calculated successfully!");
                     }
 
                     return PunchJson("error", "Database transaction failed.");

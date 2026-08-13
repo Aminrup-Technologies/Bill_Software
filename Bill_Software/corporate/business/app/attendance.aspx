@@ -278,6 +278,30 @@
         #modalPayableDays { color: #28a745; }
         #modalLateMins { color: #dc3545; }
         #modalTotalHours { color: #19658A; }
+
+        .geofence-override-swal {
+            z-index: 200000 !important;
+        }
+
+        .geofence-override-swal .swal2-html-container {
+            text-align: left;
+        }
+
+        .geofence-override-swal #swal-locType,
+        .geofence-override-swal #swal-reason {
+            width: 100%;
+            box-sizing: border-box;
+            margin: 4px 0 10px 0;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .geofence-override-swal #swal-reason {
+            min-height: 80px;
+            resize: vertical;
+        }
     </style>
 </asp:Content>
 
@@ -580,6 +604,8 @@
 
     <script type="text/javascript">
 
+        window.failedPunchAttempts = 0;
+
         const Toast = Swal.mixin({
             toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true,
             didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
@@ -605,28 +631,7 @@
 
                 navigator.geolocation.getCurrentPosition(
                     function (position) {
-                        fetch('attendance.aspx/ProcessPunch', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: actionType, lat: position.coords.latitude, lng: position.coords.longitude, address: "" })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            var response = JSON.parse(data.d);
-                            if (response.status === "success") {
-                                showNotification("Attendance Marked", response.message, "success");
-                                setTimeout(function () { location.reload(); }, 1500);
-                            } else {
-                                showNotification("Punch Failed", response.message, "error");
-                                if (errorLabel) errorLabel.innerText = "❌ " + response.message;
-                                btnElement.innerText = originalText;
-                                btnElement.disabled = false;
-                            }
-                        })
-                        .catch(err => {
-                            showNotification("Network Error", "Unable to connect to server.", "error");
-                            btnElement.innerText = originalText;
-                            btnElement.disabled = false;
-                        });
+                        submitProcessPunch(actionType, position.coords.latitude, position.coords.longitude, '', '', btnElement, originalText);
                     },
                     function (error) {
                         var errorMsg = "Geolocation failed. Please allow location access in your browser.";
@@ -642,6 +647,99 @@
                 btnElement.innerText = originalText;
                 btnElement.disabled = false;
             }
+        }
+
+        function submitProcessPunch(punchType, currentLat, currentLng, locationType, overrideReason, btnElement, originalText) {
+            var errorLabel = document.getElementById('<%= lblError.ClientID %>');
+
+            fetch('attendance.aspx/ProcessPunch', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    punchType: punchType,
+                    currentLat: currentLat,
+                    currentLng: currentLng,
+                    locationType: locationType || '',
+                    overrideReason: overrideReason || ''
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                var response = JSON.parse(data.d);
+                if (response.status === "success") {
+                    window.failedPunchAttempts = 0;
+                    showNotification("Attendance Marked", response.message, "success");
+                    setTimeout(function () { location.reload(); }, 1500);
+                    return;
+                }
+
+                var msg = response.message || '';
+                var isGeoReject = msg.indexOf('meters away') !== -1 || msg.indexOf('Rejected') !== -1;
+                if (isGeoReject) {
+                    window.failedPunchAttempts = (window.failedPunchAttempts || 0) + 1;
+                }
+
+                if (isGeoReject && window.failedPunchAttempts >= 3 && !locationType) {
+                    promptGeoFenceOverride(punchType, currentLat, currentLng, btnElement, originalText, msg);
+                    return;
+                }
+
+                showNotification("Punch Failed", msg, "error");
+                if (errorLabel) errorLabel.innerText = "❌ " + msg;
+                btnElement.innerText = originalText;
+                btnElement.disabled = false;
+            })
+            .catch(err => {
+                showNotification("Network Error", "Unable to connect to server.", "error");
+                btnElement.innerText = originalText;
+                btnElement.disabled = false;
+            });
+        }
+
+        function promptGeoFenceOverride(punchType, currentLat, currentLng, btnElement, originalText, lastError) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Geo-Fence Override',
+                html:
+                    '<p style="margin:0 0 12px 0;font-size:13px;color:#555;">After 3 failed GPS checks, you may submit an override. Last error: <b>' + (lastError || 'Outside authorized zone') + '</b></p>' +
+                    '<label for="swal-locType" style="display:block;font-weight:bold;font-size:13px;">Location Type</label>' +
+                    '<select id="swal-locType">' +
+                        '<option value="">-- Select Location Type --</option>' +
+                        '<option value="GPS Error at Office">GPS Error at Office</option>' +
+                        '<option value="Client Site">Client Site</option>' +
+                        '<option value="Home Office">Home Office</option>' +
+                        '<option value="Transit">Transit</option>' +
+                    '</select>' +
+                    '<label for="swal-reason" style="display:block;font-weight:bold;font-size:13px;">Reason (required)</label>' +
+                    '<textarea id="swal-reason" placeholder="Explain why this punch should be allowed..."></textarea>',
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Submit Override Punch',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#19658A',
+                customClass: { container: 'geofence-override-swal' },
+                preConfirm: function () {
+                    var locType = (document.getElementById('swal-locType').value || '').trim();
+                    var reason = (document.getElementById('swal-reason').value || '').trim();
+                    if (!locType) {
+                        Swal.showValidationMessage('Please select a location type.');
+                        return false;
+                    }
+                    if (!reason) {
+                        Swal.showValidationMessage('A reason is required to override the geo-fence.');
+                        return false;
+                    }
+                    return { locType: locType, reason: reason };
+                }
+            }).then(function (result) {
+                if (result.isConfirmed && result.value) {
+                    btnElement.innerText = "📍 Submitting Override...";
+                    btnElement.disabled = true;
+                    submitProcessPunch(punchType, currentLat, currentLng, result.value.locType, result.value.reason, btnElement, originalText);
+                } else {
+                    btnElement.innerText = originalText;
+                    btnElement.disabled = false;
+                }
+            });
         }
 
         // 2. Fetch and Show Maps in Modal
