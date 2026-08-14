@@ -605,6 +605,8 @@
     <script type="text/javascript">
 
         window.failedPunchAttempts = 0;
+        window.allowGeoOverride = true;
+        window.maxGeoAttempts = 3;
 
         const Toast = Swal.mixin({
             toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true,
@@ -678,7 +680,7 @@
                     window.failedPunchAttempts = (window.failedPunchAttempts || 0) + 1;
                 }
 
-                if (isGeoReject && window.failedPunchAttempts >= 3 && !locationType) {
+                if (isGeoReject && window.allowGeoOverride && window.failedPunchAttempts >= window.maxGeoAttempts && !locationType) {
                     promptGeoFenceOverride(punchType, currentLat, currentLng, btnElement, originalText, msg);
                     return;
                 }
@@ -700,7 +702,7 @@
                 icon: 'warning',
                 title: 'Geo-Fence Override',
                 html:
-                    '<p style="margin:0 0 12px 0;font-size:13px;color:#555;">After 3 failed GPS checks, you may submit an override. Last error: <b>' + (lastError || 'Outside authorized zone') + '</b></p>' +
+                    '<p style="margin:0 0 12px 0;font-size:13px;color:#555;">After ' + (window.maxGeoAttempts || 3) + ' failed GPS checks, you may submit an override. Last error: <b>' + (lastError || 'Outside authorized zone') + '</b></p>' +
                     '<label for="swal-locType" style="display:block;font-weight:bold;font-size:13px;">Location Type</label>' +
                     '<select id="swal-locType">' +
                         '<option value="">-- Select Location Type --</option>' +
@@ -791,6 +793,8 @@
                 });
             })
             .catch(err => console.error("Error loading leaves:", err));
+
+            loadMyGeoFencePolicy();
 
             // Calendar
             var calendarEl = document.getElementById('attendanceCalendar');
@@ -1067,11 +1071,32 @@
         }
 
         var empMap, empMarker, empCircle;
+
+        function applyGeoFencePolicy(geoData) {
+            if (!geoData) return;
+            window.allowGeoOverride = geoData.AllowOverride;
+            window.maxGeoAttempts = parseInt(geoData.MaxAttempts, 10);
+            if (isNaN(window.maxGeoAttempts) || window.maxGeoAttempts < 1) window.maxGeoAttempts = 3;
+        }
+
+        function loadMyGeoFencePolicy() {
+            fetch('attendance.aspx/GetMyGeoFence', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.d) return;
+                applyGeoFencePolicy(JSON.parse(data.d));
+            })
+            .catch(function () { /* keep default override policy */ });
+        }
+
         function showMyBoundary() {
             fetch('attendance.aspx/GetMyGeoFence', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
             .then(res => res.json())
             .then(data => {
                 var geoData = JSON.parse(data.d);
+                window.allowGeoOverride = geoData.AllowOverride;
+                window.maxGeoAttempts = parseInt(geoData.MaxAttempts);
+                applyGeoFencePolicy(geoData);
                 if (!geoData.Required) { showNotification("Not Required", "Geo-Fencing is disabled for your account.", "info"); return; }
                 if (!geoData.Lat || !geoData.Lng) { showNotification("Not Configured", "Your office location is not set.", "warning"); return; }
 

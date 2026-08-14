@@ -94,6 +94,8 @@ namespace Bill_Software.corporate.business.app
                           u.DesignationID, des.DesignationName, 
                           u.ReportingManagerId, mgr.Name AS ManagerName,
                             u.GeoFenceLat, u.GeoFenceLng, u.GeoFenceRadius,
+                            ISNULL(u.AllowGeoFenceOverride, 1) AS AllowGeoFenceOverride,
+                            ISNULL(u.MaxGeoFenceAttempts, 3) AS MaxGeoFenceAttempts,
                           (SELECT TOP 1 LastHeartbeat FROM ActiveSessions s WHERE s.UserId = u.Id ORDER BY LastHeartbeat DESC) AS LatestHeartbeat
                    FROM dbo.tbl_login u
                    LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
@@ -836,12 +838,17 @@ namespace Bill_Software.corporate.business.app
         }
 
         [WebMethod]
-        public static string SaveGeoFence(int userId, decimal lat, decimal lng, int radius)
+        public static string SaveGeoFence(int userId, decimal lat, decimal lng, int radius, bool allowFallback, int maxAttempts)
         {
             try
             {
                 int currentCompanyId = CompanyContext.CurrentCompanyID;
                 string currentUserId = HttpContext.Current.Session["USERID"] != null ? HttpContext.Current.Session["USERID"].ToString() : "System";
+
+                if (radius < 10) radius = 10;
+                if (radius > 10000) radius = 10000;
+                if (maxAttempts < 1) maxAttempts = 1;
+                if (maxAttempts > 10) maxAttempts = 10;
 
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 using (SqlConnection conn = new SqlConnection(connStr))
@@ -851,7 +858,9 @@ namespace Bill_Software.corporate.business.app
                 SET GeoFenceLat = @Lat, 
                     GeoFenceLng = @Lng, 
                     GeoFenceRadius = @Radius,
-                    RequireGeoTagging = 1
+                    RequireGeoTagging = 1,
+                    AllowGeoFenceOverride = @AllowFallback,
+                    MaxGeoFenceAttempts = @MaxAttempts
                 WHERE Id = @UserId 
                   AND CompanyID = @CompanyID";
 
@@ -860,8 +869,10 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Lat", lat);
                         cmd.Parameters.AddWithValue("@Lng", lng);
                         cmd.Parameters.AddWithValue("@Radius", radius);
+                        cmd.Parameters.AddWithValue("@AllowFallback", allowFallback);
+                        cmd.Parameters.AddWithValue("@MaxAttempts", maxAttempts);
                         cmd.Parameters.AddWithValue("@UserId", userId);
-                        cmd.Parameters.AddWithValue("@CompanyID", currentCompanyId); // The Shield
+                        cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = currentCompanyId });
 
                         conn.Open();
                         int rowsAffected = cmd.ExecuteNonQuery();
@@ -870,7 +881,7 @@ namespace Bill_Software.corporate.business.app
                         {
                             InsertSystemNotification(
                                 "Geo-Fence Configured",
-                                $"A new Geo-Fence radius of {radius}m was configured for Employee ID: {userId}.",
+                                $"Geo-Fence configured for User {userId} with a {radius}m radius. Override Allowed: {allowFallback}.",
                                 "Attendance Settings",
                                 "Info",
                                 currentUserId
