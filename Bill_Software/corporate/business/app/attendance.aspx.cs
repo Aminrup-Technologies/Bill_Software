@@ -188,7 +188,7 @@ namespace Bill_Software.corporate.business.app
                     LeaveData AS (
                         SELECT lr.UserCode, d.CalDate AS LeaveDate, lr.RequestStatus, lm.LeaveName
                         FROM tbl_LeaveRequests lr
-                        LEFT JOIN tbl_LeaveMaster lm ON lr.LeaveID = lm.LeaveID
+                        LEFT JOIN tbl_LeaveMaster lm ON lr.LeaveID = lm.LeaveID AND lm.CompanyID = @CompanyID
                         CROSS JOIN DateRange d
                         WHERE lr.CompanyID = @CompanyID AND lr.UserCode = @UserId
                           AND lr.RequestStatus = 'Approved'

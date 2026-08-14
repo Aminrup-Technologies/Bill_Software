@@ -338,8 +338,9 @@ namespace Bill_Software.corporate.business.app
 
                         if (ddlGridRole != null)
                         {
-                            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
+                            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles WHERE CompanyID = @CompanyID ORDER BY RoleName", cn))
                             {
+                                cmd.Parameters.AddWithValue("@CompanyID", compId);
                                 var dt = new DataTable();
                                 new SqlDataAdapter(cmd).Fill(dt);
                                 ddlGridRole.DataSource = dt;
@@ -736,6 +737,12 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Services.WebMethod(EnableSession = true)]
         public static string GetSessionHistory(int userId)
         {
+            if (HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
+                return "[]";
+
+            int companyId = CompanyContext.CurrentCompanyID;
+            if (companyId <= 0) return "[]";
+
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             System.Collections.Generic.List<object> sessions = new System.Collections.Generic.List<object>();
 
@@ -744,14 +751,16 @@ namespace Bill_Software.corporate.business.app
             using (SqlConnection cn = new SqlConnection(connStr))
             {
                 string sql = @"
-                    SELECT TOP 15 LoginTime, LastHeartbeat, IPAddress, UserAgent, IsActive 
-                    FROM ActiveSessions 
-                    WHERE UserId = @UserId 
-                    ORDER BY LoginTime DESC";
+                    SELECT TOP 15 s.LoginTime, s.LastHeartbeat, s.IPAddress, s.UserAgent, s.IsActive 
+                    FROM ActiveSessions s
+                    INNER JOIN dbo.tbl_login u ON u.Id = s.UserId AND u.CompanyID = @CompanyID
+                    WHERE s.UserId = @UserId 
+                    ORDER BY s.LoginTime DESC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, cn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
                     cn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
@@ -837,13 +846,19 @@ namespace Bill_Software.corporate.business.app
             return res.ToString();
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static string SaveGeoFence(int userId, decimal lat, decimal lng, int radius, bool allowFallback, int maxAttempts)
         {
             try
             {
+                if (HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
+                    return "Session expired.";
+
                 int currentCompanyId = CompanyContext.CurrentCompanyID;
-                string currentUserId = HttpContext.Current.Session["USERID"] != null ? HttpContext.Current.Session["USERID"].ToString() : "System";
+                if (currentCompanyId <= 0)
+                    return "Company context is missing. Please sign in again.";
+
+                string currentUserId = HttpContext.Current.Session["USERID"].ToString();
 
                 if (radius < 10) radius = 10;
                 if (radius > 10000) radius = 10000;
