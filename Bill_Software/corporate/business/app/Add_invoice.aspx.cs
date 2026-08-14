@@ -650,7 +650,8 @@ namespace Bill_Software.corporate.business.app
                         CAST(qd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
                         ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = qd.Quotation_no AND id.Product_id = qd.Product_Code AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0) AS InvoicedQty,
                         (CAST(qd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = qd.Quotation_no AND id.Product_id = qd.Product_Code AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0)) AS PendingQty,
-                        qd.sail_rate, qd.discount_rate AS discountRate, qd.Service_tax_rate, qd.specification, ISNULL(np.Quantity, '0') AS AvailableStock
+                        qd.sail_rate, qd.discount_rate AS discountRate, qd.Service_tax_rate, qd.specification, ISNULL(np.Quantity, '0') AS AvailableStock,
+                        qd.ItemNo, qd.MaterialNo, qd.PackSize, qd.Unit, qd.DeliveryDate, qd.Department, qd.ItemRemarks
                     FROM tbl_Quotaion_details qd
                     LEFT JOIN tbl_NewProduct np ON np.ProductID = qd.Product_Code AND np.CompanyID = @CompanyID
                     WHERE qd.Quotation_no = @Ref AND qd.CompanyID = @CompanyID";
@@ -663,7 +664,8 @@ namespace Bill_Software.corporate.business.app
                     CAST(pd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
                     ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = pd.Invoice_No AND id.Product_id = pd.Product_id AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0) AS InvoicedQty,
                     (CAST(pd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = pd.Invoice_No AND id.Product_id = pd.Product_id AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0)) AS PendingQty,
-                    pd.Rate AS sail_rate, 0 AS discountRate, pd.Tax_Rate AS Service_tax_rate, pd.ProductOrServiceCat AS specification, ISNULL(np.Quantity, '0') AS AvailableStock
+                    pd.Rate AS sail_rate, 0 AS discountRate, pd.Tax_Rate AS Service_tax_rate, pd.ProductOrServiceCat AS specification, ISNULL(np.Quantity, '0') AS AvailableStock,
+                    '' AS ItemNo, '' AS MaterialNo, '' AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
                 FROM tbl_Proforma_Details pd
                 LEFT JOIN tbl_NewProduct np ON np.ProductID = pd.Product_id AND np.CompanyID = @CompanyID
                 WHERE pd.Invoice_No = @Ref AND pd.CompanyID = @CompanyID";
@@ -676,7 +678,8 @@ namespace Bill_Software.corporate.business.app
                     CAST(cd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
                     ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = cd.Challan_no AND id.Product_id = cd.Product_id AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0) AS InvoicedQty,
                     (CAST(cd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = cd.Challan_no AND id.Product_id = cd.Product_id AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0)) AS PendingQty,
-                    ISNULL(qd.sail_rate, 0) AS sail_rate, ISNULL(qd.discount_rate, 0) AS discountRate, ISNULL(qd.Service_tax_rate, 0) AS Service_tax_rate, ISNULL(qd.specification, '') AS specification, ISNULL(np.Quantity, '0') AS AvailableStock
+                    ISNULL(qd.sail_rate, 0) AS sail_rate, ISNULL(qd.discount_rate, 0) AS discountRate, ISNULL(qd.Service_tax_rate, 0) AS Service_tax_rate, ISNULL(qd.specification, '') AS specification, ISNULL(np.Quantity, '0') AS AvailableStock,
+                    '' AS ItemNo, '' AS MaterialNo, '' AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
                 FROM tbl_Challan_details cd
                 LEFT JOIN tbl_Chalan ch ON cd.Challan_no = ch.Chalan_No AND ch.CompanyID = @CompanyID
                 LEFT JOIN tbl_Quotaion_details qd ON ch.Quotation_No = qd.Quotation_no AND qd.Product_Code = cd.Product_id AND qd.CompanyID = @CompanyID

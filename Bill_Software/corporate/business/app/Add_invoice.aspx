@@ -970,6 +970,17 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
+                                        <asp:TemplateField HeaderText="Item & Delivery Info" ItemStyle-CssClass="stack-cell" ItemStyle-Width="200px">
+                                            <ItemTemplate>
+                                                <div style="font-size: 11px; color: #444; line-height: 1.4;">
+                                                    <span style="color:#006699; font-weight:bold;">Item No: <%# Eval("ItemNo") %></span> | Mat: <strong><%# Eval("MaterialNo") %></strong><br />
+                                                    Pack: <strong><%# Eval("PackSize") %> <%# Eval("Unit") %></strong> | Dept: <strong><%# Eval("Department") %></strong><br />
+                                                    Del. Date: <span style="color:#dc3545; font-weight:bold;"><%# Eval("DeliveryDate") %></span><br />
+                                                    <span style="color:#666; font-style:italic;">Rem: <%# Eval("ItemRemarks") %></span>
+                                                </div>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                         <asp:TemplateField HeaderText="Specification" ItemStyle-Width="150px">
                                             <ItemTemplate>
                                                 <asp:TextBox ID="txtdes" runat="server" Text='<%# Bind("specification") %>' CssClass="form-control" TextMode="MultiLine" Rows="2"></asp:TextBox></ItemTemplate>
