@@ -410,8 +410,8 @@
             <td colspan="6" style="padding-bottom: 15px; padding-top: 10px; border-bottom: 1px solid #eee;">
 
                 <div class="filter-group">
-                    <asp:Button ID="btnFilterAll" runat="server" Text="All Users" CssClass="filter-btn active" OnClick="btnFilter_Click" CommandArgument="All" />
-                    <asp:Button ID="btnFilterActive" runat="server" Text="Active" CssClass="filter-btn" OnClick="btnFilter_Click" CommandArgument="Active" />
+                    <asp:Button ID="btnFilterAll" runat="server" Text="All Users" CssClass="filter-btn" OnClick="btnFilter_Click" CommandArgument="All" />
+                    <asp:Button ID="btnFilterActive" runat="server" Text="Active" CssClass="filter-btn active" OnClick="btnFilter_Click" CommandArgument="Active" />
                     <asp:Button ID="btnFilterInactive" runat="server" Text="Inactive" CssClass="filter-btn" OnClick="btnFilter_Click" CommandArgument="Inactive" />
                     <asp:Button ID="btnFilterLocked" runat="server" Text="Locked" CssClass="filter-btn" OnClick="btnFilter_Click" CommandArgument="Locked" />
                 </div>

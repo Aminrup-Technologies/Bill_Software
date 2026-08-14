@@ -31,6 +31,7 @@ namespace Bill_Software.corporate.business.app
 
             if (!IsPostBack)
             {
+                ViewState["CurrentFilter"] = "Active";
                 BindGrid();
             }
         }
@@ -67,10 +68,10 @@ namespace Bill_Software.corporate.business.app
         protected void btnClear_Click(object sender, EventArgs e)
         {
             txtSearch.Text = string.Empty;
-            ViewState["CurrentFilter"] = "All";
+            ViewState["CurrentFilter"] = "Active";
 
-            btnFilterAll.CssClass = "filter-btn active";
-            btnFilterActive.CssClass = "filter-btn";
+            btnFilterAll.CssClass = "filter-btn";
+            btnFilterActive.CssClass = "filter-btn active";
             btnFilterInactive.CssClass = "filter-btn";
             btnFilterLocked.CssClass = "filter-btn";
 
@@ -112,7 +113,7 @@ namespace Bill_Software.corporate.business.app
             }
 
             // 4. Status Filter Logic
-            string currentFilter = ViewState["CurrentFilter"] as string;
+            string currentFilter = ViewState["CurrentFilter"] as string ?? "Active";
             if (currentFilter == "Active")
             {
                 sql += " AND u.IsActive = 1 ";
@@ -338,9 +339,9 @@ namespace Bill_Software.corporate.business.app
 
                         if (ddlGridRole != null)
                         {
-                            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles WHERE CompanyID = @CompanyID ORDER BY RoleName", cn))
+                            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles WHERE CompanyID = @CompID ORDER BY RoleName", cn))
                             {
-                                cmd.Parameters.AddWithValue("@CompanyID", compId);
+                                cmd.Parameters.AddWithValue("@CompID", compId);
                                 var dt = new DataTable();
                                 new SqlDataAdapter(cmd).Fill(dt);
                                 ddlGridRole.DataSource = dt;
@@ -753,8 +754,8 @@ namespace Bill_Software.corporate.business.app
                 string sql = @"
                     SELECT TOP 15 s.LoginTime, s.LastHeartbeat, s.IPAddress, s.UserAgent, s.IsActive 
                     FROM ActiveSessions s
-                    INNER JOIN dbo.tbl_login u ON u.Id = s.UserId AND u.CompanyID = @CompanyID
-                    WHERE s.UserId = @UserId 
+                    INNER JOIN tbl_login u ON s.UserId = u.Id
+                    WHERE s.UserId = @UserId AND u.CompanyID = @CompanyID
                     ORDER BY s.LoginTime DESC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, cn))
