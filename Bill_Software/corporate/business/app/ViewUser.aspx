@@ -488,7 +488,7 @@
                                         class="action-btn"
                                         style="background-color: #f8f9fa; color: #19658A; border: 1px solid #19658A;"
                                         title="Set Geo-Fence Boundaries"
-                                        onclick="openGeoFenceModal('<%# Eval("Id") %>', '<%# Eval("GeoFenceLat") %>', '<%# Eval("GeoFenceLng") %>', '<%# Eval("GeoFenceRadius") %>')">
+                                        onclick="openGeoFenceModal('<%# Eval("Id") %>', '<%# Eval("GeoFenceLat") %>', '<%# Eval("GeoFenceLng") %>', '<%# Eval("GeoFenceRadius") %>', '<%# Eval("AllowGeoFenceOverride") %>', '<%# Eval("MaxGeoFenceAttempts") %>')">
                                         📍 Geo-Fence
    
                                     </button>
@@ -719,7 +719,16 @@
 
                 <div style="margin-bottom: 10px;">
                     <label style="font-weight: bold; font-size: 13px; color: #333;">Allowed Radius: <span id="lblRadius" style="color: #19658A; font-size: 16px;">100</span> meters</label>
-                    <input type="range" id="rngRadius" min="10" max="1000" value="100" style="width: 100%; margin-top: 5px;" oninput="updateMapCircle()" />
+                    <input type="range" id="rngRadius" min="10" max="10000" value="100" style="width: 100%; margin-top: 5px;" oninput="updateMapCircle()" />
+                </div>
+
+                <div style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border: 1px solid #eaeaea; border-radius: 6px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 13px; color: #333; cursor: pointer;">
+                        <input type="checkbox" id="chkAllowFallback" checked />
+                        Allow Geo-Fence Fallback
+                    </label>
+                    <label style="display: block; font-weight: bold; font-size: 13px; color: #333; margin-top: 10px;">Max Failed Attempts Before Override</label>
+                    <input type="number" id="txtMaxAttempts" value="3" min="1" max="10" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" />
                 </div>
 
                 <div id="map" style="height: 300px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"></div>
@@ -739,7 +748,7 @@
     <script type="text/javascript">
         var map, marker, circle;
 
-        function openGeoFenceModal(userId, currentLat, currentLng, currentRadius) {
+        function openGeoFenceModal(userId, currentLat, currentLng, currentRadius, allowFallback, maxAttempts) {
             document.getElementById('geoFenceModal').style.display = 'block';
             document.getElementById('hfGeoUserId').value = userId;
 
@@ -755,6 +764,18 @@
             document.getElementById('txtLng').value = lng;
             document.getElementById('rngRadius').value = radius;
             document.getElementById('lblRadius').innerText = radius;
+
+            var allow = true;
+            if (typeof allowFallback !== 'undefined' && allowFallback !== null && String(allowFallback) !== '') {
+                var allowText = String(allowFallback).toLowerCase();
+                allow = (allowText === 'true' || allowText === '1' || allowFallback === true);
+            }
+            document.getElementById('chkAllowFallback').checked = allow;
+
+            var attempts = parseInt(maxAttempts, 10);
+            if (isNaN(attempts) || attempts < 1) attempts = 3;
+            if (attempts > 10) attempts = 10;
+            document.getElementById('txtMaxAttempts').value = attempts;
 
             if (!map) {
                 map = L.map('map').setView([lat, lng], 16);
@@ -849,11 +870,20 @@
             var lat = document.getElementById('txtLat').value;
             var lng = document.getElementById('txtLng').value;
             var radius = document.getElementById('rngRadius').value;
+            var allowFallback = document.getElementById('chkAllowFallback').checked;
+            var maxAttempts = parseInt(document.getElementById('txtMaxAttempts').value, 10) || 3;
 
             fetch('ViewUser.aspx/SaveGeoFence', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: parseInt(userId), lat: parseFloat(lat), lng: parseFloat(lng), radius: parseInt(radius) })
+                body: JSON.stringify({
+                    userId: parseInt(userId),
+                    lat: parseFloat(lat),
+                    lng: parseFloat(lng),
+                    radius: parseInt(radius),
+                    allowFallback: allowFallback,
+                    maxAttempts: maxAttempts
+                })
             })
             .then(res => res.json())
             .then(data => {

@@ -665,7 +665,9 @@ namespace Bill_Software.corporate.business.app
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string query = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius 
+                string query = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius,
+                                        ISNULL(AllowGeoFenceOverride, 1) AS AllowGeoFenceOverride,
+                                        ISNULL(MaxGeoFenceAttempts, 3) AS MaxGeoFenceAttempts
                                  FROM tbl_login 
                                  WHERE User_Id = @UserId AND CompanyID = @CompanyID AND IsActive = 1";
 
@@ -684,7 +686,9 @@ namespace Bill_Software.corporate.business.app
                                 Required = Convert.ToBoolean(rdr["RequireGeoTagging"]),
                                 Lat = rdr["GeoFenceLat"] != DBNull.Value ? rdr["GeoFenceLat"].ToString() : "",
                                 Lng = rdr["GeoFenceLng"] != DBNull.Value ? rdr["GeoFenceLng"].ToString() : "",
-                                Radius = rdr["GeoFenceRadius"] != DBNull.Value ? rdr["GeoFenceRadius"].ToString() : "100"
+                                Radius = rdr["GeoFenceRadius"] != DBNull.Value ? rdr["GeoFenceRadius"].ToString() : "100",
+                                AllowOverride = rdr["AllowGeoFenceOverride"] != DBNull.Value && Convert.ToBoolean(rdr["AllowGeoFenceOverride"]),
+                                MaxAttempts = rdr["MaxGeoFenceAttempts"] != DBNull.Value ? Convert.ToInt32(rdr["MaxGeoFenceAttempts"]) : 3
                             };
                             return new JavaScriptSerializer().Serialize(boundaryData);
                         }
