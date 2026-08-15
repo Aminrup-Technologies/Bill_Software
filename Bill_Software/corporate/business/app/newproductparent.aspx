@@ -93,9 +93,9 @@
         function preventDoubleSubmit() {
             var btn = document.getElementById('<%= btnSave.ClientID %>');
             if (btn) {
-                btn.disabled = true;
                 btn.style.pointerEvents = 'none';
                 btn.value = 'Saving...';
+                setTimeout(function () { btn.disabled = true; }, 0);
             }
             return true;
         }
@@ -140,16 +140,16 @@
             <div class="box-title">Category Form</div>
 
             <asp:Panel ID="PanelOK" runat="server" CssClass="alert-ok" BackColor="#EEFFDD"
-                BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" style="display:none;">
                 <asp:Image ID="imageTick" runat="server"
                     ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
                 &nbsp;<asp:Label ID="lblOk" runat="server"></asp:Label>
             </asp:Panel>
 
             <asp:Panel ID="PanelError" runat="server" CssClass="alert-err" BorderColor="#FF3300"
-                BorderStyle="Solid" BorderWidth="1px" Visible="False">
+                BorderStyle="Solid" BorderWidth="1px" style="display:none;">
                 <asp:Image ID="Image1" runat="server" Height="16px"
-                    ImageUrl="~/corporate/business/WebImages/Cross_icon.png.png"
+                    ImageUrl="~/corporate/business/WebImages/Cross_icon.png"
                     Width="16px" />
                 &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
             </asp:Panel>
