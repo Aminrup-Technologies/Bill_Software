@@ -241,3 +241,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /Bill_Software/SupportUploads
+/Bill_Software/App_Data/AuditLogs/
+/Bill_Software/App_Data/ErrorLogs/

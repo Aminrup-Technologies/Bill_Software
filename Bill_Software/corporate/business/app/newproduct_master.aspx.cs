@@ -1,228 +1,200 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Web.Services;
+using System.Web;
 using System.Web.Script.Services;
-using System.Configuration;
+using System.Web.Services;
+using System.Web.UI;
+using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm69 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
+        string ConnString { get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; } }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
             {
                 Response.Redirect("~/index.aspx");
+                return;
             }
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmdProduct, "select ProductOrServiceCat from tbl_NewparentProduct order by id");
+                BindCategories();
                 DbCL.FillCombo(cmbtax, "select Vat_Rate from tbl_New_Vat_Master order by ID");
                 txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
-
-                //Products pre-loading in Page laod have been disabled initially and later only top 100 items are laoded
                 Binddata();
             }
+        }
 
+        private void BindCategories()
+        {
+            cmdProduct.Items.Clear();
+            cmdProduct.Items.Add("--Select--");
+            using (SqlConnection conn = new SqlConnection(ConnString))
+            using (SqlCommand cmd = new SqlCommand(
+                "SELECT ProductOrServiceCat FROM tbl_NewparentProduct WHERE CompanyID=@CompanyID ORDER BY ProductOrServiceCat", conn))
+            {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                conn.Open();
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                        cmdProduct.Items.Add(rdr[0].ToString());
+                }
+            }
         }
 
         private void Binddata()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select top 100 Id,Product_code,ProductOrServiceCat,Product_catagory,Sail_Rate,Tax_Rate,Type,ProductName,Unit,Brand,parentId from tbl_NewProduct where ViewMode=1 and DeleteMode=0 order by Id desc";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            DataList1.DataSource = cmd.ExecuteReader();
-            DataList1.DataBind();
-            DbCL.Conn.Close();
+            using (SqlConnection conn = new SqlConnection(ConnString))
+            using (SqlCommand cmd = new SqlCommand(
+                @"SELECT TOP 100 Id, Product_code, ProductOrServiceCat, Product_catagory, Sail_Rate, Tax_Rate, Type, ProductName, Unit, Brand, parentId, ProductID
+                  FROM tbl_NewProduct
+                  WHERE CompanyID=@CompanyID AND ViewMode=1 AND (DeleteMode=0 OR DeleteMode IS NULL)
+                  ORDER BY Id DESC", conn))
+            {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                conn.Open();
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    DataList1.DataSource = rdr;
+                    DataList1.DataBind();
+                }
+            }
         }
 
-        private string findProductId()
+        private void BinddataByServiceCategory(int ParentId)
         {
-            string PurID = "";
-            string aa = "";
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdString1 = "select Id,ProductID from tbl_NewProduct where Id=(select max(Id)from tbl_NewProduct)";
-            SqlCommand com1 = new SqlCommand(cmdString1, DbCL.Conn);
-            SqlDataReader DR1 = com1.ExecuteReader();
-            if (DR1.Read())
+            using (SqlConnection conn = new SqlConnection(ConnString))
+            using (SqlCommand cmd = new SqlCommand(
+                @"SELECT Id, Product_code, ProductOrServiceCat, Product_catagory, Sail_Rate, Tax_Rate, Type, ProductName, Unit, Brand, parentId, ProductID
+                  FROM tbl_NewProduct
+                  WHERE parentId=@parentId AND CompanyID=@CompanyID AND (DeleteMode=0 OR DeleteMode IS NULL)
+                  ORDER BY Id ASC", conn))
             {
-                aa = DR1.GetValue(1).ToString();
-                string bb = aa.Substring(3); // Get the numeric part of ProductID, skipping "PRD"
-                int k = Convert.ToInt32(bb);
-                k = k + 1; // Increment the numeric part
-                PurID = "PRD" + k.ToString().PadLeft(2, '0'); // Pad with leading zeros to ensure two digits
+                cmd.Parameters.AddWithValue("@parentId", ParentId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                conn.Open();
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    DataList1.DataSource = rdr;
+                    DataList1.DataBind();
+                }
             }
-            else
-            {
-                PurID = "PRD01"; // Start with "PRD01" if no records exist
-            }
+        }
 
-            DbCL.Conn.Close();
+        private string findProductId(SqlConnection conn, SqlTransaction trans)
+        {
+            string PurID = "PRD01";
+            using (SqlCommand com1 = new SqlCommand(
+                @"SELECT TOP 1 ProductID FROM tbl_NewProduct
+                  WHERE CompanyID=@CompanyID AND ProductID LIKE 'PRD%'
+                  ORDER BY Id DESC", conn, trans))
+            {
+                com1.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                object o = com1.ExecuteScalar();
+                if (o != null && o != DBNull.Value)
+                {
+                    string aa = o.ToString();
+                    if (aa.Length > 3)
+                    {
+                        int k;
+                        if (int.TryParse(aa.Substring(3), out k))
+                            PurID = "PRD" + (k + 1).ToString().PadLeft(2, '0');
+                    }
+                }
+            }
             return PurID;
         }
 
-        protected void btnSave_Click_OLD(object sender, EventArgs e)
+        private bool CheckDuplicateProduct(string category, string productName, string productId, SqlConnection conn, SqlTransaction trans)
         {
-            //if (txtProductCode.Text != "")
-            //{
-            //    //string product_code = Session["ProductCode"].ToString();
-            //    //string gstRate = Session["gstRate"].ToString();
-            //    DbCL.Sqlconnection();
-            //    DbCL.ConnectDb();
-            //    DbCL.executeRdr("insert into tbl_NewProduct(Product_code,ProductOrServiceCat,Sail_Rate,Tax_Rate,ProductName,Type,Unit,Brand,parentId) values ('" + txtProductCode.Text.ToString() + "','" + cmdProduct.Text + "','" + txtSalerate.Text + "','" + cmbtax.Text.ToString() + "','" + txtSubProductsName.Text + "','" + ddlProOrSer.Text + "','" + txtUnit.Text + "','" + txtBrand.Text + "','" + Convert.ToInt32(Session["pid"]) + "')");
-            //    PanelOK.Visible = true;
-            //    lblOk.Text = "Data Save Successfully...";
-            //    DbCL.Conn.Close();
-            //}
-
-            if (!string.IsNullOrEmpty(txtProductCode.Text))
+            string normName = (productName ?? string.Empty).Trim().ToLower();
+            using (SqlCommand cmd = new SqlCommand(
+                @"SELECT COUNT(1) FROM dbo.tbl_NewProduct
+                  WHERE CompanyID=@CompanyID
+                    AND (DeleteMode=0 OR DeleteMode IS NULL)
+                    AND (
+                          (LOWER(LTRIM(RTRIM(ProductName))) = @normName AND ProductOrServiceCat = @cat)
+                          OR (@productId <> '' AND ProductID = @productId)
+                    )", conn, trans))
             {
-                SqlTransaction transaction = null;
-
-                try
-                {
-                    string productid = findProductId();
-
-                    // Initialize database connection
-                    DbCL.Sqlconnection();
-                    DbCL.ConnectDb();
-
-                    // Start a new transaction
-                    transaction = DbCL.Conn.BeginTransaction();
-
-                    // SQL query for tbl_NewProduct
-                    string queryNewProduct = @"
-                            INSERT INTO tbl_NewProduct 
-                            (Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, 
-                            Type, Unit, Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, 
-                            TimeStamp, ProductID, AddedbyUserId, AddedOn) 
-                            VALUES 
-                            (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, 
-                            @Type, @Unit, @Brand, @ParentId, @Specification, @Quantity, @MOQ_Value, @SaleNote, @ExpiryDate, 
-                            GETDATE(), @ProductID, @AddedbyUserId, @AddedOn)";
-
-                    SqlCommand cmdNewProduct = new SqlCommand(queryNewProduct, DbCL.Conn, transaction);
-                    cmdNewProduct.Parameters.AddWithValue("@ProductCode", txtProductCode.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@ProductOrServiceCat", cmdProduct.SelectedItem.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@SaleRate", Convert.ToDecimal(txtSalerate.Text));
-                    cmdNewProduct.Parameters.AddWithValue("@TaxRate", Convert.ToDecimal(cmbtax.SelectedItem.Text));
-                    cmdNewProduct.Parameters.AddWithValue("@Product_catagory", txtproducttype.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@ProductName", txtSubProductsName.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@Type", ddlProOrSer.SelectedItem.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@Unit", txtUnit.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@Brand", txtBrand.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@ParentId", Convert.ToInt32(Session["pid"]));
-                    cmdNewProduct.Parameters.AddWithValue("@Specification", TextBox1.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@Quantity", Convert.ToInt32(TextBox2.Text));
-                    cmdNewProduct.Parameters.AddWithValue("@MOQ_Value", Convert.ToInt32(TextBox3.Text));
-                    cmdNewProduct.Parameters.AddWithValue("@SaleNote", TextBox4.Text);
-                    cmdNewProduct.Parameters.AddWithValue("@ProductID", productid);
-                    cmdNewProduct.Parameters.AddWithValue("@AddedbyUserId", Session["USERID"].ToString());
-                    cmdNewProduct.Parameters.AddWithValue("@AddedOn", DateTime.Now);
-
-                    DateTime expiryDate;
-                    if (DateTime.TryParse(txtfromDate.Text, out expiryDate))
-                    {
-                        cmdNewProduct.Parameters.AddWithValue("@ExpiryDate", expiryDate);
-                    }
-                    else
-                    {
-                        cmdNewProduct.Parameters.AddWithValue("@ExpiryDate", DBNull.Value);
-                    }
-
-                    // Execute tbl_NewProduct Insert
-                    cmdNewProduct.ExecuteNonQuery();
-
-                    // SQL query for tbl_stock
-                    string queryStock = @"
-                    INSERT INTO tbl_stock 
-                    (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate) 
-                    VALUES 
-                    (@ProductID, @ProductName, @Quantity, @SaleRate, @TaxRate)";
-
-                    SqlCommand cmdStock = new SqlCommand(queryStock, DbCL.Conn, transaction);
-                    cmdStock.Parameters.AddWithValue("@ProductID", productid);
-                    cmdStock.Parameters.AddWithValue("@ProductName", txtSubProductsName.Text);
-                    cmdStock.Parameters.AddWithValue("@Quantity", Convert.ToInt32(TextBox2.Text));
-                    cmdStock.Parameters.AddWithValue("@SaleRate", Convert.ToDecimal(txtSalerate.Text));
-                    cmdStock.Parameters.AddWithValue("@TaxRate", Convert.ToDecimal(cmbtax.SelectedItem.Text));
-
-                    // Execute tbl_stock Insert
-                    cmdStock.ExecuteNonQuery();
-
-                    // Commit transaction if both insertions succeed
-                    transaction.Commit();
-
-                    PanelOK.Visible = true;
-                    lblOk.Text = "Data saved successfully into both tables!";
-                }
-                catch (Exception ex)
-                {
-                    // Rollback the transaction if an error occurs
-                    if (transaction != null)
-                    {
-                        transaction.Rollback();
-                    }
-
-                    lblOk.Text = "Error: " + ex.Message;
-                    PanelOK.Visible = true;
-                }
-                finally
-                {
-                    // Close the connection
-                    DbCL.Conn.Close();
-                }
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                cmd.Parameters.AddWithValue("@cat", category ?? string.Empty);
+                cmd.Parameters.AddWithValue("@normName", normName);
+                cmd.Parameters.AddWithValue("@productId", productId ?? string.Empty);
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
             }
+        }
 
-            else
+        private void InsertSystemNotification(string title, string message, string severity, SqlConnection conn, SqlTransaction trans)
+        {
+            string sql = @"INSERT INTO tbl_SystemNotification
+                           (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CompanyID)
+                           VALUES
+                           (@Title, @Msg, @Mod, @Severity, GETDATE(), DATEADD(day, 30, GETDATE()), 1, @User, @Comp)";
+            using (SqlCommand cmd = new SqlCommand(sql, conn, trans))
             {
-                lblOk.Text = "Please enter a Product Code.";
-                PanelOK.Visible = true;
+                cmd.Parameters.AddWithValue("@Title", title);
+                cmd.Parameters.AddWithValue("@Msg", message);
+                cmd.Parameters.AddWithValue("@Mod", "PRODUCT_MASTER");
+                cmd.Parameters.AddWithValue("@Severity", severity);
+                cmd.Parameters.AddWithValue("@User", Session["USERID"] != null ? Session["USERID"].ToString() : "System");
+                cmd.Parameters.AddWithValue("@Comp", CompanyContext.CurrentCompanyID);
+                cmd.ExecuteNonQuery();
             }
+        }
 
+        private void ShowOk(string msg)
+        {
+            PanelError.Visible = true;
+            PanelError.Style["display"] = "none";
+            PanelOK.Visible = true;
+            PanelOK.Style["display"] = "block";
+            lblOk.Text = msg;
+        }
 
-            Binddata();
-
+        private void ShowErr(string msg)
+        {
+            PanelOK.Visible = true;
+            PanelOK.Style["display"] = "none";
+            PanelError.Visible = true;
+            PanelError.Style["display"] = "block";
+            lblErrorMsg.Text = msg;
         }
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
-            // Basic guard
             if (string.IsNullOrWhiteSpace(txtProductCode.Text))
             {
-                lblOk.Text = "Please enter a Product Code.";
-                PanelOK.Visible = true;
+                ShowErr("Please enter a Product Code.");
                 lblSimilar.Text = "";
                 return;
             }
 
-            // Normalize and read inputs
             string productCode = txtProductCode.Text.Trim();
-            string category = cmdProduct.SelectedItem?.Text?.Trim() ?? "";
+            string category = cmdProduct.SelectedItem != null ? (cmdProduct.SelectedItem.Text ?? "").Trim() : "";
             string productName = txtSubProductsName.Text.Trim();
-            string normProductName = productName.ToLower().Trim();
-            string type = ddlProOrSer.SelectedItem?.Text ?? "";
+            string type = ddlProOrSer.SelectedItem != null ? ddlProOrSer.SelectedItem.Text : "";
             string unit = txtUnit.Text.Trim();
             string brand = txtBrand.Text.Trim();
             int parentId = Session["pid"] != null ? Convert.ToInt32(Session["pid"]) : 0;
             string addedBy = Session["USERID"] != null ? Session["USERID"].ToString() : "0";
+            int companyId = CompanyContext.CurrentCompanyID;
 
             decimal saleRate = 0m;
             decimal taxRate = 0m;
             int quantity = 0;
             int moq = 0;
-
             Decimal.TryParse(txtSalerate.Text, out saleRate);
-            Decimal.TryParse(cmbtax.SelectedItem?.Text, out taxRate);
+            if (cmbtax.SelectedItem != null)
+                Decimal.TryParse(cmbtax.SelectedItem.Text, out taxRate);
             Int32.TryParse(TextBox2.Text, out quantity);
             Int32.TryParse(TextBox3.Text, out moq);
 
@@ -231,353 +203,164 @@ namespace Bill_Software.corporate.business.app
             if (DateTime.TryParse(txtfromDate.Text, out tmpDt))
                 expiryDate = tmpDt;
 
-            // Clear UI messages
-            PanelOK.Visible = false;
-            lblOk.Text = "";
             lblSimilar.Text = "";
 
             try
             {
-                // Ensure DB connection helper opens connection (same as you used before)
-                DbCL.Sqlconnection();
-                DbCL.ConnectDb();
-
-                // 1) Exact existence check (normalized)
-                int? existingId = null;
-                string existingProductIDStr = null;
-                using (var cmdCheck = new SqlCommand(@"
-            SELECT TOP(1) Id, ProductID, ProductName
-            FROM dbo.tbl_NewProduct
-            WHERE ProductOrServiceCat = @cat
-              AND LOWER(LTRIM(RTRIM(ProductName))) = @normName
-            ", DbCL.Conn))
-                {
-                    cmdCheck.Parameters.AddWithValue("@cat", category);
-                    cmdCheck.Parameters.AddWithValue("@normName", normProductName);
-
-                    using (var rdr = cmdCheck.ExecuteReader())
-                    {
-                        if (rdr.Read())
-                        {
-                            existingId = rdr["Id"] != DBNull.Value ? (int?)Convert.ToInt32(rdr["Id"]) : null;
-                            existingProductIDStr = rdr["ProductID"] != DBNull.Value ? rdr["ProductID"].ToString() : null;
-                        }
-                    }
-                }
-
-                if (existingId.HasValue)
-                {
-                    // Exact duplicate found — do NOT insert. Inform user and show similar suggestions.
-                    PanelError.Visible = true;
-                    lblErrorMsg.Text = $"A product with the same name already exists in this category. Existing Product Id: {existingId.Value}.";
-
-                    // Show productID too if available
-                    if (!string.IsNullOrEmpty(existingProductIDStr))
-                    {
-                        PanelError.Visible = true;
-                        lblErrorMsg.Text += $" (ProductID: {existingProductIDStr})";
-                    }
-
-                    // Also fetch a few similar products to help the user
-                    List<string> similar = new List<string>();
-                    using (var cmdSim = new SqlCommand(@"
-                        SELECT TOP(10) ProductName
-                        FROM dbo.tbl_NewProduct
-                        WHERE ProductOrServiceCat = @cat
-                          AND ProductName LIKE @like
-                        ORDER BY ProductName", DbCL.Conn))
-                    {
-                        cmdSim.Parameters.AddWithValue("@cat", category);
-                        cmdSim.Parameters.AddWithValue("@like", "%" + productName + "%");
-                        using (var rdr = cmdSim.ExecuteReader())
-                        {
-                            while (rdr.Read())
-                            {
-                                similar.Add(rdr["ProductName"].ToString());
-                            }
-                        }
-                    }
-
-                    if (similar.Count > 0)
-                    {
-                        lblSimilar.Text = "Similar products: " + string.Join(" | ", similar);
-                    }
-                    else
-                    {
-                        lblSimilar.Text = "";
-                    }
-
-                    // Optionally: you can pre-fill the form with existing product details here
-                    // LoadProductIntoForm(existingId.Value);
-
-                    return; // stop - no insert
-                }
-
-                // 2) Not existing — optionally check for "very similar" matches (informational only)
                 List<string> softSimilar = new List<string>();
-                using (var cmdSoft = new SqlCommand(@"
-                SELECT TOP(8) ProductName
-                FROM dbo.tbl_NewProduct
-                WHERE ProductOrServiceCat = @cat
-                  AND ProductName LIKE @like
-                ORDER BY ProductName", DbCL.Conn))
+                using (SqlConnection connPre = new SqlConnection(ConnString))
                 {
-                    cmdSoft.Parameters.AddWithValue("@cat", category);
-                    cmdSoft.Parameters.AddWithValue("@like", "%" + productName + "%");
-                    using (var rdr = cmdSoft.ExecuteReader())
+                    connPre.Open();
+                    using (SqlCommand cmdSoft = new SqlCommand(
+                        @"SELECT TOP(8) ProductName FROM dbo.tbl_NewProduct
+                          WHERE CompanyID=@CompanyID AND ProductOrServiceCat=@cat AND ProductName LIKE @like
+                            AND (DeleteMode=0 OR DeleteMode IS NULL)
+                          ORDER BY ProductName", connPre))
                     {
-                        while (rdr.Read()) softSimilar.Add(rdr["ProductName"].ToString());
+                        cmdSoft.Parameters.AddWithValue("@CompanyID", companyId);
+                        cmdSoft.Parameters.AddWithValue("@cat", category);
+                        cmdSoft.Parameters.AddWithValue("@like", "%" + productName + "%");
+                        using (SqlDataReader rdr = cmdSoft.ExecuteReader())
+                        {
+                            while (rdr.Read()) softSimilar.Add(rdr["ProductName"].ToString());
+                        }
                     }
                 }
                 if (softSimilar.Count > 0)
-                {
-                    // show suggestions but proceed with insert
                     lblSimilar.Text = "Found similar items: " + string.Join(" | ", softSimilar);
-                    //PanelOK.Visible = true;
-                    //lblOk.Text = "No exact duplicate found. Proceeding to insert new product (but please review the similar items listed).";
-                    PanelError.Visible = true;
-                    lblErrorMsg.Text = "No exact duplicate found. Proceeding to insert new product (but please review the similar items listed).";
-                }
 
-                if (DbCL.Conn == null || DbCL.Conn.State != ConnectionState.Open)
-                    throw new InvalidOperationException("Database connection could not be opened.");
-
-                //// 3) Proceed to insert product + stock in a single DB transaction (preserve behavior)
-                //using (SqlTransaction transaction = DbCL.Conn.BeginTransaction())
-                //{
-                //    try
-                //    {
-                //        // generate your productid string
-                //        string productid = findProductId();
-
-                //        // Insert into tbl_NewProduct
-                //        string queryNewProduct = @"
-                //            INSERT INTO tbl_NewProduct 
-                //            (Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, Type, Unit, Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, TimeStamp, ProductID, AddedbyUserId, AddedOn) 
-                //            VALUES 
-                //            (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, @Specification, @Quantity, @MOQ_Value, @SaleNote, @ExpiryDate, 
-                //             GETDATE(), @ProductID, @AddedbyUserId, @AddedOn);
-                //            SELECT SCOPE_IDENTITY();";
-
-                //        int newId = 0;
-                //        using (var cmdNewProduct = new SqlCommand(queryNewProduct, DbCL.Conn, transaction))
-                //        {
-                //            cmdNewProduct.Parameters.AddWithValue("@ProductCode", productCode);
-                //            cmdNewProduct.Parameters.AddWithValue("@ProductOrServiceCat", category);
-                //            cmdNewProduct.Parameters.AddWithValue("@SaleRate", saleRate);
-                //            cmdNewProduct.Parameters.AddWithValue("@TaxRate", taxRate);
-                //            cmdNewProduct.Parameters.AddWithValue("@Product_catagory", string.IsNullOrEmpty(txtproducttype.Text) ? (object)DBNull.Value : txtproducttype.Text);
-                //            cmdNewProduct.Parameters.AddWithValue("@ProductName", productName);
-                //            cmdNewProduct.Parameters.AddWithValue("@Type", string.IsNullOrEmpty(type) ? (object)DBNull.Value : type);
-                //            cmdNewProduct.Parameters.AddWithValue("@Unit", string.IsNullOrEmpty(unit) ? (object)DBNull.Value : unit);
-                //            cmdNewProduct.Parameters.AddWithValue("@Brand", string.IsNullOrEmpty(brand) ? (object)DBNull.Value : brand);
-                //            cmdNewProduct.Parameters.AddWithValue("@ParentId", parentId);
-                //            cmdNewProduct.Parameters.AddWithValue("@Specification", string.IsNullOrEmpty(TextBox1.Text) ? (object)DBNull.Value : TextBox1.Text);
-                //            cmdNewProduct.Parameters.AddWithValue("@Quantity", quantity);
-                //            cmdNewProduct.Parameters.AddWithValue("@MOQ_Value", moq);
-                //            cmdNewProduct.Parameters.AddWithValue("@SaleNote", string.IsNullOrEmpty(TextBox4.Text) ? (object)DBNull.Value : TextBox4.Text);
-                //            cmdNewProduct.Parameters.AddWithValue("@ProductID", productid);
-                //            cmdNewProduct.Parameters.AddWithValue("@AddedbyUserId", addedBy);
-                //            cmdNewProduct.Parameters.AddWithValue("@AddedOn", DateTime.Now);
-                //            cmdNewProduct.Parameters.AddWithValue("@ExpiryDate", expiryDate.HasValue ? (object)expiryDate.Value : DBNull.Value);
-
-                //            //object scopeObj = cmdNewProduct.ExecuteScalar();
-                //            //newId = scopeObj != null ? Convert.ToInt32(scopeObj) : 0;
-
-                //            object scopeObj = cmdNewProduct.ExecuteScalar();
-                //            if (scopeObj != null && scopeObj != DBNull.Value)
-                //            {
-                //                // SCOPE_IDENTITY() returns decimal (SqlDecimal), so convert via Decimal first
-                //                newId = Convert.ToInt32(Convert.ToDecimal(scopeObj));
-                //            }
-                //        }
-
-                //        // Insert into tbl_stock using ProductID (string) or newId as needed
-                //        string queryStock = @"
-                //            INSERT INTO tbl_stock 
-                //            (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate, ShippedToStoreId, ShippedToStoreName) 
-                //            VALUES 
-                //            (@ProductID, @ProductName, @Quantity, @SaleRate, @TaxRate, @ShippedToStoreId, @ShippedToStoreName)";
-
-                //        using (var cmdStock = new SqlCommand(queryStock, DbCL.Conn, transaction))
-                //        {
-                //            // Decision: use ProductID string (productid) as your other code did
-                //            cmdStock.Parameters.AddWithValue("@ProductID", productid);
-                //            cmdStock.Parameters.AddWithValue("@ProductName", productName);
-                //            cmdStock.Parameters.AddWithValue("@Quantity", quantity);
-                //            cmdStock.Parameters.AddWithValue("@SaleRate", saleRate);
-                //            cmdStock.Parameters.AddWithValue("@TaxRate", taxRate);
-                //            cmdStock.Parameters.AddWithValue("@ShippedToStoreId", "STR001");
-                //            cmdStock.Parameters.AddWithValue("@ShippedToStoreName", "Central Warehouse");
-
-                //            cmdStock.ExecuteNonQuery();
-                //        }
-
-                //        // Commit both inserts together
-                //        transaction.Commit();
-
-                //        PanelOK.Visible = true;
-                //        lblOk.Text = $"New product created (Id={newId}). Opening stock recorded.";
-                //        // Clear similar label because insert successful
-                //        lblSimilar.Text = "";
-                //    }
-                //    catch (SqlException sqlex)
-                //    {
-                //        // Handle unique-key race condition (someone inserted concurrently)
-                //        try { transaction.Rollback(); } catch { }
-
-                //        if (sqlex.Number == 2627 || sqlex.Number == 2601)
-                //        {
-                //            PanelError.Visible = true;
-                //            lblErrorMsg.Text = "A product with the same name was created by someone else just now. Please refresh and try again (or choose the existing product).";
-                //            // Optionally, show similar/exact now
-                //        }
-                //        else
-                //        {
-                //            PanelError.Visible = true;
-                //            lblErrorMsg.Text = "SQL Error: " + sqlex.Message;
-                //        }
-                //        return;
-                //    }
-                //    catch (Exception exTrans)
-                //    {
-                //        try { transaction.Rollback(); } catch { }
-                //        PanelError.Visible = true;
-                //        lblErrorMsg.Text = "Error: " + exTrans.Message;
-                //        return;
-                //    }
-                //} // end using transaction
-
-                string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-                using (var conn = new SqlConnection(connectionString))
+                using (SqlConnection conn = new SqlConnection(ConnString))
                 {
-                    conn.Open(); // IMPORTANT: ensure connection is open before BeginTransaction
-
-                    using (var transaction = conn.BeginTransaction())
+                    conn.Open();
+                    using (SqlTransaction transaction = conn.BeginTransaction())
                     {
                         try
                         {
-                            // generate your productid string
-                            string productid = findProductId();
+                            if (CheckDuplicateProduct(category, productName, "", conn, transaction))
+                            {
+                                transaction.Rollback();
+                                ShowErr("A product with the same name already exists in this category for this company.");
+                                return;
+                            }
 
-                            // 1) Insert into tbl_NewProduct and return identity
-                            string queryNewProduct = @"INSERT INTO tbl_NewProduct (Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, Type, [Unit], Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, TimeStamp, ProductID, AddedbyUserId, AddedOn) VALUES (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, @Specification, @Quantity, @MOQ_Value, @SaleNote, @ExpiryDate, GETDATE(), @ProductID, @AddedbyUserId, @AddedOn); SELECT SCOPE_IDENTITY();";
+                            string productid = findProductId(conn, transaction);
+                            if (CheckDuplicateProduct(category, productName, productid, conn, transaction))
+                            {
+                                transaction.Rollback();
+                                ShowErr("A product with the same Product ID already exists for this company.");
+                                return;
+                            }
+
+                            string queryNewProduct = @"INSERT INTO tbl_NewProduct
+                                (Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, Type, [Unit], Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, TimeStamp, ProductID, AddedbyUserId, AddedOn, CompanyID, ViewMode, DeleteMode)
+                                VALUES
+                                (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, @Specification, @Quantity, @MOQ_Value, @SaleNote, @ExpiryDate, GETDATE(), @ProductID, @AddedbyUserId, GETDATE(), @CompanyID, 1, 0);
+                                SELECT SCOPE_IDENTITY();";
 
                             int newId = 0;
-                            using (var cmdNewProduct = new SqlCommand(queryNewProduct, conn, transaction))
+                            using (SqlCommand cmdNewProduct = new SqlCommand(queryNewProduct, conn, transaction))
                             {
-                                // NOTE: change SqlDbType where appropriate for your schema (example types used)
                                 cmdNewProduct.Parameters.Add("@ProductCode", SqlDbType.VarChar, 50).Value = (object)productCode ?? DBNull.Value;
                                 cmdNewProduct.Parameters.Add("@ProductOrServiceCat", SqlDbType.VarChar, 100).Value = (object)category ?? DBNull.Value;
-                                cmdNewProduct.Parameters.Add("@SaleRate", SqlDbType.Decimal).Value = saleRate; // ensure saleRate is decimal
-                                cmdNewProduct.Parameters["@SaleRate"].Scale = 2; cmdNewProduct.Parameters["@SaleRate"].Precision = 18;
-                                cmdNewProduct.Parameters.Add("@TaxRate", SqlDbType.Decimal).Value = taxRate;     // ensure taxRate is decimal
-                                cmdNewProduct.Parameters["@TaxRate"].Scale = 2; cmdNewProduct.Parameters["@TaxRate"].Precision = 5;
+                                cmdNewProduct.Parameters.Add("@SaleRate", SqlDbType.Decimal).Value = saleRate;
+                                cmdNewProduct.Parameters["@SaleRate"].Scale = 2;
+                                cmdNewProduct.Parameters["@SaleRate"].Precision = 18;
+                                cmdNewProduct.Parameters.Add("@TaxRate", SqlDbType.Decimal).Value = taxRate;
+                                cmdNewProduct.Parameters["@TaxRate"].Scale = 2;
+                                cmdNewProduct.Parameters["@TaxRate"].Precision = 5;
                                 cmdNewProduct.Parameters.Add("@Product_catagory", SqlDbType.VarChar, 200).Value = string.IsNullOrEmpty(txtproducttype.Text) ? (object)DBNull.Value : txtproducttype.Text;
                                 cmdNewProduct.Parameters.Add("@ProductName", SqlDbType.NVarChar, 400).Value = productName ?? (object)DBNull.Value;
                                 cmdNewProduct.Parameters.Add("@Type", SqlDbType.VarChar, 100).Value = string.IsNullOrEmpty(type) ? (object)DBNull.Value : type;
                                 cmdNewProduct.Parameters.Add("@Unit", SqlDbType.VarChar, 50).Value = string.IsNullOrEmpty(unit) ? (object)DBNull.Value : unit;
                                 cmdNewProduct.Parameters.Add("@Brand", SqlDbType.VarChar, 100).Value = string.IsNullOrEmpty(brand) ? (object)DBNull.Value : brand;
-                                cmdNewProduct.Parameters.Add("@ParentId", SqlDbType.Int).Value = parentId != 0 ? (object)parentId : DBNull.Value; // adjust type if parentId is varchar
+                                cmdNewProduct.Parameters.Add("@ParentId", SqlDbType.Int).Value = parentId != 0 ? (object)parentId : DBNull.Value;
                                 cmdNewProduct.Parameters.Add("@Specification", SqlDbType.NVarChar, -1).Value = string.IsNullOrEmpty(TextBox1.Text) ? (object)DBNull.Value : TextBox1.Text;
-                                cmdNewProduct.Parameters.Add("@Quantity", SqlDbType.Decimal).Value = quantity; // ensure quantity numeric
-                                cmdNewProduct.Parameters["@Quantity"].Scale = 3; cmdNewProduct.Parameters["@Quantity"].Precision = 18;
+                                cmdNewProduct.Parameters.Add("@Quantity", SqlDbType.Decimal).Value = quantity;
+                                cmdNewProduct.Parameters["@Quantity"].Scale = 3;
+                                cmdNewProduct.Parameters["@Quantity"].Precision = 18;
                                 cmdNewProduct.Parameters.Add("@MOQ_Value", SqlDbType.Decimal).Value = moq;
-                                cmdNewProduct.Parameters["@MOQ_Value"].Scale = 3; cmdNewProduct.Parameters["@MOQ_Value"].Precision = 18;
+                                cmdNewProduct.Parameters["@MOQ_Value"].Scale = 3;
+                                cmdNewProduct.Parameters["@MOQ_Value"].Precision = 18;
                                 cmdNewProduct.Parameters.Add("@SaleNote", SqlDbType.NVarChar, -1).Value = string.IsNullOrEmpty(TextBox4.Text) ? (object)DBNull.Value : TextBox4.Text;
                                 cmdNewProduct.Parameters.Add("@ExpiryDate", SqlDbType.DateTime).Value = expiryDate.HasValue ? (object)expiryDate.Value : DBNull.Value;
                                 cmdNewProduct.Parameters.Add("@ProductID", SqlDbType.VarChar, 100).Value = productid;
                                 cmdNewProduct.Parameters.Add("@AddedbyUserId", SqlDbType.VarChar, 100).Value = addedBy ?? (object)DBNull.Value;
-                                cmdNewProduct.Parameters.Add("@AddedOn", SqlDbType.DateTime).Value = DateTime.Now;
+                                cmdNewProduct.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
 
                                 object scopeObj = cmdNewProduct.ExecuteScalar();
                                 if (scopeObj != null && scopeObj != DBNull.Value)
                                 {
-                                    // SCOPE_IDENTITY() returns numeric (decimal) for SQL Server — convert safely
                                     decimal scopeDec;
                                     if (decimal.TryParse(scopeObj.ToString(), out scopeDec))
-                                    {
                                         newId = Convert.ToInt32(scopeDec);
-                                    }
                                 }
                             }
 
-                            // 2) Insert into tbl_stock (use string ProductID field)
-                            string queryStock = @"INSERT INTO tbl_stock (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate, ShippedToStoreId, ShippedToStoreName) VALUES (@ProductID, @ProductName, @Quantity, @SaleRate, @TaxRate, @ShippedToStoreId, @ShippedToStoreName);";
-
-                            using (var cmdStock = new SqlCommand(queryStock, conn, transaction))
+                            string queryStock = @"INSERT INTO tbl_stock (Product_id, Product_name, Quantity, Sail_Rate, Service_tax_rate, ShippedToStoreId, ShippedToStoreName)
+                                                  VALUES (@ProductID, @ProductName, @Quantity, @SaleRate, @TaxRate, @ShippedToStoreId, @ShippedToStoreName);";
+                            using (SqlCommand cmdStock = new SqlCommand(queryStock, conn, transaction))
                             {
                                 cmdStock.Parameters.Add("@ProductID", SqlDbType.VarChar, 100).Value = productid ?? (object)DBNull.Value;
                                 cmdStock.Parameters.Add("@ProductName", SqlDbType.NVarChar, 400).Value = productName ?? (object)DBNull.Value;
                                 cmdStock.Parameters.Add("@Quantity", SqlDbType.Decimal).Value = quantity;
-                                cmdStock.Parameters["@Quantity"].Scale = 3; cmdStock.Parameters["@Quantity"].Precision = 18;
+                                cmdStock.Parameters["@Quantity"].Scale = 3;
+                                cmdStock.Parameters["@Quantity"].Precision = 18;
                                 cmdStock.Parameters.Add("@SaleRate", SqlDbType.Decimal).Value = saleRate;
-                                cmdStock.Parameters["@SaleRate"].Scale = 2; cmdStock.Parameters["@SaleRate"].Precision = 18;
+                                cmdStock.Parameters["@SaleRate"].Scale = 2;
+                                cmdStock.Parameters["@SaleRate"].Precision = 18;
                                 cmdStock.Parameters.Add("@TaxRate", SqlDbType.Decimal).Value = taxRate;
-                                cmdStock.Parameters["@TaxRate"].Scale = 2; cmdStock.Parameters["@TaxRate"].Precision = 5;
+                                cmdStock.Parameters["@TaxRate"].Scale = 2;
+                                cmdStock.Parameters["@TaxRate"].Precision = 5;
                                 cmdStock.Parameters.Add("@ShippedToStoreId", SqlDbType.VarChar, 50).Value = "STR001";
                                 cmdStock.Parameters.Add("@ShippedToStoreName", SqlDbType.VarChar, 200).Value = "Central Warehouse";
-
                                 cmdStock.ExecuteNonQuery();
                             }
 
-                            // 3) Commit the transaction if both inserts succeeded
-                            transaction.Commit();
+                            InsertSystemNotification(
+                                "Product Created",
+                                "Product '" + productName + "' (Id=" + newId + ") was created.",
+                                "Success",
+                                conn, transaction);
 
-                            PanelOK.Visible = true;
-                            lblOk.Text = $"New product created (Id={newId}). Opening stock recorded.";
-                            lblSimilar.Text = ""; // clear similar message
+                            transaction.Commit();
+                            ShowOk("New product created (Id=" + newId + "). Opening stock recorded.");
+                            lblSimilar.Text = "";
                         }
                         catch (SqlException sqlex)
                         {
-                            try
-                            {
-                                transaction.Rollback();
-                            }
-                            catch { /* ignore rollback failures */ }
-
+                            try { transaction.Rollback(); } catch { }
+                            System.Diagnostics.Debug.WriteLine(sqlex.ToString());
                             if (sqlex.Number == 2627 || sqlex.Number == 2601)
-                            {
-                                PanelError.Visible = true;
-                                lblErrorMsg.Text = "A product with the same name was created by someone else just now. Please refresh and try again (or choose the existing product).";
-                            }
+                                ShowErr("A product with the same name was created by someone else just now. Please refresh and try again.");
                             else
-                            {
-                                PanelError.Visible = true;
-                                lblErrorMsg.Text = "SQL Error: " + sqlex.Message;
-                            }
+                                ShowErr("An error occurred while saving the product. Please try again.");
                             return;
                         }
                         catch (Exception exTrans)
                         {
                             try { transaction.Rollback(); } catch { }
-                            PanelError.Visible = true;
-                            lblErrorMsg.Text = "Error: " + exTrans.Message;
+                            System.Diagnostics.Debug.WriteLine(exTrans.ToString());
+                            ShowErr("An error occurred while saving the product. Please try again.");
                             return;
                         }
-                    } // using transaction
-                } // using conn
+                    }
+                }
             }
             catch (Exception ex)
             {
-                PanelError.Visible = true;
-                lblErrorMsg.Text = "Error: " + ex.Message;
-            }
-            finally
-            {
-                try { if (DbCL.Conn != null && DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close(); } catch { }
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowErr("An error occurred while saving the product. Please try again.");
             }
 
-            // Refresh UI list / grid
             Binddata();
         }
 
         public class DuplicateInfoResult
         {
             public bool foundExact { get; set; }
-            public int existingId { get; set; }            // Id if foundExact==true
-            public string productID { get; set; }          // ProductID string if available
-            public List<string> similar { get; set; }      // similar product names (informational)
+            public int existingId { get; set; }
+            public string productID { get; set; }
+            public List<string> similar { get; set; }
         }
 
         [WebMethod]
@@ -585,163 +368,175 @@ namespace Bill_Software.corporate.business.app
         public static DuplicateInfoResult GetDuplicateInfo(string productName, string category)
         {
             var result = new DuplicateInfoResult { foundExact = false, existingId = 0, productID = null, similar = new List<string>() };
-
             if (string.IsNullOrWhiteSpace(productName) || string.IsNullOrWhiteSpace(category))
                 return result;
 
             string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-
-            // normalize incoming name for exact compare
             string normName = productName.Trim().ToLower();
+            int companyId = CompanyContext.CurrentCompanyID;
 
-            using (var conn = new SqlConnection(cs))
-            using (var cmd = conn.CreateCommand())
+            using (SqlConnection conn = new SqlConnection(cs))
             {
                 conn.Open();
-
-                // 1) exact match check (normalized)
-                cmd.CommandText = @"
-            SELECT TOP(1) Id, ProductID, ProductName
-            FROM dbo.tbl_NewProduct
-            WHERE ProductOrServiceCat = @cat
-              AND LOWER(LTRIM(RTRIM(ProductName))) = @normName";
-                cmd.Parameters.AddWithValue("@cat", category);
-                cmd.Parameters.AddWithValue("@normName", normName);
-
-                using (var rdr = cmd.ExecuteReader())
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    if (rdr.Read())
+                    cmd.CommandText = @"
+                        SELECT TOP(1) Id, ProductID, ProductName
+                        FROM dbo.tbl_NewProduct
+                        WHERE CompanyID=@CompanyID
+                          AND ProductOrServiceCat=@cat
+                          AND LOWER(LTRIM(RTRIM(ProductName)))=@normName
+                          AND (DeleteMode=0 OR DeleteMode IS NULL)";
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                    cmd.Parameters.AddWithValue("@cat", category);
+                    cmd.Parameters.AddWithValue("@normName", normName);
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        result.foundExact = true;
-                        result.existingId = rdr["Id"] != DBNull.Value ? Convert.ToInt32(rdr["Id"]) : 0;
-                        result.productID = rdr["ProductID"] != DBNull.Value ? rdr["ProductID"].ToString() : null;
-                        // we can return early or still fill similar items below (I will still fill similar after closing reader)
-                    }
-                }
-
-                // 2) fetch similar names (informational)
-                using (var cmd2 = conn.CreateCommand())
-                {
-                    cmd2.CommandText = @"
-                SELECT TOP(10) ProductName
-                FROM dbo.tbl_NewProduct
-                WHERE ProductOrServiceCat = @cat
-                  AND ProductName LIKE @like
-                ORDER BY ProductName";
-                    cmd2.Parameters.AddWithValue("@cat", category);
-                    cmd2.Parameters.AddWithValue("@like", "%" + productName + "%");
-
-                    using (var rdr2 = cmd2.ExecuteReader())
-                    {
-                        while (rdr2.Read())
+                        if (rdr.Read())
                         {
-                            result.similar.Add(rdr2["ProductName"].ToString());
+                            result.foundExact = true;
+                            result.existingId = rdr["Id"] != DBNull.Value ? Convert.ToInt32(rdr["Id"]) : 0;
+                            result.productID = rdr["ProductID"] != DBNull.Value ? rdr["ProductID"].ToString() : null;
                         }
                     }
                 }
-            }
 
+                using (SqlCommand cmd2 = conn.CreateCommand())
+                {
+                    cmd2.CommandText = @"
+                        SELECT TOP(10) ProductName
+                        FROM dbo.tbl_NewProduct
+                        WHERE CompanyID=@CompanyID
+                          AND ProductOrServiceCat=@cat
+                          AND ProductName LIKE @like
+                          AND (DeleteMode=0 OR DeleteMode IS NULL)
+                        ORDER BY ProductName";
+                    cmd2.Parameters.AddWithValue("@CompanyID", companyId);
+                    cmd2.Parameters.AddWithValue("@cat", category);
+                    cmd2.Parameters.AddWithValue("@like", "%" + productName + "%");
+                    using (SqlDataReader rdr2 = cmd2.ExecuteReader())
+                    {
+                        while (rdr2.Read())
+                            result.similar.Add(rdr2["ProductName"].ToString());
+                    }
+                }
+            }
             return result;
         }
-
-
-        //protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
-        //{
-        //    string Id = Convert.ToString(e.CommandArgument);
-
-        //    if (e.CommandName == "Delete")
-        //    {
-        //        DbCL.executeRdr("UPDATE tbl_NewProduct SET ViewMode=0, DeleteMode=1, DeletedOn=@DeletedOn, DeletedByUserId=@DeletedByUserId where Id='" + Id + "'");
-        //        PanelOK.Visible = true;
-        //        lblOk.Text = "Data Deleted Successfully...";
-        //    }
-        //    else if (e.CommandName == "Edit")
-        //    {
-        //        Response.Redirect("NewUpdate_product.aspx?Id=" + Id);
-        //    }
-        //    Binddata();
-        //}
 
         protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
         {
             string Id = Convert.ToString(e.CommandArgument);
 
+            if (e.CommandName == "Edit")
+            {
+                Response.Redirect("NewUpdate_product.aspx?Id=" + Id);
+                return;
+            }
+
+            if (e.CommandName != "Delete")
+            {
+                Binddata();
+                return;
+            }
+
+            int idVal;
+            if (!int.TryParse(Id, out idVal))
+            {
+                ShowErr("Invalid product id.");
+                return;
+            }
+
+            string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+
             try
             {
-                if (e.CommandName == "Delete")
+                using (SqlConnection conn = new SqlConnection(ConnString))
                 {
-                    string query = "UPDATE tbl_NewProduct SET ViewMode=0, DeleteMode=1, DeletedOn=@DeletedOn, DeletedByUserId=@DeletedByUserId WHERE Id=@Id";
-
-                    // Initialize database connection
-                    DbCL.Sqlconnection();
-                    DbCL.ConnectDb();
-
-                    using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
+                    conn.Open();
+                    using (SqlTransaction trans = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@DeletedOn", DateTime.Now);
-                        cmd.Parameters.AddWithValue("@DeletedByUserId", Session["USERID"].ToString());
-                        cmd.Parameters.AddWithValue("@Id", Id);
+                        try
+                        {
+                            string prodName = "";
+                            using (SqlCommand cmdLookup = new SqlCommand(
+                                "SELECT ProductName FROM tbl_NewProduct WHERE Id=@Id AND CompanyID=@CompanyID", conn, trans))
+                            {
+                                cmdLookup.Parameters.AddWithValue("@Id", idVal);
+                                cmdLookup.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                object o = cmdLookup.ExecuteScalar();
+                                if (o == null || o == DBNull.Value)
+                                {
+                                    trans.Rollback();
+                                    ShowErr("Product not found for this company.");
+                                    return;
+                                }
+                                prodName = o.ToString();
+                            }
 
-                        cmd.ExecuteNonQuery();
+                            int affected;
+                            using (SqlCommand cmd = new SqlCommand(
+                                @"UPDATE tbl_NewProduct
+                                  SET ViewMode=0, DeleteMode=1, DeletedOn=GETDATE(), DeletedByUserId=@DeletedByUserId
+                                  WHERE Id=@Id AND CompanyID=@CompanyID", conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@DeletedByUserId", userId);
+                                cmd.Parameters.AddWithValue("@Id", idVal);
+                                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                affected = cmd.ExecuteNonQuery();
+                            }
+
+                            if (affected == 0)
+                            {
+                                trans.Rollback();
+                                ShowErr("Product not found for this company.");
+                                return;
+                            }
+
+                            InsertSystemNotification(
+                                "Product Deactivated",
+                                "Product '" + prodName + "' was deactivated.",
+                                "Warning",
+                                conn, trans);
+
+                            trans.Commit();
+                            ShowOk("Data Deleted Successfully...");
+                        }
+                        catch (Exception ex)
+                        {
+                            try { trans.Rollback(); } catch { }
+                            System.Diagnostics.Debug.WriteLine(ex.ToString());
+                            ShowErr("An error occurred while deleting the product. Please try again.");
+                        }
                     }
-
-                    PanelOK.Visible = true;
-                    lblOk.Text = "Data Deleted Successfully...";
-                }
-                else if (e.CommandName == "Edit")
-                {
-                    Response.Redirect("NewUpdate_product.aspx?Id=" + Id);
                 }
             }
             catch (Exception ex)
             {
-                PanelOK.Visible = true;
-                lblOk.Text = "Error: " + ex.Message;
-            }
-            finally
-            {
-                // Ensure proper database connection handling
-                if (DbCL.Conn != null && DbCL.Conn.State == ConnectionState.Open)
-                {
-                    DbCL.Conn.Close();
-                }
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowErr("An error occurred while deleting the product. Please try again.");
             }
 
             Binddata();
         }
 
-
         protected void cmdProduct_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string query = "select id from tbl_NewparentProduct where ProductOrServiceCat=@ProductOrServiceCat";
-            SqlParameter[] pram = {
-                new SqlParameter("@ProductOrServiceCat",cmdProduct.Text)
-            };
-            DataTable dt = new DataTable();
-            dt = DbCL.SPreturn_dt(query, pram);
-            if (dt.Rows.Count > 0)
+            using (SqlConnection conn = new SqlConnection(ConnString))
+            using (SqlCommand cmd = new SqlCommand(
+                "SELECT id FROM tbl_NewparentProduct WHERE ProductOrServiceCat=@ProductOrServiceCat AND CompanyID=@CompanyID", conn))
             {
-                int pid = Convert.ToInt32(dt.Rows[0]["id"]);
-                //string ProductCode = dt.Rows[0]["ProductCode"].ToString();
-                //string gstRate = dt.Rows[0]["gstRate"].ToString();
-                //Session["ProductCode"] = ProductCode;
-                //Session["gstRate"] = gstRate;
-                Session["pid"] = pid;
-                BinddataByServiceCategory(pid);
+                cmd.Parameters.AddWithValue("@ProductOrServiceCat", cmdProduct.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                conn.Open();
+                object o = cmd.ExecuteScalar();
+                if (o != null && o != DBNull.Value)
+                {
+                    int pid = Convert.ToInt32(o);
+                    Session["pid"] = pid;
+                    BinddataByServiceCategory(pid);
+                }
             }
         }
-
-        private void BinddataByServiceCategory(int ParentId)
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Id,Product_code,ProductOrServiceCat,Product_catagory,Sail_Rate,Tax_Rate,Type,ProductName,Unit,Brand,parentId from tbl_NewProduct where parentId=@parentId order by Id asc";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            cmd.Parameters.AddWithValue("@parentId", ParentId);
-            DataList1.DataSource = cmd.ExecuteReader();
-            DataList1.DataBind();
-            DbCL.Conn.Close();
-        }
-
     }
 }
