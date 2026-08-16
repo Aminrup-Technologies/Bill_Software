@@ -38,29 +38,28 @@
             width: 100% !important; max-width: 100%; box-sizing: border-box; padding: 8px 10px;
             border: 1px solid var(--border-color); border-radius: 4px;
         }
+        .form-grid-aligned select,
+        .form-grid-aligned .dropdown_style,
+        .form-grid-aligned .form-control,
+        .form-grid-aligned .form-control option,
+        .form-grid-aligned select option {
+            color: #0f172a !important; background-color: #ffffff !important;
+        }
+        .input-group { display: flex; gap: 8px; align-items: flex-start; }
+        .input-group .textbox_U_style { flex: 1; }
+        .input-group button { white-space: nowrap; margin-top: 0; }
+        .avail-ok { color: #15803d; font-size: 12px; font-weight: 600; }
+        .avail-bad { color: #b91c1c; font-size: 12px; font-weight: 600; }
+        .img-preview { width: 64px; height: 64px; object-fit: cover; border: 1px solid var(--border-color); border-radius: 4px; display: none; }
+        .img-preview.is-on { display: inline-block; }
+        .thumb-40 { width: 40px; height: 40px; object-fit: cover; border-radius: 3px; border: 1px solid var(--border-color); }
         .span-2 { grid-column: span 2; }
         .span-4 { grid-column: span 4; }
         .action-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .grid-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-        #txtGridSearch {
-            min-width: 220px; padding: 8px 10px; border: 1px solid var(--border-color);
-            border-radius: 4px; font-size: 13px; box-sizing: border-box;
-        }
+        .grid-toolbar .search-wrap { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .alert-ok, .alert-err { padding: 10px 12px; border-radius: 4px; margin-bottom: 14px; }
-        .catalog-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .catalog-header td {
-            background: var(--primary-color); color: #fff; font-weight: 700;
-            padding: 8px 6px; text-align: left; border: 1px solid #0f4a66;
-            position: sticky; top: 0; z-index: 2;
-        }
-        .catalog-item-row td { padding: 10px 6px; border: 1px solid var(--border-color); vertical-align: top; }
-        .catalog-item-row { background: #fff; }
-        .catalog-item-row:nth-child(even) { background: #f8fafc; }
-        .col-actions { width: 180px; }
-        .col-idents { width: 180px; }
-        .col-commercial { width: 170px; }
-        .col-unit { width: 140px; }
         .prod-primary { font-weight: 700; color: #0f172a; margin-bottom: 4px; }
         .badge {
             display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px;
@@ -97,12 +96,7 @@
             .form-grid-aligned { grid-template-columns: 1fr; }
             .span-2, .span-4 { grid-column: span 1; }
             .modal-grid { grid-template-columns: 1fr; }
-            .col-actions, .col-idents, .col-commercial, .col-unit { width: auto; }
         }
-        .table1 { border-collapse: collapse; width: 100%; }
-        .table1 td { text-align: left; border: 1px solid var(--border-color); }
-        .table2 { border-collapse: collapse; width: 100%; }
-        .table2 td { text-align: left; border: 1px solid var(--border-color); border-top: none; }
     </style>
     <script type="text/javascript">
         function showClientErr(text) {
@@ -160,7 +154,8 @@
                 '<%= txtSubProductsName.ClientID %>', '<%= txtproducttype.ClientID %>', '<%= TextBox1.ClientID %>',
                 '<%= txtBrand.ClientID %>', '<%= txtProductCode.ClientID %>', '<%= txtUnit.ClientID %>',
                 '<%= TextBox2.ClientID %>', '<%= TextBox3.ClientID %>', '<%= txtSalerate.ClientID %>',
-                '<%= txtfromDate.ClientID %>', '<%= TextBox4.ClientID %>', '<%= txtProductID.ClientID %>'
+                '<%= txtfromDate.ClientID %>', '<%= TextBox4.ClientID %>', '<%= txtProductID.ClientID %>',
+                '<%= txtOemUrl.ClientID %>'
             ];
             for (var i = 0; i < fields.length; i++) {
                 var field = document.getElementById(fields[i]);
@@ -173,6 +168,12 @@
             }
             var hf = document.getElementById('<%= hfEditProductID.ClientID %>');
             if (hf) hf.value = '';
+            var hfImg = document.getElementById('<%= hfProductImage.ClientID %>');
+            if (hfImg) hfImg.value = '';
+            var prev = document.getElementById('imgProductPreview');
+            if (prev) { prev.src = ''; prev.className = 'img-preview'; }
+            var av = document.getElementById('lblAvailability');
+            if (av) { av.className = ''; av.textContent = ''; }
             var btn = document.getElementById('<%= btnSave.ClientID %>');
             if (btn) btn.value = 'Save';
             return false;
@@ -180,15 +181,76 @@
         function ValidateDelete1() {
             return confirm('Want to Delete this Products?');
         }
-        function filterProductsGrid() {
-            var input = document.getElementById('txtGridSearch');
-            if (!input) return;
-            var q = (input.value || '').toUpperCase();
-            var rows = document.querySelectorAll('.catalog-item-row');
-            for (var i = 0; i < rows.length; i++) {
-                var t = (rows[i].innerText || rows[i].textContent || '').toUpperCase();
-                rows[i].style.display = (!q || t.indexOf(q) > -1) ? '' : 'none';
+        function checkDuplicateProduct() {
+            var nameEl = document.getElementById('<%= txtSubProductsName.ClientID %>');
+            var catEl = document.getElementById('<%= cmdProduct.ClientID %>');
+            var hf = document.getElementById('<%= hfEditProductID.ClientID %>');
+            var status = document.getElementById('lblAvailability');
+            if (!nameEl || !status) return false;
+            var name = (nameEl.value || '').replace(/^\s+|\s+$/g, '');
+            nameEl.value = name;
+            if (!name) {
+                status.className = 'avail-bad';
+                status.textContent = 'Enter a product name.';
+                return false;
             }
+            var cat = '';
+            if (catEl && catEl.selectedIndex > 0)
+                cat = (catEl.options[catEl.selectedIndex].text || '').replace(/^\s+|\s+$/g, '');
+            if (!cat || cat === '--Select--') {
+                status.className = 'avail-bad';
+                status.textContent = 'Select a category first.';
+                return false;
+            }
+            var excludeId = 0;
+            if (hf && hf.value) excludeId = parseInt(hf.value, 10) || 0;
+            status.className = '';
+            status.textContent = 'Checking...';
+            var url = window.location.pathname.replace(/\\/g, '/') + '/CheckDuplicateName';
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                body: JSON.stringify({ productName: name, category: cat, excludeId: excludeId }),
+                credentials: 'same-origin'
+            }).then(function (res) {
+                if (!res.ok) throw new Error('http');
+                return res.json();
+            }).then(function (data) {
+                var r = (data && typeof data.d !== 'undefined') ? data.d : data;
+                if (!r || r.checkedOk !== true) {
+                    status.className = 'avail-bad';
+                    status.textContent = 'Unable to check availability.';
+                    return;
+                }
+                if (r.isDuplicate === true) {
+                    status.className = 'avail-bad';
+                    status.textContent = 'Name already exists.';
+                } else {
+                    status.className = 'avail-ok';
+                    status.textContent = 'Name available.';
+                }
+            }).catch(function () {
+                status.className = 'avail-bad';
+                status.textContent = 'Unable to check availability.';
+            });
+            return false;
+        }
+        function previewImage(input) {
+            var prev = document.getElementById('imgProductPreview');
+            if (!input || !input.files || !input.files[0]) return;
+            var f = input.files[0];
+            var n = (f.name || '').toLowerCase();
+            if (!(n.lastIndexOf('.jpg') === n.length - 4 || n.lastIndexOf('.jpeg') === n.length - 5 || n.lastIndexOf('.png') === n.length - 4 || n.lastIndexOf('.webp') === n.length - 5)) {
+                input.value = '';
+                if (prev) { prev.src = ''; prev.className = 'img-preview'; }
+                showClientErr('Only .jpg, .png, .webp images are allowed.');
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                if (prev) { prev.src = e.target.result; prev.className = 'img-preview is-on'; }
+            };
+            reader.readAsDataURL(f);
         }
         function showProductModal(btn) {
             if (!btn) return false;
@@ -226,36 +288,10 @@
         prm.add_pageLoaded(function () {
             $(".datepicker").datepicker({ dateFormat: 'dd-M-yy', changeMonth: true, changeYear: true });
         });
-        function checkDuplicates() {
-            var productName = $("#<%= txtSubProductsName.ClientID %>").val().trim();
-            var category = $("#<%= cmdProduct.ClientID %> option:selected").text();
-            $("#<%= lblDupMessage.ClientID %>").text("");
-            $("#<%= lblSimilar.ClientID %>").text("");
-            if (!productName) {
-                $("#<%= lblDupMessage.ClientID %>").text("Please enter a product name to check.");
-                return;
-            }
-            PageMethods.GetDuplicateInfo(productName, category,
-                function (result) {
-                    if (result.foundExact) {
-                        var msg = "Exact product exists: Id=" + result.existingId;
-                        if (result.productID) msg += " (ProductID: " + result.productID + ")";
-                        $("#<%= lblDupMessage.ClientID %>").text(msg);
-                    } else {
-                        $("#<%= lblDupMessage.ClientID %>").text("No exact match found. You may proceed.");
-                    }
-                    if (result.similar && result.similar.length > 0) {
-                        $("#<%= lblSimilar.ClientID %>").text("Similar products: " + result.similar.join(" | "));
-                    }
-                },
-                function (err) {
-                    $("#<%= lblDupMessage.ClientID %>").text("Unable to check duplicates. Please try again.");
-                }
-            );
-        }
     </script>
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true"></asp:ScriptManager>
     <asp:HiddenField ID="hfEditProductID" runat="server" Value="" />
+    <asp:HiddenField ID="hfProductImage" runat="server" Value="" />
 
     <div class="page-header">
         <div class="hdr-icon">P</div>
@@ -282,13 +318,28 @@
             </asp:Panel>
 
             <div class="form-grid-aligned">
-                <div class="form-group">
+                <div class="form-group span-2">
                     <label><asp:Label ID="Label16" runat="server" Text="*" CssClass="req"></asp:Label> Category</label>
-                    <asp:DropDownList ID="cmdProduct" runat="server" CssClass="dropdown_style" AutoPostBack="True" OnSelectedIndexChanged="cmdProduct_SelectedIndexChanged"></asp:DropDownList>
+                    <asp:DropDownList ID="cmdProduct" runat="server" CssClass="dropdown_style form-control" AutoPostBack="True" OnSelectedIndexChanged="cmdProduct_SelectedIndexChanged"></asp:DropDownList>
                 </div>
+                <div class="form-group span-2">
+                    <label><asp:Label ID="Label18" runat="server" Text="*" CssClass="req"></asp:Label> Product Name</label>
+                    <div class="input-group">
+                        <asp:TextBox ID="txtSubProductsName" runat="server" CssClass="textbox_U_style"></asp:TextBox>
+                        <button type="button" class="btn_style" onclick="return checkDuplicateProduct();">Check Availability</button>
+                    </div>
+                    <span id="lblAvailability"></span>
+                    <asp:Button ID="btnCheckDup" runat="server" Text="Check Duplicates" OnClientClick="return checkDuplicateProduct();" CssClass="btn btn_style" style="display:none;" />
+                    <div id="dupResultPanel" class="dup-panel" style="display:none;">
+                        <asp:Label ID="lblDupMessage" runat="server" ForeColor="Crimson" />
+                        <br />
+                        <asp:Label ID="lblSimilar" runat="server" ForeColor="Gray" />
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label><asp:Label ID="Label17" runat="server" Text="*" CssClass="req"></asp:Label> Type</label>
-                    <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style">
+                    <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style form-control">
                         <asp:ListItem>--Select--</asp:ListItem>
                         <asp:ListItem>Product</asp:ListItem>
                         <asp:ListItem>Service</asp:ListItem>
@@ -296,26 +347,11 @@
                 </div>
                 <div class="form-group">
                     <label>Product ID</label>
-                    <asp:TextBox ID="txtProductID" runat="server" CssClass="textbox_U_style" ReadOnly="true" placeholder="Auto on save"></asp:TextBox>
+                    <asp:TextBox ID="txtProductID" runat="server" CssClass="textbox_U_style" ReadOnly="true"></asp:TextBox>
                 </div>
                 <div class="form-group">
                     <label><asp:Label ID="Label22" runat="server" Text="*" CssClass="req"></asp:Label> HSN / SAC</label>
                     <asp:TextBox ID="txtProductCode" runat="server" CssClass="textbox_U_style" onkeypress="return validate(event)"></asp:TextBox>
-                </div>
-
-                <div class="form-group span-2">
-                    <label><asp:Label ID="Label18" runat="server" Text="*" CssClass="req"></asp:Label> Product Name</label>
-                    <asp:TextBox ID="txtSubProductsName" runat="server" CssClass="textbox_U_style"></asp:TextBox>
-                    <asp:Button ID="btnCheckDup" runat="server" Text="Check Duplicates" OnClientClick="checkDuplicates(); return false;" CssClass="btn btn_style" style="margin-top:6px;" />
-                    <div id="dupResultPanel" class="dup-panel">
-                        <asp:Label ID="lblDupMessage" runat="server" ForeColor="Crimson" />
-                        <br />
-                        <asp:Label ID="lblSimilar" runat="server" ForeColor="Gray" />
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label><asp:Label ID="Label21" runat="server" Text="*" CssClass="req"></asp:Label> Brand</label>
-                    <asp:TextBox ID="txtBrand" runat="server" CssClass="textbox_U_style"></asp:TextBox>
                 </div>
                 <div class="form-group">
                     <label><asp:Label ID="Label23" runat="server" Text="*" CssClass="req"></asp:Label> Unit</label>
@@ -332,28 +368,43 @@
                 </div>
                 <div class="form-group">
                     <label><asp:Label ID="Label25" runat="server" Text="*" CssClass="req"></asp:Label> GST / Tax</label>
-                    <asp:DropDownList ID="cmbtax" runat="server" CssClass="dropdown_style"></asp:DropDownList>
+                    <asp:DropDownList ID="cmbtax" runat="server" CssClass="dropdown_style form-control"></asp:DropDownList>
                 </div>
+                <div class="form-group">
+                    <label><asp:Label ID="Label21" runat="server" Text="*" CssClass="req"></asp:Label> Brand</label>
+                    <asp:TextBox ID="txtBrand" runat="server" CssClass="textbox_U_style"></asp:TextBox>
+                </div>
+
+                <div class="form-group span-2">
+                    <label>OEM URL</label>
+                    <asp:TextBox ID="txtOemUrl" runat="server" CssClass="textbox_U_style"></asp:TextBox>
+                </div>
+                <div class="form-group span-2">
+                    <label>Product Image</label>
+                    <asp:FileUpload ID="fuProductImage" runat="server" onchange="previewImage(this);" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+                    <img id="imgProductPreview" class="img-preview" alt="" />
+                </div>
+
                 <div class="form-group">
                     <label>MOQ Value</label>
                     <asp:TextBox ID="TextBox3" runat="server" CssClass="textbox_U_style" onkeypress="return validate(event)"></asp:TextBox>
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date</label>
+                    <asp:TextBox ID="txtfromDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="100%"></asp:TextBox>
+                </div>
+                <div class="form-group span-2">
+                    <label>Sale Note</label>
+                    <asp:TextBox ID="TextBox4" runat="server" CssClass="textbox_U_style" Text="N/A"></asp:TextBox>
                 </div>
 
                 <div class="form-group span-4">
                     <label>Specification / Remarks</label>
                     <asp:TextBox ID="txtproducttype" runat="server" CssClass="textbox_U_style"></asp:TextBox>
                 </div>
-                <div class="form-group span-2">
+                <div class="form-group span-4">
                     <label>Extra Specifications</label>
                     <asp:TextBox ID="TextBox1" runat="server" CssClass="textbox_U_style"></asp:TextBox>
-                </div>
-                <div class="form-group">
-                    <label>Expiry Date</label>
-                    <asp:TextBox ID="txtfromDate" runat="server" BorderColor="#CCCCCC" BorderStyle="Solid" BorderWidth="1px" class="datepicker" Font-Names="Tahoma, Geneva, sans-serif" Font-Size="11px" Height="22px" Width="100%"></asp:TextBox>
-                </div>
-                <div class="form-group">
-                    <label>Sale Note</label>
-                    <asp:TextBox ID="TextBox4" runat="server" CssClass="textbox_U_style" Text="N/A"></asp:TextBox>
                 </div>
             </div>
 
@@ -365,80 +416,95 @@
         </div>
 
         <div class="box-panel">
-            <div class="grid-toolbar">
-                <input type="text" id="txtGridSearch" placeholder="Search name / category / type / ID / HSN..."
-                    onkeyup="filterProductsGrid();" oninput="filterProductsGrid();" autocomplete="off" />
-            </div>
             <div class="box-title">Product Catalog / Data Directory</div>
+            <div class="grid-toolbar">
+                <div class="search-wrap">
+                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="textbox_U_style" Width="240px" placeholder="Search name / HSN / ID / brand / category"></asp:TextBox>
+                    <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn_style" OnClick="btnSearch_Click" />
+                </div>
+                <div class="search-wrap">
+                    <span style="font-size:12px;color:#64748b;">Page size</span>
+                    <asp:DropDownList ID="ddlPageSize" runat="server" AutoPostBack="true" CssClass="dropdown_style form-control"
+                        OnSelectedIndexChanged="ddlPageSize_SelectedIndexChanged" Width="80px">
+                        <asp:ListItem Text="10" Value="10" Selected="True"></asp:ListItem>
+                        <asp:ListItem Text="25" Value="25"></asp:ListItem>
+                        <asp:ListItem Text="50" Value="50"></asp:ListItem>
+                        <asp:ListItem Text="100" Value="100"></asp:ListItem>
+                    </asp:DropDownList>
+                </div>
+            </div>
             <div class="table-responsive">
-                <asp:DataList ID="DataList1" runat="server" BorderColor="#e2e8f0"
-                    BorderStyle="Solid" BorderWidth="1px" Font-Bold="False" Font-Size="10px"
-                    ForeColor="#2D2D2D" GridLines="Both" Width="100%"
-                    OnItemCommand="DataList1_ItemCommand" CssClass="catalog-table">
-                    <FooterStyle BackColor="White" ForeColor="#000066" />
-                    <AlternatingItemStyle BackColor="#f8fafc" />
-                    <SeparatorStyle BorderColor="#e2e8f0" BorderStyle="Solid" BorderWidth="1px" />
-                    <SelectedItemStyle BackColor="#669999" ForeColor="White" Font-Bold="True" />
-                    <HeaderStyle BackColor="#19658A" ForeColor="White" Font-Bold="True" />
-                    <HeaderTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table1 catalog-table catalog-header" width="100%">
-                            <tr>
-                                <td class="col-actions">Actions</td>
-                                <td>Product / Category</td>
-                                <td class="col-idents">Identifiers</td>
-                                <td class="col-commercial">Commercial</td>
-                                <td class="col-unit">Unit / Brand</td>
-                            </tr>
-                        </table>
-                    </HeaderTemplate>
-                    <ItemTemplate>
-                        <table border="0" cellpadding="0" cellspacing="0" class="table2 catalog-table catalog-item-row" width="100%">
-                            <tr>
-                                <td class="col-actions">
-                                    <div class="action-links">
-                                        <button type="button" class="btn-viewmore"
-                                            data-pid='<%# Server.HtmlEncode(Convert.ToString(Eval("ProductID"))) %>'
-                                            data-name='<%# Server.HtmlEncode(Convert.ToString(Eval("ProductName"))) %>'
-                                            data-cat='<%# Server.HtmlEncode(Convert.ToString(Eval("ProductOrServiceCat"))) %>'
-                                            data-type='<%# Server.HtmlEncode(Convert.ToString(Eval("Type"))) %>'
-                                            data-hsn='<%# Server.HtmlEncode(Convert.ToString(Eval("Product_code"))) %>'
-                                            data-brand='<%# Server.HtmlEncode(Convert.ToString(Eval("Brand"))) %>'
-                                            data-unit='<%# Server.HtmlEncode(Convert.ToString(Eval("Unit"))) %>'
-                                            data-srate='<%# Server.HtmlEncode(Convert.ToString(Eval("Sail_Rate"))) %>'
-                                            data-prate='<%# Server.HtmlEncode(Convert.ToString(Eval("Purches_Rate"))) %>'
-                                            data-tax='<%# Server.HtmlEncode(Convert.ToString(Eval("Tax_Rate"))) %>'
-                                            data-spec='<%# Server.HtmlEncode(Convert.ToString(Eval("Specification"))) %>'
-                                            onclick="return showProductModal(this);">View More</button>
-                                        <asp:ImageButton ID="ImageButton3" runat="server" CommandName="EditProduct" CommandArgument='<%# Eval("Id") %>'
-                                            ImageUrl="~/corporate/business/WebImages/edit1.png" ToolTip="Edit" />
-                                        <asp:ImageButton ID="ImageButton1" runat="server" CommandName="DeleteProduct" CommandArgument='<%# Eval("Id") %>'
-                                            ImageUrl="~/corporate/business/WebImages/delete.png" ToolTip="Deactivate" OnClientClick="return ValidateDelete1();" />
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="prod-primary"><asp:Label ID="Label3" runat="server" Text='<%# Eval("ProductName") %>'></asp:Label></div>
-                                    <span class="badge"><asp:Label ID="addshowname" runat="server" Text='<%# Eval("ProductOrServiceCat") %>'></asp:Label></span>
-                                    <span class="badge"><asp:Label ID="Label2" runat="server" Text='<%# Eval("Type") %>'></asp:Label></span>
-                                    <asp:Label ID="ID" runat="server" Text='<%# Eval("Id") %>' style="display:none;"></asp:Label>
-                                    <asp:Label ID="Label15" runat="server" Text='<%# Eval("Product_catagory") %>' style="display:none;"></asp:Label>
-                                </td>
-                                <td class="col-idents">
-                                    <div><asp:Label ID="lblGridPid" runat="server" Text='<%# Eval("ProductID") %>'></asp:Label></div>
-                                    <div class="rate-sub">HSN: <asp:Label ID="Label13" runat="server" Text='<%# Eval("Product_code") %>'></asp:Label></div>
-                                </td>
-                                <td class="col-commercial">
-                                    <div class="rate-main"><asp:Label ID="Label4" runat="server" Text='<%# Eval("Sail_Rate") %>'></asp:Label></div>
-                                    <div class="rate-sub">Pur: <asp:Label ID="Label10b" runat="server" Text='<%# Eval("Purches_Rate") %>'></asp:Label>
-                                        · GST: <asp:Label ID="Label7" runat="server" Text='<%# Eval("Tax_Rate") %>'></asp:Label>%</div>
-                                </td>
-                                <td class="col-unit">
-                                    <div><asp:Label ID="Label6u" runat="server" Text='<%# Eval("Unit") %>'></asp:Label></div>
-                                    <div class="rate-sub"><asp:Label ID="Label10" runat="server" Text='<%# Eval("Brand") %>'></asp:Label></div>
-                                </td>
-                            </tr>
-                        </table>
-                    </ItemTemplate>
-                </asp:DataList>
+                <asp:GridView ID="gridProducts" runat="server" AutoGenerateColumns="False" CssClass="catalog-table"
+                    Width="100%" AllowPaging="True" PageSize="10" GridLines="Both"
+                    OnPageIndexChanging="gridProducts_PageIndexChanging"
+                    OnRowCommand="gridProducts_RowCommand"
+                    BorderColor="#e2e8f0" BorderStyle="Solid" BorderWidth="1px" Font-Size="10px"
+                    HeaderStyle-BackColor="#19658A" HeaderStyle-ForeColor="White" HeaderStyle-Font-Bold="True"
+                    AlternatingRowStyle-BackColor="#f8fafc" EmptyDataText="No products found.">
+                    <Columns>
+                        <asp:TemplateField HeaderText="Img" ItemStyle-Width="50px">
+                            <ItemTemplate>
+                                <asp:Image ID="imgThumb" runat="server" CssClass="thumb-40"
+                                    ImageUrl='<%# Eval("ProductImage") %>'
+                                    Visible='<%# Eval("ProductImage") != null && !string.IsNullOrEmpty(Convert.ToString(Eval("ProductImage"))) %>'
+                                    onerror="this.style.display='none';" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Actions" ItemStyle-Width="160px">
+                            <ItemTemplate>
+                                <div class="action-links">
+                                    <button type="button" class="btn-viewmore"
+                                        data-pid='<%# Server.HtmlEncode(Convert.ToString(Eval("ProductID"))) %>'
+                                        data-name='<%# Server.HtmlEncode(Convert.ToString(Eval("ProductName"))) %>'
+                                        data-cat='<%# Server.HtmlEncode(Convert.ToString(Eval("ProductOrServiceCat"))) %>'
+                                        data-type='<%# Server.HtmlEncode(Convert.ToString(Eval("Type"))) %>'
+                                        data-hsn='<%# Server.HtmlEncode(Convert.ToString(Eval("Product_code"))) %>'
+                                        data-brand='<%# Server.HtmlEncode(Convert.ToString(Eval("Brand"))) %>'
+                                        data-unit='<%# Server.HtmlEncode(Convert.ToString(Eval("Unit"))) %>'
+                                        data-srate='<%# Server.HtmlEncode(Convert.ToString(Eval("Sail_Rate"))) %>'
+                                        data-prate='<%# Server.HtmlEncode(Convert.ToString(Eval("Purches_Rate"))) %>'
+                                        data-tax='<%# Server.HtmlEncode(Convert.ToString(Eval("Tax_Rate"))) %>'
+                                        data-spec='<%# Server.HtmlEncode(Convert.ToString(Eval("Specification"))) %>'
+                                        onclick="return showProductModal(this);">View More</button>
+                                    <asp:ImageButton ID="ImageButton3" runat="server" CommandName="EditProduct" CommandArgument='<%# Eval("Id") %>'
+                                        ImageUrl="~/corporate/business/WebImages/edit1.png" ToolTip="Edit" />
+                                    <asp:ImageButton ID="ImageButton1" runat="server" CommandName="DeleteProduct" CommandArgument='<%# Eval("Id") %>'
+                                        ImageUrl="~/corporate/business/WebImages/delete.png" ToolTip="Deactivate" OnClientClick="return ValidateDelete1();" />
+                                </div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Product / Category">
+                            <ItemTemplate>
+                                <div class="prod-primary"><asp:Label ID="Label3" runat="server" Text='<%# Eval("ProductName") %>'></asp:Label></div>
+                                <span class="badge"><asp:Label ID="addshowname" runat="server" Text='<%# Eval("ProductOrServiceCat") %>'></asp:Label></span>
+                                <span class="badge"><asp:Label ID="Label2" runat="server" Text='<%# Eval("Type") %>'></asp:Label></span>
+                                <asp:Label ID="ID" runat="server" Text='<%# Eval("Id") %>' style="display:none;"></asp:Label>
+                                <asp:Label ID="Label15" runat="server" Text='<%# Eval("Product_catagory") %>' style="display:none;"></asp:Label>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Identifiers" ItemStyle-Width="140px">
+                            <ItemTemplate>
+                                <div><asp:Label ID="lblGridPid" runat="server" Text='<%# Eval("ProductID") %>'></asp:Label></div>
+                                <div class="rate-sub">HSN: <asp:Label ID="Label13" runat="server" Text='<%# Eval("Product_code") %>'></asp:Label></div>
+                                <%# FormatOemLink(Eval("OEMUrl")) %>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Commercial" ItemStyle-Width="140px">
+                            <ItemTemplate>
+                                <div class="rate-main"><asp:Label ID="Label4" runat="server" Text='<%# Eval("Sail_Rate") %>'></asp:Label></div>
+                                <div class="rate-sub">Pur: <asp:Label ID="Label10b" runat="server" Text='<%# Eval("Purches_Rate") %>'></asp:Label>
+                                    · GST: <asp:Label ID="Label7" runat="server" Text='<%# Eval("Tax_Rate") %>'></asp:Label>%</div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                        <asp:TemplateField HeaderText="Unit / Brand" ItemStyle-Width="120px">
+                            <ItemTemplate>
+                                <div><asp:Label ID="Label6u" runat="server" Text='<%# Eval("Unit") %>'></asp:Label></div>
+                                <div class="rate-sub"><asp:Label ID="Label10" runat="server" Text='<%# Eval("Brand") %>'></asp:Label></div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
+                <asp:DataList ID="DataList1" runat="server" Visible="false" OnItemCommand="DataList1_ItemCommand"></asp:DataList>
             </div>
         </div>
     </div>

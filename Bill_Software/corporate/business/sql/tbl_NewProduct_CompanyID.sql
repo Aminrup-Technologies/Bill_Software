@@ -30,3 +30,25 @@ BEGIN
     ADD Purches_Rate DECIMAL(18,2) NULL;
 END
 GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[tbl_NewProduct]')
+    AND name = 'OEMUrl'
+)
+BEGIN
+    ALTER TABLE [dbo].[tbl_NewProduct]
+    ADD OEMUrl NVARCHAR(500) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[tbl_NewProduct]')
+    AND name = 'ProductImage'
+)
+BEGIN
+    ALTER TABLE [dbo].[tbl_NewProduct]
+    ADD ProductImage NVARCHAR(500) NULL;
+END
+GO
