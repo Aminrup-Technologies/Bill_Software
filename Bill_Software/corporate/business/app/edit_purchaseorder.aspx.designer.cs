@@ -112,13 +112,13 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Label lblErrorMsg;
         
         /// <summary>
-        /// WizardMultiView control.
+        /// mvPOWizard control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.MultiView WizardMultiView;
+        protected global::System.Web.UI.WebControls.MultiView mvPOWizard;
         
         /// <summary>
         /// View0_Search control.
@@ -193,13 +193,13 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.DataList DataList1;
         
         /// <summary>
-        /// View1_BasicDetails control.
+        /// vwHeader control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.View View1_BasicDetails;
+        protected global::System.Web.UI.WebControls.View vwHeader;
         
         /// <summary>
         /// lbl_recordno control.
@@ -463,13 +463,13 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Button btnNext1;
         
         /// <summary>
-        /// View2_Catalog control.
+        /// vwCatalog control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.View View2_Catalog;
+        protected global::System.Web.UI.WebControls.View vwCatalog;
         
         /// <summary>
         /// cmbproduct_service control.
@@ -517,22 +517,49 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Button btnNext2;
         
         /// <summary>
-        /// btnSkipCatalog control.
+        /// txtCatalogSearch control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnSkipCatalog;
+        protected global::System.Web.UI.WebControls.TextBox txtCatalogSearch;
         
         /// <summary>
-        /// View3_Cart control.
+        /// btnAddProduct control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.View View3_Cart;
+        protected global::System.Web.UI.WebControls.Button btnAddProduct;
+        
+        /// <summary>
+        /// lblGrossAmt control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblGrossAmt;
+        
+        /// <summary>
+        /// lblTaxAmt control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblTaxAmt;
+        
+        /// <summary>
+        /// vwCart control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.View vwCart;
         
         /// <summary>
         /// btnAddMoreProducts control.
@@ -571,13 +598,13 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Button btnNext3;
         
         /// <summary>
-        /// View4_Terms control.
+        /// vwFinal control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.View View4_Terms;
+        protected global::System.Web.UI.WebControls.View vwFinal;
         
         /// <summary>
         /// gridps control.

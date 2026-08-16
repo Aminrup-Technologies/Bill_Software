@@ -42,6 +42,64 @@
         .wizard-footer { margin-top: 20px; text-align: right; padding-top: 15px; border-top: 1px solid #eee; }
         .approval-box { background-color: #fdf5e6; border: 1px solid #faebcc; padding: 15px; margin-top: 20px; border-radius: 5px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .btn-viewmore {
+            border: 1px solid #cbd5e1; background: #fff; color: #19658A;
+            padding: 2px 8px; border-radius: 3px; font-size: 11px; cursor: pointer;
+        }
+        .btn-viewmore:hover { background: #e8f4fa; }
+        a.pid-link { color: #19658A; font-weight: 700; text-decoration: underline; cursor: pointer; }
+        .modal-backdrop {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, .45); align-items: center; justify-content: center; padding: 12px;
+        }
+        .modal-backdrop.is-open { display: flex; }
+        .modal-box.product-detail-modal {
+            background: #fff; border-radius: 8px; width: min(920px, 96vw); max-height: 92vh;
+            overflow: hidden; padding: 0; border: 1px solid #d7e2ec; display: flex; flex-direction: column;
+            box-shadow: 0 12px 40px rgba(0,0,0,.2);
+        }
+        .pd-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 20px;
+            padding: 14px 16px; background: linear-gradient(135deg, #19658A 0%, #0f4a66 100%);
+            border-radius: 8px 8px 0 0; color: #fff; flex-shrink: 0;
+        }
+        .pd-header-left { flex: 1; min-width: 0; }
+        .pd-eyebrow { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; opacity: .8; margin-bottom: 2px; }
+        .pd-name { margin: 0; color: #fff; font-size: 18px; font-weight: 800; line-height: 1.2; word-break: break-word; }
+        .pd-header-right {
+            flex: 0 0 auto; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
+            border-radius: 6px; padding: 6px 12px;
+        }
+        .pd-meta-k { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
+        .pd-meta-v { font-size: 13px; font-weight: 700; }
+        .pd-body { padding: 12px 14px 10px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+        .pd-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .modal-section { margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid #e8edf3; }
+        .modal-section:last-of-type { border-bottom: 0; margin-bottom: 0; }
+        .modal-section-title { font-size: 11px; font-weight: 700; color: #19658A; margin-bottom: 8px; text-transform: uppercase; }
+        .modal-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 12px; }
+        .modal-grid .span2 { grid-column: span 2; }
+        .pd-field { background: #f8fafc; border: 1px solid #e8edf3; border-radius: 6px; padding: 7px 9px; }
+        .modal-grid .k { font-size: 9px; line-height: 1.1; margin-bottom: 3px; color: #64748b; font-weight: 700; text-transform: uppercase; }
+        .modal-grid .v { font-size: 12px; line-height: 1.3; font-weight: 600; color: #0f172a; word-break: break-word; }
+        .product-detail-modal .modal-close {
+            margin: 0; padding: 10px 14px; border-top: 1px solid #e8edf3; text-align: right; flex-shrink: 0;
+        }
+        .view-gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+        .view-gallery-item { border: 1px solid #e8edf3; border-radius: 6px; padding: 6px; text-align: center; background: #f8fafc; min-height: 90px; }
+        .view-gallery-item img { max-width: 100%; max-height: 70px; cursor: pointer; }
+        .view-label { display: block; font-size: 10px; color: #64748b; margin-bottom: 4px; }
+        .view-empty { display: flex; align-items: center; justify-content: center; height: 70px; color: #94a3b8; font-size: 11px; }
+        .img-lightbox {
+            display: none; position: fixed; z-index: 10000; left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,.8); align-items: center; justify-content: center; flex-direction: column;
+        }
+        .img-lightbox.is-open { display: flex; }
+        .img-lightbox img { max-width: 90vw; max-height: 80vh; }
+        .img-lightbox-hint { color: #fff; margin-top: 10px; font-size: 12px; }
+        @media (max-width: 700px) {
+            .pd-top-row, .modal-grid, .view-gallery { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 
     <script type="text/javascript">
@@ -258,40 +316,25 @@
 
         function validateModifiedRows() {
             const grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
-            if(!grid) return true;
+            if (!grid) return true;
             const rows = grid.getElementsByTagName("tr");
-            let hasError = false;
-            let firstErrorRow = null;
-
+            let hasError = false, firstErrorRow = null;
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
-                const hdn = row.querySelector("input[type='hidden'][id*='hdnIsModified']");
+                const hdn = row.querySelector("input[id*='hdnIsModified']");
                 if (!hdn || hdn.value !== "1") continue;
-
                 const qty = row.querySelector("[id*='Quantity']");
                 const rate = row.querySelector("[id*='Vendor_rate']");
-                const gst = row.querySelector("[id*='vat_parsentage']");
-                const chkTax = row.querySelector("input[id*='chkTaxApplicable']");
-
-                [qty, rate, gst].forEach(c => { if (c) c.classList.remove("field-error"); });
+                [qty, rate].forEach(c => { if (c) c.classList.remove("field-error"); });
                 let rowHasError = false;
-
-                if (chkTax && chkTax.checked && (!gst || gst.value === "" || gst.value === "NA")) {
-                    gst.classList.add("field-error"); rowHasError = true;
-                }
                 if (!qty || qty.value.trim() === "" || Number(qty.value) <= 0) {
-                    qty.classList.add("field-error"); rowHasError = true;
+                    if (qty) qty.classList.add("field-error"); rowHasError = true;
                 }
-                if (!rate || rate.value.trim() === "" || Number(rate.value) < 0) {
+                if (rate && rate.value.trim() !== "" && Number(rate.value) < 0) {
                     rate.classList.add("field-error"); rowHasError = true;
                 }
-
-                if (rowHasError) {
-                    hasError = true;
-                    if (!firstErrorRow) firstErrorRow = row;
-                }
+                if (rowHasError) { hasError = true; if (!firstErrorRow) firstErrorRow = row; }
             }
-
             if (hasError) {
                 if (firstErrorRow) firstErrorRow.scrollIntoView({ behavior: "smooth", block: "center" });
                 alert("Please correct highlighted fields in modified rows.");
@@ -299,6 +342,136 @@
             }
             return true;
         }
+
+        function validatePRGrid() {
+            var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
+            if (!grid) return true;
+            var rows = grid.rows;
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var rate = row.querySelector('input.rate-input') || row.querySelector("input[id*='Vendor_rate']");
+                if (!rate) continue;
+                var tax = row.querySelector("input[id*='chkTaxApplicable']")
+                    || row.querySelector('input.tax-check')
+                    || row.querySelector('.tax-check input[type="checkbox"]');
+                var gst = row.querySelector('select.gst-select')
+                    || row.querySelector("select[id*='vat_parsentage']");
+                var v = parseFloat(rate.value);
+                if (isNaN(v) || v <= 0) {
+                    row.style.backgroundColor = 'red';
+                    alert('Rate must be greater than zero.');
+                    return false;
+                }
+                if (!tax || !tax.checked) {
+                    row.style.backgroundColor = 'red';
+                    alert('Tax Applicable must be checked.');
+                    return false;
+                }
+                var g = gst && gst.value != null ? String(gst.value).replace(/^\s+|\s+$/g, '') : '';
+                var gNum = parseFloat(g);
+                if (!g || g === 'NA' || g === '0' || g === '0.00' || isNaN(gNum) || gNum <= 0) {
+                    row.style.backgroundColor = 'red';
+                    alert('Please select a GST percentage.');
+                    return false;
+                }
+                row.style.backgroundColor = '';
+            }
+            return true;
+        }
+
+        function setPdTxt(id, val) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = (val && String(val).replace(/^\s+|\s+$/g, '')) ? val : '—';
+        }
+        function setPdView(imgId, emptyId, url, label) {
+            var img = document.getElementById(imgId);
+            var empty = document.getElementById(emptyId);
+            var has = !!(url && String(url).replace(/^\s+|\s+$/g, ''));
+            if (img) {
+                img.onclick = null;
+                if (has) {
+                    img.src = url;
+                    img.style.display = 'inline-block';
+                    img.onclick = function () { return openImageLightbox(url, label); };
+                } else {
+                    img.removeAttribute('src');
+                    img.style.display = 'none';
+                }
+            }
+            if (empty) empty.style.display = has ? 'none' : 'flex';
+        }
+        function fillProductModal(d) {
+            setPdTxt('mdHdrName', d.name); setPdTxt('mdHdrPid', d.pid);
+            setPdTxt('mdHsn', d.hsn); setPdTxt('mdCat', d.cat); setPdTxt('mdType', d.type);
+            setPdTxt('mdBrand', d.brand); setPdTxt('mdUnit', d.unit);
+            setPdTxt('mdSrate', d.srate); setPdTxt('mdPrate', d.prate); setPdTxt('mdTax', d.tax);
+            setPdTxt('mdQty', d.qty); setPdTxt('mdMoq', d.moq); setPdTxt('mdExpiry', d.expiry);
+            setPdTxt('mdSaleNote', d.salenote); setPdTxt('mdRemarks', d.remarks); setPdTxt('mdSpec', d.spec);
+            var oemEl = document.getElementById('mdOem');
+            if (oemEl) {
+                oemEl.innerHTML = '';
+                if (d.oem) {
+                    var a = document.createElement('a');
+                    a.href = d.oem; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = d.oem;
+                    oemEl.appendChild(a);
+                } else oemEl.textContent = '—';
+            }
+            setPdView('mdImgTop', 'mdEmptyTop', d.imgtop, 'Top View');
+            setPdView('mdImgBottom', 'mdEmptyBottom', d.imgbottom, 'Bottom View');
+            setPdView('mdImgLeft', 'mdEmptyLeft', d.imgleft, 'Left View');
+            setPdView('mdImgRight', 'mdEmptyRight', d.imgright, 'Right View');
+            var backdrop = document.getElementById('productModal');
+            if (backdrop) backdrop.className = 'modal-backdrop is-open';
+        }
+        function showProductModal(btn) {
+            if (!btn) return false;
+            function g(k) { return (btn.dataset && btn.dataset[k]) || btn.getAttribute('data-' + k) || ''; }
+            fillProductModal({
+                name: g('name'), pid: g('pid'), hsn: g('hsn'), cat: g('cat'), type: g('type'),
+                brand: g('brand'), unit: g('unit'), srate: g('srate'), prate: g('prate'), tax: g('tax'),
+                qty: g('qty'), moq: g('moq'), expiry: g('expiry'), salenote: g('salenote'),
+                remarks: g('remarks'), spec: g('spec'), oem: g('oem'),
+                imgtop: g('imgtop'), imgbottom: g('imgbottom'), imgleft: g('imgleft'), imgright: g('imgright')
+            });
+            return false;
+        }
+        function openProductDetailById(productId) {
+            if (!productId) return false;
+            PageMethods.GetProductDetail(productId, function (r) {
+                if (!r || !r.ok) { alert((r && r.message) || 'Product details not found.'); return; }
+                fillProductModal(r);
+            }, function () { alert('Unable to load product details.'); });
+            return false;
+        }
+        function closeProductModal() {
+            closeImageLightbox();
+            var backdrop = document.getElementById('productModal');
+            if (backdrop) backdrop.className = 'modal-backdrop';
+            return false;
+        }
+        function openImageLightbox(url, label) {
+            if (!url) return false;
+            var box = document.getElementById('imgLightbox');
+            var img = document.getElementById('imgLightboxSrc');
+            var hint = document.getElementById('imgLightboxHint');
+            if (img) { img.src = url; img.alt = label || 'Product view'; }
+            if (hint) hint.textContent = (label ? label + ' — ' : '') + 'Click anywhere to close';
+            if (box) box.className = 'img-lightbox is-open';
+            return false;
+        }
+        function closeImageLightbox() {
+            var box = document.getElementById('imgLightbox');
+            var img = document.getElementById('imgLightboxSrc');
+            if (box) box.className = 'img-lightbox';
+            if (img) img.removeAttribute('src');
+            return false;
+        }
+        document.addEventListener('keydown', function (e) {
+            if ((e.key === 'Escape' || e.keyCode === 27) && document.getElementById('imgLightbox') &&
+                document.getElementById('imgLightbox').className.indexOf('is-open') >= 0) {
+                closeImageLightbox();
+            }
+        });
 
         function applyInactiveRowStyle() {
             const grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
@@ -322,14 +495,25 @@
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true"></asp:ScriptManager>
+    <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" EnablePageMethods="true"></asp:ScriptManager>
 
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <asp:HiddenField ID="hdnActiveStep" runat="server" Value="1" />
 
             <table class="style1">
-                <tr><td bgcolor="#19658A" colspan="4">&nbsp;<span class="style2">View/Modify Purchase Requisition</span>&nbsp;</td></tr>
+                <tr>
+                    <td bgcolor="#19658A" colspan="4">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>&nbsp;<span class="style2">View/Modify Purchase Requisition</span>&nbsp;</td>
+                                <td align="right" style="padding: 4px 8px;">
+                                    <asp:Button ID="btnBackToList" runat="server" Text="&laquo; Back to PR List" CssClass="btn_style" OnClick="btnBackToList_Click" />
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
             </table>
             
             <div style="margin:15px 0;">
@@ -419,8 +603,54 @@
                                         <ItemTemplate><asp:CheckBox ID="chkSelect" runat="server" CssClass="product-checkbox" /></ItemTemplate>
                                         <ItemStyle Width="40px" />
                                     </asp:TemplateField>
-                                    <asp:BoundField DataField="ItemId" HeaderText="Item Code" ItemStyle-Width="100px" />
-                                    <asp:BoundField DataField="ItemName" HeaderText="Item Name" ItemStyle-HorizontalAlign="Left" />
+                                    <asp:TemplateField HeaderText="Item Code" ItemStyle-Width="110px">
+                                        <ItemTemplate>
+                                            <a href="javascript:void(0);" class="pid-link"
+                                               onclick='<%# Convert.ToString(Eval("IsProduct")) == "1"
+                                                   ? "return openProductDetailById(\"" + HttpUtility.JavaScriptStringEncode(Convert.ToString(Eval("ItemId"))) + "\");"
+                                                   : "return false;" %>'><%# Eval("ItemId") %></a>
+                                            <asp:Label ID="lblItemId" runat="server" Text='<%# Eval("ItemId") %>' style="display:none;"></asp:Label>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="HSN / SAC" ItemStyle-Width="90px">
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblHsn" runat="server" Text='<%# Eval("HSN") %>'></asp:Label>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="Item Name" ItemStyle-HorizontalAlign="Left">
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblItemName" runat="server" Text='<%# Eval("ItemName") %>'></asp:Label>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="Details" ItemStyle-Width="90px">
+                                        <ItemTemplate>
+                                            <%# Convert.ToString(Eval("IsProduct")) == "1"
+                                                ? "<button type=\"button\" class=\"btn-viewmore\" "
+                                                  + "data-pid=\"" + Server.HtmlEncode(Convert.ToString(Eval("ItemId"))) + "\" "
+                                                  + "data-name=\"" + Server.HtmlEncode(Convert.ToString(Eval("ItemName"))) + "\" "
+                                                  + "data-hsn=\"" + Server.HtmlEncode(Convert.ToString(Eval("HSN"))) + "\" "
+                                                  + "data-cat=\"" + Server.HtmlEncode(Convert.ToString(Eval("Category"))) + "\" "
+                                                  + "data-type=\"" + Server.HtmlEncode(Convert.ToString(Eval("Type"))) + "\" "
+                                                  + "data-brand=\"" + Server.HtmlEncode(Convert.ToString(Eval("Brand"))) + "\" "
+                                                  + "data-unit=\"" + Server.HtmlEncode(Convert.ToString(Eval("Unit"))) + "\" "
+                                                  + "data-srate=\"" + Server.HtmlEncode(Convert.ToString(Eval("Sail_Rate"))) + "\" "
+                                                  + "data-prate=\"" + Server.HtmlEncode(Convert.ToString(Eval("Purches_Rate"))) + "\" "
+                                                  + "data-tax=\"" + Server.HtmlEncode(Convert.ToString(Eval("Tax_Rate"))) + "\" "
+                                                  + "data-qty=\"" + Server.HtmlEncode(Convert.ToString(Eval("Quantity"))) + "\" "
+                                                  + "data-moq=\"" + Server.HtmlEncode(Convert.ToString(Eval("MOQ_Value"))) + "\" "
+                                                  + "data-expiry=\"" + Server.HtmlEncode(Convert.ToString(Eval("ExpiryText"))) + "\" "
+                                                  + "data-salenote=\"" + Server.HtmlEncode(Convert.ToString(Eval("SaleNote"))) + "\" "
+                                                  + "data-remarks=\"" + Server.HtmlEncode(Convert.ToString(Eval("Remarks"))) + "\" "
+                                                  + "data-spec=\"" + Server.HtmlEncode(Convert.ToString(Eval("Specification"))) + "\" "
+                                                  + "data-oem=\"" + Server.HtmlEncode(Convert.ToString(Eval("OemUrl"))) + "\" "
+                                                  + "data-imgtop=\"" + Server.HtmlEncode(Convert.ToString(Eval("ImgTop"))) + "\" "
+                                                  + "data-imgbottom=\"" + Server.HtmlEncode(Convert.ToString(Eval("ImgBottom"))) + "\" "
+                                                  + "data-imgleft=\"" + Server.HtmlEncode(Convert.ToString(Eval("ImgLeft"))) + "\" "
+                                                  + "data-imgright=\"" + Server.HtmlEncode(Convert.ToString(Eval("ImgRight"))) + "\" "
+                                                  + "onclick=\"return showProductModal(this);\">View</button>"
+                                                : "—" %>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
                                 </Columns>
                             </asp:GridView>
                         </div>
@@ -456,12 +686,22 @@
                                 <asp:TemplateField HeaderText="Status">
                                     <ItemTemplate><span data-modified="1" style="display: none; color:red; font-weight:bold;">✱</span></ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Code">
+                                        <asp:TemplateField HeaderText="Code">
+                                            <ItemTemplate>
+                                                <%# Convert.ToString(Eval("IsProduct")) == "1"
+                                                    ? "<a href=\"javascript:void(0);\" class=\"pid-link\" onclick=\"return openProductDetailById('"
+                                                      + HttpUtility.JavaScriptStringEncode(Convert.ToString(Eval("Ser_pro_code")))
+                                                      + "');\">" + Server.HtmlEncode(Convert.ToString(Eval("Ser_pro_code"))) + "</a>"
+                                                    : Server.HtmlEncode(Convert.ToString(Eval("Ser_pro_code"))) %>
+                                                <asp:Label ID="Ser_pro_code" runat="server" Text='<%# Eval("Ser_pro_code") %>' style="display:none;"></asp:Label>
+                                                <asp:HiddenField ID="hdnIsModified" runat="server" Value='<%# Convert.ToBoolean(Eval("IsModified")) ? "1" : "0" %>' />
+                                                <asp:HiddenField ID="hdnParentCategoryId" runat="server" Value='<%# Eval("ParentCategoryId") %>' />
+                                                <asp:HiddenField ID="hdnRowId" runat="server" Value='<%# Eval("id") %>' />
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+                                <asp:TemplateField HeaderText="HSN">
                                     <ItemTemplate>
-                                        <asp:Label ID="Ser_pro_code" runat="server" Text='<%# Eval("Ser_pro_code") %>'></asp:Label>
-                                        <asp:HiddenField ID="hdnIsModified" runat="server" Value='<%# Convert.ToBoolean(Eval("IsModified")) ? "1" : "0" %>' />
-                                        <asp:HiddenField ID="hdnParentCategoryId" runat="server" Value='<%# Eval("ParentCategoryId") %>' />
-                                        <asp:HiddenField ID="hdnRowId" runat="server" Value='<%# Eval("id") %>' />
+                                        <asp:Label ID="lblCartHsn" runat="server" Text='<%# Eval("HSN") %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Name">
@@ -479,7 +719,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Rate">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="Vendor_rate" runat="server" Text='<%# Eval("Rate") %>' onkeyup="calculateDiscount(this)" CssClass="textbox_style21" Width="80px"></asp:TextBox>
+                                        <asp:TextBox ID="Vendor_rate" runat="server" Text='<%# Eval("Rate") %>' onkeyup="calculateDiscount(this)" CssClass="textbox_style21 rate-input" Width="80px"></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Dis. %">
@@ -504,7 +744,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="GST %">
                                     <ItemTemplate>
-                                        <asp:DropDownList ID="vat_parsentage" runat="server" CssClass="dropdown_style" onchange="markRowModified(this); recalcSummary();"></asp:DropDownList>
+                                        <asp:DropDownList ID="vat_parsentage" runat="server" CssClass="dropdown_style gst-select" onchange="markRowModified(this); recalcSummary();"></asp:DropDownList>
                                         <asp:HiddenField ID="hdnSelectedGST" runat="server" Value='<%# Eval("gstrate") %>' />
                                     </ItemTemplate>
                                 </asp:TemplateField>
@@ -553,12 +793,13 @@
                     </asp:Panel>
 
                     <div class="wizard-footer" id="divActionButtons" runat="server">
-                        <asp:Button ID="btnBackToStep2" runat="server" Text="&laquo; Back" CssClass="btn_style" OnClientClick="showStep(2); return false;" style="float:left;" />
-                        <asp:Button ID="btnBackToStep1" runat="server" Text="&laquo; Back to Vendor" CssClass="btn_style" OnClientClick="showStep(1); return false;" style="float:left;" Visible="false" />
+                        <asp:Button ID="btnBackToStep2" runat="server" Text="&laquo; Back" CssClass="btn_style" OnClientClick="showStep(2); return false;" style="float:left; margin-right:8px;" />
+                        <asp:Button ID="btnBackToStep1" runat="server" Text="&laquo; Back to Vendor" CssClass="btn_style" OnClientClick="showStep(1); return false;" style="float:left; margin-right:8px;" Visible="false" />
+                        <asp:Button ID="btnBackToListFooter" runat="server" Text="&laquo; Back to PR List" CssClass="btn_style" OnClick="btnBackToList_Click" style="float:left;" />
                         
                         <asp:Button ID="btnSaveDraft" runat="server" Text="Save Edits" CssClass="btn_style" BackColor="#f0ad4e" ForeColor="White" OnClientClick="return validateModifiedRows();" OnClick="btnSaveEdit_Click" />
                         &nbsp;
-                        <asp:Button ID="Button3" runat="server" Text="Submit PR" CssClass="btn_style" BackColor="#5cb85c" ForeColor="White" OnClientClick="return validateModifiedRows();" OnClick="Button3_Click" />
+                        <asp:Button ID="Button3" runat="server" Text="Submit PR" CssClass="btn_style" BackColor="#5cb85c" ForeColor="White" OnClientClick="return validateModifiedRows() && validatePRGrid();" OnClick="Button3_Click" />
                         &nbsp;
                         <asp:Button ID="btnCancelPR" runat="server" Text="Cancel PR" CssClass="btn_style" BackColor="#d9534f" ForeColor="White" OnClick="btnCancelPR_Click" />
                     </div>
@@ -567,4 +808,85 @@
             </div>
         </ContentTemplate>
     </asp:UpdatePanel>
+
+            <div id="productModal" class="modal-backdrop" onclick="if(event.target===this)closeProductModal();">
+                <div class="modal-box product-detail-modal" onclick="event.stopPropagation();">
+                    <div class="pd-header">
+                        <div class="pd-header-left">
+                            <span class="pd-eyebrow">Product Detail</span>
+                            <div class="pd-name" id="mdHdrName">—</div>
+                        </div>
+                        <div class="pd-header-right">
+                            <div class="pd-meta-k">Product ID</div>
+                            <div class="pd-meta-v" id="mdHdrPid">—</div>
+                        </div>
+                    </div>
+                    <div class="pd-body">
+                        <div class="pd-top-row">
+                            <div class="modal-section">
+                                <div class="modal-section-title">1. Identity</div>
+                                <div class="modal-grid">
+                                    <div class="pd-field"><div class="k">HSN / SAC</div><div class="v" id="mdHsn"></div></div>
+                                    <div class="pd-field"><div class="k">Category</div><div class="v" id="mdCat"></div></div>
+                                    <div class="pd-field"><div class="k">Type</div><div class="v" id="mdType"></div></div>
+                                    <div class="pd-field"><div class="k">Brand</div><div class="v" id="mdBrand"></div></div>
+                                    <div class="pd-field"><div class="k">Unit</div><div class="v" id="mdUnit"></div></div>
+                                </div>
+                            </div>
+                            <div class="modal-section">
+                                <div class="modal-section-title">2. Commercial</div>
+                                <div class="modal-grid">
+                                    <div class="pd-field"><div class="k">Selling Rate</div><div class="v" id="mdSrate"></div></div>
+                                    <div class="pd-field"><div class="k">Purchase Rate</div><div class="v" id="mdPrate"></div></div>
+                                    <div class="pd-field"><div class="k">GST / Tax</div><div class="v" id="mdTax"></div></div>
+                                    <div class="pd-field"><div class="k">Stock Qty</div><div class="v" id="mdQty"></div></div>
+                                    <div class="pd-field"><div class="k">MOQ</div><div class="v" id="mdMoq"></div></div>
+                                    <div class="pd-field"><div class="k">Expiry Date</div><div class="v" id="mdExpiry"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-section">
+                            <div class="modal-section-title">3. Specifications &amp; Notes</div>
+                            <div class="modal-grid">
+                                <div class="pd-field span2"><div class="k">Specification / Remarks</div><div class="v" id="mdRemarks"></div></div>
+                                <div class="pd-field"><div class="k">Sale Note</div><div class="v" id="mdSaleNote"></div></div>
+                                <div class="pd-field span2"><div class="k">Extra Specifications</div><div class="v" id="mdSpec"></div></div>
+                                <div class="pd-field span2"><div class="k">OEM Reference URL</div><div class="v" id="mdOem"></div></div>
+                            </div>
+                        </div>
+                        <div class="modal-section">
+                            <div class="modal-section-title">4. Product Views</div>
+                            <div class="view-gallery">
+                                <div class="view-gallery-item">
+                                    <span class="view-label">Top View</span>
+                                    <img id="mdImgTop" alt="Top View" style="display:none;" />
+                                    <div class="view-empty" id="mdEmptyTop">No image</div>
+                                </div>
+                                <div class="view-gallery-item">
+                                    <span class="view-label">Bottom View</span>
+                                    <img id="mdImgBottom" alt="Bottom View" style="display:none;" />
+                                    <div class="view-empty" id="mdEmptyBottom">No image</div>
+                                </div>
+                                <div class="view-gallery-item">
+                                    <span class="view-label">Left View</span>
+                                    <img id="mdImgLeft" alt="Left View" style="display:none;" />
+                                    <div class="view-empty" id="mdEmptyLeft">No image</div>
+                                </div>
+                                <div class="view-gallery-item">
+                                    <span class="view-label">Right View</span>
+                                    <img id="mdImgRight" alt="Right View" style="display:none;" />
+                                    <div class="view-empty" id="mdEmptyRight">No image</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-close">
+                        <button type="button" class="btn_style" onclick="return closeProductModal();">Close</button>
+                    </div>
+                </div>
+            </div>
+            <div id="imgLightbox" class="img-lightbox" onclick="return closeImageLightbox();">
+                <img id="imgLightboxSrc" alt="" />
+                <div id="imgLightboxHint" class="img-lightbox-hint">Click anywhere to close</div>
+            </div>
 </asp:Content>

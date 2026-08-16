@@ -14,8 +14,6 @@ namespace Bill_Software.corporate.business.app
     public partial class edit_purchaseorder : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        public DataTable first_datatable;
-        public static DataTable Dt = new DataTable("Table");
 
         DataTable dtphasetype = new DataTable();
         DataTable dtPhasefees = new DataTable();
@@ -109,7 +107,7 @@ namespace Bill_Software.corporate.business.app
             LEFT OUTER JOIN tbl_Client c ON q.Client_Id = c.Client_Id 
             OUTER APPLY (
                 SELECT TOP 1 PServiceName FROM tbl_QuoPriSerTogather 
-                WHERE qutno = q.Quotation_no ORDER BY TimeStamp DESC
+                WHERE qutno = q.Quotation_no AND CompanyID = q.CompanyID ORDER BY TimeStamp DESC
             ) s
             WHERE q.CompanyID = @CompanyID AND q.RecordType = 'Purchase Order'";
 
@@ -248,7 +246,7 @@ namespace Bill_Software.corporate.business.app
                         dtPCatTemp.Rows.Add(dr);
                     }
 
-                    ViewState["PhaseProductData"] = dtPCatTemp;
+                    ViewState["POCart"] = dtPCatTemp;
                     gd_Service_Product.DataSource = dtPCatTemp;
                     gd_Service_Product.DataBind();
                 }
@@ -259,7 +257,7 @@ namespace Bill_Software.corporate.business.app
                 LoadPrimaryServices(Quotation_no);
                 ToggleGridColumns();
 
-                WizardMultiView.ActiveViewIndex = 1;
+                mvPOWizard.ActiveViewIndex = 1;
             }
         }
 
@@ -424,7 +422,7 @@ namespace Bill_Software.corporate.business.app
 
         private void SaveCartToViewState()
         {
-            DataTable dt = ViewState["PhaseProductData"] as DataTable;
+            DataTable dt = ViewState["POCart"] as DataTable;
             if (dt == null) return;
 
             for (int i = 0; i < gd_Service_Product.Rows.Count; i++)
@@ -432,7 +430,6 @@ namespace Bill_Software.corporate.business.app
                 GridViewRow row = gd_Service_Product.Rows[i];
                 if (row.RowType == DataControlRowType.DataRow)
                 {
-                    // Helper to safely extract data from grid cells
                     Func<string, string> GetGridValue = (controlId) =>
                     {
                         System.Web.UI.Control ctrl = row.FindControl(controlId);
@@ -444,11 +441,10 @@ namespace Bill_Software.corporate.business.app
                     dt.Rows[i]["Quantity"] = GetGridValue("Quantity");
                     dt.Rows[i]["Sail_Rate"] = GetGridValue("Sail_Rate");
                     dt.Rows[i]["discount_rate"] = GetGridValue("Discount_Rate");
+                    dt.Rows[i]["Tax_Rate"] = GetGridValue("Tax_Rate");
                     dt.Rows[i]["Specification"] = GetGridValue("Specification");
                     dt.Rows[i]["ItemRemarks"] = GetGridValue("ItemRemarks");
                     dt.Rows[i]["Sl_no"] = GetGridValue("txtOrder");
-
-                    // --- THE FIX: Now saving these missing columns to memory! ---
                     dt.Rows[i]["Brand"] = GetGridValue("Brand");
                     dt.Rows[i]["PackSize"] = GetGridValue("PackSize");
                     dt.Rows[i]["ItemNo"] = GetGridValue("ItemNo");
@@ -461,13 +457,23 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
             }
-            ViewState["PhaseProductData"] = dt;
+            ViewState["POCart"] = dt;
+        }
+
+        private void ResequenceCart(DataTable dt)
+        {
+            if (dt == null) return;
+            string orderCol = dt.Columns.Contains("Sl_no") ? "Sl_no" : (dt.Columns.Contains("ItemOrder") ? "ItemOrder" : null);
+            if (orderCol == null) return;
+            for (int i = 0; i < dt.Rows.Count; i++)
+                dt.Rows[i][orderCol] = (i + 1).ToString();
         }
 
         protected void gd_Service_Product_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             SaveCartToViewState();
-            DataTable dt = (DataTable)ViewState["PhaseProductData"];
+            DataTable dt = (DataTable)ViewState["POCart"];
+            if (dt == null) return;
             int index = Convert.ToInt32(e.CommandArgument);
 
             if (e.CommandName == "MoveUp" && index > 0)
@@ -484,12 +490,14 @@ namespace Bill_Software.corporate.business.app
                 dt.Rows.RemoveAt(index);
                 dt.Rows.InsertAt(dr, index + 1);
             }
-            else if (e.CommandName == "DeleteRow")
+            else if (e.CommandName == "Remove")
             {
                 dt.Rows.RemoveAt(index);
             }
+            else return;
 
-            ViewState["PhaseProductData"] = dt;
+            ResequenceCart(dt);
+            ViewState["POCart"] = dt;
             gd_Service_Product.DataSource = dt;
             gd_Service_Product.DataBind();
             ToggleGridColumns();
@@ -502,12 +510,22 @@ namespace Bill_Software.corporate.business.app
         protected void btnNext1_Click(object sender, EventArgs e)
         {
             PanelError.Visible = false;
-            WizardMultiView.ActiveViewIndex = 2; // Move to Catalog
+            mvPOWizard.ActiveViewIndex = 2; // Move to Catalog
         }
 
-        protected void btnPrev2_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 1; }
+        protected void btnPrev2_Click(object sender, EventArgs e) { mvPOWizard.ActiveViewIndex = 1; }
 
-        protected void btnSkipCatalog_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 3; }
+        protected void btnSkipCatalog_Click(object sender, EventArgs e)
+        {
+            DataTable dt = ViewState["POCart"] as DataTable;
+            if (dt != null)
+            {
+                gd_Service_Product.DataSource = dt;
+                gd_Service_Product.DataBind();
+                ToggleGridColumns();
+            }
+            mvPOWizard.ActiveViewIndex = 3;
+        }
 
         protected void btnAddProduct_Click(object sender, EventArgs e)
         {
@@ -516,7 +534,7 @@ namespace Bill_Software.corporate.business.app
             if (dtCatalog == null) return;
 
             // 1. Initialize Cart structure if empty
-            if (ViewState["PhaseProductData"] == null)
+            if (ViewState["POCart"] == null)
             {
                 dtPCat = new DataTable();
                 dtPCat.Columns.Add("ProductId"); dtPCat.Columns.Add("Product_code");
@@ -532,7 +550,7 @@ namespace Bill_Software.corporate.business.app
             }
             else
             {
-                dtPCat = (DataTable)ViewState["PhaseProductData"];
+                dtPCat = (DataTable)ViewState["POCart"];
             }
 
             bool itemsAdded = false; // Declaration fixed!
@@ -570,15 +588,15 @@ namespace Bill_Software.corporate.business.app
 
             if (itemsAdded)
             {
-                ViewState["PhaseProductData"] = dtPCat;
+                ViewState["POCart"] = dtPCat;
                 gd_Service_Product.DataSource = dtPCat;
                 gd_Service_Product.DataBind();
 
-                TakePservice(cmbproduct_service.Text); // Update category grouping
+                TakePservice(cmbproduct_service.Text);
                 ToggleGridColumns();
-
-                // Move to Cart View
-                WizardMultiView.ActiveViewIndex = 3;
+                PanelError.Visible = false;
+                lblOk.Text = "Selected products added to cart.";
+                PanelOK.Visible = true;
             }
             else
             {
@@ -590,20 +608,20 @@ namespace Bill_Software.corporate.business.app
         protected void btnAddMoreProducts_Click(object sender, EventArgs e)
         {
             SaveCartToViewState();
-            WizardMultiView.ActiveViewIndex = 2; // Go back to Catalog
+            mvPOWizard.ActiveViewIndex = 2; // Go back to Catalog
         }
 
         protected void btnPrev3_Click(object sender, EventArgs e)
         {
             SaveCartToViewState();
-            WizardMultiView.ActiveViewIndex = 2;
+            mvPOWizard.ActiveViewIndex = 2;
         }
 
         protected void btnNext3_Click(object sender, EventArgs e)
         {
             PanelError.Visible = false;
             SaveCartToViewState();
-            DataTable currentCart = (DataTable)ViewState["PhaseProductData"];
+            DataTable currentCart = (DataTable)ViewState["POCart"];
 
             if (currentCart == null || currentCart.Rows.Count == 0)
             {
@@ -612,11 +630,25 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
+            decimal gross = 0m, tax = 0m;
+            foreach (DataRow dr in currentCart.Rows)
+            {
+                decimal qty = ParseDecimal(dr["Quantity"]?.ToString());
+                decimal rate = ParseDecimal(dr["Sail_Rate"]?.ToString());
+                decimal disc = ParseDecimal(dr["discount_rate"]?.ToString());
+                decimal taxPct = ParseDecimal(dr["Tax_Rate"]?.ToString());
+                decimal taxable = qty * (rate - (rate * disc / 100m));
+                tax += (taxable * taxPct) / 100m;
+                gross += taxable + ((taxable * taxPct) / 100m);
+            }
+            lblGrossAmt.Text = Math.Round(gross, 2).ToString("0.00");
+            lblTaxAmt.Text = Math.Round(tax, 2).ToString("0.00");
+
             bindphaseType(lblqno.Text);
-            WizardMultiView.ActiveViewIndex = 4; // Move to Terms (Index 4)
+            mvPOWizard.ActiveViewIndex = 4;
         }
 
-        protected void btnPrev4_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 3; }
+        protected void btnPrev4_Click(object sender, EventArgs e) { mvPOWizard.ActiveViewIndex = 3; }
 
         // Fixed ID return for older C# versions
         private int idreturn_New(string prefix)
@@ -819,14 +851,70 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSabe_Click(object sender, EventArgs e)
         {
-            try { DataUpdaterMethod(); }
+            try
+            {
+                if (!ValidateBeforePersist()) return;
+                DataUpdaterMethod();
+            }
             catch (Exception ex) { ShowErrorAlert(ex); }
         }
 
         protected void btnNew_Click(object sender, EventArgs e)
         {
-            try { MagicianNew(); }
+            try
+            {
+                if (!ValidateBeforePersist()) return;
+                MagicianNew();
+            }
             catch (Exception ex) { ShowErrorAlert(ex); }
+        }
+
+        private bool ValidateBeforePersist()
+        {
+            PanelError.Visible = false;
+            if (HttpContext.Current.Session["USERID"] == null)
+            {
+                Response.Redirect("~/index.aspx");
+                return false;
+            }
+            if (cmbClient.SelectedValue == "0" || string.IsNullOrEmpty(cmbClient.SelectedValue))
+            {
+                lblErrorMsg.Text = "Please select a Client.";
+                PanelError.Visible = true;
+                return false;
+            }
+            if (cmbSalesPerson.SelectedValue == "0" || string.IsNullOrEmpty(cmbSalesPerson.SelectedValue))
+            {
+                lblErrorMsg.Text = "Please assign a Sales Person.";
+                PanelError.Visible = true;
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(txtquotationDate.Text) || ddlPlaceOfSupply.SelectedIndex < 0)
+            {
+                lblErrorMsg.Text = "Document Date and Place of Supply are required.";
+                PanelError.Visible = true;
+                return false;
+            }
+            SaveCartToViewState();
+            DataTable cart = ViewState["POCart"] as DataTable;
+            if (cart == null || cart.Rows.Count == 0)
+            {
+                lblErrorMsg.Text = "Cart is empty.";
+                PanelError.Visible = true;
+                return false;
+            }
+
+            // Loaded PO is authoritative. Heal lblqno if a failed "Save as New Revision" left an unused number.
+            if (GetQuotationByNo(lbl_recordno.Text) == null)
+            {
+                lblErrorMsg.Text = "Record not found for this company.";
+                PanelError.Visible = true;
+                return false;
+            }
+            if (GetQuotationByNo(lblqno.Text) == null)
+                lblqno.Text = lbl_recordno.Text;
+
+            return true;
         }
 
         private void ShowErrorAlert(Exception ex)
@@ -909,8 +997,8 @@ namespace Bill_Software.corporate.business.app
                         sCmd.ExecuteNonQuery();
                     }
 
-                    // --- THE FIX: Read directly from ViewState DataTable, NOT the GridView! ---
-                    DataTable dtCart = (DataTable)ViewState["PhaseProductData"];
+                    // Soft-delete then insert lines from ViewState POCart (preserve cart Sl_no)
+                    DataTable dtCart = (DataTable)ViewState["POCart"];
                     if (dtCart != null)
                     {
                         foreach (DataRow drCart in dtCart.Rows)
@@ -1032,8 +1120,8 @@ namespace Bill_Software.corporate.business.app
 
         private void MagicianNew()
         {
-            Bindquotationno();
             string oldRecordID = lbl_recordno.Text.Trim();
+            Bindquotationno();
             string newRecordID = lblqno.Text;
             int slNo = idreturn() + 1;
             string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
@@ -1042,6 +1130,8 @@ namespace Bill_Software.corporate.business.app
             decimal new_sub_total = 0, new_total_Service = 0, new_Gross_amount = 0;
             string cnnString = ConfigurationManager.ConnectionStrings["DbConn"].ToString();
 
+            try
+            {
             using (SqlConnection conn = new SqlConnection(cnnString))
             {
                 conn.Open();
@@ -1072,8 +1162,8 @@ namespace Bill_Software.corporate.business.app
                         cmd.ExecuteNonQuery();
                     }
 
-                    // --- THE FIX: Read directly from ViewState DataTable, NOT the GridView! ---
-                    DataTable dtCart = (DataTable)ViewState["PhaseProductData"];
+                    // Insert lines from ViewState POCart (preserve cart Sl_no)
+                    DataTable dtCart = (DataTable)ViewState["POCart"];
                     if (dtCart != null)
                     {
                         foreach (DataRow drCart in dtCart.Rows)
@@ -1236,6 +1326,12 @@ namespace Bill_Software.corporate.business.app
                     throw ex;
                 }
             }
+            }
+            catch
+            {
+                lblqno.Text = oldRecordID;
+                throw;
+            }
         }
 
         // ================= SUPPORT DB METHODS =================
@@ -1299,15 +1395,23 @@ namespace Bill_Software.corporate.business.app
 
         private int idreturn()
         {
-            int b = 0; DbCL.Sqlconnection(); DbCL.ConnectDb();
+            int b = 0;
             string d = txtquotationDate.Text, m = d.Substring(3, 3), y = d.Substring(7, 4), d4, d5, d6;
             if (m == "Jan" || m == "Feb" || m == "Mar") { d4 = (Convert.ToInt32(y) - 1).ToString(); d5 = "31-Mar-" + d4; d6 = "31-Mar-" + y; }
             else { d4 = (Convert.ToInt32(y) + 1).ToString(); d5 = "31-Mar-" + y; d6 = "31-Mar-" + d4; }
 
-            using (SqlCommand cmd = new SqlCommand("select Sl_no from tbl_Quotation where ID=(select max(ID) from tbl_Quotation where cast(Quotation_date as datetime) between '" + d5 + "' and '" + d6 + "' AND CompanyID = " + CompanyContext.CurrentCompanyID + ")", DbCL.Conn))
-            using (SqlDataReader re = cmd.ExecuteReader()) { if (re.Read() && re["Sl_no"] != DBNull.Value) b = Convert.ToInt32(re["Sl_no"]); }
-
-            DbCL.Conn.Close(); return b;
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(@"SELECT Sl_no FROM tbl_Quotation WHERE ID = (
+                SELECT MAX(ID) FROM tbl_Quotation WHERE CAST(Quotation_date AS DATETIME) BETWEEN @d5 AND @d6 AND CompanyID = @CompanyID)", con))
+            {
+                cmd.Parameters.AddWithValue("@d5", d5);
+                cmd.Parameters.AddWithValue("@d6", d6);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                con.Open();
+                object res = cmd.ExecuteScalar();
+                if (res != null && res != DBNull.Value) b = Convert.ToInt32(res);
+            }
+            return b;
         }
 
         private string findmonth()
@@ -1396,15 +1500,36 @@ namespace Bill_Software.corporate.business.app
         {
             string a = findtotalamount();
             double amount = netamount - Convert.ToDouble(a);
-            DbCL.executeRdr("update tbl_invoice_due set Due_amount='" + amount.ToString() + "' where qutation_no='" + lblqno.Text + "'");
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(@"UPDATE d SET Due_amount = @Due
+                FROM tbl_invoice_due d
+                INNER JOIN tbl_Quotation q ON q.Quotation_no = d.qutation_no AND q.CompanyID = @CompanyID
+                WHERE d.qutation_no = @QNo", con))
+            {
+                cmd.Parameters.AddWithValue("@Due", amount.ToString());
+                cmd.Parameters.AddWithValue("@QNo", lblqno.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private string findtotalamount()
         {
-            string amount = "0"; DbCL.Sqlconnection(); DbCL.ConnectDb();
-            using (SqlCommand cmd = new SqlCommand("select sum(cast(Given_amount as real)) as amount from tbl_invoice_payment where Quotation_No='" + lblqno.Text + "'", DbCL.Conn))
-            using (SqlDataReader re = cmd.ExecuteReader()) { if (re.Read() && re["amount"].ToString() != "") amount = re["amount"].ToString(); }
-            DbCL.Conn.Close(); return amount;
+            string amount = "0";
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(@"SELECT SUM(CAST(p.Given_amount AS real)) AS amount
+                FROM tbl_invoice_payment p
+                INNER JOIN tbl_Quotation q ON q.Quotation_no = p.Quotation_No AND q.CompanyID = @CompanyID
+                WHERE p.Quotation_No = @QNo", con))
+            {
+                cmd.Parameters.AddWithValue("@QNo", lblqno.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                con.Open();
+                object res = cmd.ExecuteScalar();
+                if (res != null && res != DBNull.Value && !string.IsNullOrEmpty(res.ToString())) amount = res.ToString();
+            }
+            return amount;
         }
 
         private void InsertSystemNotification(SqlTransaction trans, SqlConnection conn, string title, string message, string moduleCode, string severity)

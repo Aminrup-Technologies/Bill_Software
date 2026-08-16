@@ -133,6 +133,29 @@
             .action-del:hover {
                 background: #ffe6e6;
             }
+
+        .form-grid-aligned {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: end;
+        }
+        .form-grid-aligned .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .form-grid-aligned .form-group .req { color: #c00; }
+        .form-grid-aligned .dropdown_style,
+        .form-grid-aligned .textbox_style {
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+        @media (max-width: 900px) {
+            .form-grid-aligned { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 </asp:Content>
@@ -352,12 +375,35 @@
 
             function validateCart() {
                 var grid = document.getElementById('<%= gd_Service_Product.ClientID %>');
-                // A grid with data has Header (1) + Data (N) + Footer (1). So > 2 means it has items.
                 if (!grid || grid.rows.length <= 2) {
                     alert("⚠️ Your cart is empty. Please add products from the catalog first.");
                     return false;
                 }
                 return true;
+            }
+
+            function validateStep(stepIndex) {
+                if (stepIndex === 1) return ValidateDocument();
+                if (stepIndex === 3) return validateCart();
+                return true;
+            }
+
+            function preventDoubleSubmit(btn) {
+                if (!btn || btn.getAttribute('data-submitted') === '1') return false;
+                if (!ValidateDocument()) return false;
+                btn.setAttribute('data-submitted', '1');
+                btn.disabled = true;
+                return true;
+            }
+
+            function filterCatalogGrid(q) {
+                var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
+                if (!grid) return;
+                q = (q || '').toLowerCase();
+                for (var i = 1; i < grid.rows.length; i++) {
+                    var txt = (grid.rows[i].innerText || grid.rows[i].textContent || '').toLowerCase();
+                    grid.rows[i].style.display = (!q || txt.indexOf(q) >= 0) ? '' : 'none';
+                }
             }
     </script>
 
@@ -386,7 +432,7 @@
                 </tr>
             </table>
 
-            <asp:MultiView ID="WizardMultiView" runat="server" ActiveViewIndex="0">
+            <asp:MultiView ID="mvPOWizard" runat="server" ActiveViewIndex="0">
 
                 <asp:View ID="View0_Search" runat="server">
                     <div class="wizard-steps">Step 0: Search & Select Record to Edit</div>
@@ -466,51 +512,56 @@
                     </table>
                 </asp:View>
 
-                <asp:View ID="View1_BasicDetails" runat="server">
+                <asp:View ID="vwHeader" runat="server">
                     <div class="wizard-steps">Step 1 of 4: Document & Client Details</div>
-                    <div style="background: #eef; padding: 10px; border: 1px solid #ccc; text-align: center; font-size: 16px; margin-bottom: 15px;">
-                        Editing Record: <b>
-                            <asp:Label ID="lbl_recordno" runat="server" ForeColor="DarkRed"></asp:Label></b>
+
+                    <div class="form-grid-aligned">
+                        <div class="form-group">
+                            <label><span class="req">*</span> Client</label>
+                            <asp:DropDownList ID="cmbClient" runat="server" CssClass="dropdown_style select2-search" Width="100%" AutoPostBack="True" OnSelectedIndexChanged="cmbClient_SelectedIndexChanged"></asp:DropDownList>
+                        </div>
+                        <div class="form-group">
+                            <label><span class="req">*</span> Sales Person</label>
+                            <asp:DropDownList ID="cmbSalesPerson" runat="server" CssClass="dropdown_style select2-search" Width="100%"></asp:DropDownList>
+                        </div>
+                        <div class="form-group">
+                            <label>Document No</label>
+                            <asp:Label ID="lbl_recordno" runat="server" ForeColor="DarkRed" Font-Bold="true" CssClass="textbox_style" style="display:block;padding:6px;"></asp:Label>
+                        </div>
+                        <div class="form-group">
+                            <label><span class="req">*</span> Date</label>
+                            <asp:TextBox ID="txtquotationDate" runat="server" CssClass="textbox_style datepicker"></asp:TextBox>
+                        </div>
+                        <div class="form-group">
+                            <label><span class="req">*</span> Place of Supply</label>
+                            <asp:DropDownList ID="ddlPlaceOfSupply" runat="server" CssClass="dropdown_style select2-search" Width="100%"></asp:DropDownList>
+                        </div>
                     </div>
 
+                    <asp:Panel ID="pnlClientPreview" runat="server" Visible="false" Style="margin: 0 0 12px; padding: 10px; background: #eef7f9; border: 1px solid #19658A; border-radius: 4px; font-size: 11px; text-align: left; line-height: 1.6;">
+                        <div style="margin-bottom: 5px;">
+                            <span style="font-size: 13px; color: #19658A;"><strong>
+                                <asp:Label ID="lblPreviewName" runat="server"></asp:Label></strong></span>
+                            <span style="color: #666;">[ERP Code: <strong>
+                                <asp:Label ID="lblPreviewERPCode" runat="server"></asp:Label></strong>]</span>
+                        </div>
+                        <asp:Label ID="lblPreviewAddress" runat="server"></asp:Label><br />
+                        <div style="margin-top: 5px; padding-top: 5px; border-top: 1px dashed #b5c7d3;">
+                            <strong>State:</strong>
+                            <asp:Label ID="lblPreviewState" runat="server"></asp:Label>
+                            &nbsp;|&nbsp; <strong>POS:</strong>
+                            <asp:Label ID="lblPreviewPOS" runat="server"></asp:Label><br />
+                            <strong>GSTIN:</strong>
+                            <asp:Label ID="lblPreviewGST" runat="server"></asp:Label>
+                            &nbsp;|&nbsp; <strong>PAN:</strong>
+                            <asp:Label ID="lblPreviewPAN" runat="server"></asp:Label>
+                        </div>
+                        <div style="margin-top: 8px; text-align: right;">
+                            <a href="Add_client.aspx" target="_blank" style="color: #d9534f; font-weight: bold; text-decoration: underline;">✎ Modify Client Details</a>
+                        </div>
+                    </asp:Panel>
+
                     <table cellpadding="5" cellspacing="2" class="auto-style1">
-                        <tr>
-                            <td width="20%" align="right" valign="top"><span style="color: red">*</span> Select Client:</td>
-                            <td width="30%" valign="top">
-                                <asp:DropDownList ID="cmbClient" runat="server" CssClass="dropdown_style select2-search" Width="100%" AutoPostBack="True" OnSelectedIndexChanged="cmbClient_SelectedIndexChanged"></asp:DropDownList>
-                                <asp:Panel ID="pnlClientPreview" runat="server" Visible="false" Style="margin-top: 10px; padding: 10px; background: #eef7f9; border: 1px solid #19658A; border-radius: 4px; font-size: 11px; text-align: left; line-height: 1.6;">
-                                    <div style="margin-bottom: 5px;">
-                                        <span style="font-size: 13px; color: #19658A;"><strong>
-                                            <asp:Label ID="lblPreviewName" runat="server"></asp:Label></strong></span>
-                                        <span style="color: #666;">[ERP Code: <strong>
-                                            <asp:Label ID="lblPreviewERPCode" runat="server"></asp:Label></strong>]</span>
-                                    </div>
-
-                                    <asp:Label ID="lblPreviewAddress" runat="server"></asp:Label><br />
-
-                                    <div style="margin-top: 5px; padding-top: 5px; border-top: 1px dashed #b5c7d3;">
-                                        <strong>State:</strong>
-                                        <asp:Label ID="lblPreviewState" runat="server"></asp:Label>
-                                        &nbsp;|&nbsp; 
-        <strong>POS:</strong>
-                                        <asp:Label ID="lblPreviewPOS" runat="server"></asp:Label><br />
-                                        <strong>GSTIN:</strong>
-                                        <asp:Label ID="lblPreviewGST" runat="server"></asp:Label>
-                                        &nbsp;|&nbsp; 
-        <strong>PAN:</strong>
-                                        <asp:Label ID="lblPreviewPAN" runat="server"></asp:Label>
-                                    </div>
-
-                                    <div style="margin-top: 8px; text-align: right;">
-                                        <a href="Add_client.aspx" target="_blank" style="color: #d9534f; font-weight: bold; text-decoration: underline;">✎ Modify Client Details</a>
-                                    </div>
-                                </asp:Panel>
-                            </td>
-                            <td width="20%" align="right" valign="top"><span style="color: red">*</span> Assigned Sales Person:</td>
-                            <td width="30%" valign="top">
-                                <asp:DropDownList ID="cmbSalesPerson" runat="server" CssClass="dropdown_style select2-search" Width="100%"></asp:DropDownList>
-                            </td>
-                        </tr>
                         <tr>
                             <td align="right">Enable Reference Details:</td>
                             <td>
@@ -528,14 +579,6 @@
                             <td align="right">Reference Date:</td>
                             <td>
                                 <asp:TextBox ID="txt_clientrefdate" runat="server" CssClass="textbox_style datepicker"></asp:TextBox></td>
-                        </tr>
-                        <tr>
-                            <td align="right"><span style="color: red">*</span> Document Date:</td>
-                            <td>
-                                <asp:TextBox ID="txtquotationDate" runat="server" CssClass="textbox_style datepicker"></asp:TextBox></td>
-                            <td align="right"><span style="color: red">*</span> Place Of Supply:</td>
-                            <td>
-                                <asp:DropDownList ID="ddlPlaceOfSupply" runat="server" CssClass="dropdown_style select2-search" Width="100%"></asp:DropDownList></td>
                         </tr>
                         <tr>
                             <td align="right">GST Type:</td>
@@ -586,18 +629,24 @@
                     <div style="text-align: center; margin-top: 20px;">
                         <asp:Button ID="btnCancelEdit" runat="server" Text="✖ Cancel Edit" CssClass="btn_style" Width="150px" OnClick="btnreset_Click" CausesValidation="false" />
                         &nbsp;&nbsp;&nbsp;&nbsp;
-                        <asp:Button ID="btnNext1" runat="server" Text="Next: Review Catalog/Cart ➔" CssClass="btn_style" Width="250px" OnClientClick="if (!ValidateDocument()) return false;" OnClick="btnNext1_Click" CausesValidation="false" UseSubmitBehavior="false" />
+                        <asp:Button ID="btnNext1" runat="server" Text="Next: Select Products" CssClass="btn_style" Width="250px" OnClientClick="if (!validateStep(1)) return false;" OnClick="btnNext1_Click" CausesValidation="false" UseSubmitBehavior="false" />
                     </div>
                 </asp:View>
 
-                <asp:View ID="View2_Catalog" runat="server">
+                <asp:View ID="vwCatalog" runat="server">
                     <div class="wizard-steps">Step 2 of 4: Browse & Add More Products</div>
                     <table width="100%" cellpadding="5">
                         <tr>
                             <td width="20%" align="right">Select Category:</td>
-                            <td width="40%">
+                            <td width="30%">
                                 <asp:DropDownList ID="cmbproduct_service" runat="server" CssClass="dropdown_style select2-search" Width="100%"></asp:DropDownList></td>
-                            <td width="40%">
+                            <td width="20%" align="right">Search:</td>
+                            <td width="30%">
+                                <asp:TextBox ID="txtCatalogSearch" runat="server" CssClass="textbox_style" Width="100%" onkeyup="filterCatalogGrid(this.value)" placeholder="Filter products..."></asp:TextBox>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" align="center">
                                 <asp:Button ID="Button2" runat="server" CssClass="btn_style" OnClick="Button2_Click" Text="Load Products" /></td>
                         </tr>
                     </table>
@@ -670,16 +719,15 @@
                     </div>
 
                     <div style="margin-top: 15px; text-align: center;">
-                        <asp:Button ID="btnPrev2" runat="server" Text="🡄 Back to Details" CssClass="btn_style" Width="150px" OnClick="btnPrev2_Click" />
+                        <asp:Button ID="btnPrev2" runat="server" Text="Previous" CssClass="btn_style" Width="150px" OnClick="btnPrev2_Click" />
                         &nbsp;
-                        <asp:Button ID="btnNext2" runat="server" Text="Add to Cart ➔" CssClass="btn_style" Width="200px" OnClick="btnAddProduct_Click" CausesValidation="false" UseSubmitBehavior="false" />
-                        <br />
-                        <br />
-                        <asp:Button ID="btnSkipCatalog" runat="server" Text="Skip Catalog (Go to Cart)" CssClass="btn_style" BackColor="#6c757d" ForeColor="White" Width="250px" OnClick="btnSkipCatalog_Click" CausesValidation="false" />
+                        <asp:Button ID="btnAddProduct" runat="server" Text="Add Selected" CssClass="btn_style" Width="160px" OnClick="btnAddProduct_Click" CausesValidation="false" UseSubmitBehavior="false" />
+                        &nbsp;
+                        <asp:Button ID="btnNext2" runat="server" Text="Next: Review Cart" CssClass="btn_style" Width="200px" OnClick="btnSkipCatalog_Click" CausesValidation="false" UseSubmitBehavior="false" />
                     </div>
                 </asp:View>
 
-                <asp:View ID="View3_Cart" runat="server">
+                <asp:View ID="vwCart" runat="server">
                     <div class="wizard-steps">Step 3 of 4: Review Cart & Calculations</div>
                     <div style="text-align: right; margin-bottom: 5px;">
                         <asp:Button ID="btnAddMoreProducts" runat="server" Text="+ Add More Products" CssClass="btn_style" Width="180px" BackColor="#17a2b8" ForeColor="White" OnClick="btnAddMoreProducts_Click" CausesValidation="false" UseSubmitBehavior="false" />
@@ -694,7 +742,7 @@
                                     <ItemTemplate>
                                         <asp:LinkButton ID="btnUp" runat="server" CommandName="MoveUp" CommandArgument="<%# Container.DataItemIndex %>" CssClass="action-btn">↑</asp:LinkButton>
                                         <asp:LinkButton ID="btnDown" runat="server" CommandName="MoveDown" CommandArgument="<%# Container.DataItemIndex %>" CssClass="action-btn">↓</asp:LinkButton>
-                                        <asp:LinkButton ID="btnDel" runat="server" CommandName="DeleteRow" CommandArgument="<%# Container.DataItemIndex %>" CssClass="action-btn action-del">X</asp:LinkButton>
+                                        <asp:LinkButton ID="btnDel" runat="server" CommandName="Remove" CommandArgument="<%# Container.DataItemIndex %>" CssClass="action-btn action-del">X</asp:LinkButton>
                                     </ItemTemplate>
                                     <FooterTemplate><b>TOTAL:</b></FooterTemplate>
                                 </asp:TemplateField>
@@ -789,14 +837,13 @@
                     </div>
 
                     <div style="margin-top: 15px; text-align: center;">
-                        <asp:Button ID="btnPrev3" runat="server" Text="🡄 Back" CssClass="btn_style" Width="120px" OnClick="btnPrev3_Click" CausesValidation="false" />
+                        <asp:Button ID="btnPrev3" runat="server" Text="Previous" CssClass="btn_style" Width="120px" OnClick="btnPrev3_Click" CausesValidation="false" />
                         &nbsp;
-       
-                        <asp:Button ID="btnNext3" runat="server" Text="Proceed to Terms ➔" CssClass="btn_style" Width="200px" OnClientClick="if (!validateCart()) return false;" OnClick="btnNext3_Click" CausesValidation="false" UseSubmitBehavior="false" />
+                        <asp:Button ID="btnNext3" runat="server" Text="Next: Commercial Terms" CssClass="btn_style" Width="220px" OnClientClick="if (!validateStep(3)) return false;" OnClick="btnNext3_Click" CausesValidation="false" UseSubmitBehavior="false" />
                     </div>
                 </asp:View>
 
-                <asp:View ID="View4_Terms" runat="server">
+                <asp:View ID="vwFinal" runat="server">
                     <div class="wizard-steps">Step 4 of 4: Commercial Terms & Finalization</div>
 
                     <div style="display: none;">
@@ -813,7 +860,23 @@
 
                     <table cellpadding="4" cellspacing="2" class="auto-style1">
                         <tr>
-                            <td width="15%" align="right">Validay Days: </td>
+                            <td width="15%" align="right">Gross Amount:</td>
+                            <td width="35%"><asp:Label ID="lblGrossAmt" runat="server" Font-Bold="true" Text="0.00"></asp:Label></td>
+                            <td width="15%" align="right">Taxes:</td>
+                            <td width="35%"><asp:Label ID="lblTaxAmt" runat="server" Font-Bold="true" Text="0.00"></asp:Label></td>
+                        </tr>
+                        <tr>
+                            <td align="right">Discounts:</td>
+                            <td colspan="3">
+                                <asp:DropDownList ID="DDL_DiscountView" runat="server" CssClass="dropdown_style">
+                                    <asp:ListItem Text="--SELECT--" Value="0" Selected="True"></asp:ListItem>
+                                    <asp:ListItem Text="Yes" Value="1"></asp:ListItem>
+                                    <asp:ListItem Text="No" Value="2"></asp:ListItem>
+                                </asp:DropDownList>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">Validay Days: </td>
                             <td width="35%">
                                 <asp:TextBox ID="txt_valdays" runat="server" Text="0" CssClass="textbox_style" TextMode="Number" Width="100px"></asp:TextBox></td>
                             <td width="15%" align="right">View Type: </td>
@@ -826,14 +889,6 @@
                             </td>
                         </tr>
                         <tr>
-                            <td align="right">Discount Visibility: </td>
-                            <td>
-                                <asp:DropDownList ID="DDL_DiscountView" runat="server" CssClass="dropdown_style">
-                                    <asp:ListItem Text="--SELECT--" Value="0" Selected="True"></asp:ListItem>
-                                    <asp:ListItem Text="Yes" Value="1"></asp:ListItem>
-                                    <asp:ListItem Text="No" Value="2"></asp:ListItem>
-                                </asp:DropDownList>
-                            </td>
                             <td align="right">Delivery Tenure: </td>
                             <td>
                                 <asp:DropDownList ID="DDL_DeliveryTerms" runat="server" CssClass="dropdown_style" onchange="handleDeliveryTermChange(this)">
@@ -844,6 +899,7 @@
                                     <asp:ListItem Text="Manual Input" Value="4"></asp:ListItem>
                                 </asp:DropDownList>
                             </td>
+                            <td colspan="2"></td>
                         </tr>
                         <tr id="manualInputRow" runat="server" style="display: none;">
                             <td colspan="2"></td>
@@ -889,7 +945,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td align="right" valign="top">Remarks: </td>
+                            <td align="right" valign="top">T&amp;C / Remarks: </td>
                             <td colspan="3">
                                 <asp:TextBox ID="txt_remarks" runat="server" CssClass="textbox_style" TextMode="MultiLine" Rows="3" Width="90%"></asp:TextBox></td>
                         </tr>
@@ -933,12 +989,12 @@
                     </table>
 
                     <div style="margin-top: 20px; text-align: center;">
-                        <asp:Button ID="btnPrev4" runat="server" Text="🡄 Back to Cart" CssClass="btn_style" Width="150px" OnClick="btnPrev4_Click" CausesValidation="false" />
+                        <asp:Button ID="btnPrev4" runat="server" Text="Previous" CssClass="btn_style" Width="150px" OnClick="btnPrev4_Click" CausesValidation="false" />
                         <br />
                         <br />
-                        <asp:Button ID="btnSabe" runat="server" CssClass="btn_style" OnClientClick="if (!ValidateDocument()) return false;" OnClick="btnSabe_Click" Text="💾 Update Existing Version" Width="250px" BackColor="#28a745" ForeColor="White" Font-Bold="true" />
+                        <asp:Button ID="btnSabe" runat="server" CssClass="btn_style" OnClientClick="return preventDoubleSubmit(this);" OnClick="btnSabe_Click" Text="Save Changes" Width="250px" BackColor="#28a745" ForeColor="White" Font-Bold="true" />
                         &nbsp;&nbsp;&nbsp;&nbsp;
-                        <asp:Button ID="btnNew" runat="server" CssClass="btn_style" OnClientClick="if (!ValidateDocument()) return false;" OnClick="btnNew_Click" Text="📄 Save as New Version" Width="250px" BackColor="#17a2b8" ForeColor="White" Font-Bold="true" />
+                        <asp:Button ID="btnNew" runat="server" CssClass="btn_style" OnClientClick="return preventDoubleSubmit(this);" OnClick="btnNew_Click" Text="Save as New Revision" Width="250px" BackColor="#17a2b8" ForeColor="White" Font-Bold="true" />
                     </div>
                 </asp:View>
 
