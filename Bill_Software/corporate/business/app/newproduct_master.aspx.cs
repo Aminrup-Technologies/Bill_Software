@@ -36,14 +36,209 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        protected string FormatOemLink(object oemUrl)
+        protected string FormatImageLink(object imageUrl)
         {
-            string u = oemUrl == null || oemUrl == DBNull.Value ? string.Empty : Convert.ToString(oemUrl).Trim();
-            if (u.Length == 0) return string.Empty;
-            if (!(u.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || u.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+            ProductImages imgs = ParseProductImages(imageUrl == null || imageUrl == DBNull.Value ? string.Empty : Convert.ToString(imageUrl));
+            string u = imgs.Oem;
+            if (string.IsNullOrEmpty(u) || !(u.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || u.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
                 return string.Empty;
             string enc = HttpUtility.HtmlAttributeEncode(u);
             return "<div class=\"rate-sub\"><a href=\"" + enc + "\" target=\"_blank\" rel=\"noopener noreferrer\">OEM</a></div>";
+        }
+
+        protected string PrimaryImageUrl(object imageUrl)
+        {
+            ProductImages imgs = ParseProductImages(imageUrl == null || imageUrl == DBNull.Value ? string.Empty : Convert.ToString(imageUrl));
+            string u = imgs.PrimaryLocal();
+            return string.IsNullOrEmpty(u) ? string.Empty : u;
+        }
+
+        protected bool HasPrimaryImage(object imageUrl)
+        {
+            return !string.IsNullOrEmpty(PrimaryImageUrl(imageUrl));
+        }
+
+        protected string ViewImageUrl(object imageUrl, string viewKey)
+        {
+            ProductImages imgs = ParseProductImages(imageUrl == null || imageUrl == DBNull.Value ? string.Empty : Convert.ToString(imageUrl));
+            string path = null;
+            if (string.Equals(viewKey, "T", StringComparison.OrdinalIgnoreCase)) path = imgs.Top;
+            else if (string.Equals(viewKey, "B", StringComparison.OrdinalIgnoreCase)) path = imgs.Bottom;
+            else if (string.Equals(viewKey, "L", StringComparison.OrdinalIgnoreCase)) path = imgs.Left;
+            else if (string.Equals(viewKey, "R", StringComparison.OrdinalIgnoreCase)) path = imgs.Right;
+            else if (string.Equals(viewKey, "O", StringComparison.OrdinalIgnoreCase)) path = imgs.Oem;
+            if (string.IsNullOrEmpty(path)) return string.Empty;
+            if (IsHttpUrl(path) || path.StartsWith("~/", StringComparison.Ordinal))
+                return HttpUtility.HtmlAttributeEncode(IsHttpUrl(path) ? path : ResolveUrl(path));
+            return HttpUtility.HtmlAttributeEncode(ResolveUrl(path));
+        }
+
+        protected string FormatExpiry(object expiry)
+        {
+            if (expiry == null || expiry == DBNull.Value) return string.Empty;
+            DateTime dt;
+            if (DateTime.TryParse(Convert.ToString(expiry), out dt))
+                return dt.ToString("dd-MMM-yyyy");
+            return Convert.ToString(expiry);
+        }
+
+        protected string FormatAuditTrail(object user, object when)
+        {
+            string u = user == null || user == DBNull.Value ? "" : Convert.ToString(user).Trim();
+            string d = "";
+            if (when != null && when != DBNull.Value)
+            {
+                DateTime dt;
+                if (when is DateTime)
+                    dt = (DateTime)when;
+                else if (!DateTime.TryParse(Convert.ToString(when), out dt))
+                    return string.IsNullOrEmpty(u) ? "—" : u;
+                d = dt.ToString("dd-MMM-yyyy hh:mm tt");
+            }
+            if (string.IsNullOrEmpty(u) && string.IsNullOrEmpty(d)) return "—";
+            if (string.IsNullOrEmpty(d)) return u;
+            if (string.IsNullOrEmpty(u)) return d;
+            return u + " · " + d;
+        }
+
+        private static string NormalizeKey(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            return value.Trim().ToLowerInvariant();
+        }
+
+        private static string Clip(string value, int maxLen)
+        {
+            if (string.IsNullOrEmpty(value) || maxLen <= 0) return value;
+            return value.Length <= maxLen ? value : value.Substring(0, maxLen);
+        }
+
+        private static object DbStr(string value)
+        {
+            return string.IsNullOrEmpty(value) ? (object)DBNull.Value : value;
+        }
+
+        private void TryInsertSystemNotification(string title, string message, string severity, SqlConnection conn, SqlTransaction trans)
+        {
+            try { InsertSystemNotification(title, message, severity, conn, trans); }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Notification skipped: " + ex);
+            }
+        }
+
+        private void BindSharedProductParams(SqlCommand cmd, string productCode, string category, string purchaseRate,
+            decimal saleRate, decimal taxRate, string productName, string type, string unit, string brand,
+            int parentId, decimal quantity, decimal moq, DateTime? expiryDate, string imagePath,
+            bool isNewFlag, bool isFastMoving, string normName)
+        {
+            // Align with flamex_uat column types to avoid truncation / conversion failures on update.
+            cmd.Parameters.Add("@ProductCode", SqlDbType.VarChar, 50).Value = DbStr(Clip(productCode, 50));
+            cmd.Parameters.Add("@ProductOrServiceCat", SqlDbType.VarChar, -1).Value = DbStr(category);
+            cmd.Parameters.Add("@PurchesRate", SqlDbType.VarChar, -1).Value = DbStr(purchaseRate);
+            cmd.Parameters.Add("@SaleRate", SqlDbType.VarChar, -1).Value = saleRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            cmd.Parameters.Add("@TaxRate", SqlDbType.VarChar, -1).Value = taxRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            cmd.Parameters.Add("@Product_catagory", SqlDbType.VarChar, -1).Value = DbStr(txtproducttype.Text != null ? txtproducttype.Text.Trim() : "");
+            cmd.Parameters.Add("@ProductName", SqlDbType.VarChar, -1).Value = DbStr(productName);
+            cmd.Parameters.Add("@Type", SqlDbType.NVarChar, 250).Value = DbStr(Clip(type, 250));
+            cmd.Parameters.Add("@Unit", SqlDbType.NVarChar, -1).Value = DbStr(unit);
+            cmd.Parameters.Add("@Brand", SqlDbType.NVarChar, -1).Value = DbStr(brand);
+            cmd.Parameters.Add("@ParentId", SqlDbType.Int).Value = parentId != 0 ? (object)parentId : DBNull.Value;
+            cmd.Parameters.Add("@Specification", SqlDbType.NVarChar, 100).Value = DbStr(Clip(TextBox1.Text != null ? TextBox1.Text.Trim() : "", 100));
+            cmd.Parameters.Add("@Quantity", SqlDbType.NVarChar, 100).Value = quantity.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            cmd.Parameters.Add("@QuantityNum", SqlDbType.Decimal).Value = quantity;
+            cmd.Parameters["@QuantityNum"].Precision = 18;
+            cmd.Parameters["@QuantityNum"].Scale = 3;
+            cmd.Parameters.Add("@MOQ_Value", SqlDbType.NVarChar, 100).Value = moq.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            cmd.Parameters.Add("@SaleNote", SqlDbType.NVarChar, 100).Value = DbStr(Clip(TextBox4.Text != null ? TextBox4.Text.Trim() : "", 100));
+            if (expiryDate.HasValue)
+            {
+                DateTime e = expiryDate.Value;
+                cmd.Parameters.Add("@ExpiryDate", SqlDbType.SmallDateTime).Value = new DateTime(e.Year, e.Month, e.Day, e.Hour, e.Minute, 0);
+            }
+            else
+                cmd.Parameters.Add("@ExpiryDate", SqlDbType.SmallDateTime).Value = DBNull.Value;
+            cmd.Parameters.Add("@ImageUrl", SqlDbType.VarChar, 500).Value = DbStr(Clip(imagePath, 500));
+            cmd.Parameters.Add("@IsNew", SqlDbType.Bit).Value = isNewFlag;
+            cmd.Parameters.Add("@IsFastMoving", SqlDbType.Bit).Value = isFastMoving;
+            // NormalizedProductID is a computed column — do not write it.
+            cmd.Parameters.Add("@NormName", SqlDbType.VarChar, 500).Value = DbStr(Clip(normName, 500));
+        }
+
+        private class ProductImages
+        {
+            public string Top;
+            public string Bottom;
+            public string Left;
+            public string Right;
+            public string Oem;
+
+            public string PrimaryLocal()
+            {
+                if (IsLocalPath(Top)) return Top;
+                if (IsLocalPath(Bottom)) return Bottom;
+                if (IsLocalPath(Left)) return Left;
+                if (IsLocalPath(Right)) return Right;
+                return string.Empty;
+            }
+        }
+
+        private static bool IsHttpUrl(string u)
+        {
+            return !string.IsNullOrEmpty(u)
+                && (u.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                    || u.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsLocalPath(string u)
+        {
+            return !string.IsNullOrEmpty(u) && !IsHttpUrl(u);
+        }
+
+        private static ProductImages ParseProductImages(string raw)
+        {
+            var p = new ProductImages();
+            if (string.IsNullOrWhiteSpace(raw)) return p;
+            string s = raw.Trim();
+            bool packed = s.IndexOf('|') >= 0
+                || s.StartsWith("T=", StringComparison.OrdinalIgnoreCase)
+                || s.StartsWith("B=", StringComparison.OrdinalIgnoreCase)
+                || s.StartsWith("L=", StringComparison.OrdinalIgnoreCase)
+                || s.StartsWith("R=", StringComparison.OrdinalIgnoreCase)
+                || s.StartsWith("O=", StringComparison.OrdinalIgnoreCase);
+            if (packed)
+            {
+                string[] parts = s.Split('|');
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    string part = parts[i];
+                    int eq = part.IndexOf('=');
+                    if (eq <= 0) continue;
+                    string key = part.Substring(0, eq).Trim().ToUpperInvariant();
+                    string val = part.Substring(eq + 1).Trim();
+                    if (key == "T") p.Top = val;
+                    else if (key == "B") p.Bottom = val;
+                    else if (key == "L") p.Left = val;
+                    else if (key == "R") p.Right = val;
+                    else if (key == "O") p.Oem = val;
+                }
+                return p;
+            }
+            if (IsHttpUrl(s)) p.Oem = s;
+            else p.Top = s;
+            return p;
+        }
+
+        private static string SerializeProductImages(ProductImages p)
+        {
+            if (p == null) return string.Empty;
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(p.Top)) parts.Add("T=" + p.Top);
+            if (!string.IsNullOrEmpty(p.Bottom)) parts.Add("B=" + p.Bottom);
+            if (!string.IsNullOrEmpty(p.Left)) parts.Add("L=" + p.Left);
+            if (!string.IsNullOrEmpty(p.Right)) parts.Add("R=" + p.Right);
+            if (!string.IsNullOrEmpty(p.Oem)) parts.Add("O=" + p.Oem);
+            return string.Join("|", parts.ToArray());
         }
 
         private void BindCategories()
@@ -77,7 +272,9 @@ namespace Bill_Software.corporate.business.app
 
             string sql = @"SELECT Id, ProductID, Product_code, ProductName, ProductOrServiceCat, Brand, Specification, Product_catagory, Type,
                                   ISNULL(Sail_Rate,0) AS Sail_Rate, ISNULL(Purches_Rate,0) AS Purches_Rate, ISNULL(Tax_Rate,0) AS Tax_Rate, Unit,
-                                  OEMUrl, ProductImage
+                                  ISNULL(Quantity,0) AS Quantity, ISNULL(MOQ_Value,0) AS MOQ_Value, SaleNote, ExpiryDate, ImageUrl,
+                                  ISNULL(IsNew,0) AS IsNew, ISNULL(IsFastMoving,0) AS IsFastMoving,
+                                  AddedbyUserId, AddedOn, ModifiedByUserId, ModifiedOn
                            FROM tbl_NewProduct
                            WHERE CompanyID=@CompanyID AND (DeleteMode=0 OR DeleteMode IS NULL)";
             if (hasParent)
@@ -204,51 +401,130 @@ namespace Bill_Software.corporate.business.app
             hfProductImage.Value = "";
             txtOemUrl.Text = "";
             btnSave.Text = "Save";
+            pnlAuditTrail.Visible = false;
+            lblAuditCreated.Text = "—";
+            lblAuditModified.Text = "—";
         }
 
-        private bool TryValidateProductImage(out string ext)
+        private void ApplyFormDefaults()
+        {
+            ClearEditMode();
+            txtSubProductsName.Text = "";
+            txtproducttype.Text = "";
+            TextBox1.Text = "";
+            txtBrand.Text = "";
+            txtProductCode.Text = "";
+            txtUnit.Text = "";
+            TextBox2.Text = "";
+            TextBox3.Text = "";
+            txtSalerate.Text = "";
+            txtPurchaseRate.Text = "";
+            TextBox4.Text = "N/A";
+            txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+            txtOemUrl.Text = "";
+            txtGlobalSearch.Text = "";
+            chkIsNew.Checked = false;
+            chkIsFastMoving.Checked = false;
+
+            if (cmdProduct.Items.Count > 0) { cmdProduct.ClearSelection(); cmdProduct.SelectedIndex = 0; }
+            if (ddlProOrSer.Items.Count > 0) { ddlProOrSer.ClearSelection(); ddlProOrSer.SelectedIndex = 0; }
+            if (cmbtax.Items.Count > 0) { cmbtax.ClearSelection(); cmbtax.SelectedIndex = 0; }
+            if (ddlPageSize.Items.FindByValue("10") != null)
+            {
+                ddlPageSize.ClearSelection();
+                ddlPageSize.Items.FindByValue("10").Selected = true;
+            }
+
+            ViewState["FilterParentId"] = null;
+            Session.Remove("pid");
+            gridProducts.PageIndex = 0;
+            PanelOK.Style["display"] = "none";
+            PanelError.Style["display"] = "none";
+            lblSimilar.Text = "";
+            lblDupMessage.Text = "";
+        }
+
+        protected void btnreset_Click(object sender, EventArgs e)
+        {
+            ApplyFormDefaults();
+            BindProductsGrid();
+        }
+
+        private bool TryValidateUpload(FileUpload fu, string label, out string ext)
         {
             ext = null;
-            if (!fuProductImage.HasFile)
-                return true;
-            ext = Path.GetExtension(fuProductImage.FileName);
+            if (fu == null || !fu.HasFile) return true;
+            ext = Path.GetExtension(fu.FileName);
             if (string.IsNullOrEmpty(ext))
             {
-                ShowErr("Invalid image file.");
+                ShowErr("Invalid image file for " + label + ".");
                 return false;
             }
             ext = ext.ToLowerInvariant();
             if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp")
             {
-                ShowErr("Only .jpg, .png, .webp images are allowed.");
+                ShowErr("Only .jpg, .png, .webp images are allowed (" + label + ").");
                 return false;
             }
             if (ext == ".jpeg") ext = ".jpg";
             return true;
         }
 
-        private string SaveProductImage(string ext, ref string keepPath, out string physicalPath)
+        private bool TryValidateProductImages()
+        {
+            string ext;
+            if (!TryValidateUpload(fuImgTop, "Top View", out ext)) return false;
+            if (!TryValidateUpload(fuImgBottom, "Bottom View", out ext)) return false;
+            if (!TryValidateUpload(fuImgLeft, "Left View", out ext)) return false;
+            if (!TryValidateUpload(fuImgRight, "Right View", out ext)) return false;
+            return true;
+        }
+
+        private string SaveViewImage(FileUpload fu, string token, out string physicalPath)
         {
             physicalPath = null;
-            if (!fuProductImage.HasFile)
-                return keepPath;
+            if (fu == null || !fu.HasFile) return null;
+
+            string ext = Path.GetExtension(fu.FileName);
+            if (string.IsNullOrEmpty(ext)) return null;
+            ext = ext.ToLowerInvariant();
+            if (ext == ".jpeg") ext = ".jpg";
 
             string virtualDir = "~/Uploads/Products/";
             string physicalDir = Server.MapPath(virtualDir);
             if (!Directory.Exists(physicalDir))
                 Directory.CreateDirectory(physicalDir);
 
-            string fileName = Guid.NewGuid().ToString("N") + ext;
+            string fileName = Guid.NewGuid().ToString("N") + (string.IsNullOrEmpty(token) ? "" : ("_" + token)) + ext;
             physicalPath = Path.Combine(physicalDir, fileName);
-            fuProductImage.SaveAs(physicalPath);
-            keepPath = virtualDir + fileName;
-            return keepPath;
+            fu.SaveAs(physicalPath);
+            return virtualDir + fileName;
         }
 
         private static void TryDeleteFile(string physicalPath)
         {
             if (string.IsNullOrEmpty(physicalPath)) return;
             try { if (File.Exists(physicalPath)) File.Delete(physicalPath); } catch { }
+        }
+
+        private void RegisterViewPreviews(ProductImages imgs)
+        {
+            if (imgs == null) return;
+            var sb = new System.Text.StringBuilder();
+            AppendPreviewScript(sb, "imgPrevTop", imgs.Top);
+            AppendPreviewScript(sb, "imgPrevBottom", imgs.Bottom);
+            AppendPreviewScript(sb, "imgPrevLeft", imgs.Left);
+            AppendPreviewScript(sb, "imgPrevRight", imgs.Right);
+            if (sb.Length == 0) return;
+            ClientScript.RegisterStartupScript(GetType(), "prevImgs", sb.ToString(), true);
+        }
+
+        private void AppendPreviewScript(System.Text.StringBuilder sb, string elId, string path)
+        {
+            if (!IsLocalPath(path)) return;
+            string clientUrl = ResolveUrl(path).Replace("\\", "\\\\").Replace("'", "\\'");
+            sb.Append("var el=document.getElementById('").Append(elId).Append("');");
+            sb.Append("if(el){el.src='").Append(clientUrl).Append("';el.className='img-preview is-on';}");
         }
 
         protected void btnSearch_Click(object sender, EventArgs e)
@@ -284,7 +560,7 @@ namespace Bill_Software.corporate.business.app
             string type = ddlProOrSer.SelectedItem != null ? ddlProOrSer.SelectedItem.Text : "";
             string unit = txtUnit.Text.Trim();
             string brand = txtBrand.Text.Trim();
-            string oemUrl = txtOemUrl.Text != null ? txtOemUrl.Text.Trim() : "";
+            string externalImageUrl = txtOemUrl.Text != null ? txtOemUrl.Text.Trim() : "";
             int parentId = 0;
             if (!string.IsNullOrEmpty(cmdProduct.SelectedValue))
                 int.TryParse(cmdProduct.SelectedValue, out parentId);
@@ -293,13 +569,16 @@ namespace Bill_Software.corporate.business.app
 
             decimal saleRate = 0m;
             decimal taxRate = 0m;
-            int quantity = 0;
-            int moq = 0;
+            decimal quantity = 0m;
+            decimal moq = 0m;
             Decimal.TryParse(txtSalerate.Text, out saleRate);
             if (cmbtax.SelectedItem != null)
                 Decimal.TryParse(cmbtax.SelectedItem.Text, out taxRate);
-            Int32.TryParse(TextBox2.Text, out quantity);
-            Int32.TryParse(TextBox3.Text, out moq);
+            Decimal.TryParse(TextBox2.Text, out quantity);
+            Decimal.TryParse(TextBox3.Text, out moq);
+            string purchaseRate = txtPurchaseRate.Text != null ? txtPurchaseRate.Text.Trim() : "";
+            bool isNewFlag = chkIsNew.Checked;
+            bool isFastMoving = chkIsFastMoving.Checked;
 
             DateTime? expiryDate = null;
             DateTime tmpDt;
@@ -315,12 +594,11 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            string imageExt;
-            if (!TryValidateProductImage(out imageExt))
+            if (!TryValidateProductImages())
                 return;
 
-            string imagePath = hfProductImage.Value ?? "";
-            string newImagePhysical = null;
+            ProductImages imgs = ParseProductImages(hfProductImage.Value ?? "");
+            var newImagePhysicals = new List<string>();
 
             try
             {
@@ -332,6 +610,7 @@ namespace Bill_Software.corporate.business.app
                         try
                         {
                             string productid = isEdit ? (txtProductID.Text ?? "").Trim() : findProductId(conn, trans);
+                            string normName = NormalizeKey(productName);
                             if (CheckDuplicateProduct(category, productName, productid, editId, conn, trans))
                             {
                                 trans.Rollback();
@@ -339,54 +618,91 @@ namespace Bill_Software.corporate.business.app
                                 return;
                             }
 
-                            if (fuProductImage.HasFile)
+                            List<string> similarNames = FindSimilarProductNames(conn, trans, category, productName, editId, 10);
+                            if (!isEdit && similarNames.Count > 0)
                             {
-                                if (SaveProductImage(imageExt, ref imagePath, out newImagePhysical) == null)
+                                trans.Rollback();
+                                string preview = string.Join("; ", similarNames);
+                                lblSimilar.Text = preview;
+                                ShowErr("Similar product(s) already exist. Change the name to continue. Matches: " + preview);
+                                return;
+                            }
+
+                            string phys;
+                            string saved;
+                            if (fuImgTop.HasFile)
+                            {
+                                saved = SaveViewImage(fuImgTop, "TopView", out phys);
+                                if (saved == null) { trans.Rollback(); return; }
+                                imgs.Top = saved;
+                                if (!string.IsNullOrEmpty(phys)) newImagePhysicals.Add(phys);
+                            }
+                            if (fuImgBottom.HasFile)
+                            {
+                                saved = SaveViewImage(fuImgBottom, "BottomView", out phys);
+                                if (saved == null) { trans.Rollback(); foreach (string f in newImagePhysicals) TryDeleteFile(f); return; }
+                                imgs.Bottom = saved;
+                                if (!string.IsNullOrEmpty(phys)) newImagePhysicals.Add(phys);
+                            }
+                            if (fuImgLeft.HasFile)
+                            {
+                                saved = SaveViewImage(fuImgLeft, "LeftView", out phys);
+                                if (saved == null) { trans.Rollback(); foreach (string f in newImagePhysicals) TryDeleteFile(f); return; }
+                                imgs.Left = saved;
+                                if (!string.IsNullOrEmpty(phys)) newImagePhysicals.Add(phys);
+                            }
+                            if (fuImgRight.HasFile)
+                            {
+                                saved = SaveViewImage(fuImgRight, "RightView", out phys);
+                                if (saved == null) { trans.Rollback(); foreach (string f in newImagePhysicals) TryDeleteFile(f); return; }
+                                imgs.Right = saved;
+                                if (!string.IsNullOrEmpty(phys)) newImagePhysicals.Add(phys);
+                            }
+
+                            if (!string.IsNullOrEmpty(externalImageUrl))
+                            {
+                                if (!(externalImageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                                    || externalImageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                                    || externalImageUrl.StartsWith("~/", StringComparison.Ordinal)))
                                 {
                                     trans.Rollback();
+                                    foreach (string f in newImagePhysicals) TryDeleteFile(f);
+                                    ShowErr("OEM Reference URL must start with http://, https://, or ~/.");
                                     return;
                                 }
+                                imgs.Oem = externalImageUrl;
+                            }
+                            else
+                            {
+                                imgs.Oem = "";
+                            }
+
+                            string imagePath = SerializeProductImages(imgs);
+                            if (imagePath.Length > 500)
+                            {
+                                trans.Rollback();
+                                foreach (string f in newImagePhysicals) TryDeleteFile(f);
+                                ShowErr("Image data exceeds storage limit. Use shorter OEM URL or fewer/smaller path images.");
+                                return;
                             }
 
                             if (hfEditProductID.Value == "")
                             {
                                 string queryNewProduct = @"INSERT INTO tbl_NewProduct
-                                    (Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, Type, [Unit], Brand, parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, TimeStamp, ProductID, AddedbyUserId, AddedOn, CompanyID, ViewMode, DeleteMode, OEMUrl, ProductImage)
+                                    (Product_code, ProductOrServiceCat, Purches_Rate, Sail_Rate, Tax_Rate, Product_catagory, ProductName, Type, [Unit], Brand, parentId, Specification, Quantity, Quantity_Num, MOQ_Value, SaleNote, ExpiryDate, TimeStamp, ProductID, AddedbyUserId, AddedOn, CompanyID, ViewMode, DeleteMode, ImageUrl, IsNew, IsFastMoving, NormalizedProductName)
                                     VALUES
-                                    (@ProductCode, @ProductOrServiceCat, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, @Specification, @Quantity, @MOQ_Value, @SaleNote, @ExpiryDate, GETDATE(), @ProductID, @AddedbyUserId, GETDATE(), @CompanyID, 1, 0, @OEMUrl, @ProductImage);
+                                    (@ProductCode, @ProductOrServiceCat, @PurchesRate, @SaleRate, @TaxRate, @Product_catagory, @ProductName, @Type, @Unit, @Brand, @ParentId, @Specification, @Quantity, @QuantityNum, @MOQ_Value, @SaleNote, @ExpiryDate, GETDATE(), @ProductID, @AddedbyUserId, GETDATE(), @CompanyID, 1, 0, @ImageUrl, @IsNew, @IsFastMoving, @NormName);
                                     SELECT SCOPE_IDENTITY();";
 
                                 int newId = 0;
                                 using (SqlCommand cmdNewProduct = new SqlCommand(queryNewProduct, conn, trans))
                                 {
-                                    cmdNewProduct.Parameters.Add("@ProductCode", SqlDbType.VarChar, 50).Value = (object)productCode ?? DBNull.Value;
-                                    cmdNewProduct.Parameters.Add("@ProductOrServiceCat", SqlDbType.VarChar, 100).Value = (object)category ?? DBNull.Value;
-                                    cmdNewProduct.Parameters.Add("@SaleRate", SqlDbType.Decimal).Value = saleRate;
-                                    cmdNewProduct.Parameters["@SaleRate"].Scale = 2;
-                                    cmdNewProduct.Parameters["@SaleRate"].Precision = 18;
-                                    cmdNewProduct.Parameters.Add("@TaxRate", SqlDbType.Decimal).Value = taxRate;
-                                    cmdNewProduct.Parameters["@TaxRate"].Scale = 2;
-                                    cmdNewProduct.Parameters["@TaxRate"].Precision = 5;
-                                    cmdNewProduct.Parameters.Add("@Product_catagory", SqlDbType.VarChar, 200).Value = string.IsNullOrEmpty(txtproducttype.Text) ? (object)DBNull.Value : txtproducttype.Text;
-                                    cmdNewProduct.Parameters.Add("@ProductName", SqlDbType.NVarChar, 400).Value = productName ?? (object)DBNull.Value;
-                                    cmdNewProduct.Parameters.Add("@Type", SqlDbType.VarChar, 100).Value = string.IsNullOrEmpty(type) ? (object)DBNull.Value : type;
-                                    cmdNewProduct.Parameters.Add("@Unit", SqlDbType.VarChar, 50).Value = string.IsNullOrEmpty(unit) ? (object)DBNull.Value : unit;
-                                    cmdNewProduct.Parameters.Add("@Brand", SqlDbType.VarChar, 100).Value = string.IsNullOrEmpty(brand) ? (object)DBNull.Value : brand;
-                                    cmdNewProduct.Parameters.Add("@ParentId", SqlDbType.Int).Value = parentId != 0 ? (object)parentId : DBNull.Value;
-                                    cmdNewProduct.Parameters.Add("@Specification", SqlDbType.NVarChar, -1).Value = string.IsNullOrEmpty(TextBox1.Text) ? (object)DBNull.Value : TextBox1.Text;
-                                    cmdNewProduct.Parameters.Add("@Quantity", SqlDbType.Decimal).Value = quantity;
-                                    cmdNewProduct.Parameters["@Quantity"].Scale = 3;
-                                    cmdNewProduct.Parameters["@Quantity"].Precision = 18;
-                                    cmdNewProduct.Parameters.Add("@MOQ_Value", SqlDbType.Decimal).Value = moq;
-                                    cmdNewProduct.Parameters["@MOQ_Value"].Scale = 3;
-                                    cmdNewProduct.Parameters["@MOQ_Value"].Precision = 18;
-                                    cmdNewProduct.Parameters.Add("@SaleNote", SqlDbType.NVarChar, -1).Value = string.IsNullOrEmpty(TextBox4.Text) ? (object)DBNull.Value : TextBox4.Text;
-                                    cmdNewProduct.Parameters.Add("@ExpiryDate", SqlDbType.DateTime).Value = expiryDate.HasValue ? (object)expiryDate.Value : DBNull.Value;
-                                    cmdNewProduct.Parameters.Add("@ProductID", SqlDbType.VarChar, 100).Value = productid;
-                                    cmdNewProduct.Parameters.Add("@AddedbyUserId", SqlDbType.VarChar, 100).Value = userId ?? (object)DBNull.Value;
+                                    BindSharedProductParams(cmdNewProduct, productCode, category, purchaseRate, saleRate, taxRate,
+                                        productName, type, unit, brand, parentId, quantity, moq, expiryDate, imagePath,
+                                        isNewFlag, isFastMoving, normName);
+                                    cmdNewProduct.Parameters.Add("@ProductID", SqlDbType.NVarChar, 250).Value = DbStr(Clip(productid, 250));
+                                    cmdNewProduct.Parameters.Add("@AddedbyUserId", SqlDbType.VarChar, 50).Value = DbStr(Clip(userId, 50));
                                     cmdNewProduct.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
-                                    cmdNewProduct.Parameters.Add("@OEMUrl", SqlDbType.NVarChar, 500).Value = string.IsNullOrEmpty(oemUrl) ? (object)DBNull.Value : oemUrl;
-                                    cmdNewProduct.Parameters.Add("@ProductImage", SqlDbType.NVarChar, 500).Value = string.IsNullOrEmpty(imagePath) ? (object)DBNull.Value : imagePath;
 
                                     object scopeObj = cmdNewProduct.ExecuteScalar();
                                     if (scopeObj != null && scopeObj != DBNull.Value)
@@ -417,54 +733,37 @@ namespace Bill_Software.corporate.business.app
                                     cmdStock.ExecuteNonQuery();
                                 }
 
-                                InsertSystemNotification(
+                                TryInsertSystemNotification(
                                     "Product Created",
                                     "New Product '" + productName + "' added with HSN " + productCode + ".",
                                     "Success",
                                     conn, trans);
 
                                 trans.Commit();
+                                ApplyFormDefaults();
                                 ShowOk("New product created (Id=" + newId + "). Opening stock recorded.");
-                                ClearEditMode();
                             }
                             else
                             {
+                                // Id and ProductID are immutable — never updated.
                                 string updateQuery = @"UPDATE tbl_NewProduct SET
-                                    Product_code=@ProductCode, ProductOrServiceCat=@ProductOrServiceCat, Sail_Rate=@SaleRate, Tax_Rate=@TaxRate,
-                                    Product_catagory=@Product_catagory, ProductName=@ProductName, Type=@Type, [Unit]=@Unit, Brand=@Brand,
-                                    Specification=@Specification, Quantity=@Quantity, MOQ_Value=@MOQ_Value, SaleNote=@SaleNote, ExpiryDate=@ExpiryDate,
-                                    OEMUrl=@OEMUrl, ProductImage=@ProductImage,
+                                    Product_code=@ProductCode, ProductOrServiceCat=@ProductOrServiceCat, Purches_Rate=@PurchesRate,
+                                    Sail_Rate=@SaleRate, Tax_Rate=@TaxRate, Product_catagory=@Product_catagory, ProductName=@ProductName,
+                                    Type=@Type, [Unit]=@Unit, Brand=@Brand, parentId=@ParentId,
+                                    Specification=@Specification, Quantity=@Quantity, Quantity_Num=@QuantityNum, MOQ_Value=@MOQ_Value,
+                                    SaleNote=@SaleNote, ExpiryDate=@ExpiryDate, ImageUrl=@ImageUrl,
+                                    IsNew=@IsNew, IsFastMoving=@IsFastMoving,
+                                    NormalizedProductName=@NormName,
                                     ModifiedByUserId=@ModifiedByUserId, ModifiedOn=GETDATE()
                                     WHERE Id=@Id AND CompanyID=@CompanyID";
 
                                 int affected;
                                 using (SqlCommand cmdUpd = new SqlCommand(updateQuery, conn, trans))
                                 {
-                                    cmdUpd.Parameters.Add("@ProductCode", SqlDbType.VarChar, 50).Value = (object)productCode ?? DBNull.Value;
-                                    cmdUpd.Parameters.Add("@ProductOrServiceCat", SqlDbType.VarChar, 100).Value = (object)category ?? DBNull.Value;
-                                    cmdUpd.Parameters.Add("@SaleRate", SqlDbType.Decimal).Value = saleRate;
-                                    cmdUpd.Parameters["@SaleRate"].Scale = 2;
-                                    cmdUpd.Parameters["@SaleRate"].Precision = 18;
-                                    cmdUpd.Parameters.Add("@TaxRate", SqlDbType.Decimal).Value = taxRate;
-                                    cmdUpd.Parameters["@TaxRate"].Scale = 2;
-                                    cmdUpd.Parameters["@TaxRate"].Precision = 5;
-                                    cmdUpd.Parameters.Add("@Product_catagory", SqlDbType.VarChar, 200).Value = string.IsNullOrEmpty(txtproducttype.Text) ? (object)DBNull.Value : txtproducttype.Text;
-                                    cmdUpd.Parameters.Add("@ProductName", SqlDbType.NVarChar, 400).Value = productName ?? (object)DBNull.Value;
-                                    cmdUpd.Parameters.Add("@Type", SqlDbType.VarChar, 100).Value = string.IsNullOrEmpty(type) ? (object)DBNull.Value : type;
-                                    cmdUpd.Parameters.Add("@Unit", SqlDbType.VarChar, 50).Value = string.IsNullOrEmpty(unit) ? (object)DBNull.Value : unit;
-                                    cmdUpd.Parameters.Add("@Brand", SqlDbType.VarChar, 100).Value = string.IsNullOrEmpty(brand) ? (object)DBNull.Value : brand;
-                                    cmdUpd.Parameters.Add("@Specification", SqlDbType.NVarChar, -1).Value = string.IsNullOrEmpty(TextBox1.Text) ? (object)DBNull.Value : TextBox1.Text;
-                                    cmdUpd.Parameters.Add("@Quantity", SqlDbType.Decimal).Value = quantity;
-                                    cmdUpd.Parameters["@Quantity"].Scale = 3;
-                                    cmdUpd.Parameters["@Quantity"].Precision = 18;
-                                    cmdUpd.Parameters.Add("@MOQ_Value", SqlDbType.Decimal).Value = moq;
-                                    cmdUpd.Parameters["@MOQ_Value"].Scale = 3;
-                                    cmdUpd.Parameters["@MOQ_Value"].Precision = 18;
-                                    cmdUpd.Parameters.Add("@SaleNote", SqlDbType.NVarChar, -1).Value = string.IsNullOrEmpty(TextBox4.Text) ? (object)DBNull.Value : TextBox4.Text;
-                                    cmdUpd.Parameters.Add("@ExpiryDate", SqlDbType.DateTime).Value = expiryDate.HasValue ? (object)expiryDate.Value : DBNull.Value;
-                                    cmdUpd.Parameters.Add("@OEMUrl", SqlDbType.NVarChar, 500).Value = string.IsNullOrEmpty(oemUrl) ? (object)DBNull.Value : oemUrl;
-                                    cmdUpd.Parameters.Add("@ProductImage", SqlDbType.NVarChar, 500).Value = string.IsNullOrEmpty(imagePath) ? (object)DBNull.Value : imagePath;
-                                    cmdUpd.Parameters.Add("@ModifiedByUserId", SqlDbType.VarChar, 100).Value = userId ?? (object)DBNull.Value;
+                                    BindSharedProductParams(cmdUpd, productCode, category, purchaseRate, saleRate, taxRate,
+                                        productName, type, unit, brand, parentId, quantity, moq, expiryDate, imagePath,
+                                        isNewFlag, isFastMoving, normName);
+                                    cmdUpd.Parameters.Add("@ModifiedByUserId", SqlDbType.VarChar, 50).Value = DbStr(Clip(userId, 50));
                                     cmdUpd.Parameters.Add("@Id", SqlDbType.Int).Value = editId;
                                     cmdUpd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
                                     affected = cmdUpd.ExecuteNonQuery();
@@ -477,36 +776,36 @@ namespace Bill_Software.corporate.business.app
                                     return;
                                 }
 
-                                InsertSystemNotification(
+                                TryInsertSystemNotification(
                                     "Product Updated",
                                     "Product '" + productName + "' specifications or pricing updated.",
                                     "Information",
                                     conn, trans);
 
                                 trans.Commit();
+                                ApplyFormDefaults();
                                 ShowOk("Product updated successfully.");
-                                ClearEditMode();
                             }
-
-                            lblSimilar.Text = "";
                         }
                         catch (SqlException sqlex)
                         {
                             try { trans.Rollback(); } catch { }
-                            TryDeleteFile(newImagePhysical);
+                            foreach (string f in newImagePhysicals) TryDeleteFile(f);
                             System.Diagnostics.Debug.WriteLine(sqlex.ToString());
                             if (sqlex.Number == 2627 || sqlex.Number == 2601)
                                 ShowErr("A product with the same name was created by someone else just now. Please refresh and try again.");
+                            else if (sqlex.Number == 8152)
+                                ShowErr("One or more fields are too long for the database (Specification / Sale Note max 100 chars). Shorten and retry.");
                             else
-                                ShowErr("An error occurred while saving the product. Please try again.");
+                                ShowErr("Save failed: " + Clip(sqlex.Message, 180));
                             return;
                         }
                         catch (Exception exTrans)
                         {
                             try { trans.Rollback(); } catch { }
-                            TryDeleteFile(newImagePhysical);
+                            foreach (string f in newImagePhysicals) TryDeleteFile(f);
                             System.Diagnostics.Debug.WriteLine(exTrans.ToString());
-                            ShowErr("An error occurred while saving the product. Please try again.");
+                            ShowErr("Save failed: " + Clip(exTrans.Message, 180));
                             return;
                         }
                     }
@@ -514,9 +813,9 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                TryDeleteFile(newImagePhysical);
+                foreach (string f in newImagePhysicals) TryDeleteFile(f);
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
-                ShowErr("An error occurred while saving the product. Please try again.");
+                ShowErr("Save failed: " + Clip(ex.Message, 180));
             }
 
             BindProductsGrid();
@@ -526,13 +825,64 @@ namespace Bill_Software.corporate.business.app
         {
             public bool checkedOk { get; set; }
             public bool isDuplicate { get; set; }
+            public bool hasSimilar { get; set; }
+            public List<string> similar { get; set; }
+        }
+
+        private static List<string> FindSimilarProductNames(SqlConnection conn, SqlTransaction trans, string category, string productName, int excludeId, int take)
+        {
+            var list = new List<string>();
+            string trimmed = (productName ?? string.Empty).Trim();
+            if (trimmed.Length < 3 || string.IsNullOrWhiteSpace(category) || category == "--Select--")
+                return list;
+
+            string sql = @"
+                SELECT TOP(@take) ProductName, ProductID
+                FROM dbo.tbl_NewProduct
+                WHERE CompanyID=@CompanyID
+                  AND (DeleteMode=0 OR DeleteMode IS NULL)
+                  AND (@excludeId=0 OR Id<>@excludeId)
+                  AND ProductOrServiceCat=@cat
+                  AND ProductName LIKE @like
+                ORDER BY
+                  CASE WHEN LOWER(LTRIM(RTRIM(ProductName))) = @normName THEN 0 ELSE 1 END,
+                  ProductName";
+
+            using (SqlCommand cmd = trans != null
+                ? new SqlCommand(sql, conn, trans)
+                : new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@take", take);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                cmd.Parameters.AddWithValue("@excludeId", excludeId);
+                cmd.Parameters.AddWithValue("@cat", category.Trim());
+                cmd.Parameters.AddWithValue("@like", "%" + trimmed + "%");
+                cmd.Parameters.AddWithValue("@normName", trimmed.ToLower());
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        string name = rdr["ProductName"] != DBNull.Value ? rdr["ProductName"].ToString() : "";
+                        string pid = rdr["ProductID"] != DBNull.Value ? rdr["ProductID"].ToString() : "";
+                        if (string.IsNullOrEmpty(name)) continue;
+                        list.Add(string.IsNullOrEmpty(pid) ? name : (name + " [" + pid + "]"));
+                    }
+                }
+            }
+            return list;
         }
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static NameAvailabilityResult CheckDuplicateName(string productName, string category, int excludeId)
         {
-            var result = new NameAvailabilityResult { checkedOk = false, isDuplicate = false };
+            var result = new NameAvailabilityResult
+            {
+                checkedOk = false,
+                isDuplicate = false,
+                hasSimilar = false,
+                similar = new List<string>()
+            };
             try
             {
                 if (string.IsNullOrWhiteSpace(productName) || string.IsNullOrWhiteSpace(category) || category == "--Select--")
@@ -541,20 +891,25 @@ namespace Bill_Software.corporate.business.app
                 string normName = productName.Trim().ToLower();
                 string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 using (SqlConnection conn = new SqlConnection(cs))
-                using (SqlCommand cmd = new SqlCommand(
-                    @"SELECT COUNT(1) FROM dbo.tbl_NewProduct
-                      WHERE CompanyID=@CompanyID
-                        AND (DeleteMode=0 OR DeleteMode IS NULL)
-                        AND (@excludeId=0 OR Id<>@excludeId)
-                        AND LOWER(LTRIM(RTRIM(ProductName)))=@normName
-                        AND ProductOrServiceCat=@cat", conn))
                 {
-                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                    cmd.Parameters.AddWithValue("@cat", category.Trim());
-                    cmd.Parameters.AddWithValue("@normName", normName);
-                    cmd.Parameters.AddWithValue("@excludeId", excludeId);
                     conn.Open();
-                    result.isDuplicate = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+                    using (SqlCommand cmd = new SqlCommand(
+                        @"SELECT COUNT(1) FROM dbo.tbl_NewProduct
+                          WHERE CompanyID=@CompanyID
+                            AND (DeleteMode=0 OR DeleteMode IS NULL)
+                            AND (@excludeId=0 OR Id<>@excludeId)
+                            AND LOWER(LTRIM(RTRIM(ProductName)))=@normName
+                            AND ProductOrServiceCat=@cat", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@cat", category.Trim());
+                        cmd.Parameters.AddWithValue("@normName", normName);
+                        cmd.Parameters.AddWithValue("@excludeId", excludeId);
+                        result.isDuplicate = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+                    }
+
+                    result.similar = FindSimilarProductNames(conn, null, category, productName, excludeId, 15);
+                    result.hasSimilar = result.similar.Count > 0;
                     result.checkedOk = true;
                     return result;
                 }
@@ -639,8 +994,10 @@ namespace Bill_Software.corporate.business.app
         {
             using (SqlConnection conn = new SqlConnection(ConnString))
             using (SqlCommand cmd = new SqlCommand(
-                @"SELECT Id, ProductID, Product_code, ProductOrServiceCat, Sail_Rate, Tax_Rate, Product_catagory, ProductName, Type, Unit, Brand,
-                         parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, OEMUrl, ProductImage
+                @"SELECT Id, ProductID, Product_code, ProductOrServiceCat, Purches_Rate, Sail_Rate, Tax_Rate, Product_catagory, ProductName, Type, Unit, Brand,
+                         parentId, Specification, Quantity, MOQ_Value, SaleNote, ExpiryDate, ImageUrl,
+                         ISNULL(IsNew,0) AS IsNew, ISNULL(IsFastMoving,0) AS IsFastMoving,
+                         AddedbyUserId, AddedOn, ModifiedByUserId, ModifiedOn
                   FROM tbl_NewProduct WHERE Id=@Id AND CompanyID=@CompanyID AND (DeleteMode=0 OR DeleteMode IS NULL)", conn))
             {
                 cmd.Parameters.AddWithValue("@Id", idVal);
@@ -656,19 +1013,29 @@ namespace Bill_Software.corporate.business.app
 
                     hfEditProductID.Value = re["Id"].ToString();
                     txtProductID.Text = re["ProductID"] != DBNull.Value ? re["ProductID"].ToString() : "";
+                    txtProductID.ReadOnly = true;
                     txtProductCode.Text = re["Product_code"] != DBNull.Value ? re["Product_code"].ToString() : "";
                     txtSubProductsName.Text = re["ProductName"] != DBNull.Value ? re["ProductName"].ToString() : "";
                     txtBrand.Text = re["Brand"] != DBNull.Value ? re["Brand"].ToString() : "";
                     txtUnit.Text = re["Unit"] != DBNull.Value ? re["Unit"].ToString() : "";
                     txtSalerate.Text = re["Sail_Rate"] != DBNull.Value ? re["Sail_Rate"].ToString() : "";
+                    txtPurchaseRate.Text = re["Purches_Rate"] != DBNull.Value ? re["Purches_Rate"].ToString() : "";
                     txtproducttype.Text = re["Product_catagory"] != DBNull.Value ? re["Product_catagory"].ToString() : "";
                     TextBox1.Text = re["Specification"] != DBNull.Value ? re["Specification"].ToString() : "";
                     TextBox2.Text = re["Quantity"] != DBNull.Value ? re["Quantity"].ToString() : "";
                     TextBox3.Text = re["MOQ_Value"] != DBNull.Value ? re["MOQ_Value"].ToString() : "";
                     TextBox4.Text = re["SaleNote"] != DBNull.Value ? re["SaleNote"].ToString() : "N/A";
-                    txtOemUrl.Text = re["OEMUrl"] != DBNull.Value ? re["OEMUrl"].ToString() : "";
-                    string imgPath = re["ProductImage"] != DBNull.Value ? re["ProductImage"].ToString() : "";
+                    chkIsNew.Checked = re["IsNew"] != DBNull.Value && Convert.ToBoolean(re["IsNew"]);
+                    chkIsFastMoving.Checked = re["IsFastMoving"] != DBNull.Value && Convert.ToBoolean(re["IsFastMoving"]);
+                    string imgPath = re["ImageUrl"] != DBNull.Value ? re["ImageUrl"].ToString() : "";
                     hfProductImage.Value = imgPath;
+                    ProductImages imgs = ParseProductImages(imgPath);
+                    txtOemUrl.Text = imgs.Oem ?? "";
+                    RegisterViewPreviews(imgs);
+
+                    lblAuditCreated.Text = FormatAuditTrail(re["AddedbyUserId"], re["AddedOn"]);
+                    lblAuditModified.Text = FormatAuditTrail(re["ModifiedByUserId"], re["ModifiedOn"]);
+                    pnlAuditTrail.Visible = true;
 
                     string cat = re["ProductOrServiceCat"] != DBNull.Value ? re["ProductOrServiceCat"].ToString() : "";
                     string typ = re["Type"] != DBNull.Value ? re["Type"].ToString() : "";
@@ -709,15 +1076,17 @@ namespace Bill_Software.corporate.business.app
                     }
 
                     btnSave.Text = "Update Product";
-                    if (!string.IsNullOrEmpty(imgPath))
-                    {
-                        string clientUrl = ResolveUrl(imgPath).Replace("\\", "\\\\").Replace("'", "\\'");
-                        ClientScript.RegisterStartupScript(GetType(), "prevImg",
-                            "var p=document.getElementById('imgProductPreview');if(p){p.src='" + clientUrl + "';p.className='img-preview is-on';}", true);
-                    }
-                    ShowOk("Editing product Id=" + idVal + ". Update and save.");
+                    ShowOk("Editing product Id=" + idVal + " (Product ID locked). Update and save.");
                 }
             }
+        }
+
+        protected void btnModalEdit_Click(object sender, EventArgs e)
+        {
+            HandleProductCommand("EditProduct", hfModalEditId.Value);
+            hfModalEditId.Value = "";
+            ClientScript.RegisterStartupScript(GetType(), "scrollEditForm",
+                "try{var el=document.querySelector('.page-header')||document.getElementById('" + txtSubProductsName.ClientID + "');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}catch(ex){}", true);
         }
 
         protected void gridProducts_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -788,8 +1157,9 @@ namespace Bill_Software.corporate.business.app
                             int affected;
                             using (SqlCommand cmd = new SqlCommand(
                                 @"UPDATE tbl_NewProduct
-                                  SET DeleteMode=1, ModifiedByUserId=@UserId, ModifiedOn=GETDATE()
-                                  WHERE Id=@Id AND CompanyID=@CompanyID", conn, trans))
+                                  SET DeleteMode=1, DeletedOn=GETDATE(), DeletedByUserId=@UserId,
+                                      ModifiedByUserId=@UserId, ModifiedOn=GETDATE()
+                                  WHERE Id=@Id AND CompanyID=@CompanyID AND (DeleteMode=0 OR DeleteMode IS NULL)", conn, trans))
                             {
                                 cmd.Parameters.AddWithValue("@UserId", userId);
                                 cmd.Parameters.AddWithValue("@Id", delId);
@@ -800,18 +1170,18 @@ namespace Bill_Software.corporate.business.app
                             if (affected == 0)
                             {
                                 trans.Rollback();
-                                ShowErr("Product not found for this company.");
+                                ShowErr("Product not found or already deactivated.");
                                 return;
                             }
 
-                            InsertSystemNotification(
-                                "Product Deactivated",
-                                "Product '" + prodName + "' was deactivated.",
+                            TryInsertSystemNotification(
+                                "Product Soft-Deleted",
+                                "Product '" + prodName + "' was soft-deleted (deactivated).",
                                 "Warning",
                                 conn, trans);
 
                             trans.Commit();
-                            ShowOk("Product deactivated successfully.");
+                            ShowOk("Product soft-deleted successfully. It is hidden from the catalog.");
                         }
                         catch (Exception ex)
                         {

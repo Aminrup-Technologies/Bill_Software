@@ -1,3 +1,6 @@
+-- flamex_uat already has CompanyID + ImageUrl on tbl_NewProduct.
+-- Idempotent guards only; do not invent OEMUrl/ProductImage columns.
+
 IF NOT EXISTS (
     SELECT 1 FROM sys.columns
     WHERE object_id = OBJECT_ID(N'[dbo].[tbl_NewProduct]')
@@ -23,32 +26,21 @@ GO
 IF NOT EXISTS (
     SELECT 1 FROM sys.columns
     WHERE object_id = OBJECT_ID(N'[dbo].[tbl_NewProduct]')
+    AND name = 'ImageUrl'
+)
+BEGIN
+    ALTER TABLE [dbo].[tbl_NewProduct]
+    ADD ImageUrl VARCHAR(500) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[tbl_NewProduct]')
     AND name = 'Purches_Rate'
 )
 BEGIN
     ALTER TABLE [dbo].[tbl_NewProduct]
-    ADD Purches_Rate DECIMAL(18,2) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM sys.columns
-    WHERE object_id = OBJECT_ID(N'[dbo].[tbl_NewProduct]')
-    AND name = 'OEMUrl'
-)
-BEGIN
-    ALTER TABLE [dbo].[tbl_NewProduct]
-    ADD OEMUrl NVARCHAR(500) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM sys.columns
-    WHERE object_id = OBJECT_ID(N'[dbo].[tbl_NewProduct]')
-    AND name = 'ProductImage'
-)
-BEGIN
-    ALTER TABLE [dbo].[tbl_NewProduct]
-    ADD ProductImage NVARCHAR(500) NULL;
+    ADD Purches_Rate VARCHAR(MAX) NULL;
 END
 GO
