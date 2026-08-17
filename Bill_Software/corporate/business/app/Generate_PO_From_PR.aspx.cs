@@ -28,21 +28,25 @@ namespace Bill_Software.corporate.business.app
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
                 string sql = @"
-                SELECT ReqNo, clientName, Vendor, VendorId, NetAmount, ApprovedBy, ApprovedOn, CreatedBy, CreatedOn, Status
-                FROM tbl_RequisitionMain
-                WHERE CompanyID = @CompanyID
-                  AND Status = 'Approved'";
+                SELECT R.ReqNo, R.clientName, R.Vendor, R.VendorId, R.NetAmount, R.ApprovedBy, R.ApprovedOn, R.CreatedBy, R.CreatedOn, R.Status
+                FROM tbl_RequisitionMain R
+                WHERE R.CompanyID = @CompanyID
+                  AND R.Status = 'Approved'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM tbl_PO_Header P
+                      WHERE P.ReqNo = R.ReqNo AND P.CompanyID = R.CompanyID
+                  )";
 
                 if (!string.IsNullOrWhiteSpace(txtDocNo.Text))
-                    sql += " AND ReqNo LIKE '%' + @DocNo + '%'";
+                    sql += " AND R.ReqNo LIKE '%' + @DocNo + '%'";
                 if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
-                    sql += " AND CAST(ISNULL(ApprovedOn, CreatedOn) AS DATE) >= @FromDate";
+                    sql += " AND CAST(ISNULL(R.ApprovedOn, R.CreatedOn) AS DATE) >= @FromDate";
                 if (!string.IsNullOrWhiteSpace(txtToDate.Text))
-                    sql += " AND CAST(ISNULL(ApprovedOn, CreatedOn) AS DATE) <= @ToDate";
+                    sql += " AND CAST(ISNULL(R.ApprovedOn, R.CreatedOn) AS DATE) <= @ToDate";
                 if (!string.IsNullOrWhiteSpace(ddlStatus.SelectedValue))
-                    sql += " AND Status = @Status";
+                    sql += " AND R.Status = @Status";
 
-                sql += " ORDER BY ApprovedOn DESC";
+                sql += " ORDER BY R.ApprovedOn DESC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, con))
                 {
@@ -110,7 +114,7 @@ namespace Bill_Software.corporate.business.app
         {
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             using (SqlCommand cmd = new SqlCommand(
-                "SELECT 1 FROM tbl_RequisitionMain WHERE ReqNo = @ReqNo AND CompanyID = @CompanyID AND Status = 'Approved'", con))
+                "SELECT 1 FROM tbl_RequisitionMain R WHERE R.ReqNo = @ReqNo AND R.CompanyID = @CompanyID AND R.Status = 'Approved' AND NOT EXISTS (SELECT 1 FROM tbl_PO_Header P WHERE P.ReqNo = R.ReqNo AND P.CompanyID = R.CompanyID)", con))
             {
                 cmd.Parameters.AddWithValue("@ReqNo", reqNo);
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);

@@ -2,7 +2,7 @@
    NAME:        requisition_po_companyid
    WHEN:        2026-08-16
    WHY:         Tenant-isolate PR/PO; backfill CompanyID from creator/vendor; align TVP HSNCode
-   WHAT:        CompanyID columns + ownership backfill; rebuild RequisitionItem_TVP; SPs with @CompanyID
+   WHAT:        CompanyID columns + backfill; PR/PO SPs with @CompanyID; rebuild RequisitionItem_TVP
    ============================================================================ */
 
 IF NOT EXISTS (
@@ -169,7 +169,13 @@ IF EXISTS (
 )
     ALTER TABLE [dbo].[tbl_RequisitionMain] ALTER COLUMN CompanyID INT NOT NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.default_constraints WHERE name = N'DF_tbl_RequisitionMain_CompanyID')
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.default_constraints dc
+    INNER JOIN sys.columns c ON c.default_object_id = dc.object_id
+    WHERE dc.parent_object_id = OBJECT_ID(N'dbo.tbl_RequisitionMain')
+      AND c.name = N'CompanyID'
+)
    AND COL_LENGTH(N'dbo.tbl_RequisitionMain', N'CompanyID') IS NOT NULL
     ALTER TABLE [dbo].[tbl_RequisitionMain] ADD CONSTRAINT DF_tbl_RequisitionMain_CompanyID DEFAULT (1) FOR CompanyID;
 GO
@@ -180,7 +186,13 @@ IF EXISTS (
 )
     ALTER TABLE [dbo].[tbl_RequisitionNew] ALTER COLUMN CompanyID INT NOT NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.default_constraints WHERE name = N'DF_tbl_RequisitionNew_CompanyID')
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.default_constraints dc
+    INNER JOIN sys.columns c ON c.default_object_id = dc.object_id
+    WHERE dc.parent_object_id = OBJECT_ID(N'dbo.tbl_RequisitionNew')
+      AND c.name = N'CompanyID'
+)
    AND COL_LENGTH(N'dbo.tbl_RequisitionNew', N'CompanyID') IS NOT NULL
     ALTER TABLE [dbo].[tbl_RequisitionNew] ADD CONSTRAINT DF_tbl_RequisitionNew_CompanyID DEFAULT (1) FOR CompanyID;
 GO
@@ -191,7 +203,13 @@ IF EXISTS (
 )
     ALTER TABLE [dbo].[tbl_PO_Header] ALTER COLUMN CompanyID INT NOT NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.default_constraints WHERE name = N'DF_tbl_PO_Header_CompanyID')
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.default_constraints dc
+    INNER JOIN sys.columns c ON c.default_object_id = dc.object_id
+    WHERE dc.parent_object_id = OBJECT_ID(N'dbo.tbl_PO_Header')
+      AND c.name = N'CompanyID'
+)
    AND COL_LENGTH(N'dbo.tbl_PO_Header', N'CompanyID') IS NOT NULL
     ALTER TABLE [dbo].[tbl_PO_Header] ADD CONSTRAINT DF_tbl_PO_Header_CompanyID DEFAULT (1) FOR CompanyID;
 GO
@@ -202,7 +220,13 @@ IF EXISTS (
 )
     ALTER TABLE [dbo].[tbl_PO_Items] ALTER COLUMN CompanyID INT NOT NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.default_constraints WHERE name = N'DF_tbl_PO_Items_CompanyID')
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.default_constraints dc
+    INNER JOIN sys.columns c ON c.default_object_id = dc.object_id
+    WHERE dc.parent_object_id = OBJECT_ID(N'dbo.tbl_PO_Items')
+      AND c.name = N'CompanyID'
+)
    AND COL_LENGTH(N'dbo.tbl_PO_Items', N'CompanyID') IS NOT NULL
     ALTER TABLE [dbo].[tbl_PO_Items] ADD CONSTRAINT DF_tbl_PO_Items_CompanyID DEFAULT (1) FOR CompanyID;
 GO
@@ -421,5 +445,100 @@ BEGIN
 
     IF @@ROWCOUNT = 0
         THROW 50004, 'Approval failed: submitted requisition not found for company.', 1;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_GeneratePO_FromReqNo
+    @ReqNo     VARCHAR(250),
+    @UserId    VARCHAR(100),
+    @CompanyID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.tbl_RequisitionMain
+        WHERE ReqNo = @ReqNo AND CompanyID = @CompanyID AND Status = 'Approved'
+    )
+        THROW 50010, 'Approved PR not found for company.', 1;
+
+    IF EXISTS (
+        SELECT 1 FROM dbo.tbl_PO_Header
+        WHERE ReqNo = @ReqNo AND CompanyID = @CompanyID
+    )
+        THROW 50011, 'A PO already exists for this PR.', 1;
+
+    DECLARE @VendorId INT;
+    SELECT @VendorId = VendorId
+    FROM dbo.tbl_RequisitionMain
+    WHERE ReqNo = @ReqNo AND CompanyID = @CompanyID;
+
+    DECLARE @Seq INT, @PONo VARCHAR(250);
+    SELECT @Seq = ISNULL(MAX(TRY_CAST(RIGHT(PO_No, 6) AS INT)), 0) + 1
+    FROM dbo.tbl_PO_Header WITH (UPDLOCK, HOLDLOCK)
+    WHERE CompanyID = @CompanyID;
+
+    SET @PONo = 'PO/' + CONVERT(VARCHAR(8), GETDATE(), 112) + '/' + RIGHT('000000' + CAST(@Seq AS VARCHAR(6)), 6);
+
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.tbl_RequisitionNew
+        WHERE ReqNo = @ReqNo AND CompanyID = @CompanyID
+    )
+        THROW 50012, 'No PR line items found for company.', 1;
+
+    DECLARE @PO_Id INT;
+
+    INSERT INTO dbo.tbl_PO_Header
+    (PO_No, ReqNo, VendorId, PO_Date, PO_Status, IsLocked, CreatedBy, CreatedOn, CompanyID)
+    VALUES
+    (@PONo, @ReqNo, @VendorId, GETDATE(), 'Draft', 0, @UserId, GETDATE(), @CompanyID);
+
+    SET @PO_Id = SCOPE_IDENTITY();
+
+    INSERT INTO dbo.tbl_PO_Items
+    (PO_Id, ProductId, ProductName, Quantity, Rate, DiscountPercent, DiscountAmount,
+     TaxableAmount, TaxRate, TaxAmount, NetAmount, ItemOrder, CompanyID)
+    SELECT
+        @PO_Id,
+        ISNULL(R.ProductId, ''),
+        R.ProductName,
+        R.Qnty,
+        R.Rate,
+        ISNULL(R.DiscountPercent, 0),
+        ISNULL(R.DiscountAmount, 0),
+        ISNULL(R.TaxableAmount, 0),
+        ISNULL(R.gstrate, 0),
+        CAST(CASE WHEN ISNULL(R.IsTaxApplicable, 0) = 1
+             THEN ISNULL(R.TaxableAmount, 0) * ISNULL(CAST(R.gstrate AS DECIMAL(5,2)), 0) / 100.0
+             ELSE 0 END AS DECIMAL(18,2)),
+        CAST(ISNULL(R.TaxableAmount, 0) +
+             CASE WHEN ISNULL(R.IsTaxApplicable, 0) = 1
+                  THEN ISNULL(R.TaxableAmount, 0) * ISNULL(CAST(R.gstrate AS DECIMAL(5,2)), 0) / 100.0
+                  ELSE 0 END AS DECIMAL(18,2)),
+        R.ItemOrder,
+        @CompanyID
+    FROM dbo.tbl_RequisitionNew R
+    WHERE R.ReqNo = @ReqNo AND R.CompanyID = @CompanyID;
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ReleasePO_Final
+    @PO_Id     INT,
+    @UserId    VARCHAR(100),
+    @CompanyID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE dbo.tbl_PO_Header
+    SET PO_Status = 'Released',
+        IsLocked = 1
+    WHERE PO_Id = @PO_Id
+      AND CompanyID = @CompanyID
+      AND PO_Status = 'Draft'
+      AND IsLocked = 0;
+
+    IF @@ROWCOUNT = 0
+        THROW 50020, 'Release failed: draft PO not found for company.', 1;
 END
 GO

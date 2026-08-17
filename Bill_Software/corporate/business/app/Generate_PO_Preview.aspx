@@ -4,8 +4,9 @@
     <style type="text/css">
         .style2 { color: #FFFFFF; font-weight: bold; }
         
-        /* Grid Styles */
-        .po-preview-grid { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 20px; }
+        .po-preview-container { padding: 20px; background: #fdfdfd; }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+        .po-preview-grid { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 0; }
         .po-preview-grid th { background-color: #0b5f8a; color: #ffffff; padding: 10px; text-align: center; border: 1px solid #0b5f8a; font-weight: bold; }
         .po-preview-grid td { padding: 8px 10px; border: 1px solid #d6d6d6; background-color: #ffffff; }
         .po-preview-grid tr:nth-child(even) td { background-color: #f6f9fc; }
@@ -13,8 +14,6 @@
         .po-preview-grid .center { text-align: center; }
         .po-preview-grid .amount { font-weight: bold; color: #0b5f8a; }
 
-        /* PO Details Styles */
-        .page-container { padding: 20px; background: #fdfdfd; }
         .po-card { border: 1px solid #e2e6ea; border-radius: 8px; background: #fff; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .po-card-header { padding: 12px 15px; font-weight: bold; font-size: 15px; background: #f5f7fa; border-bottom: 1px solid #e2e6ea; color: #333; }
         .po-card-body { padding: 20px; }
@@ -37,17 +36,25 @@
         
         .action-bar { text-align: right; padding: 15px; background: #fff; border-top: 1px solid #ddd; margin-top: 20px; }
         .info-header { margin-bottom: 15px; font-size: 15px; }
+        .page-title-bar { background: #19658A; padding: 8px; margin-bottom: 0; }
     </style>
+    <script type="text/javascript">
+        function confirmCreatePO(btn) {
+            if (btn.getAttribute('data-submitting') === '1') return false;
+            if (!confirm('Are you sure you want to generate the Purchase Order?')) return false;
+            btn.setAttribute('data-submitting', '1');
+            btn.value = 'Creating...';
+            return true;
+        }
+    </script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-            <td bgcolor="#19658A" style="padding: 8px;">&nbsp;<span class="style2">Generate Purchase Order from PR</span></td>
-        </tr>
-    </table>
+    <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true"></asp:ScriptManager>
 
-    <div class="page-container">
+    <div class="page-title-bar">&nbsp;<span class="style2">Generate Purchase Order from PR</span></div>
+
+    <div class="po-preview-container">
         
         <div class="info-header">
             <strong>PR No:</strong> <asp:Label ID="lblPrevReqNo" runat="server" ForeColor="#0b5f8a" Font-Bold="true" />
@@ -55,77 +62,83 @@
             <strong>Vendor:</strong> <asp:Label ID="lblPrevVendor" runat="server" ForeColor="#0b5f8a" Font-Bold="true" />
         </div>
 
-        <asp:GridView ID="gvPreviewItems" runat="server" AutoGenerateColumns="false" ShowFooter="true"
-            CssClass="po-preview-grid" OnRowDataBound="gvPreviewItems_RowDataBound">
-            <Columns>
-                <asp:BoundField DataField="SlNo" HeaderText="Sl">
-                    <HeaderStyle CssClass="center" Width="5%" />
-                    <ItemStyle CssClass="center" />
-                </asp:BoundField>
-                <asp:BoundField DataField="ProductName" HeaderText="Item">
-                    <HeaderStyle Width="35%" />
-                </asp:BoundField>
-                <asp:BoundField DataField="Qnty" HeaderText="Qty" DataFormatString="{0:N2}">
-                    <HeaderStyle CssClass="center" Width="8%" />
-                    <ItemStyle CssClass="num" />
-                </asp:BoundField>
-                <asp:BoundField DataField="Rate" HeaderText="Rate" DataFormatString="{0:N2}">
-                    <HeaderStyle CssClass="center" Width="8%" />
-                    <ItemStyle CssClass="num" />
-                </asp:BoundField>
-                <asp:BoundField DataField="TaxableAmount" HeaderText="Before GST" DataFormatString="{0:N2}">
-                    <HeaderStyle CssClass="center" Width="12%" />
-                    <ItemStyle CssClass="num" />
-                </asp:BoundField>
-                <asp:BoundField DataField="TaxAmount" HeaderText="GST Amt" DataFormatString="{0:N2}">
-                    <HeaderStyle CssClass="center" Width="10%" />
-                    <ItemStyle CssClass="num" />
-                </asp:BoundField>
-                <asp:BoundField DataField="NetAmount" HeaderText="After GST" DataFormatString="{0:N2}">
-                    <HeaderStyle CssClass="center" Width="12%" />
-                    <ItemStyle CssClass="num amount" />
-                </asp:BoundField>
-            </Columns>
-        </asp:GridView>
+        <div class="table-responsive">
+            <asp:GridView ID="gvPreviewItems" runat="server" AutoGenerateColumns="false" ShowFooter="true"
+                CssClass="po-preview-grid" OnRowDataBound="gvPreviewItems_RowDataBound">
+                <Columns>
+                    <asp:BoundField DataField="SlNo" HeaderText="Sl">
+                        <HeaderStyle CssClass="center" Width="5%" />
+                        <ItemStyle CssClass="center" />
+                    </asp:BoundField>
+                    <asp:BoundField DataField="ProductName" HeaderText="Item">
+                        <HeaderStyle Width="35%" />
+                    </asp:BoundField>
+                    <asp:BoundField DataField="Qnty" HeaderText="Qty" DataFormatString="{0:N2}">
+                        <HeaderStyle CssClass="center" Width="8%" />
+                        <ItemStyle CssClass="num" />
+                    </asp:BoundField>
+                    <asp:BoundField DataField="Rate" HeaderText="Rate" DataFormatString="{0:N2}">
+                        <HeaderStyle CssClass="center" Width="8%" />
+                        <ItemStyle CssClass="num" />
+                    </asp:BoundField>
+                    <asp:BoundField DataField="TaxableAmount" HeaderText="Before GST" DataFormatString="{0:N2}">
+                        <HeaderStyle CssClass="center" Width="12%" />
+                        <ItemStyle CssClass="num" />
+                    </asp:BoundField>
+                    <asp:BoundField DataField="TaxAmount" HeaderText="GST Amt" DataFormatString="{0:N2}">
+                        <HeaderStyle CssClass="center" Width="10%" />
+                        <ItemStyle CssClass="num" />
+                    </asp:BoundField>
+                    <asp:BoundField DataField="NetAmount" HeaderText="After GST" DataFormatString="{0:N2}">
+                        <HeaderStyle CssClass="center" Width="12%" />
+                        <ItemStyle CssClass="num amount" />
+                    </asp:BoundField>
+                </Columns>
+            </asp:GridView>
+        </div>
 
         <asp:Label ID="lblError" runat="server" ForeColor="Red" Font-Bold="true"></asp:Label>
         
         <div class="po-card">
             <div class="po-card-header">Step 2: PO Delivery & Billing Details</div>
             <div class="po-card-body">
-                <div class="po-grid-2">
-                    <div class="po-subsection">
-                        <div class="po-section">
-                            <div class="po-section-title">Bill To <span class="req">*</span></div>
-                            <asp:RadioButtonList ID="rblBillToType" runat="server" CssClass="po-radio-group"
-                                RepeatDirection="Horizontal" AutoPostBack="true" RepeatLayout="Flow"
-                                OnSelectedIndexChanged="rblBillToType_SelectedIndexChanged">
-                                <asp:ListItem Text="Company" Value="Company" />
-                                <asp:ListItem Text="Store" Value="Store" />
-                            </asp:RadioButtonList>
-                            <div style="margin-top: 10px;">
-                                <asp:DropDownList ID="ddlBillToCompany" runat="server" CssClass="po-input" Enabled="false" />
-                                <asp:DropDownList ID="ddlBillToStore" runat="server" CssClass="po-input" Enabled="false" Style="margin-top:8px;" />
+                <asp:UpdatePanel ID="upBillShip" runat="server" UpdateMode="Conditional" ChildrenAsTriggers="true">
+                    <ContentTemplate>
+                        <div class="po-grid-2">
+                            <div class="po-subsection">
+                                <div class="po-section">
+                                    <div class="po-section-title">Bill To <span class="req">*</span></div>
+                                    <asp:RadioButtonList ID="rblBillToType" runat="server" CssClass="po-radio-group"
+                                        RepeatDirection="Horizontal" AutoPostBack="true" RepeatLayout="Flow"
+                                        OnSelectedIndexChanged="rblBillToType_SelectedIndexChanged">
+                                        <asp:ListItem Text="Company" Value="Company" />
+                                        <asp:ListItem Text="Store" Value="Store" />
+                                    </asp:RadioButtonList>
+                                    <div style="margin-top: 10px;">
+                                        <asp:DropDownList ID="ddlBillToCompany" runat="server" CssClass="po-input" Enabled="false" />
+                                        <asp:DropDownList ID="ddlBillToStore" runat="server" CssClass="po-input" Enabled="false" Style="margin-top:8px;" />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="po-subsection">
-                        <div class="po-section">
-                            <div class="po-section-title">Ship To (Consignee) <span class="req">*</span></div>
-                            <asp:RadioButtonList ID="rblShipToType" runat="server" CssClass="po-radio-group"
-                                RepeatDirection="Horizontal" AutoPostBack="true" RepeatLayout="Flow"
-                                OnSelectedIndexChanged="rblShipToType_SelectedIndexChanged">
-                                <asp:ListItem Text="Store" Value="Store" />
-                                <asp:ListItem Text="Client (Direct Delivery)" Value="Client" />
-                            </asp:RadioButtonList>
-                            <div style="margin-top: 10px;">
-                                <asp:DropDownList ID="ddlShipToStore" runat="server" CssClass="po-input" Enabled="false" />
-                                <asp:DropDownList ID="ddlShipToClient" runat="server" CssClass="po-input" Enabled="false" Style="margin-top:8px;"/>
+                            <div class="po-subsection">
+                                <div class="po-section">
+                                    <div class="po-section-title">Ship To (Consignee) <span class="req">*</span></div>
+                                    <asp:RadioButtonList ID="rblShipToType" runat="server" CssClass="po-radio-group"
+                                        RepeatDirection="Horizontal" AutoPostBack="true" RepeatLayout="Flow"
+                                        OnSelectedIndexChanged="rblShipToType_SelectedIndexChanged">
+                                        <asp:ListItem Text="Store" Value="Store" />
+                                        <asp:ListItem Text="Client (Direct Delivery)" Value="Client" />
+                                    </asp:RadioButtonList>
+                                    <div style="margin-top: 10px;">
+                                        <asp:DropDownList ID="ddlShipToStore" runat="server" CssClass="po-input" Enabled="false" />
+                                        <asp:DropDownList ID="ddlShipToClient" runat="server" CssClass="po-input" Enabled="false" Style="margin-top:8px;"/>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </ContentTemplate>
+                </asp:UpdatePanel>
 
                 <div class="po-section">
                     <div class="po-section-title op-title">Operational Details</div>
@@ -176,7 +189,7 @@
         <div class="action-bar">
             <asp:Button ID="btnCancel" runat="server" Text="Cancel / Back" CssClass="btn btn-secondary btn_style" OnClick="btnCancel_Click" CausesValidation="false" />
             &nbsp;&nbsp;
-            <asp:Button ID="btnCreatePO" runat="server" Text="Confirm & Create PO" CssClass="btn btn-success btn_style" OnClick="btnCreatePO_Click" OnClientClick="return confirm('Are you sure you want to generate the Purchase Order?');" />
+            <asp:Button ID="btnCreatePO" runat="server" Text="Confirm & Create PO" CssClass="btn btn-success btn_style" OnClick="btnCreatePO_Click" OnClientClick="return confirmCreatePO(this);" />
         </div>
     </div>
 </asp:Content>

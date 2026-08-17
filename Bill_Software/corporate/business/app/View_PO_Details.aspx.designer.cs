@@ -292,6 +292,11 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Label lblNet;
         
         /// <summary>
+        /// btnBack control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnBack;
+        
+        /// <summary>
         /// pnlReleaseActions control.
         /// </summary>
         /// <remarks>

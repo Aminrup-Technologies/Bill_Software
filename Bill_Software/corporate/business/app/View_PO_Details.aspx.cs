@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Configuration;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -40,22 +40,23 @@ namespace Bill_Software.corporate.business.app
         private void LoadPO(int poId)
         {
             lblPO_Id.Text = poId.ToString();
+            int companyId = CompanyContext.CurrentCompanyID;
 
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
                 con.Open();
 
-                /* ================= 1. PO HEADER & OPERATIONAL DETAILS ================= */
                 SqlCommand cmdHdr = new SqlCommand(@"
                     SELECT H.PO_Id, H.PO_No, H.ReqNo, H.PO_Date,
                            H.PO_Status, H.IsLocked, V.Vendor_Name,
                            H.EngineerName, H.DispatchMode, H.DispatchUpto, 
                            H.DeliveryBasis, H.FreightTerms, H.Remarks
                     FROM tbl_PO_Header H
-                    LEFT JOIN tbl_Vendor V ON V.Id = H.VendorId
-                    WHERE H.PO_Id = @PO_Id", con);
+                    LEFT JOIN tbl_Vendor V ON V.Id = H.VendorId AND V.CompanyID = H.CompanyID
+                    WHERE H.PO_Id = @PO_Id AND H.CompanyID = @CompanyID", con);
 
                 cmdHdr.Parameters.AddWithValue("@PO_Id", poId);
+                cmdHdr.Parameters.AddWithValue("@CompanyID", companyId);
 
                 using (SqlDataReader dr = cmdHdr.ExecuteReader())
                 {
@@ -65,14 +66,12 @@ namespace Bill_Software.corporate.business.app
                         return;
                     }
 
-                    // Header Info
                     lblPONo.Text = dr["PO_No"].ToString();
                     lblReqNo.Text = dr["ReqNo"].ToString();
                     lblStatus.Text = dr["PO_Status"].ToString();
                     lblPODate.Text = Convert.ToDateTime(dr["PO_Date"]).ToString("dd-MMM-yyyy");
                     lblVendor.Text = dr["Vendor_Name"]?.ToString();
 
-                    // Operational Details (Maker's Input)
                     lblEngineerName.Text = dr["EngineerName"]?.ToString();
                     lblDispatchMode.Text = dr["DispatchMode"]?.ToString();
                     lblDispatchUpto.Text = dr["DispatchUpto"]?.ToString();
@@ -84,12 +83,13 @@ namespace Bill_Software.corporate.business.app
                     ApplyStatusUI(lblStatus.Text, isLocked);
                 }
 
-                /* ================= 2. PARTY SNAPSHOTS (BILL TO / SHIP TO) ================= */
                 SqlCommand cmdSnap = new SqlCommand(@"
-                    SELECT PartyRole, SourceTable, Name, Address, City, State, Pin 
-                    FROM tbl_PO_PartySnapshot 
-                    WHERE PO_Id = @PO_Id", con);
+                    SELECT S.PartyRole, S.SourceTable, S.Name, S.Address, S.City, S.State, S.Pin 
+                    FROM tbl_PO_PartySnapshot S
+                    INNER JOIN tbl_PO_Header H ON H.PO_Id = S.PO_Id AND H.CompanyID = @CompanyID
+                    WHERE S.PO_Id = @PO_Id", con);
                 cmdSnap.Parameters.AddWithValue("@PO_Id", poId);
+                cmdSnap.Parameters.AddWithValue("@CompanyID", companyId);
 
                 using (SqlDataReader drSnap = cmdSnap.ExecuteReader())
                 {
@@ -118,22 +118,24 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
-                /* ================= 3. PO ITEMS ================= */
-                SqlDataAdapter da = new SqlDataAdapter(@"
-                    SELECT ProductName, Quantity, Rate, DiscountPercent, DiscountAmount, 
-                           TaxableAmount, TaxRate, TaxAmount, NetAmount
-                    FROM tbl_PO_Items
-                    WHERE PO_Id = @PO_Id
-                    ORDER BY ItemOrder", con);
+                using (SqlCommand cmdItems = new SqlCommand(@"
+                    SELECT I.ProductName, I.Quantity, I.Rate, I.DiscountPercent, I.DiscountAmount, 
+                           I.TaxableAmount, I.TaxRate, I.TaxAmount, I.NetAmount
+                    FROM tbl_PO_Items I
+                    INNER JOIN tbl_PO_Header H ON H.PO_Id = I.PO_Id AND H.CompanyID = @CompanyID
+                    WHERE I.PO_Id = @PO_Id
+                    ORDER BY I.ItemOrder", con))
+                {
+                    cmdItems.Parameters.AddWithValue("@PO_Id", poId);
+                    cmdItems.Parameters.AddWithValue("@CompanyID", companyId);
+                    SqlDataAdapter da = new SqlDataAdapter(cmdItems);
+                    DataTable dtItems = new DataTable();
+                    da.Fill(dtItems);
 
-                da.SelectCommand.Parameters.AddWithValue("@PO_Id", poId);
-                DataTable dtItems = new DataTable();
-                da.Fill(dtItems);
+                    gdPOItems.DataSource = dtItems;
+                    gdPOItems.DataBind();
+                }
 
-                gdPOItems.DataSource = dtItems;
-                gdPOItems.DataBind();
-
-                /* ================= 4. UI SUMMARY ================= */
                 lblGross.Text = _totalTaxable.ToString("N2");
                 lblGST.Text = _totalGST.ToString("N2");
                 lblNet.Text = _totalNet.ToString("N2");
@@ -155,18 +157,38 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnReleasePO_Click(object sender, EventArgs e)
         {
+            if (Session["USERID"] == null)
+            {
+                Response.Redirect("~/index.aspx");
+                return;
+            }
+
             int poId = Convert.ToInt32(lblPO_Id.Text);
+            int companyId = CompanyContext.CurrentCompanyID;
 
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
                 try
                 {
                     con.Open();
-                    // Just execute the final release stored procedure! Maker already saved everything else.
+
+                    using (SqlCommand cmdOwn = new SqlCommand(
+                        "SELECT 1 FROM tbl_PO_Header WHERE PO_Id = @PO_Id AND CompanyID = @CompanyID", con))
+                    {
+                        cmdOwn.Parameters.AddWithValue("@PO_Id", poId);
+                        cmdOwn.Parameters.AddWithValue("@CompanyID", companyId);
+                        if (cmdOwn.ExecuteScalar() == null)
+                        {
+                            ShowError("PO not found for this company.");
+                            return;
+                        }
+                    }
+
                     SqlCommand cmd = new SqlCommand("sp_ReleasePO_Final", con);
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@PO_Id", poId);
                     cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
 
                     cmd.ExecuteNonQuery();
                 }
