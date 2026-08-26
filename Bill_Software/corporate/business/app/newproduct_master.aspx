@@ -42,9 +42,9 @@
         }
         .form-grid-aligned select,
         .form-grid-aligned .dropdown_style,
-        .grid-toolbar select,
-        .grid-toolbar .dropdown_style,
-        .grid-toolbar .form-control {
+        .search-area select,
+        .search-area .dropdown_style,
+        .search-area .form-control {
             color: #0f172a !important;
             background-color: #ffffff !important;
             -webkit-text-fill-color: #0f172a !important;
@@ -55,9 +55,9 @@
         }
         .form-grid-aligned select option,
         .form-grid-aligned .dropdown_style option,
-        .grid-toolbar select option,
-        .grid-toolbar .dropdown_style option,
-        .grid-toolbar .form-control option {
+        .search-area select option,
+        .search-area .dropdown_style option,
+        .search-area .form-control option {
             color: #0f172a;
             background-color: #ffffff;
         }
@@ -91,8 +91,44 @@
         .span-4 { grid-column: span 4; }
         .action-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .grid-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-        .grid-toolbar .search-wrap { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .search-area {
+            background-color: #f9f9f9;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eaeaea;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .search-area .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 140px;
+            margin-bottom: 0;
+        }
+        .search-area .form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+        }
+        .search-area .btn-group { display: flex; gap: 8px; }
+        .search-area .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: bold;
+            font-size: 12px;
+            height: 35px;
+        }
+        .search-area .btn-search { background-color: #005b8f; }
+        .search-area .btn-search:hover { background-color: #004d73; }
         .alert-ok, .alert-err { padding: 10px 12px; border-radius: 4px; margin-bottom: 14px; }
         .prod-primary { font-weight: 700; color: #0f172a; margin-bottom: 4px; }
         .badge {
@@ -796,7 +832,13 @@
 
     <div class="stacked-container">
         <div class="box-panel">
-            <div class="box-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleMasterForm()">Product / Service Master<span title="This form auto-folds when interacting with the grid to maximize your viewing area." style="cursor:help;margin-right:8px;">ℹ️</span><span id="formToggleIcon">▼</span></div>
+            <div class="box-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleMasterForm()">
+                <div>Category Form</div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <span title="This form auto-folds when interacting with the grid to maximize your viewing area." style="cursor:help;font-size:14px;">ℹ️</span>
+                    <span id="formToggleIcon">▼</span>
+                </div>
+            </div>
 
             <asp:Panel ID="PanelOK" runat="server" CssClass="alert-ok" BackColor="#EEFFDD"
                 BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" style="display:none;">
@@ -961,19 +1003,28 @@
 
         <div class="box-panel">
             <div class="box-title">Product Catalog / Data Directory</div>
-            <div class="grid-toolbar">
-                <div class="search-wrap">
+            <div class="search-area">
+                <div class="form-group">
+                    <label>Filter by Type</label>
                     <asp:DropDownList ID="ddlFilterType" runat="server" AutoPostBack="true" OnSelectedIndexChanged="FilterGrid_Changed" CssClass="form-control">
                         <asp:ListItem Text="All Types" Value="0"></asp:ListItem>
                         <asp:ListItem Text="Product" Value="Product"></asp:ListItem>
                         <asp:ListItem Text="Service" Value="Service"></asp:ListItem>
                     </asp:DropDownList>
-                    <asp:DropDownList ID="ddlFilterCategory" runat="server" AutoPostBack="true" OnSelectedIndexChanged="FilterGrid_Changed" CssClass="form-control"></asp:DropDownList>
-                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="textbox_U_style" Width="240px" placeholder="Search name / HSN / ID / brand / category" onfocus="autoCollapseForm()"></asp:TextBox>
-                    <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn_style" OnClick="btnSearch_Click" />
                 </div>
-                <div class="search-wrap">
-                    <span style="font-size:12px;color:#64748b;">Page size</span>
+                <div class="form-group">
+                    <label>Filter by Category</label>
+                    <asp:DropDownList ID="ddlFilterCategory" runat="server" AutoPostBack="true" OnSelectedIndexChanged="FilterGrid_Changed" CssClass="form-control"></asp:DropDownList>
+                </div>
+                <div class="form-group" style="flex:2;">
+                    <label>Global Search</label>
+                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="form-control" placeholder="Search by name, ID, HSN, Brand..."></asp:TextBox>
+                </div>
+                <div class="btn-group">
+                    <asp:Button ID="btnSearch" runat="server" CssClass="btn btn-search" Text="Search" OnClick="btnSearch_Click" />
+                </div>
+                <div class="form-group">
+                    <label>Page size</label>
                     <asp:DropDownList ID="ddlPageSize" runat="server" AutoPostBack="true" CssClass="dropdown_style"
                         OnSelectedIndexChanged="ddlPageSize_SelectedIndexChanged" Width="80px">
                         <asp:ListItem Text="10" Value="10" Selected="True"></asp:ListItem>
