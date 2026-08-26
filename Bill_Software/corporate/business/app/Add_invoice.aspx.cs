@@ -788,7 +788,30 @@ namespace Bill_Software.corporate.business.app
                     logEntry.AppendLine("");
                     System.IO.File.AppendAllText(logFilePath, logEntry.ToString());
 
-                    // 6. Commit Transaction
+                    // 6. CRM Pipeline Integration — Mark Sales Visit as Productive
+                    string sqlVisitUpdate = @"
+                        UPDATE v
+                        SET v.IsProductive = 1, 
+                            v.RevenueRealized = ISNULL(v.RevenueRealized, 0) + @NetAmt
+                        FROM tbl_SalesVisitReport v
+                        INNER JOIN tbl_Quotation q ON v.Id = q.VisitId AND q.CompanyID = @CompanyID
+                        WHERE q.Quotation_no = @RefNo 
+                          AND v.CompanyID = @CompanyID";
+
+                    using (SqlCommand cmdVisit = new SqlCommand(sqlVisitUpdate, conn, tran))
+                    {
+                        cmdVisit.Parameters.Add("@NetAmt", SqlDbType.Decimal).Value = headerNet;
+                        cmdVisit.Parameters.AddWithValue("@RefNo", refNo);
+                        cmdVisit.Parameters.AddWithValue("@CompanyID", companyId);
+                        int rowsAffected = cmdVisit.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            InsertSystemNotification("CRM", "Success", "Sales Target Achieved!", $"Invoice generated for {headerNet}. Revenue successfully tied to the original Sales Visit.", uid, companyId, conn, tran);
+                        }
+                    }
+
+                    // 7. Commit Transaction
                     tran.Commit();
 
                     // === PROACTIVE NOTIFICATION LOGGING (Step 7) ===
