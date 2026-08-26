@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>i2i inc.</title>
+    <title>Aminrup Technologies.</title>
     <link rel="shortcut icon" href="corporate/business/WebImages/i2i_logo.png" />
         <style type="text/css">
             .style1
@@ -408,7 +408,7 @@
                         <tr>
                             <td style="width:50%">
                                 A/C Name:
-                                I2I INC</td>
+                                Aminrup Technologies</td>
                             <td style="width:50%;">
                                 <span lang="en-us">Bank: 
                                 AXIS BANK, A/C No-914020031882592</span></td>
@@ -416,7 +416,7 @@
                         <tr>
                             <td style="width:50%">
                                 Branch:
-                                Behala,Kolkata-700008</td>
+                                Sakchi, Jamshedpur-831001</td>
                             <td style="width:50%;">
                                 IFSC Code:
                                 UTIB0000034</td>

@@ -94,7 +94,8 @@
             <thead id="header">
                 <tr>
                     <th style="width: 100%">
-                        <img src="../WebImages/I2ILHHeader1.png" width="100%" /></th>
+                        <asp:Image ID="Image21" runat="server"
+                            Width="844px" Height="140px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" /></th>
                 </tr>
                 <tr>
                     <th>
@@ -444,7 +445,7 @@
                                             <td class="" style="background-color: #e31e24; color: white; text-align: center;">PAYMENT TERMS</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “I2I INC” at the Account Details Provided.</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “FLAME-EX” at the Account Details Provided.</td>
                                         </tr>
                                         <tr>
                                             <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Invoices shall be paid by the Client within Seven (7) Days of the Date of Invoice. In the event of Late Payment, the Company shall be entitled to charge Interest on any Outstanding Amounts at a rate of 1.5% per Month. GST at Current Rates is payable in addition to the Amount Quoted in accordance with the HSN/SAC Code.</td>
@@ -458,19 +459,19 @@
                                 <td class="qno" style="vertical-align: top;" width="45%">
                                     <table border="0" width="100%" class="quotation">
                                         <tr>
-                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">ACCOUNT DETAILS FOR BANK TRANSFER</td>
+                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">FLAME-EX ACCOUNT DETAILS FOR BANK TRANSFER</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK: ICICI BANK</td>
+                                            <td class="auto-style1" style="text-align: justify; border: 1px solid #bfbfbf;">BANK: AXIS BANK LTD</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 032805004861</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 921030046141801</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: ICIC0000328</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: UTIB0000012</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: Behala, Branch, Kolkata – 700 008</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: JAMSHEDPUR (JH)</td>
                                         </tr>
                                         <tr>
                                             <td class="gap" style="text-align: justify; border: 0;">&nbsp</td>
@@ -480,20 +481,20 @@
                                         </tr>
                                         <asp:Panel ID="PnlGstKvqa" runat="server">
                                             <tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GST NUMBER: 19AAEFI5315E1ZL</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GSTIN No.: 20AESPD7535D1ZS</td>
                                             </tr>
                                             <%--<tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">HSN CODE/SAC: 998214</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px"></td>
                                             </tr>--%>
                                         </asp:Panel>
                                         <asp:Panel ID="PnlTaxKvqa" runat="server">
                                             <tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">SERVICE TAX NUMBER: AAEFI5315ESD001</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GSTIN No.: 20AESPD7535D1ZS</td>
                                             </tr>
                                         </asp:Panel>
-                                        <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">PAN NUMBER: AAEFI5315E</td>
-                                        </tr>
+                                        <%--<tr>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;"></td>
+                                        </tr>--%>
                                     </table>
                                 </td>
                             </tr>
@@ -508,7 +509,7 @@
                                 <td class="qno" width="100%">
                                     <table border="0" width="100%" class="">
                                         <tr>
-                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">If you have any Question about this Invoice, Please Contact Ms Das at +91 9674897316 or info@i2iinc.in</td>
+                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">If you have any Question about this Invoice, Please Contact Ms Das at +91 9674897316 or info@aminruptechnologies.co.in</td>
                                         </tr>
                                     </table>
                                 </td>
@@ -520,13 +521,13 @@
 
                         <table border="0" width="100%" class="FORKVQAEAST">
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR I2I INC</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR FLAME-EX</td>
                             </tr>
                             <%--<tr>
                                 <td><img src="../WebImages/Stamp.jpg" width="100PX" /></td>
                             </tr>--%>
                             <tr>
-                                <td><img src="../WebImages/i2i_LOGO_ad_sig.png" width="150PX" /></td>
+                                <td><img src="../WebImages/flmx_authsign.png" width="150PX" /></td>
                             </tr>
                             <tr class="trheight">
                                 <td class="" style="text-align: left; font-weight: bold;">Authorized Signatory</td>
@@ -552,7 +553,8 @@
             <tr>
                 <td style="height: auto; text-align: center; font-weight: bold; font-size: 14px; font-style: italic" width="100%">
                     <span style="padding-right:10px; color:#c8152a">------------------------------Thank You For Your Business------------------------------</span>
-                    <img src='../WebImages/I2ILHFooter.png' width='100%' />
+                    <asp:Image ID="Image22" runat="server"
+                            Width="844px" Height="180px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrbtm.png" />
                 </td>
             </tr>
         </table>

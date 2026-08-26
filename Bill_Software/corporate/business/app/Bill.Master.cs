@@ -1,860 +1,557 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI;
+using System.Net.Mail;
+using System.IO;
 using System.Web.UI.WebControls;
-using System.Data.SqlClient;
-using System.Data;
 
 namespace Bill_Software.corporate.business.app
 {
+    public static class CompanyContext
+    {
+        public static int CurrentCompanyID
+        {
+            get
+            {
+                if (HttpContext.Current.Session["CompanyID"] != null)
+                {
+                    return Convert.ToInt32(HttpContext.Current.Session["CompanyID"]);
+                }
+                return 0;
+            }
+        }
+        public static string CurrentCompanyCode
+        {
+            get
+            {
+                return HttpContext.Current.Session["CompanyCode"] != null
+                    ? HttpContext.Current.Session["CompanyCode"].ToString()
+                    : "FE"; // Fallback to "FE" if session is somehow lost
+            }
+        }
+    }
+
     public partial class Bill : System.Web.UI.MasterPage
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        DataTable dtm = new DataTable();
+        private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            // 1. Validate Core Session
+            if (Session["USERID"] == null || Session["SessionToken"] == null)
             {
-                GetMenuControl();
+                Response.Redirect("~/index.aspx", false);
+                return;
             }
+
+            // 2. Validate Active Session Token (Concurrent Login Check)
+            using (var cn = new SqlConnection(ConnString))
+            {
+                cn.Open();
+                using (var cmd = new SqlCommand("SELECT IsActive FROM dbo.ActiveSessions WHERE SessionToken = @Token", cn))
+                {
+                    cmd.Parameters.AddWithValue("@Token", Session["SessionToken"].ToString());
+                    object result = cmd.ExecuteScalar();
+
+                    if (result == null || Convert.ToBoolean(result) == false)
+                    {
+                        Session.Clear();
+                        Session.Abandon();
+                        Response.Redirect("~/index.aspx", false);
+                        return;
+                    }
+                }
+            }
+
+            // 3. Prevent Caching
             HttpContext.Current.Response.Cache.SetAllowResponseInBrowserHistory(false);
             HttpContext.Current.Response.Cache.SetCacheability(HttpCacheability.NoCache);
             HttpContext.Current.Response.Cache.SetNoStore();
 
-            if (HttpContext.Current.Session["USERID"] == null)
-            {
-                Response.Redirect("~/index.aspx");
-            }
-            GetAdminName();
+            // ==========================================
+            // FORCE PASSWORD & CONTACT VERIFICATION GLOBAL LOCKOUT
+            // ==========================================
+            bool isLockedOut = Session["MustUpdateUserId"] != null || Session["MustVerifyContact"] != null;
 
+            if (isLockedOut)
+            {
+                // Get the current page filename 
+                string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath).ToLower();
+
+                // If they are NOT on the settings page, force them there immediately
+                if (currentPage != "settings.aspx")
+                {
+                    Response.Redirect("~/corporate/business/app/settings.aspx", false);
+                    return;
+                }
+
+                // IMPORTANT: If they ARE on settings.aspx and locked out, we return immediately.
+                // We do NOT want to load the menu, company dropdown, or header if they are locked out.
+                return;
+            }
+            // ==========================================
+
+            // 4. Load Normal UI Elements (Only executes if NOT locked out)
+            if (!IsPostBack)
+            {
+                int currentYear = DateTime.Now.Year;
+                lbl_crntyr.Text = $"{currentYear - 2}-{currentYear}";
+
+                GetMenuControl();
+
+                // MULTI-COMPANY INITIALIZATION
+                BindCompanies();
+
+                if (Session["CompanyID"] != null)
+                {
+                    ddlCompany.SelectedValue = Session["CompanyID"].ToString();
+                }
+                else if (ddlCompany.Items.Count > 0)
+                {
+                    Session["CompanyID"] = ddlCompany.Items[0].Value;
+                }
+
+                LoadCompanyHeader();
+            }
+            else
+            {
+                // Ensure dynamic header loads on every postback
+                LoadCompanyHeader();
+            }
+
+            GetAdminName();
+        }
+
+        // --- MULTI-COMPANY METHODS ---
+
+        private void BindCompanies()
+        {
+            using (SqlConnection con = new SqlConnection(ConnString))
+            {
+                SqlDataAdapter da = new SqlDataAdapter("SELECT ID, Name FROM tbl_Company WHERE IsActive = 1 OR IsActive IS NULL ORDER BY ID ASC", con);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                ddlCompany.DataSource = dt;
+                ddlCompany.DataTextField = "Name";
+                ddlCompany.DataValueField = "ID";
+                ddlCompany.DataBind();
+            }
+        }
+
+        private void LoadCompanyHeader()
+        {
+            if (Session["CompanyID"] == null) return;
+
+            int companyId = Convert.ToInt32(Session["CompanyID"]);
+
+            using (SqlConnection con = new SqlConnection(ConnString))
+            {
+                // ADDED 'ShortCode' to the SELECT query
+                SqlCommand cmd = new SqlCommand("SELECT Name, Address, Signe, ShortCode FROM tbl_Company WHERE ID=@ID", con);
+                cmd.Parameters.AddWithValue("@ID", companyId);
+
+                con.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+
+                if (dr.Read())
+                {
+                    lblCompanyName.Text = dr["Name"].ToString();
+
+                    // --- NEW: Save the ShortCode into the Session ---
+                    Session["CompanyCode"] = dr["ShortCode"] != DBNull.Value ? dr["ShortCode"].ToString() : "FE";
+
+                    // Convert raw binary image to base64 for seamless display
+                    if (!Convert.IsDBNull(dr["Signe"]))
+                    {
+                        byte[] bytes = (byte[])dr["Signe"];
+                        string base64 = Convert.ToBase64String(bytes);
+                        Image2.ImageUrl = "data:image/png;base64," + base64;
+                    }
+                    else
+                    {
+                        // Fallback image if company has no logo configured
+                        Image2.ImageUrl = "../WebImages/aagrouplogo.png";
+                    }
+                }
+            }
+        }
+
+        protected void ddlCompany_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Session["CompanyID"] = ddlCompany.SelectedValue;
+            Response.Redirect(Request.RawUrl, false);
+            Context.ApplicationInstance.CompleteRequest();
         }
 
         private void GetAdminName()
         {
+            if (Session["USERID"] == null) return;
+
             string UserName = Session["USERID"].ToString();
-            string cmdString = "select Name from tbl_login where User_Id='" + UserName + "'";
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
-            SqlDataReader Rdr;
-            Rdr = cmd.ExecuteReader();
-            if (Rdr.Read())
+            string cmdString = @"
+                SELECT u.Name, r.RoleName, u.ProfilePictureUrl 
+                FROM tbl_login u 
+                LEFT JOIN Roles r ON u.RoleId = r.RoleId 
+                WHERE u.User_Id=@UserId";
+
+            try
             {
-                lblName.Text = Rdr["Name"].ToString();
+                DbCL.Sqlconnection();
+                DbCL.ConnectDb();
+                using (SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", UserName);
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        if (rdr.Read())
+                        {
+                            lblName.Text = rdr["Name"] != DBNull.Value ? rdr["Name"].ToString() : "Unknown User";
+
+                            Label lblRole = this.FindControl("lblRole") as Label;
+                            if (lblRole != null)
+                            {
+                                string role = rdr["RoleName"] != DBNull.Value ? rdr["RoleName"].ToString() : "";
+                                lblRole.Text = string.IsNullOrEmpty(role) ? "Standard User" : role;
+                            }
+
+                            Image imgProfile = this.FindControl("imgProfile") as Image;
+                            if (imgProfile != null)
+                            {
+                                string picUrl = rdr["ProfilePictureUrl"] != DBNull.Value ? rdr["ProfilePictureUrl"].ToString() : "";
+                                imgProfile.ImageUrl = string.IsNullOrEmpty(picUrl)
+                                    ? "~/corporate/business/WebImages/representative.png"
+                                    : picUrl;
+                            }
+                        }
+                    }
+                }
             }
-            DbCL.Conn.Close();
+            finally { DbCL.DisconnectDb(); }
         }
 
         private void GetMenuControl()
         {
+            if (Session["USERID"] == null) return;
             string UserName = Session["USERID"].ToString();
-            string query = "select Home,home1,settings,Dashboard,Data_Mastering,master_State,master_city,AddIndustry,PaymentPhase,AddPrimaryService,PrimaryServiceTerms,productparent,product_master,newproductparent,newproduct_master,Service_master,Vat_master,Service_Tax_Master,Expenses_Head,Vendor,New_vendor,View_vendor,Delete_vendor,Purches_exting_vendor,View_purches,seartch_purtch,Delete_purtches,Purchess_payment,add_payment_purchess,View_purchess_payment,Seartch_purchess_payments,Delete_purches_payment,Client,New_client,View_client,Delete_client,Representative,AddFactory,Quotatio,Create_quotation,View_quotation,Seartch_quotation,Delete_Quotation,Edit_quatation,challan,add_chalan,View_chalan,seartch_chalan,Delete_chalan,proforma,Add_proforma,View_proforma,Seartch_proforma,Delete_proforma,Invoice,Add_invoice,View_Invoice,seartch_invoice,Delete_invoice,Block_invoice,Payment,add_payment,View_payment,seartch_payment,Delete_payment,Epencess,general_expences,patty_cash_expences,view_expencess_head,view_patty_cash_expenses,Delete_general_expencess,Delete_patty_cash_expenses,Reports,Payment_due,Purchess_due,PurchaseRequisition,RequisitionManual,RequisitionManualView,RequisitionManualSearch,RequisitionManualDelete,Users,AddUser,ViewUser,SetQuatation,ProformaMail,InvoiceMail,PaymentMail,FinalPaymentInvoice from tbl_Designation where User_Id=@User_Id";
-            SqlParameter[] pram = {
-                new SqlParameter("@User_Id",UserName)
-            };
-            dtm = DbCL.SPreturn_dt(query,pram);
-            if (dtm.Rows.Count>0)
+
+            List<string> allSystemPermissions = new List<string>();
+            HashSet<string> userGrantedPermissions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            using (var cn = new SqlConnection(ConnString))
             {
-                if (dtm.Rows[0]["Home"].ToString() == "Yes")
+                cn.Open();
+                using (var cmdAll = new SqlCommand("SELECT PermissionKey FROM dbo.Permissions", cn))
+                using (var rdrAll = cmdAll.ExecuteReader())
                 {
-                    Home.Visible = true;
+                    while (rdrAll.Read()) allSystemPermissions.Add(rdrAll.GetString(0));
                 }
-                else if (dtm.Rows[0]["Home"].ToString() == "No")
-                {
-                    Home.Visible = false;
-                }
-
-                if (dtm.Rows[0]["home1"].ToString() == "Yes")
-                {
-                    home1.Visible = true;
-                }
-                else if (dtm.Rows[0]["home1"].ToString() == "No")
-                {
-                    home1.Visible = false;
-                }
-
-                if (dtm.Rows[0]["settings"].ToString() == "Yes")
-                {
-                    settings.Visible = true;
-                }
-                else if (dtm.Rows[0]["settings"].ToString() == "No")
-                {
-                    settings.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Dashboard"].ToString() == "Yes")
-                {
-                    Dashboard.Visible = true;
-                }
-                else if (dtm.Rows[0]["Dashboard"].ToString() == "No")
-                {
-                    Dashboard.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Data_Mastering"].ToString() == "Yes")
-                {
-                    Data_Mastering.Visible = true;
-                }
-                else if (dtm.Rows[0]["Data_Mastering"].ToString() == "No")
-                {
-                    Data_Mastering.Visible = false;
-                }
-
-                if (dtm.Rows[0]["master_State"].ToString() == "Yes")
-                {
-                    master_State.Visible = true;
-                }
-                else if (dtm.Rows[0]["master_State"].ToString() == "No")
-                {
-                    master_State.Visible = false;
-                }
-
-                if (dtm.Rows[0]["master_city"].ToString() == "Yes")
-                {
-                    master_city.Visible = true;
-                }
-                else if (dtm.Rows[0]["master_city"].ToString() == "No")
-                {
-                    master_city.Visible = false;
-                }
-
-                if (dtm.Rows[0]["AddIndustry"].ToString() == "Yes")
-                {
-                    AddIndustry.Visible = true;
-                }
-                else if (dtm.Rows[0]["AddIndustry"].ToString() == "No")
-                {
-                    AddIndustry.Visible = false;
-                }
-
-                if (dtm.Rows[0]["PaymentPhase"].ToString() == "Yes")
-                {
-                    PaymentPhase.Visible = true;
-                }
-                else if (dtm.Rows[0]["PaymentPhase"].ToString() == "No")
-                {
-                    PaymentPhase.Visible = false;
-                }
-
-                if (dtm.Rows[0]["AddPrimaryService"].ToString() == "Yes")
-                {
-                    AddPrimaryService.Visible = true;
-                }
-                else if (dtm.Rows[0]["AddPrimaryService"].ToString() == "No")
-                {
-                    AddPrimaryService.Visible = false;
-                }
-
-                if (dtm.Rows[0]["PrimaryServiceTerms"].ToString() == "Yes")
-                {
-                    PrimaryServiceTerms.Visible = true;
-                }
-                else if (dtm.Rows[0]["PrimaryServiceTerms"].ToString() == "No")
-                {
-                    PrimaryServiceTerms.Visible = false;
-                }
-
-                if (dtm.Rows[0]["productparent"].ToString() == "Yes")
-                {
-                    productparent.Visible = true;
-                }
-                else if (dtm.Rows[0]["productparent"].ToString() == "No")
-                {
-                    productparent.Visible = false;
-                }
-
-                if (dtm.Rows[0]["product_master"].ToString() == "Yes")
-                {
-                    product_master.Visible = true;
-                }
-                else if (dtm.Rows[0]["product_master"].ToString() == "No")
-                {
-                    product_master.Visible = false;
-                }
-
-                if (dtm.Rows[0]["newproductparent"].ToString() == "Yes")
-                {
-                    newproductparent.Visible = true;
-                }
-                else if (dtm.Rows[0]["newproductparent"].ToString() == "No")
-                {
-                    newproductparent.Visible = false;
-                }
-
-                if (dtm.Rows[0]["newproduct_master"].ToString() == "Yes")
-                {
-                    newproduct_master.Visible = true;
-                }
-                else if (dtm.Rows[0]["newproduct_master"].ToString() == "No")
-                {
-                    newproduct_master.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Service_master"].ToString() == "Yes")
-                {
-                    Service_master.Visible = true;
-                }
-                else if (dtm.Rows[0]["Service_master"].ToString() == "No")
-                {
-                    Service_master.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Vat_master"].ToString() == "Yes")
-                {
-                    Vat_master.Visible = true;
-                }
-                else if (dtm.Rows[0]["Vat_master"].ToString() == "No")
-                {
-                    Vat_master.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Service_Tax_Master"].ToString() == "Yes")
-                {
-                    Service_Tax_Master.Visible = true;
-                }
-                else if (dtm.Rows[0]["Service_Tax_Master"].ToString() == "No")
-                {
-                    Service_Tax_Master.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Expenses_Head"].ToString() == "Yes")
-                {
-                    Expenses_Head.Visible = true;
-                }
-                else if (dtm.Rows[0]["Expenses_Head"].ToString() == "No")
-                {
-                    Expenses_Head.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Vendor"].ToString() == "Yes")
-                {
-                    Vendor.Visible = true;
-                }
-                else if (dtm.Rows[0]["Vendor"].ToString() == "No")
-                {
-                    Vendor.Visible = false;
-                }
-
-                if (dtm.Rows[0]["New_vendor"].ToString() == "Yes")
-                {
-                    New_vendor.Visible = true;
-                }
-                else if (dtm.Rows[0]["New_vendor"].ToString() == "No")
-                {
-                    New_vendor.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_vendor"].ToString() == "Yes")
-                {
-                    View_vendor.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_vendor"].ToString() == "No")
-                {
-                    View_vendor.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_vendor"].ToString() == "Yes")
-                {
-                    Delete_vendor.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_vendor"].ToString() == "No")
-                {
-                    Delete_vendor.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Purches_exting_vendor"].ToString() == "Yes")
-                {
-                    Purches_exting_vendor.Visible = true;
-                }
-                else if (dtm.Rows[0]["Purches_exting_vendor"].ToString() == "No")
-                {
-                    Purches_exting_vendor.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_purches"].ToString() == "Yes")
-                {
-                    View_purches.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_purches"].ToString() == "No")
-                {
-                    View_purches.Visible = false;
-                }
-
-                if (dtm.Rows[0]["seartch_purtch"].ToString() == "Yes")
-                {
-                    seartch_purtch.Visible = true;
-                }
-                else if (dtm.Rows[0]["seartch_purtch"].ToString() == "No")
-                {
-                    seartch_purtch.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_purtches"].ToString() == "Yes")
-                {
-                    Delete_purtches.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_purtches"].ToString() == "No")
-                {
-                    Delete_purtches.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Purchess_payment"].ToString() == "Yes")
-                {
-                    Purchess_payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["Purchess_payment"].ToString() == "No")
-                {
-                    Purchess_payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["add_payment_purchess"].ToString() == "Yes")
-                {
-                    add_payment_purchess.Visible = true;
-                }
-                else if (dtm.Rows[0]["add_payment_purchess"].ToString() == "No")
-                {
-                    add_payment_purchess.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_purchess_payment"].ToString() == "Yes")
-                {
-                    View_purchess_payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_purchess_payment"].ToString() == "No")
-                {
-                    View_purchess_payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Seartch_purchess_payments"].ToString() == "Yes")
-                {
-                    Seartch_purchess_payments.Visible = true;
-                }
-                else if (dtm.Rows[0]["Seartch_purchess_payments"].ToString() == "No")
-                {
-                    Seartch_purchess_payments.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_purches_payment"].ToString() == "Yes")
-                {
-                    Delete_purches_payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_purches_payment"].ToString() == "No")
-                {
-                    Delete_purches_payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Client"].ToString() == "Yes")
-                {
-                    Client.Visible = true;
-                }
-                else if (dtm.Rows[0]["Client"].ToString() == "No")
-                {
-                    Client.Visible = false;
-                }
-
-                if (dtm.Rows[0]["New_client"].ToString() == "Yes")
-                {
-                    New_client.Visible = true;
-                }
-                else if (dtm.Rows[0]["New_client"].ToString() == "No")
-                {
-                    New_client.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_client"].ToString() == "Yes")
-                {
-                    View_client.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_client"].ToString() == "No")
-                {
-                    View_client.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_client"].ToString() == "Yes")
-                {
-                    Delete_client.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_client"].ToString() == "No")
-                {
-                    Delete_client.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Representative"].ToString() == "Yes")
-                {
-                    Representative.Visible = true;
-                }
-                else if (dtm.Rows[0]["Representative"].ToString() == "No")
-                {
-                    Representative.Visible = false;
-                }
-
-                if (dtm.Rows[0]["AddFactory"].ToString() == "Yes")
-                {
-                    AddFactory.Visible = true;
-                }
-                else if (dtm.Rows[0]["AddFactory"].ToString() == "No")
-                {
-                    AddFactory.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Quotatio"].ToString() == "Yes")
-                {
-                    Quotatio.Visible = true;
-                }
-                else if (dtm.Rows[0]["Quotatio"].ToString() == "No")
-                {
-                    Quotatio.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Create_quotation"].ToString() == "Yes")
-                {
-                    Create_quotation.Visible = true;
-                }
-                else if (dtm.Rows[0]["Create_quotation"].ToString() == "No")
-                {
-                    Create_quotation.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_quotation"].ToString() == "Yes")
-                {
-                    View_quotation.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_quotation"].ToString() == "No")
-                {
-                    View_quotation.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Seartch_quotation"].ToString() == "Yes")
-                {
-                    Seartch_quotation.Visible = true;
-                }
-                else if (dtm.Rows[0]["Seartch_quotation"].ToString() == "No")
-                {
-                    Seartch_quotation.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_Quotation"].ToString() == "Yes")
-                {
-                    Delete_Quotation.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_Quotation"].ToString() == "No")
-                {
-                    Delete_Quotation.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Edit_quatation"].ToString() == "Yes")
-                {
-                    Edit_quatation.Visible = true;
-                }
-                else if (dtm.Rows[0]["Edit_quatation"].ToString() == "No")
-                {
-                    Edit_quatation.Visible = false;
-                }
-
-                if (dtm.Rows[0]["challan"].ToString() == "Yes")
-                {
-                    challan.Visible = true;
-                }
-                else if (dtm.Rows[0]["challan"].ToString() == "No")
-                {
-                    challan.Visible = false;
-                }
-
-                if (dtm.Rows[0]["add_chalan"].ToString() == "Yes")
-                {
-                    add_chalan.Visible = true;
-                }
-                else if (dtm.Rows[0]["add_chalan"].ToString() == "No")
-                {
-                    add_chalan.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_chalan"].ToString() == "Yes")
-                {
-                    View_chalan.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_chalan"].ToString() == "No")
-                {
-                    View_chalan.Visible = false;
-                }
-
-                if (dtm.Rows[0]["seartch_chalan"].ToString() == "Yes")
-                {
-                    seartch_chalan.Visible = true;
-                }
-                else if (dtm.Rows[0]["seartch_chalan"].ToString() == "No")
-                {
-                    seartch_chalan.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_chalan"].ToString() == "Yes")
-                {
-                    Delete_chalan.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_chalan"].ToString() == "No")
-                {
-                    Delete_chalan.Visible = false;
-                }
-
-                if (dtm.Rows[0]["proforma"].ToString() == "Yes")
-                {
-                    proforma.Visible = true;
-                }
-                else if (dtm.Rows[0]["proforma"].ToString() == "No")
-                {
-                    proforma.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Add_proforma"].ToString() == "Yes")
-                {
-                    Add_proforma.Visible = true;
-                }
-                else if (dtm.Rows[0]["Add_proforma"].ToString() == "No")
-                {
-                    Add_proforma.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_proforma"].ToString() == "Yes")
-                {
-                    View_proforma.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_proforma"].ToString() == "No")
-                {
-                    View_proforma.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Seartch_proforma"].ToString() == "Yes")
-                {
-                    Seartch_proforma.Visible = true;
-                }
-                else if (dtm.Rows[0]["Seartch_proforma"].ToString() == "No")
-                {
-                    Seartch_proforma.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_proforma"].ToString() == "Yes")
-                {
-                    Delete_proforma.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_proforma"].ToString() == "No")
-                {
-                    Delete_proforma.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Invoice"].ToString() == "Yes")
-                {
-                    Invoice.Visible = true;
-                }
-                else if (dtm.Rows[0]["Invoice"].ToString() == "No")
-                {
-                    Invoice.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Add_invoice"].ToString() == "Yes")
-                {
-                    Add_invoice.Visible = true;
-                }
-                else if (dtm.Rows[0]["Add_invoice"].ToString() == "No")
-                {
-                    Add_invoice.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_Invoice"].ToString() == "Yes")
-                {
-                    View_Invoice.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_Invoice"].ToString() == "No")
-                {
-                    View_Invoice.Visible = false;
-                }
-
-                if (dtm.Rows[0]["seartch_invoice"].ToString() == "Yes")
-                {
-                    seartch_invoice.Visible = true;
-                }
-                else if (dtm.Rows[0]["seartch_invoice"].ToString() == "No")
-                {
-                    seartch_invoice.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_invoice"].ToString() == "Yes")
-                {
-                    Delete_invoice.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_invoice"].ToString() == "No")
-                {
-                    Delete_invoice.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Block_invoice"].ToString() == "Yes")
-                {
-                    Block_invoice.Visible = true;
-                }
-                else if (dtm.Rows[0]["Block_invoice"].ToString() == "No")
-                {
-                    Block_invoice.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Payment"].ToString() == "Yes")
-                {
-                    Payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["Payment"].ToString() == "No")
-                {
-                    Payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["add_payment"].ToString() == "Yes")
-                {
-                    add_payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["add_payment"].ToString() == "No")
-                {
-                    add_payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["View_payment"].ToString() == "Yes")
-                {
-                    View_payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["View_payment"].ToString() == "No")
-                {
-                    View_payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["seartch_payment"].ToString() == "Yes")
-                {
-                    seartch_payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["seartch_payment"].ToString() == "No")
-                {
-                    seartch_payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_payment"].ToString() == "Yes")
-                {
-                    Delete_payment.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_payment"].ToString() == "No")
-                {
-                    Delete_payment.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Epencess"].ToString() == "Yes")
-                {
-                    Epencess.Visible = true;
-                }
-                else if (dtm.Rows[0]["Epencess"].ToString() == "No")
-                {
-                    Epencess.Visible = false;
-                }
-
-                if (dtm.Rows[0]["general_expences"].ToString() == "Yes")
-                {
-                    general_expences.Visible = true;
-                }
-                else if (dtm.Rows[0]["general_expences"].ToString() == "No")
-                {
-                    general_expences.Visible = false;
-                }
-
-                if (dtm.Rows[0]["patty_cash_expences"].ToString() == "Yes")
-                {
-                    patty_cash_expences.Visible = true;
-                }
-                else if (dtm.Rows[0]["patty_cash_expences"].ToString() == "No")
-                {
-                    patty_cash_expences.Visible = false;
-                }
-
-                if (dtm.Rows[0]["view_expencess_head"].ToString() == "Yes")
-                {
-                    view_expencess_head.Visible = true;
-                }
-                else if (dtm.Rows[0]["view_expencess_head"].ToString() == "No")
-                {
-                    view_expencess_head.Visible = false;
-                }
-
-                if (dtm.Rows[0]["view_patty_cash_expenses"].ToString() == "Yes")
-                {
-                    view_patty_cash_expenses.Visible = true;
-                }
-                else if (dtm.Rows[0]["view_patty_cash_expenses"].ToString() == "No")
-                {
-                    view_patty_cash_expenses.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_general_expencess"].ToString() == "Yes")
-                {
-                    Delete_general_expencess.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_general_expencess"].ToString() == "No")
-                {
-                    Delete_general_expencess.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Delete_patty_cash_expenses"].ToString() == "Yes")
-                {
-                    Delete_general_expencess.Visible = true;
-                }
-                else if (dtm.Rows[0]["Delete_patty_cash_expenses"].ToString() == "No")
-                {
-                    Delete_general_expencess.Visible = false;
-                }
-
-
-                if (dtm.Rows[0]["Reports"].ToString() == "Yes")
-                {
-                    Reports.Visible = true;
-                }
-                else if (dtm.Rows[0]["Reports"].ToString() == "No")
-                {
-                    Reports.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Payment_due"].ToString() == "Yes")
-                {
-                    Payment_due.Visible = true;
-                }
-                else if (dtm.Rows[0]["Payment_due"].ToString() == "No")
-                {
-                    Payment_due.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Purchess_due"].ToString() == "Yes")
-                {
-                    Purchess_due.Visible = true;
-                }
-                else if (dtm.Rows[0]["Purchess_due"].ToString() == "No")
-                {
-                    Purchess_due.Visible = false;
-                }
-
-                if (dtm.Rows[0]["PurchaseRequisition"].ToString() == "Yes")
-                {
-                    PurchaseRequisition.Visible = true;
-                }
-                else if (dtm.Rows[0]["PurchaseRequisition"].ToString() == "No")
-                {
-                    PurchaseRequisition.Visible = false;
-                }
-
-                if (dtm.Rows[0]["RequisitionManual"].ToString() == "Yes")
-                {
-                    RequisitionManual.Visible = true;
-                }
-                else if (dtm.Rows[0]["RequisitionManual"].ToString() == "No")
-                {
-                    RequisitionManual.Visible = false;
-                }
-
-                if (dtm.Rows[0]["RequisitionManualView"].ToString() == "Yes")
-                {
-                    RequisitionManualView.Visible = true;
-                }
-                else if (dtm.Rows[0]["RequisitionManualView"].ToString() == "No")
-                {
-                    RequisitionManualView.Visible = false;
-                }
-
-                if (dtm.Rows[0]["RequisitionManualSearch"].ToString() == "Yes")
-                {
-                    RequisitionManualSearch.Visible = true;
-                }
-                else if (dtm.Rows[0]["RequisitionManualSearch"].ToString() == "No")
-                {
-                    RequisitionManualSearch.Visible = false;
-                }
-
-                if (dtm.Rows[0]["RequisitionManualDelete"].ToString() == "Yes")
-                {
-                    RequisitionManualDelete.Visible = true;
-                }
-                else if (dtm.Rows[0]["RequisitionManualDelete"].ToString() == "No")
-                {
-                    RequisitionManualDelete.Visible = false;
-                }
-
-                if (dtm.Rows[0]["Users"].ToString() == "Yes")
-                {
-                    Users.Visible = true;
-                }
-                else if (dtm.Rows[0]["Users"].ToString() == "No")
-                {
-                    Users.Visible = false;
-                }
-
-                if (dtm.Rows[0]["AddUser"].ToString() == "Yes")
-                {
-                    AddUser.Visible = true;
-                }
-                else if (dtm.Rows[0]["AddUser"].ToString() == "No")
-                {
-                    AddUser.Visible = false;
-                }
-
-                if (dtm.Rows[0]["ViewUser"].ToString() == "Yes")
-                {
-                    ViewUser.Visible = true;
-                }
-                else if (dtm.Rows[0]["ViewUser"].ToString() == "No")
-                {
-                    ViewUser.Visible = false;
-                }
-
-                if (dtm.Rows[0]["SetQuatation"].ToString() == "Yes")
-                {
-                    SetQuatation.Visible = true;
-                }
-                else if (dtm.Rows[0]["SetQuatation"].ToString() == "No")
-                {
-                    SetQuatation.Visible = false;
-                }
-
-                if (dtm.Rows[0]["ProformaMail"].ToString() == "Yes")
-                {
-                    ProformaMail.Visible = true;
-                }
-                else if (dtm.Rows[0]["ProformaMail"].ToString() == "No")
-                {
-                    ProformaMail.Visible = false;
-                }
 
-                if (dtm.Rows[0]["InvoiceMail"].ToString() == "Yes")
-                {
-                    InvoiceMail.Visible = true;
-                }
-                else if (dtm.Rows[0]["InvoiceMail"].ToString() == "No")
-                {
-                    InvoiceMail.Visible = false;
-                }
+                string sqlUserPerms = @"
+                    SELECT DISTINCT p.PermissionKey 
+                    FROM dbo.Permissions p
+                    INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
+                    INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
+                    INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id
+                    WHERE u.User_Id = @UserId";
 
-                if (dtm.Rows[0]["PaymentMail"].ToString() == "Yes")
+                using (var cmdUser = new SqlCommand(sqlUserPerms, cn))
                 {
-                    PaymentMail.Visible = true;
+                    cmdUser.Parameters.AddWithValue("@UserId", UserName);
+                    using (var rdrUser = cmdUser.ExecuteReader())
+                    {
+                        while (rdrUser.Read()) userGrantedPermissions.Add(rdrUser.GetString(0));
+                    }
                 }
-                else if (dtm.Rows[0]["PaymentMail"].ToString() == "No")
-                {
-                    PaymentMail.Visible = false;
-                }
+            }
 
-                if (dtm.Rows[0]["FinalPaymentInvoice"].ToString() == "Yes")
-                {
-                    PaymentMail.Visible = true;
-                }
-                else if (dtm.Rows[0]["FinalPaymentInvoice"].ToString() == "No")
+            foreach (string menuId in allSystemPermissions)
+            {
+                Control menuControl = FindControlRecursive(this, menuId);
+                if (menuControl != null)
                 {
-                    PaymentMail.Visible = false;
+                    menuControl.Visible = userGrantedPermissions.Contains(menuId);
                 }
             }
         }
 
+        private Control FindControlRecursive(Control rootControl, string controlID)
+        {
+            if (rootControl.ID == controlID) return rootControl;
+            foreach (Control controlToSearch in rootControl.Controls)
+            {
+                Control controlToReturn = FindControlRecursive(controlToSearch, controlID);
+                if (controlToReturn != null) return controlToReturn;
+            }
+            return null;
+        }
+
         protected void btnLogOut_Click(object sender, EventArgs e)
         {
-            Response.Redirect("~/index.aspx");
+            if (Session["SessionToken"] != null)
+            {
+                try
+                {
+                    using (var cn = new SqlConnection(ConnString))
+                    {
+                        cn.Open();
+                        using (var cmd = new SqlCommand("UPDATE dbo.ActiveSessions SET IsActive = 0 WHERE SessionToken = @Token", cn))
+                        {
+                            cmd.Parameters.AddWithValue("@Token", Session["SessionToken"].ToString());
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch { /* Ignore DB errors on logout */ }
+            }
+
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/index.aspx", false);
+        }
+
+        // --- IT SUPPORT SYSTEM METHODS ---
+
+        private string GetUserEmailFromDatabase(string userId)
+        {
+            string email = "Not Provided";
+            string query = "SELECT Email FROM tbl_login WHERE User_Id = @UserId";
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                {
+                    using (var cmd = new SqlCommand(query, cn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cn.Open();
+                        object result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value) email = result.ToString();
+                    }
+                }
+            }
+            catch { }
+            return email;
+        }
+
+        private void NotifyITSupport(string userId, string name, string email, string url, string message, string file1Path, string file2Path)
+        {
+            string insertQuery = @"
+            INSERT INTO tbl_ITSupportTickets (UserId, UserName, UserEmail, PageUrl, UserMessage, Attachment1Path, Attachment2Path, CreatedDate)
+            VALUES (@UserId, @UserName, @UserEmail, @PageUrl, @Message, @File1, @File2, GETDATE())";
+
+            using (var cn = new SqlConnection(ConnString))
+            {
+                using (var cmd = new SqlCommand(insertQuery, cn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@UserName", name);
+                    cmd.Parameters.AddWithValue("@UserEmail", email);
+                    cmd.Parameters.AddWithValue("@PageUrl", url);
+                    cmd.Parameters.AddWithValue("@Message", message);
+                    cmd.Parameters.AddWithValue("@File1", string.IsNullOrEmpty(file1Path) ? (object)DBNull.Value : file1Path);
+                    cmd.Parameters.AddWithValue("@File2", string.IsNullOrEmpty(file2Path) ? (object)DBNull.Value : file2Path);
+                    cn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            SendSupportEmail(userId, name, email, url, message, file1Path, file2Path);
+        }
+
+        private void SendSupportEmail(string userId, string name, string email, string url, string message, string file1Path, string file2Path)
+        {
+            try
+            {
+                string smtpFrom = ConfigurationManager.AppSettings["SmtpFrom"];
+                string smtpUser = ConfigurationManager.AppSettings["SmtpUser"];
+                string smtpPass = ConfigurationManager.AppSettings["SmtpPass"];
+                string smtpHost = ConfigurationManager.AppSettings["SmtpHost"];
+                int smtpPort = Convert.ToInt32(ConfigurationManager.AppSettings["SmtpPort"]);
+                bool enableSsl = Convert.ToBoolean(ConfigurationManager.AppSettings["SmtpEnableSsl"]);
+
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(smtpFrom, "IT Support System");
+                mail.To.Add("it.support@aminruptechnologies.co.in");
+                mail.Subject = "New IT Support Concern Raised by " + name;
+                mail.IsBodyHtml = true;
+
+                mail.Body = $@"
+                    <h2 style='color: #2268a9;'>New IT Support Concern</h2><hr />
+                    <p><strong>User ID:</strong> {userId}</p>
+                    <p><strong>Name:</strong> {name}</p>
+                    <p><strong>User's Email:</strong> {email}</p>
+                    <p><strong>Reported From URL:</strong> <a href='{url}'>{url}</a></p><br />
+                    <p><strong>User Message:</strong></p>
+                    <p style='background-color: #f9f9f9; padding: 10px; border-left: 4px solid #2268a9;'>
+                        {message.Replace(Environment.NewLine, "<br/>")}
+                    </p>";
+
+                if (!string.IsNullOrEmpty(file1Path) && File.Exists(file1Path)) mail.Attachments.Add(new Attachment(file1Path));
+                if (!string.IsNullOrEmpty(file2Path) && File.Exists(file2Path)) mail.Attachments.Add(new Attachment(file2Path));
+
+                using (SmtpClient smtp = new SmtpClient(smtpHost, smtpPort))
+                {
+                    smtp.Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass);
+                    smtp.EnableSsl = enableSsl;
+                    smtp.Send(mail);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ticket saved, but email notification failed: " + ex.Message);
+            }
+        }
+
+        protected void btnSubmitSupport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "Unknown User";
+                string userName = lblName.Text;
+                string currentUrl = Request.Url.AbsoluteUri;
+                string userMessage = txtSupportMessage.Text;
+                string userEmail = GetUserEmailFromDatabase(userId);
+
+                string saveDirectory = Server.MapPath("~/SupportUploads/");
+                if (!Directory.Exists(saveDirectory)) Directory.CreateDirectory(saveDirectory);
+
+                string file1Path = string.Empty;
+                string file2Path = string.Empty;
+
+                string rawBase64 = hfAutoScreenshot.Value;
+                if (!string.IsNullOrEmpty(rawBase64))
+                {
+                    string cleanBase64 = rawBase64.Contains(",") ? rawBase64.Split(',')[1] : rawBase64;
+                    byte[] imageBytes = Convert.FromBase64String(cleanBase64);
+                    string autoFileName = userId + "_auto_" + DateTime.Now.Ticks + ".png";
+                    file1Path = Path.Combine(saveDirectory, autoFileName);
+                    File.WriteAllBytes(file1Path, imageBytes);
+                }
+
+                if (fileScreenshot1.HasFile)
+                {
+                    string fileName1 = userId + "_manual_" + DateTime.Now.Ticks + "_" + fileScreenshot1.FileName;
+                    file2Path = Path.Combine(saveDirectory, fileName1);
+                    fileScreenshot1.SaveAs(file2Path);
+                }
+
+                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+                CreateiTopTicket(userId, userName, currentUrl, userMessage, rawBase64);
+                NotifyITSupport(userId, userName, userEmail, currentUrl, userMessage, file1Path, file2Path);
+
+                txtSupportMessage.Text = "";
+                hfAutoScreenshot.Value = "";
+
+                string successScript = "alert('Success! Your ticket is logged in iTop and Support has been notified.'); document.getElementById('supportModal').style.display = 'none'; document.getElementById('imgScreenshotPreview').style.display = 'none';";
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "FinalSuccess", successScript, true);
+            }
+            catch (Exception ex)
+            {
+                lblSupportStatus.Text = "Error: " + ex.Message;
+                lblSupportStatus.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+
+        private void CreateiTopTicket(string userId, string name, string currentUrl, string userMessage, string base64Screenshot)
+        {
+            try
+            {
+                string iTopUrl = ConfigurationManager.AppSettings["iTopUrl"];
+                string iTopUser = ConfigurationManager.AppSettings["iTopUser"];
+                string iTopPass = ConfigurationManager.AppSettings["iTopPass"];
+                string callerEmail = ConfigurationManager.AppSettings["iTopCallerEmail"];
+                string orgName = ConfigurationManager.AppSettings["iTopOrgName"];
+
+                string descriptionHtml = $"<p><strong>Reported By:</strong> {name} (User ID: {userId})</p>";
+                descriptionHtml += $"<p><strong>Page URL:</strong> <a href='{currentUrl}'>{currentUrl}</a></p>";
+                descriptionHtml += $"<p><strong>Message:</strong><br/>{userMessage.Replace(Environment.NewLine, "<br/>")}</p>";
+
+                System.Web.Script.Serialization.JavaScriptSerializer js = new System.Web.Script.Serialization.JavaScriptSerializer();
+                js.MaxJsonLength = int.MaxValue;
+
+                var ticketPayload = new
+                {
+                    operation = "core/create",
+                    comment = "Ticket created via FLAME-EX Portal API",
+                    @class = "UserRequest",
+                    output_fields = "id",
+                    fields = new
+                    {
+                        org_id = $"SELECT Organization WHERE name = '{orgName}'",
+                        caller_id = $"SELECT Person WHERE email = '{callerEmail}'",
+                        title = $"FLAME-EX Issue: {name} ({userId})",
+                        description = descriptionHtml
+                    }
+                };
+
+                string ticketJsonData = js.Serialize(ticketPayload);
+                string newTicketId = "";
+
+                using (var client = new System.Net.WebClient())
+                {
+                    var reqParm = new System.Collections.Specialized.NameValueCollection();
+                    reqParm.Add("version", "1.3");
+                    reqParm.Add("auth_user", iTopUser);
+                    reqParm.Add("auth_pwd", iTopPass);
+                    reqParm.Add("json_data", ticketJsonData);
+
+                    byte[] responseBytes = client.UploadValues(iTopUrl, "POST", reqParm);
+                    string responseBody = System.Text.Encoding.UTF8.GetString(responseBytes);
+
+                    if (responseBody.Contains("\"code\":") && !responseBody.Contains("\"code\":0"))
+                    {
+                        throw new Exception("iTop Ticket Creation Error: " + responseBody);
+                    }
+
+                    System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(responseBody, "\"key\"\\s*:\\s*\"?(\\d+)\"?");
+                    if (match.Success) newTicketId = match.Groups[1].Value;
+                    else throw new Exception("Ticket created, but could not extract ID to attach image.");
+                }
+
+                if (!string.IsNullOrEmpty(base64Screenshot) && !string.IsNullOrEmpty(newTicketId))
+                {
+                    string cleanBase64 = base64Screenshot.Contains(",") ? base64Screenshot.Split(',')[1] : base64Screenshot;
+
+                    var attachmentPayload = new
+                    {
+                        operation = "core/create",
+                        comment = "Auto-captured screenshot from FLAME-EX",
+                        @class = "Attachment",
+                        output_fields = "id",
+                        fields = new
+                        {
+                            item_class = "UserRequest",
+                            item_id = newTicketId,
+                            contents = new
+                            {
+                                data = cleanBase64,
+                                mimetype = "image/png",
+                                filename = "Auto_Screenshot.png"
+                            }
+                        }
+                    };
+
+                    string attachmentJsonData = js.Serialize(attachmentPayload);
+
+                    using (var client = new System.Net.WebClient())
+                    {
+                        var reqParm = new System.Collections.Specialized.NameValueCollection();
+                        reqParm.Add("version", "1.3");
+                        reqParm.Add("auth_user", iTopUser);
+                        reqParm.Add("auth_pwd", iTopPass);
+                        reqParm.Add("json_data", attachmentJsonData);
+                        client.UploadValues(iTopUrl, "POST", reqParm);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

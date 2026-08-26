@@ -240,3 +240,11 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/Bill_Software/SupportUploads
+/Bill_Software/App_Data/AuditLogs/
+/Bill_Software/App_Data/ErrorLogs/
+Bill_Software/Uploads/Products/.gitkeep
+Bill_Software/Uploads/Products/94a93741902441d6ace503c1b9ff8ca5_BottomView.png
+Bill_Software/Uploads/Products/834a245a06c74ff1bdc3af6dcc6e600e_LeftView.png
+Bill_Software/Uploads/Products/d79a60aec8f249138d9640c3a03793fa_TopView.png
+Bill_Software/Uploads/Products/fa6080c7bb89432ea6307c4dd59c3437_RightView.png

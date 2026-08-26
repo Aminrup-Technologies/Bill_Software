@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>i2i inc.</title>
+    <title>Aminrup Technologies.</title>
     <link rel="shortcut icon" href="corporate/business/WebImages/i2i_logo.png" />
     <style type="text/css">
         .auto-style1 {
@@ -41,10 +41,10 @@
             <tr>
                 <td style="width:20px">&nbsp;</td>
                 <td style="width:20px">
-                    <asp:ImageButton ID="ImageButton1" runat="server" ImageUrl="~/Invoice.jpg" OnClick="ImageButton1_Click" Width="209px" />
-                    `</td>
+                    <asp:ImageButton ID="ImageButton1" runat="server" ImageUrl="~/Images/Invoice.jpg" OnClick="ImageButton1_Click" Width="209px" />
+                    </td>
                 <td style="width:20px">
-                    <asp:ImageButton ID="ImageButton2" runat="server" Height="167px" ImageUrl="~/idcardslogo.jpg" OnClick="ImageButton2_Click" Width="169px" />
+                    <asp:ImageButton ID="ImageButton2" runat="server" Height="167px" ImageUrl="~/Images/idcardslogo.jpg" OnClick="ImageButton2_Click" Width="169px" />
                 </td>
                 <td style="width:20px">&nbsp;</td>
                 <td style="width:20px">&nbsp;</td>

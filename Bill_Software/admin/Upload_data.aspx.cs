@@ -71,7 +71,7 @@ namespace Bill_Software.admin
             }
             catch (Exception ex)
             {
-
+                throw (ex);
             }
 
         }

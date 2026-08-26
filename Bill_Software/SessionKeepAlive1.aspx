@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <%--<meta http-equiv="refresh" content="59;http://i2iinc.in"/>--%>
+    <%--<meta http-equiv="refresh" content="59;http://aminruptechnologies.co.in"/>--%>
     <title></title>
 </head>
 <body>

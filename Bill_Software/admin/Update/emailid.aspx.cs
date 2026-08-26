@@ -22,28 +22,43 @@ namespace Bill_Software.Update
         private void Binddata()
         {
 
-            if (Session["USERID"].ToString() == "admin")
+            //if (Session["USERID"].ToString() == "admin")
+            //{
+            //    string cmdString = "select Email from tbl_login where User_Id='" + Session["USERID"].ToString() + "'";
+            //    DbCL.Sqlconnection();
+            //    DbCL.ConnectDb();
+            //    SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
+            //    SqlDataReader Rdr;
+            //    Rdr = cmd.ExecuteReader();
+            //    if (Rdr.Read())
+            //    {
+            //        lblCrntEmailId.Text = Rdr["Email"].ToString();
+            //    }
+            //    DbCL.Conn.Close();
+            //}
+
+
+            string cmdString = "select Email from tbl_login where User_Id='" + Session["USERID"].ToString() + "'";
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
+            SqlDataReader Rdr;
+            Rdr = cmd.ExecuteReader();
+            if (Rdr.Read())
             {
-                string cmdString = "select Email from tbl_card_login where User_Id='" + Session["USERID"].ToString() + "'";
-                DbCL.Sqlconnection();
-                DbCL.ConnectDb();
-                SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
-                SqlDataReader Rdr;
-                Rdr = cmd.ExecuteReader();
-                if (Rdr.Read())
-                {
-                    lblCrntEmailId.Text = Rdr["Email"].ToString();
-                }
-                DbCL.Conn.Close();
+                lblCrntEmailId.Text = Rdr["Email"].ToString();
             }
+            DbCL.Conn.Close();
         }
 
         protected void btnUpdate_Click(object sender, EventArgs e)
         {
-            if (Session["USERID"].ToString() == "admin")
-            {
-                DbCL.executeRdr("UPDATE tbl_card_login SET Email='" + txtEmailId.Text.Trim() + "' where User_Id='" + Session["USERID"].ToString() + "'");
-            }
+            //if (Session["USERID"].ToString() == "admin")
+            //{
+            //    DbCL.executeRdr("UPDATE tbl_login SET Email='" + txtEmailId.Text.Trim() + "' where User_Id='" + Session["USERID"].ToString() + "'");
+            //}
+
+            DbCL.executeRdr("UPDATE tbl_login SET Email='" + txtEmailId.Text.Trim() + "' where User_Id='" + Session["USERID"].ToString() + "'");
             Response.Redirect("~/admin/Update/emailid.aspx");
         }
     }

@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>i2i inc.</title>
+    <title>FLAME-EX.</title>
     
     <link href="~/WebProperty/css/style.css" rel="stylesheet" type="text/css" />
 <link href="~/WebProperty/css/menu.css" rel="stylesheet" type="text/css" />

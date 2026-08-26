@@ -48,6 +48,154 @@ namespace Bill_Software
             }
         }
 
+        public DataTable ReturnDataTable(string cmdstring)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                // Ensure connection object is initialized (Method from your DB_UTILITY class)
+                Sqlconnection();
+
+                // Open the connection (Method from your DB_UTILITY class)
+                ConnectDb();
+
+                using (SqlCommand cmd = new SqlCommand(cmdstring, Conn))
+                {
+                    // Optional: Increase timeout for heavy queries
+                    cmd.CommandTimeout = 180;
+
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // It is good practice to log the error here if you have a logging mechanism
+                throw ex;
+            }
+            finally
+            {
+                // Ensure connection is closed even if an error occurs
+                if (Conn.State == System.Data.ConnectionState.Open)
+                {
+                    Conn.Close();
+                }
+            }
+            return dt;
+        }
+
+        public void ExecuteNonQuery(string sql, SqlParameter[] parameters)
+        {
+            try
+            {
+                Sqlconnection();
+                ConnectDb();
+                using (SqlCommand cmd = new SqlCommand(sql, Conn))
+                {
+                    if (parameters != null)
+                        cmd.Parameters.AddRange(parameters);
+                    cmd.CommandTimeout = 0;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception exp)
+            {
+                throw new Exception("ExecuteNonQuery Error: " + exp.Message);
+            }
+            finally
+            {
+                if (Conn != null && Conn.State == ConnectionState.Open)
+                    Conn.Close();
+            }
+        }
+
+
+
+        public void executeRdrNew(string sql, Dictionary<string, object> parameters)
+        {
+            try
+            {
+                Sqlconnection();
+                ConnectDb();
+                SqlCommand cmd = new SqlCommand(sql, Conn);
+                cmd.CommandTimeout = 0;
+
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        cmd.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                    }
+                }
+
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception exp)
+            {
+                throw new Exception(exp.Message);
+            }
+            finally
+            {
+                Conn.Close();
+            }
+        }
+
+        public object ExecuteScalar(string query, SqlParameter[] parameters)
+        {
+            object result = null;
+            try
+            {
+                Sqlconnection();
+                ConnectDb();
+                using (SqlCommand cmd = new SqlCommand(query, Conn))
+                {
+                    cmd.Parameters.AddRange(parameters);
+                    cmd.CommandTimeout = 0;
+                    result = cmd.ExecuteScalar(); // Gets a single value
+                }
+            }
+            catch (Exception exp)
+            {
+                throw new Exception(exp.Message);
+            }
+            finally
+            {
+                Conn.Close();
+            }
+            return result;
+        }
+
+
+        public void ExecuteQuery(string sqlString, params SqlParameter[] parameters)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString()))  // Use your actual connection string
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand(sqlString, conn))
+                    {
+                        cmd.CommandTimeout = 0;
+
+                        // Add parameters if available
+                        if (parameters != null)
+                        {
+                            cmd.Parameters.AddRange(parameters);
+                        }
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception exp)
+            {
+                throw new Exception("Database error: " + exp.Message);
+            }
+        }
+
+
         public void ConnectDb()
         {
             try
@@ -69,7 +217,7 @@ namespace Bill_Software
             }
             catch (Exception ex)
             {
-                throw new Exception();
+                throw new Exception(ex.Message);
             }
         }
 
@@ -100,6 +248,29 @@ namespace Bill_Software
             }
             Conn.Close();
         }
+
+        public void FillComboNew(DropDownList cmbName, string cmdString)
+        {
+            cmbName.Items.Clear();
+            Sqlconnection();
+            ConnectDb();
+
+            SqlCommand cmd = new SqlCommand(cmdString, Conn);
+            SqlDataReader Rdr = cmd.ExecuteReader();
+
+            cmbName.Items.Add(new ListItem("--Select--", ""));
+
+            while (Rdr.Read())
+            {
+                string text = Rdr[1].ToString();  // Assuming Client_Name is at index 1
+                string value = Rdr[0].ToString(); // Assuming Client_ID is at index 0
+                cmbName.Items.Add(new ListItem(text, value));
+            }
+
+            Rdr.Close();
+            Conn.Close();
+        }
+
 
         public void FillCombo1(DropDownList cmbName, string cmdString)
         {

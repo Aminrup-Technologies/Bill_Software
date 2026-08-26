@@ -94,7 +94,8 @@
             <thead id="header">
                 <tr>
                     <th style="width: 100%">
-                        <img src="../WebImages/I2ILHHeader1.png" width="100%" /></th>
+                        <asp:Image ID="Image21" runat="server"
+                            Width="844px" Height="140px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" /></th>
                 </tr>
                 <tr>
                     <th>
@@ -128,11 +129,11 @@
                             <tr>
                                 <td class="gap" style="text-align: center; font-weight: bold;">&nbsp</td>
                             </tr>
-                           <tr>
-                                <td class="sub" style="text-align: right; font-weight: bold;font-size: 30px; font-family:Arial, Helvetica, sans-serif; color: #e31e24;">PAYMENT INVOICE</td>
+                            <tr>
+                                <td class="sub" style="text-align: right; font-weight: bold; font-size: 30px; font-family: Arial, Helvetica, sans-serif; color: #e31e24;">PAYMENT INVOICE</td>
                             </tr>
                             <tr class="trheight">
-                               <td class="sub" style="text-align: right; font-weight: bold;  font-size: 15px;">Original Buyer's Copy</td>
+                                <td class="sub" style="text-align: right; font-weight: bold; font-size: 15px;">Original Buyer's Copy</td>
                             </tr>
                             <tr>
                                 <td class="gap" style="text-align: center; font-weight: bold;">&nbsp</td>
@@ -149,7 +150,7 @@
                             <tr>
                                 <td class="add" style="vertical-align: top" width="53%">
                                     <table border="0" width="100%" class="address">
-                                       <%-- <tr>
+                                        <%-- <tr>
                                             <td class="" style="width: 30%; vertical-align: top; padding: 1px 5px;">Kind Attention</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="vertical-align: top; padding: 1px 5px; width: 68%">
@@ -175,7 +176,7 @@
                                                 <asp:Label ID="lblcity" runat="server"></asp:Label>-<asp:Label ID="lblpincode" runat="server"></asp:Label>
                                             </td>
                                         </tr>
-                                         <tr id="delAddress" runat="server">
+                                        <tr id="delAddress" runat="server">
                                             <td class="" style="width: 30%; vertical-align: top; padding: 1px 5px;">Delivery Address</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 68%; vertical-align: top; padding: 1px 5px;">
@@ -201,7 +202,7 @@
                                             <td class="" style="vertical-align: top; padding: 1px 5px; width: 60%">
                                                 <asp:Label ID="lblpaydate" runat="server"></asp:Label></td>
                                         </tr>
-                                         <tr id="inv" runat="server">
+                                        <tr id="inv" runat="server">
                                             <td class="" style="width: 38%; vertical-align: top; padding: 1px 5px;">Invoice Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 60%; vertical-align: top; padding: 1px 5px;">
@@ -213,13 +214,13 @@
                                             <td class="" style="width: 60%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblqnumber" runat="server"></asp:Label></td>
                                         </tr>
-                                       <%-- <tr>
+                                        <%-- <tr>
                                             <td class="" style="width: 38%; vertical-align: top; padding: 1px 5px;">Client Code</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 60%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblClientCode" runat="server"></asp:Label></td>
                                         </tr>--%>
-                                       
+
                                         <asp:Panel ID="pnlTasGst" runat="server">
                                             <tr>
                                                 <td class="" style="width: 38%; vertical-align: top; padding: 1px 5px;">Client GST Number</td>
@@ -265,7 +266,7 @@
                             </tr>
                         </table>--%>
 
-                       <%-- =======================================--%>
+                        <%-- =======================================--%>
 
                         <asp:Label ID="lblserviceamo" runat="server"></asp:Label>
 
@@ -323,7 +324,7 @@
                             </tr>
                         </table>
 
-                       <%-- <table border="0" width="100%">
+                        <%-- <table border="0" width="100%">
                             <tr>
                                 <td style="width:100%">
                                     
@@ -331,7 +332,7 @@
                             </tr>
                         </table>--%>
 
-                        
+
 
                         <%--<table border="0" width="100%";>
                             <tr id="AMODETAILS" runat="server" Visible="false">
@@ -415,7 +416,7 @@
                         </table>--%>
 
 
-                         <table class="PaymentPhase pagebrake" border="0" width="100%" id="BackData" runat="server">
+                        <table class="PaymentPhase pagebrake" border="0" width="100%" id="BackData" runat="server">
                             <tr>
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
@@ -430,26 +431,26 @@
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
                         </table>
-                                    
-                        
+
+
                         <asp:Label ID="lblPaymentReceived" runat="server"></asp:Label>
-                                
+
 
                         <table border="0" width="100%">
                             <tr>
                                 <td class="add" style="vertical-align: top" width="53%">
-                                      <table border="0" width="100%" class="address">
+                                    <table border="0" width="100%" class="address">
                                         <tr>
                                             <td class="" style="background-color: #e31e24; color: white; text-align: center;">PAYMENT TERMS</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “I2I INC” at the Account Details Provided.</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 1px 4px 1px 4px">All Payments shall be made through Demand Draft/Pay Orders/At Par Payable Cheques/Telegraphic Transfer in favour of “FLAME-EX” at the Account Details Provided.</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">All Invoices shall be paid by the Client within Seven (7) Days of the Date of Invoice. In the event of Late Payment, the Company shall be entitled to charge Interest on any Outstanding Amounts at a rate of 1.5% per Month. GST at Current Rates is payable in addition to the Amount Quoted in accordance with the HSN/SAC Code.</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 1px 4px 1px 4px">All Invoices shall be paid by the Client within Seven (7) Days of the Date of Invoice. In the event of Late Payment, the Company shall be entitled to charge Interest on any Outstanding Amounts at a rate of 1.5% per Month. GST at Current Rates is payable in addition to the Amount Quoted in accordance with the HSN/SAC Code.</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding:1px 4px 1px 4px">The Company reserves the Right to Withdraw or Suspend all or any of its Services to the Client, till such time that the raised Invoice is settled.</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 1px 4px 1px 4px">The Company reserves the Right to Withdraw or Suspend all or any of its Services to the Client, till such time that the raised Invoice is settled.</td>
                                         </tr>
                                     </table>
                                 </td>
@@ -457,19 +458,19 @@
                                 <td class="qno" style="vertical-align: top;" width="45%">
                                     <table border="0" width="100%" class="quotation">
                                         <tr>
-                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">ACCOUNT DETAILS FOR BANK TRANSFER</td>
+                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">FLAME-EX ACCOUNT DETAILS FOR BANK TRANSFER</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK: ICICI BANK</td>
+                                            <td class="auto-style1" style="text-align: justify; border: 1px solid #bfbfbf;">BANK: AXIS BANK LTD</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 032805004861</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BANK ACCOUNT NUMBER: 921030046141801</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: ICIC0000328</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">IFSC CODE: UTIB0000012</td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: Behala, Branch, Kolkata – 700 008</td>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">BRANCH: JAMSHEDPUR (JH)</td>
                                         </tr>
                                         <tr>
                                             <td class="gap" style="text-align: justify; border: 0;">&nbsp</td>
@@ -479,20 +480,20 @@
                                         </tr>
                                         <asp:Panel ID="PnlGstKvqa" runat="server">
                                             <tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GST NUMBER: 19AAEFI5315E1ZL</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GSTIN No.: 20AESPD7535D1ZS</td>
                                             </tr>
                                             <%--<tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">HSN CODE/SAC: 998214</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px"></td>
                                             </tr>--%>
                                         </asp:Panel>
                                         <asp:Panel ID="PnlTaxKvqa" runat="server">
                                             <tr>
-                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">SERVICE TAX NUMBER: AAEFI5315ESD001</td>
+                                                <td class="" style="text-align: justify; border: 1px solid #bfbfbf; padding: 2px 5px">GSTIN No.: 20AESPD7535D1ZS</td>
                                             </tr>
                                         </asp:Panel>
-                                        <tr>
-                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;">PAN NUMBER: AAEFI5315E</td>
-                                        </tr>
+                                        <%--<tr>
+                                            <td class="" style="text-align: justify; border: 1px solid #bfbfbf;"></td>
+                                        </tr>--%>
                                     </table>
                                 </td>
                             </tr>
@@ -503,11 +504,11 @@
                             <tr>
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
-                          <%--  <tr>
+                            <%--  <tr>
                                 <td class="qno" width="100%">
                                     <table border="0" width="100%" class="">
                                         <tr>
-                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">If you have any Question about this Invoice, Please Contact Mr. Das at +91 9674897316 or email at info@i2iinc.in</td>
+                                            <td class="" style="background-color: #e31e24; color: white; text-align: center;">If you have any Question about this Invoice, Please Contact Mr. Das at +91 9674897316 or email at info@aminruptechnologies.co.in</td>
                                         </tr>
                                     </table>
                                 </td>
@@ -517,22 +518,23 @@
                             </tr>
                         </table>
 
-                       <table border="0" width="100%" class="FORKVQAEAST">
+                        <table border="0" width="100%" class="FORKVQAEAST">
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR I2I INC</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR FLAME-EX</td>
                             </tr>
                             <%--<tr>
                                 <td><img src="../WebImages/Stamp.jpg" width="100PX" /></td>
                             </tr>--%>
                             <tr>
-                                <td><img src="../WebImages/i2i_LOGO_ad_sig.png" width="150PX" /></td>
+                                <td>
+                                    <img src="../WebImages/flmx_authsign.png" width="150PX" /></td>
                             </tr>
                             <tr class="trheight">
                                 <td class="" style="text-align: left; font-weight: bold;">Authorized Signatory</td>
                             </tr>
                         </table>
 
-                       <table border="0" width="100%" class="FORKVQAEAST">
+                        <table border="0" width="100%" class="FORKVQAEAST">
                             <tr>
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
@@ -554,7 +556,7 @@
                             <tr>
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
-                           <%-- <tr>
+                            <%-- <tr>
                                 <td class="" style="text-align: center; font-weight: bold; font-size: 14px; color: #c8152a; font-style: italic">------------------------------Thank You For Your Business------------------------------</td>
                             </tr>
                             <tr>
@@ -568,8 +570,9 @@
         <table id="footer" border="0" width="844px">
             <tr>
                 <td style="height: auto; text-align: center; font-weight: bold; font-size: 14px; font-style: italic" width="100%">
-                    <span style="padding-right:10px; color:#c8152a">------------------------------Thank You For Your Business------------------------------</span>
-                    <img src='../WebImages/I2ILHFooter.png' width='100%' />
+                    <span style="padding-right: 10px; color: #c8152a">------------------------------Thank You For Your Business------------------------------</span>
+                    <asp:Image ID="Image22" runat="server"
+                            Width="844px" Height="180px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrbtm.png" />
                 </td>
             </tr>
         </table>

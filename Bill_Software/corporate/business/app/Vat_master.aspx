@@ -60,7 +60,7 @@
      <table cellpadding="0" cellspacing="1" class="style1">
         <tr>
             <td bgcolor="#19658A" colspan="6">
-                &nbsp;<span class="style2">Manage VAT</span></td>
+                &nbsp;<span class="style2">Manage GST Rate %</span></td>
         </tr>
         <tr>
             <td width="20%">
@@ -110,7 +110,7 @@
                 &nbsp;</td>
             <td width="20%">
                 &nbsp;
-                Provide new VAT Rate</td>
+                Provide new GST Rate</td>
             <td colspan="2" width="20%">
                 <asp:TextBox ID="txtVatRate" runat="server" CssClass="textbox_U_style" onkeypress="return validate(event)"></asp:TextBox>
             </td>
@@ -151,7 +151,7 @@
                                     <asp:Label ID="showid" runat="server" Text="ID"></asp:Label>
                                 </td>
                                 <td style="text-align:center; width:70%;">
-                                    <asp:Label ID="showrm" runat="server" Text="VAT Rate"></asp:Label>
+                                    <asp:Label ID="showrm" runat="server" Text="GST Rate"></asp:Label>
                                 </td>
                                 <td style="text-align:center; width:10%;">
                                     <asp:Label ID="edit" runat="server" Text="Delete"></asp:Label>

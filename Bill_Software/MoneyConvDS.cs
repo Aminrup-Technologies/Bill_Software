@@ -234,7 +234,7 @@ namespace Bill_Software
             return a;
         }
 
-        public static string NToW(String ParaNum)
+        public static string NToW_old(String ParaNum)
         {
             //*****************************************
             //Int64 can have maximum value as 9,223,372,036,854,775,807.
@@ -330,5 +330,68 @@ namespace Bill_Software
             }
             return NName;
         }
+
+        public static string NToW(string ParaNum)
+        {
+            // Validate input length
+            if (ParaNum.Length > 18)
+                return "Maximum 18 digits only allowed";
+
+            decimal a1 = 0;
+            // Ensure input is numeric
+            if (!decimal.TryParse(ParaNum, out a1))
+                return "Invalid number format";
+
+            // Split into integer and fractional parts
+            long integerPart = (long)Math.Floor(a1);
+            int fractionalPart = (int)((a1 - integerPart) * 100); // Consider two decimal places as paise
+
+            // Validate integer part length
+            if (integerPart.ToString().Length > 18)
+                return "Maximum 18 digits only allowed";
+
+            // Split the integer part into components: Crores, Lakhs, and Remaining
+            long crores = integerPart / 10000000;
+            long remainingAfterCrores = integerPart % 10000000;
+            long lakhs = remainingAfterCrores / 100000;
+            long remaining = remainingAfterCrores % 100000;
+
+            // Build the words for the integer part
+            string result = "";
+
+            if (crores > 0)
+                result += NToWConv(crores.ToString()) + (crores == 1 ? " Crore" : " Crores");
+
+            if (lakhs > 0)
+            {
+                if (result.Length > 0) result += " ";
+                result += NToWConv(lakhs.ToString()) + (lakhs == 1 ? " Lakh" : " Lakhs");
+            }
+
+            if (remaining > 0)
+            {
+                if (result.Length > 0) result += " ";
+                result += NToWConv(remaining.ToString());
+            }
+
+            if (!string.IsNullOrWhiteSpace(result))
+                result = "Rs " + result;
+
+            // Add fractional part as paise
+            if (fractionalPart > 0)
+            {
+                if (!string.IsNullOrWhiteSpace(result))
+                    result += " & ";
+
+                result += NToWConv(fractionalPart.ToString()) + (fractionalPart == 1 ? " Paise" : " Paise");
+            }
+
+            // Finalize result
+            if (!string.IsNullOrWhiteSpace(result))
+                result += " Only.";
+
+            return result;
+        }
+
     }
 }

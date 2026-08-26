@@ -1,625 +1,313 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="New_client.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm15" %>
+﻿<%@ Page Title="Create Client" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="New_client.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm15" EnableEventValidation="false" %>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-     <style type="text/css">
-    .style1
-    {
-        width: 100%;
-    }
-    .style2
-    {
-        color: #FFFFFF;
-        font-weight: bold;
-    }
-    .style3
-    {
-        color: #FF3300;
-    }
-        .style4
-        {
-            text-align: center;
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <style type="text/css">
+        /* --- 1. Base Layout Components --- */
+        .box-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
-         .auto-style1 {
-             width: 40%;
-         }
-         .auto-style2 {
-             height: 26px;
-         }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #19658A;
+            border-bottom: 2px solid #19658A;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        /* --- 2. Form Controls --- */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .req {
+            color: #FF3300;
+        }
+
+        /* --- 3. Buttons --- */
+        .btn-primary {
+            background: #19658A;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* --- 4. Select2 Modern High-Contrast Theme --- */
+        /* Container & Selection Box */
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container--default .select2-selection--single {
+            height: 38px !important;
+            border: 1px solid #ccc !important;
+            border-radius: 4px !important;
+            padding: 5px;
+        }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 36px !important;
+            }
+
+        /* Dropdown Results List */
+        .select2-dropdown {
+            background-color: #ffffff !important;
+            border: 1px solid #19658A !important;
+            z-index: 9999 !important;
+        }
+
+        .select2-results__option {
+            color: #333333 !important;
+            padding: 8px 12px !important;
+            background-color: #ffffff !important;
+        }
+
+        /* Hover/Active States */
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #19658A !important;
+            color: #ffffff !important;
+        }
+
+        /* Inline City Addition / Tagging Visibility */
+        .select2-container--default .select2-results__option[aria-selected=true] {
+            background-color: #f4f8fb !important;
+            color: #19658A !important;
+        }
+
+        /* Dropdown Search Field */
+        .select2-search--dropdown .select2-search__field {
+            border: 1px solid #ccc !important;
+            color: #333 !important;
+        }
     </style>
-    <script type="text/javascript">
-        function ValidateField() {
-            if (document.getElementById('<%=txtvendorName.ClientID%>').value == "") {
-                alert("Provide Client Name.");
-                document.getElementById('<%=txtvendorName.ClientID%>').focus();
-                return false;
-            }
-
-          <%--  if (document.getElementById('<%=txtAddress1.ClientID%>').value == "") {
-                alert("Provide Client Address ");
-                document.getElementById('<%=txtAddress1.ClientID%>').focus();
-                return false;
-            }--%>
-
-            if (document.getElementById('<%=cmbcity.ClientID%>').selectedIndex == 0) {
-                alert("Please Select City.");
-                document.getElementById('<%=cmbcity.ClientID%>').focus();
-                return false;
-            }
-            if (document.getElementById('<%=cmbState.ClientID%>').selectedIndex == 0) {
-                alert("Please Select State.");
-                document.getElementById('<%=cmbState.ClientID%>').focus();
-                return false;
-            }
-            if (document.getElementById('<%=txtPin.ClientID%>').value == "") {
-                alert("Provide Client Pin");
-                document.getElementById('<%=txtPin.ClientID%>').focus();
-                return false;
-            }
-
-           <%-- if (document.getElementById('<%=txtRepresentativeName.ClientID%>').value == "") {
-                alert("Provide Representatives Name");
-                document.getElementById('<%=txtRepresentativeName.ClientID%>').focus();
-                return false;
-            }
-            if (document.getElementById('<%=txtRepresantativeDesig.ClientID%>').value == "") {
-                alert("Provide Representatives Designation.");
-                document.getElementById('<%=txtRepresantativeDesig.ClientID%>').focus();
-                return false;
-            }--%>
-
-
-
-
-        }
-</script>
-
-<script type="text/javascript">
-    //Function to allow only numbers to textbox
-    function validate(key) {
-        //getting key code of pressed key
-        var keycode = (key.which) ? key.which : key.keyCode;
-        var phn = document.getElementById('txtfillrequar');
-        //comparing pressed keycodes
-        if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
-            return false;
-        }
-        else {
-            //Condition to check textbox contains ten numbers or not
-            if (phn.value.length < 50) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-    }
-</script>
 </asp:Content>
+
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-     <table class="style1">
-    <tr>
-        <td bgcolor="#19658A" colspan="6">
-            &nbsp;<span class="style2">Create Client</span>&nbsp;</td>
-    </tr>
-    <tr>
-        <td width="10%">
-            &nbsp;</td>
-        <td colspan="2" width="40%">
-            &nbsp;</td>
-        <td colspan="2" width="40%">
-            &nbsp;</td>
-        <td width="10%">
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="4">
-                <asp:Panel ID="PanelOK" runat="server" BackColor="#EEFFDD" 
-                    BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False">
-                    &nbsp;<asp:Image ID="imageTick" runat="server" 
-                        ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
-                    &nbsp;<asp:Label ID="lblOk" runat="server"></asp:Label>
-                </asp:Panel>
-        
-            </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
+    <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true"></asp:ScriptManager>
+    <script type="text/javascript">
+        function ValidateClientData() {
+            var name = document.getElementById('<%=txtvendorName.ClientID%>').value.trim();
+            var phone = document.getElementById('<%=txtPhone.ClientID%>').value.trim();
+            var email = document.getElementById('<%=txtEmail.ClientID%>').value.trim();
+            var gst = document.getElementById('<%=txtservicetax_no.ClientID%>').value.trim();
+            var city = document.getElementById('<%=ddlCity.ClientID%>').value;
 
+            // 1. Name Check
+            if (name === "") {
+                alert("Client Name is required.");
+                return false;
+            }
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;<span class="style3">*</span>Client Name&nbsp;</td>
-        <td width="25%">
-            <asp:TextBox ID="txtvendorName" runat="server" CssClass="textbox_style" 
-                Width="250px"></asp:TextBox>
-        </td>
-        <td width="15%" class="auto-style1" colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
+            // 2. City Check
+            if (city === "" || city === "--Select--") {
+                alert("Please select or add a City.");
+                return false;
+            }
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="4" style=" padding:3px 3px 3px 3px; text-align:center; font-weight:bold; background-color:gray; color:white;">Corporate Office Details</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-          <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;<span class="style3">*</span>Corporate Office Address&nbsp;</td>
-        <td width="25%">
-            <asp:TextBox ID="txtAddress1" runat="server" CssClass="textbox_style" TextMode="MultiLine" Width="250px"></asp:TextBox>
-        </td>
-        <td width="15%">
-            <span class="style3">*</span>State&nbsp;&nbsp;</td>
-        <td width="25%">
-            <asp:DropDownList ID="cmbState" runat="server" CssClass="dropdown_style" Width="250px">
-            </asp:DropDownList>
-              </td>
-        <td>
-            &nbsp;</td>
-    </tr>
+            // 3. Phone Check (Indian 10-digit mobile)
+            var phoneRegex = /^[6-9]\d{9}$/;
+            if (phone !== "" && !phoneRegex.test(phone)) {
+                alert("Please enter a valid 10-digit Phone Number.");
+                return false;
+            }
 
-         <tr>
-        <td class="auto-style2">
-             </td>
-        <td width="15%" class="auto-style2">
-            &nbsp;<span class="style3">*</span>City&nbsp;</td>
-        <td width="25%" class="auto-style2">
-            <asp:DropDownList ID="cmbcity" runat="server" CssClass="dropdown_style" Width="250px">
-            </asp:DropDownList>
-        </td>
-        <td width="15%" class="auto-style2">
-            <span class="style3">*</span>Pin</td>
-        <td width="25%" class="auto-style2">
-            <asp:TextBox ID="txtPin" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td class="auto-style2">
-             </td>
-    </tr>
+            // 4. Email Check
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email !== "" && !emailRegex.test(email)) {
+                alert("Please enter a valid Email Address.");
+                return false;
+            }
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;<span class="style3">*</span>Phone Number</td>
-        <td width="25%">
-            <asp:TextBox ID="txtPhone" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
+            // 5. GSTIN Check (Indian Format: 22AAAAA0000A1Z5)
+            var gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            if (gst !== "" && !gstRegex.test(gst.toUpperCase())) {
+                alert("Please enter a valid 15-character GST Number.");
+                return false;
+            }
 
+            return true; // All good!
+        }
+    </script>
 
+    <div class="box-panel">
+        <h3 style="color: #19658A; margin-top: 0;">Create New Client</h3>
 
-          <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="4" style=" padding:3px 3px 3px 3px; text-align:center; font-weight:bold; background-color:gray; color:white;">Registered Office Details (If Different from Corporate Office)</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-          <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;Registered Office Address&nbsp;</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRegAddress" runat="server" CssClass="textbox_style" TextMode="MultiLine" Width="250px"></asp:TextBox>
-        </td>
-        <td width="15%">
-            State&nbsp;&nbsp;</td>
-        <td width="25%">
-            <asp:DropDownList ID="ddlRegState" runat="server" CssClass="dropdown_style" Width="250px">
-            </asp:DropDownList>
-              </td>
-        <td>
-            &nbsp;</td>
-    </tr>
+        <asp:Panel ID="PanelOK" runat="server" BackColor="#D4EDDA" BorderColor="#C3E6CB" BorderStyle="Solid" BorderWidth="1px" Visible="False" Style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #155724;">
+            <strong>Success:</strong>
+            <asp:Label ID="lblOk" runat="server"></asp:Label>
+        </asp:Panel>
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;City&nbsp;</td>
-        <td width="25%">
-            <asp:DropDownList ID="ddlRegCity" runat="server" CssClass="dropdown_style" Width="250px">
-            </asp:DropDownList>
-        </td>
-        <td width="15%">
-            Pin</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRegPin" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td>
-            &nbsp;</td>
-    </tr>
+        <asp:Panel ID="PanelError" runat="server" BackColor="#FFDDDD" BorderColor="#FF3300" BorderStyle="Solid" BorderWidth="1px" Visible="False" Style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #FF3300;">
+            <strong>Error:</strong>
+            <asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
+        </asp:Panel>
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;Phone Number</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRegPhno" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
+        <div class="section-title">
+            Primary Details (Next ID:
+            <asp:Label ID="lbl_nxtclientid" runat="server" ForeColor="#FF6600"></asp:Label>)
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label><span class="req">*</span> Client Name</label>
+                <asp:TextBox ID="txtvendorName" runat="server" CssClass="form-control" placeholder="Enter Client Name"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Industry Type</label>
+                <asp:DropDownList ID="cmbIndustry" runat="server" CssClass="form-control"></asp:DropDownList>
+            </div>
+        </div>
 
+        <div class="section-title">Corporate Office Details</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label><span class="req">*</span> Address</label>
+                <asp:TextBox ID="txtAddress1" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label><span class="req">*</span> State</label>
+                <asp:DropDownList ID="cmbState" runat="server" CssClass="form-control"></asp:DropDownList>
+            </div>
+            <div class="form-group">
+                <label><span class="req">*</span> City</label>
+                <asp:DropDownList ID="ddlCity" runat="server" CssClass="form-control"></asp:DropDownList>
+            </div>
+            <div class="form-group">
+                <label><span class="req">*</span> PIN Code</label>
+                <asp:TextBox ID="txtPin" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label><span class="req">*</span> Phone Number</label>
+                <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Fax Number</label>
+                <asp:TextBox ID="txtFax" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+        </div>
 
+        <div class="section-title">Business & Tax Details</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label>Company Website</label>
+                <asp:TextBox ID="txtWebsite" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Company Email ID</label>
+                <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>GST No</label>
+                <asp:TextBox ID="txtservicetax_no" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>PAN No</label>
+                <asp:TextBox ID="txtpanno" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Place of Supply</label>
+                <asp:TextBox ID="txtplaceofSupply" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+        </div>
 
+        <div style="text-align: right; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+            <asp:Button ID="btnSave" runat="server" CssClass="btn-primary" OnClick="btnSave_Click" Text="Save Client"
+                UseSubmitBehavior="false"
+                OnClientClick="if(ValidateClientData()){ this.value='Saving...'; this.style.pointerEvents='none'; this.style.opacity='0.7'; } else { return false; }" />
 
+            <asp:Button ID="btnReset" runat="server" CssClass="btn-secondary" OnClick="btnReset_Click" Text="Reset" />
+        </div>
+    </div>
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="4" style=" padding:3px 3px 3px 3px; text-align:center; font-weight:bold; background-color:gray; color:white;">Client Details</td>
-        <td>
-            &nbsp;</td>
-    </tr>
+    <script type="text/javascript">
+        $(document).ready(function () {
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Company <span>Website</span></td>
-        <td width="25%">
-            <asp:TextBox ID="txtWebsite" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td width="15%">
-            <span>Company Email ID</span></td>
-        <td width="25%">
-            <asp:TextBox ID="txtEmail" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td>
-            &nbsp;</td>
-    </tr>
+            // Initialize the City Dropdown as a Tagging Combobox
+            $('#<%= ddlCity.ClientID %>').select2({
+                placeholder: "🔍 Search or TYPE to Add New City...", // More explicit prompt
+                tags: true,
+                createTag: function (params) {
+                    var term = $.trim(params.term);
+                    if (term === '') {
+                        return null;
+                    }
+                    // If it's a new word, show it with a label so the user knows it's new
+                    return {
+                        id: term,
+                        text: term + " (Add New)",
+                        isNew: true, // Custom flag to trigger AJAX
+                        actualName: term
+                    };
+                }
+            }).on('select2:select', function (e) {
+                var data = e.params.data;
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            GST No</td>
-        <td width="25%">
-            <asp:TextBox ID="txtservicetax_no" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td width="15%">
-            Pan No</td>
-        <td width="25%">
-            <asp:TextBox ID="txtpanno" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td>
-            &nbsp;</td>
-    </tr>
+                // Check if they selected a BRAND NEW typed tag
+                if (data.isNew) {
+                    var stateDropdown = document.getElementById('<%= cmbState.ClientID %>');
+                    var selectedState = stateDropdown.options[stateDropdown.selectedIndex].text;
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Industry Type</td>
-        <td width="25%">
-            <asp:DropDownList ID="cmbIndustry" runat="server" CssClass="dropdown_style" Width="250px">
-            </asp:DropDownList>
-        </td>
-        <td width="15%">
-            <span>Fax Number</span></td>
-        <td width="25%">
-            <asp:TextBox ID="txtFax" runat="server" CssClass="textbox_style" Width="250px"></asp:TextBox>
-             </td>
-        <td>
-            &nbsp;</td>
-    </tr>
+                    // Gatekeeper: Ensure they picked a state first
+                    if (selectedState === "" || selectedState === "--Select--") {
+                        alert("Please select a State first before adding a new city.");
+                        $('#<%= ddlCity.ClientID %>').val(null).trigger('change'); // Clear the bad tag
+                        return;
+                    }
 
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Place Of Supply</td>
-        <td width="25%">
-            <asp:DropDownList ID="ddlplaceofSupply" runat="server" CssClass="dropdown_style" Width="250px">
-            </asp:DropDownList>
-        </td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-         <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-
-   <%-- <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;<span class="style3">*</span>Address 1</td>
-        <td width="25%">
-            <asp:TextBox ID="txtAddress1" runat="server" CssClass="textbox_style" 
-                Width="250px"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>--%>
-   
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td width="15%">
-            </td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            </td>
-        <td width="25%">
-            
-        </td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    
- <%--   <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Client GST No</td>
-        <td width="25%">
-            <asp:TextBox ID="txtGstNo" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>--%>
-    
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-   <%-- <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            <span class="style3">*</span>Representatives Name</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresentativeName" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            <span class="style3">*</span>Designation</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresantativeDesig" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>--%>
-    <%--<tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Phone No.</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresentativePhone" runat="server" CssClass="textbox_style" onkeypress="return validate(event)"></asp:TextBox>
-        </td>
-        <td width="15%">
-            Email</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresentativeEmail" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>--%>
-   <%-- <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>--%>
-    <%--<tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Vat No</td>
-        <td width="25%">
-            <asp:TextBox ID="txtvatno" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>--%>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="4" class="style4">
-            <asp:Button ID="btnSave" runat="server" CssClass="btn_style" 
-                onclick="btnSave_Click" Text="Save" onclientclick="return ValidateField();"/>
-&nbsp;
-            <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn_style" OnClick="btnReset_Click" />
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-</table>
+                    // Fire the silent AJAX call to the C# Backend
+                    PageMethods.AddNewCityInline(data.actualName, selectedState,
+                        function (response) {
+                            if (response.startsWith("ERROR:")) {
+                                alert(response); // Show duplicate error
+                                $('#<%= ddlCity.ClientID %>').val(null).trigger('change'); // Clear it
+                            } else {
+                                // Success! Swap the "(Add New)" tag with the clean saved name
+                                var newOption = new Option(data.actualName, data.actualName, true, true);
+                                $('#<%= ddlCity.ClientID %>').append(newOption).trigger('change');
+                            }
+                        },
+                        function (error) {
+                            alert("Error: " + error.get_message());
+                            $('#<%= ddlCity.ClientID %>').val(null).trigger('change'); // Clear it
+                        }
+                    );
+                    }
+            });
+        });
+    </script>
 </asp:Content>

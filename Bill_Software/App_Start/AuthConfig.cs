@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using Microsoft.AspNet.Membership.OpenAuth;
-
-namespace Bill_Software
+﻿namespace Bill_Software
 {
     internal static class AuthConfig
     {

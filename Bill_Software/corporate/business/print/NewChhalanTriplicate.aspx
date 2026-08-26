@@ -80,7 +80,8 @@
             <thead id="header">
                 <tr>
                     <th style="width: 100%">
-                        <img src="../WebImages/I2ILHHeader1.png" width="100%" /></th>
+                        <asp:Image ID="Image21" runat="server"
+                            Width="844px" Height="140px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" /></th>
                 </tr>
                 <tr>
                     <th></th>
@@ -182,7 +183,7 @@
                                 </td>
                                 <td style="vertical-align: top;" width="2%"></td>
                                 <td class="qno" style="vertical-align: top; background-color: #d9d3d3;" width="40%">
-                                    <table border="0" width="100%" class="quotation">
+                                    <%--<table border="0" width="100%" class="quotation">
                                         <tr>
                                             <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;" >Challan Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
@@ -206,7 +207,7 @@
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblClientCode" runat="server"></asp:Label></td>
-                                        </tr>--%>
+                                        </tr>
                                          <tr>
                                             <td class='' style='width: 45%; vertical-align: top; padding: 1px 5px;'>
                                                 <asp:Label ID="lblplaceofsup1" runat="server"></asp:Label></td>
@@ -218,17 +219,75 @@
                                         </tr>
 
                                             <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">I2I INC GST Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Aminrup Technologies GST Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">19AAEF15315E1ZL</td>
                                         </tr>
                                             <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">I2I INC Pan Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Aminrup Technologies Pan Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">AAEF15315E</td>
                                         </tr>
-                                        
-                                       
+                                    </table>--%>
+
+                                    <table border="0" width="100%" class="quotation">
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Challan Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblChano" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="vertical-align: top; padding: 1px 5px; width: 45%">Challan Date</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="vertical-align: top; padding: 1px 5px; width: 53%">
+                                                <asp:Label ID="lblChadate" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">D.O. Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lbldonumber" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">P.O. /ARC Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblpnumber" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">P.O. Date</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblpdate" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <%-- <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Client Code</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblClientCode" runat="server"></asp:Label></td>
+                                        </tr>--%>
+                                        <tr>
+                                            <td class='' style='width: 45%; vertical-align: top; padding: 1px 5px;'>
+                                                <asp:Label ID="lblplaceofsup1" runat="server"></asp:Label></td>
+                                            <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>
+                                                <asp:Label ID="lblplaceofsup2" runat="server"></asp:Label></td>
+                                            <td class='' style='width: 53%; vertical-align: top; padding: 1px 5px;'>
+                                                <asp:Label ID="lblplaceofsup3" runat="server"></asp:Label></td>
+
+                                        </tr>
+                                        <tr id="gst_row" runat="server" visible="false">
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Flame-Ex GST Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">19AAEF15315E1ZL</td>
+                                        </tr>
+                                        <tr id="pan_row" runat="server" visible="false">
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Aminrup Technologies Pan Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">AAEF15315E</td>
+                                        </tr>
+
+
                                     </table>
                                 </td>
                             </tr>
@@ -323,7 +382,7 @@
                                 <td class="qno" width="100%">
                                     <table border="0" width="100%" class="">
                                         <tr>
-                                            <td class="" style="background-color: #c8152a; color: white; text-align: center;">If you have any Question about this Chhalan, Please Contact Ms Das at +91 9674897316 or info@i2iinc.in</td>
+                                            <td class="" style="background-color: #c8152a; color: white; text-align: center;">If you have any Question about this Chhalan, Please Contact Ms Das at +91 9674897316 or info@aminruptechnologies.co.in</td>
                                         </tr>
                                     </table>
                                 </td>
@@ -335,7 +394,7 @@
 
                         <table border="0" width="100%" class="FORKVQAEAST">
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR I2I INC</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR FLAME-EX</td>
                                 <td class="" style="text-align: right; font-weight: bold;"></td>
                             </tr>
                            
@@ -345,7 +404,7 @@
                                     <img src="../WebImages/Stamp.jpg" width="100PX" />
                                 </td>--%>
                                 
-                                <td><img src="../WebImages/i2i_LOGO_ad_sig.png" width="150PX" /></td>
+                                <td><img src="../WebImages/flmx_authsign.png" width="150PX" /></td>
                             
                                 <td class="" style="text-align: right; font-weight: bold;"></td>
                             </tr>
@@ -393,7 +452,8 @@
             <tr>
                 <td style="height: auto; text-align: right; font-weight: bold; font-size: 14px; font-style: italic"" width="100%">
                    <span style="padding-right:10px; color:#c8152a">------------------------------Thank You For Your Business------------------------------</span>
-                    <img src='../WebImages/I2ILHFooter.png' width='100%' />
+                    <asp:Image ID="Image22" runat="server"
+                            Width="844px" Height="180px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrbtm.png" />
                 </td>
             </tr>
         </table>
