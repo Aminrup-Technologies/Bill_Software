@@ -122,7 +122,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Id,Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,purchess_rate,specification,InvStatus from tbl_Quotaion_details where Quotation_no=@quotation_no order by id";
+            string cmdstring = "select Id,Sl_no,Quotation_no,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate,Total_sail_rate1,Total_sail_rate2,purchess_rate,specification,InvStatus, ISNULL(ItemNo,'') AS ItemNo, ISNULL(MaterialNo,'') AS MaterialNo, ISNULL(PackSize,'') AS PackSize, ISNULL(Unit,'') AS Unit, ISNULL(DeliveryDate,'') AS DeliveryDate, ISNULL(Department,'') AS Department, ISNULL(ItemRemarks,'') AS ItemRemarks from tbl_Quotaion_details where Quotation_no=@quotation_no order by id";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlParameter[] pram = {
                 new SqlParameter("@Quotation_no",quotation_no),
@@ -470,6 +470,7 @@ namespace Bill_Software.corporate.business.app
                             string AmountWithOutGst = ((Label)Gridview_Product.Rows[i].FindControl("Total_sail_rate2")).Text;
 
                             string InvStatus = ((Label)Gridview_Product.Rows[i].FindControl("InvStatus")).Text;
+                            string ItemNo = ((Label)Gridview_Product.Rows[i].FindControl("ItemNo")).Text;
 
                             //b = Math.Round(b, 2);
 
@@ -488,7 +489,7 @@ namespace Bill_Software.corporate.business.app
                                 Session["InvTotalAmountWithOutGst"] = InvTotalAmountWithOutGst;
                                 Session["invTotalGstAmount"] = invTotalGstAmount;
 
-                                string query = "insert into tbl_Invoice_details(Quotation_no,Invoice_No,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate1,Total_sail_rate2,specification) values (@Quotation_no,@Invoice_No,@Product_id,@Product_name,@Quantity,@sail_rate,@Service_tax_rate,@Total_sail_rate1,@Total_sail_rate2,@specification)";
+                                string query = "insert into tbl_Invoice_details(Quotation_no,Invoice_No,Product_id,Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate1,Total_sail_rate2,specification,ItemNo) values (@Quotation_no,@Invoice_No,@Product_id,@Product_name,@Quantity,@sail_rate,@Service_tax_rate,@Total_sail_rate1,@Total_sail_rate2,@specification,@ItemNo)";
                             SqlParameter[] pram = {
                                 new SqlParameter("@Quotation_no",quno),
                                 new SqlParameter("@Invoice_No",invoice_no),
@@ -499,11 +500,12 @@ namespace Bill_Software.corporate.business.app
                                 new SqlParameter("@Service_tax_rate",GstPercentage),
                                 new SqlParameter("@Total_sail_rate1",AmountWithGst),
                                 new SqlParameter("@specification",specifai),
-                                new SqlParameter("@Total_sail_rate2",AmountWithOutGst)
+                                new SqlParameter("@Total_sail_rate2",AmountWithOutGst),
+                                new SqlParameter("@ItemNo",ItemNo)
                             };
                             DbCL.SPExecDB(query, pram);
 
-                            updateqtableforproduct(quno, ProductCode, ProductName);
+                            updateqtableforproduct(quno, ProductCode, ProductName, ItemNo);
                           }
 
                         }
@@ -518,15 +520,16 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private void updateqtableforproduct(string quno, string productCode, string productName)
+        private void updateqtableforproduct(string quno, string productCode, string productName, string itemNo)
         {
-            string query = "update tbl_Quotaion_details set InvStatus=@InvStatus where Quotation_no=@Quotation_no and Product_id=@Product_id and Product_name=@Product_name";
+            string query = "update tbl_Quotaion_details set InvStatus=@InvStatus where Quotation_no=@Quotation_no and Product_id=@Product_id and Product_name=@Product_name and ISNULL(ItemNo,'') = ISNULL(@ItemNo,'')";
             SqlParameter[] pram = 
                 {
                    new SqlParameter("@InvStatus","Yes"),
                    new SqlParameter("@Quotation_no",quno),
                    new SqlParameter("@Product_id",productCode),
-                   new SqlParameter("@Product_name",productName)
+                   new SqlParameter("@Product_name",productName),
+                   new SqlParameter("@ItemNo",itemNo)
                 };
             DbCL.SPExecDB(query, pram);
         }

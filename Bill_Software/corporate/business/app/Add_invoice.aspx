@@ -524,8 +524,18 @@
                                                 <asp:Label ID="Product_name" runat="server" Text='<%# Bind("Product_name") %>'></asp:Label>
                                             </ItemTemplate>
                                         </asp:TemplateField>
-                                     
-                                     
+
+                                        <asp:TemplateField HeaderText="Item & Delivery Info" ItemStyle-CssClass="stack-cell" ItemStyle-Width="200px">
+                                            <ItemTemplate>
+                                                <div style="font-size: 11px; color: #444; line-height: 1.4;">
+                                                    <span style="color:#006699; font-weight:bold;">Item No: <%# Eval("ItemNo") %></span> | Mat: <strong><%# Eval("MaterialNo") %></strong><br />
+                                                    Pack: <strong><%# Eval("PackSize") %> <%# Eval("Unit") %></strong> | Dept: <strong><%# Eval("Department") %></strong><br />
+                                                    Del. Date: <span style="color:#dc3545; font-weight:bold;"><%# Eval("DeliveryDate") %></span><br />
+                                                    <span style="color:#666; font-style:italic;">Rem: <%# Eval("ItemRemarks") %></span>
+                                                </div>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
                                          <asp:TemplateField HeaderText="Quantity">
                                             <EditItemTemplate>
                                                 <asp:TextBox ID="Quantity" runat="server" Text='<%# Bind("Quantity") %>'></asp:TextBox>
@@ -588,6 +598,12 @@
                                             </EditItemTemplate>
                                             <ItemTemplate>
                                                 <asp:Label ID="InvStatus" runat="server" Text='<%# Bind("InvStatus") %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
+
+                                        <asp:TemplateField Visible="false">
+                                            <ItemTemplate>
+                                                <asp:Label ID="ItemNo" runat="server" Text='<%# Bind("ItemNo") %>'></asp:Label>
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
