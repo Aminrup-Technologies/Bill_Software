@@ -788,10 +788,9 @@ namespace Bill_Software.corporate.business.app
                     logEntry.AppendLine("");
                     System.IO.File.AppendAllText(logFilePath, logEntry.ToString());
 
-                    // 6. CRM Pipeline Integration — Mark Sales Visit as Productive (Quotation/PO only)
+                    // 6. CRM Pipeline Integration — Mark Sales Visit as Productive (QTN/PO prefix only)
                     bool isCrmLogged = false;
-                    string docType = hdnSelectedDocType.Value;
-                    if (docType == "Quotation" || docType == "Purchase Order")
+                    if (refNo.StartsWith("QTN", StringComparison.OrdinalIgnoreCase) || refNo.StartsWith("PO", StringComparison.OrdinalIgnoreCase))
                     {
                         string sqlVisitUpdate = @"
                             UPDATE v
