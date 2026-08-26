@@ -43,7 +43,8 @@
         .form-grid-aligned select,
         .form-grid-aligned .dropdown_style,
         .grid-toolbar select,
-        .grid-toolbar .dropdown_style {
+        .grid-toolbar .dropdown_style,
+        .grid-toolbar .form-control {
             color: #0f172a !important;
             background-color: #ffffff !important;
             -webkit-text-fill-color: #0f172a !important;
@@ -55,7 +56,8 @@
         .form-grid-aligned select option,
         .form-grid-aligned .dropdown_style option,
         .grid-toolbar select option,
-        .grid-toolbar .dropdown_style option {
+        .grid-toolbar .dropdown_style option,
+        .grid-toolbar .form-control option {
             color: #0f172a;
             background-color: #ffffff;
         }
@@ -89,7 +91,7 @@
         .span-4 { grid-column: span 4; }
         .action-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .grid-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .grid-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
         .grid-toolbar .search-wrap { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .alert-ok, .alert-err { padding: 10px 12px; border-radius: 4px; margin-bottom: 14px; }
         .prod-primary { font-weight: 700; color: #0f172a; margin-bottom: 4px; }
@@ -787,14 +789,14 @@
     <div class="page-header">
         <div class="hdr-icon">P</div>
         <div class="hdr-text">
-            <div class="breadcrumb">Masters / Catalog</div>
+            <div class="breadcrumb">Masters / Catalog / <span style="color:#FFD700;font-weight:bold;">Manage Products</span></div>
             <h1>Product &amp; Service Master</h1>
         </div>
     </div>
 
     <div class="stacked-container">
         <div class="box-panel">
-            <div class="box-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleMasterForm()">Product / Service Master<span id="formToggleIcon">▼</span></div>
+            <div class="box-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleMasterForm()">Product / Service Master<span title="This form auto-folds when interacting with the grid to maximize your viewing area." style="cursor:help;margin-right:8px;">ℹ️</span><span id="formToggleIcon">▼</span></div>
 
             <asp:Panel ID="PanelOK" runat="server" CssClass="alert-ok" BackColor="#EEFFDD"
                 BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" style="display:none;">
@@ -810,6 +812,14 @@
 
             <div id="formCollapseWrapper">
             <div class="form-grid-aligned">
+                <div class="form-group">
+                    <label><asp:Label ID="Label17" runat="server" Text="*" CssClass="req"></asp:Label> Type</label>
+                    <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style">
+                        <asp:ListItem>--Select--</asp:ListItem>
+                        <asp:ListItem>Product</asp:ListItem>
+                        <asp:ListItem>Service</asp:ListItem>
+                    </asp:DropDownList>
+                </div>
                 <div class="form-group span-2">
                     <label><asp:Label ID="Label16" runat="server" Text="*" CssClass="req"></asp:Label> Category</label>
                     <asp:DropDownList ID="cmdProduct" runat="server" CssClass="dropdown_style" AutoPostBack="True" OnSelectedIndexChanged="cmdProduct_SelectedIndexChanged"></asp:DropDownList>
@@ -827,15 +837,6 @@
                         <br />
                         <asp:Label ID="lblSimilar" runat="server" ForeColor="Gray" />
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label><asp:Label ID="Label17" runat="server" Text="*" CssClass="req"></asp:Label> Type</label>
-                    <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style">
-                        <asp:ListItem>--Select--</asp:ListItem>
-                        <asp:ListItem>Product</asp:ListItem>
-                        <asp:ListItem>Service</asp:ListItem>
-                    </asp:DropDownList>
                 </div>
                 <div class="form-group">
                     <label>Product ID</label>
@@ -962,6 +963,12 @@
             <div class="box-title">Product Catalog / Data Directory</div>
             <div class="grid-toolbar">
                 <div class="search-wrap">
+                    <asp:DropDownList ID="ddlFilterType" runat="server" AutoPostBack="true" OnSelectedIndexChanged="FilterGrid_Changed" CssClass="form-control">
+                        <asp:ListItem Text="All Types" Value="0"></asp:ListItem>
+                        <asp:ListItem Text="Product" Value="Product"></asp:ListItem>
+                        <asp:ListItem Text="Service" Value="Service"></asp:ListItem>
+                    </asp:DropDownList>
+                    <asp:DropDownList ID="ddlFilterCategory" runat="server" AutoPostBack="true" OnSelectedIndexChanged="FilterGrid_Changed" CssClass="form-control"></asp:DropDownList>
                     <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="textbox_U_style" Width="240px" placeholder="Search name / HSN / ID / brand / category" onfocus="autoCollapseForm()"></asp:TextBox>
                     <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn_style" OnClick="btnSearch_Click" />
                 </div>
