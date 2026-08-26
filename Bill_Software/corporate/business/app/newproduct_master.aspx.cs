@@ -531,18 +531,21 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSearch_Click(object sender, EventArgs e)
         {
+            hfFormState.Value = "collapsed";
             gridProducts.PageIndex = 0;
             BindProductsGrid();
         }
 
         protected void ddlPageSize_SelectedIndexChanged(object sender, EventArgs e)
         {
+            hfFormState.Value = "collapsed";
             gridProducts.PageIndex = 0;
             BindProductsGrid();
         }
 
         protected void gridProducts_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
+            hfFormState.Value = "collapsed";
             gridProducts.PageIndex = e.NewPageIndex;
             BindProductsGrid();
         }

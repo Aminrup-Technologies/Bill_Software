@@ -737,40 +737,30 @@
             if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) return false;
             return true;
         }
-        function applyFormState() {
+        function pageLoad() {
             var hf = document.getElementById('<%= hfFormState.ClientID %>');
             var wrap = document.getElementById('formCollapseWrapper');
             var icon = document.getElementById('formToggleIcon');
-            if (!hf || !wrap) return;
-            var on = hf.value !== 'collapsed';
-            wrap.style.display = on ? '' : 'none';
-            if (icon) icon.innerHTML = on ? '▼' : '▲';
+            if (!hf) return;
+            if (hf.value === 'collapsed') {
+                if (wrap) wrap.style.display = 'none';
+                if (icon) icon.textContent = '▼';
+            } else {
+                if (wrap) wrap.style.display = '';
+                if (icon) icon.textContent = '▲';
+            }
         }
         function toggleMasterForm() {
             var hf = document.getElementById('<%= hfFormState.ClientID %>');
             if (!hf) return;
             hf.value = hf.value === 'collapsed' ? 'expanded' : 'collapsed';
-            applyFormState();
+            pageLoad();
         }
         function autoCollapseForm() {
             var hf = document.getElementById('<%= hfFormState.ClientID %>');
-            var wrap = document.getElementById('formCollapseWrapper');
-            var icon = document.getElementById('formToggleIcon');
-            if (!hf || !wrap) return;
+            if (!hf) return;
             hf.value = 'collapsed';
-            wrap.style.display = 'none';
-            if (icon) icon.innerHTML = '▲';
-        }
-        window.onload = function () {
-            applyFormState();
-            if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager && !window._hfFormStateEndReq) {
-                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(applyFormState);
-                window._hfFormStateEndReq = 1;
-            }
-        };
-        if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager && !window._hfFormStateEndReq) {
-            Sys.WebForms.PageRequestManager.getInstance().add_endRequest(applyFormState);
-            window._hfFormStateEndReq = 1;
+            pageLoad();
         }
     </script>
 </asp:Content>
