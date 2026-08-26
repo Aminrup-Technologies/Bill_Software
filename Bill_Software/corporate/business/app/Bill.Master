@@ -66,6 +66,11 @@
             gap: 10px;
             margin: 0;
         }
+        .main-nav #nav > li,
+        .main-nav #nav li {
+            position: relative;
+            overflow: visible;
+        }
         .main-nav #nav > li {
             float: none;
             line-height: 28px;
@@ -77,8 +82,20 @@
             white-space: nowrap;
         }
         .main-nav #nav > li:hover,
-        .main-nav #nav > li:hover > a { background: #1a4f80; color: #fff; }
-        .main-nav .menu ul { z-index: 1000; }
+        .main-nav #nav > li:hover > a { background: #1a4f80; color: #fff; z-index: 99999; }
+
+        #nav li ul {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 99999;
+            display: none;
+            min-width: 200px;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        #nav li:hover > ul { display: block; }
+        #nav li ul ul { top: 0; left: 100%; }
 
         .header-profile { flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
 
