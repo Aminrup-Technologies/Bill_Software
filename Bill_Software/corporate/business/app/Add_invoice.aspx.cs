@@ -540,6 +540,9 @@ namespace Bill_Software.corporate.business.app
                         DataTable dt = new DataTable();
                         sda.Fill(dt);
 
+                        // Subtract already-invoiced qty (ItemNo when present, else product identity)
+                        ReconcilePendingQuantities(dt, docNo, companyId, conn);
+
                         // ==========================================
                         // 🚀 SMART GATEKEEPER & AUTO-FILTER
                         // ==========================================
@@ -642,14 +645,16 @@ namespace Bill_Software.corporate.business.app
 
         private string GetItemQueryByDocType(string docType)
         {
+            // InvoicedQty / PendingQty are placeholders. ReconcilePendingQuantities
+            // overwrites them using the same Quoted - Consumed rule as add_chalan.
             if (docType == "Quotation" || docType == "Purchase Order")
             {
                 return @"
                     SELECT 
                         qd.Product_Code AS TrueID, qd.Product_id AS TrueHSN, qd.Product_name, 
                         CAST(qd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
-                        ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = qd.Quotation_no AND (id.Product_Code = qd.Product_Code OR id.Product_id = qd.Product_Code) AND ISNULL(id.ItemNo, '') = ISNULL(qd.ItemNo, '') AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0) AS InvoicedQty,
-                        (CAST(qd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = qd.Quotation_no AND (id.Product_Code = qd.Product_Code OR id.Product_id = qd.Product_Code) AND ISNULL(id.ItemNo, '') = ISNULL(qd.ItemNo, '') AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0)) AS PendingQty,
+                        CAST(0 AS DECIMAL(18,2)) AS InvoicedQty,
+                        CAST(qd.Quantity AS DECIMAL(18,2)) AS PendingQty,
                         qd.sail_rate, qd.discount_rate AS discountRate, qd.Service_tax_rate, qd.specification, ISNULL(np.Quantity, '0') AS AvailableStock,
                         qd.ItemNo, qd.MaterialNo, qd.PackSize, qd.Unit, qd.DeliveryDate, qd.Department, qd.ItemRemarks
                     FROM tbl_Quotaion_details qd
@@ -662,8 +667,8 @@ namespace Bill_Software.corporate.business.app
                 SELECT 
                     pd.Product_id AS TrueID, pd.Product_Code AS TrueHSN, pd.Product_name, 
                     CAST(pd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
-                    ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = pd.Invoice_No AND (id.Product_Code = pd.Product_Code OR id.Product_id = pd.Product_id) AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0) AS InvoicedQty,
-                    (CAST(pd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = pd.Invoice_No AND (id.Product_Code = pd.Product_Code OR id.Product_id = pd.Product_id) AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0)) AS PendingQty,
+                    CAST(0 AS DECIMAL(18,2)) AS InvoicedQty,
+                    CAST(pd.Quantity AS DECIMAL(18,2)) AS PendingQty,
                     pd.Rate AS sail_rate, 0 AS discountRate, pd.Tax_Rate AS Service_tax_rate, pd.ProductOrServiceCat AS specification, ISNULL(np.Quantity, '0') AS AvailableStock,
                     '' AS ItemNo, '' AS MaterialNo, '' AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
                 FROM tbl_Proforma_Details pd
@@ -676,15 +681,172 @@ namespace Bill_Software.corporate.business.app
                 SELECT 
                     cd.Product_id AS TrueID, cd.Product_code AS TrueHSN, cd.Product_name, 
                     CAST(cd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
-                    ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = cd.Challan_no AND (id.Product_Code = cd.Product_code OR id.Product_id = cd.Product_id) AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0) AS InvoicedQty,
-                    (CAST(cd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID WHERE id.Quotation_no = cd.Challan_no AND (id.Product_Code = cd.Product_code OR id.Product_id = cd.Product_id) AND id.CompanyID = @CompanyID AND inv.status2 = 'Active'), 0)) AS PendingQty,
+                    CAST(0 AS DECIMAL(18,2)) AS InvoicedQty,
+                    CAST(cd.Quantity AS DECIMAL(18,2)) AS PendingQty,
                     ISNULL(qd.sail_rate, 0) AS sail_rate, ISNULL(qd.discount_rate, 0) AS discountRate, ISNULL(qd.Service_tax_rate, 0) AS Service_tax_rate, ISNULL(qd.specification, '') AS specification, ISNULL(np.Quantity, '0') AS AvailableStock,
-                    '' AS ItemNo, '' AS MaterialNo, '' AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
+                    ISNULL(cd.ItemNo, '') AS ItemNo, ISNULL(cd.MaterialNo, '') AS MaterialNo, ISNULL(cd.PackSize, '') AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
                 FROM tbl_Challan_details cd
                 LEFT JOIN tbl_Chalan ch ON cd.Challan_no = ch.Chalan_No AND ch.CompanyID = @CompanyID
                 LEFT JOIN tbl_Quotaion_details qd ON ch.Quotation_No = qd.Quotation_no AND qd.Product_Code = cd.Product_id AND qd.CompanyID = @CompanyID
                 LEFT JOIN tbl_NewProduct np ON np.ProductID = cd.Product_id AND np.CompanyID = @CompanyID
                 WHERE cd.Challan_no = @Ref AND cd.CompanyID = @CompanyID";
+        }
+
+        private class PriorInvoiceLine
+        {
+            public string ItemNo;
+            public string ProductId;
+            public string ProductCode;
+            public decimal Qty;
+            public bool Allocated;
+        }
+
+        // Same pending rule as add_chalan: QuotedQty - already billed qty.
+        // ItemNo match when both sides have a line no; otherwise product identity
+        // (Product_id / Product_Code either way) so legacy invoices without ItemNo still consume qty.
+        private void ReconcilePendingQuantities(DataTable dt, string docNo, int companyId, SqlConnection conn)
+        {
+            if (dt == null || dt.Rows.Count == 0) return;
+
+            List<PriorInvoiceLine> billed = LoadPriorInvoiceLines(docNo, companyId, conn);
+            decimal[] invoiced = new decimal[dt.Rows.Count];
+
+            // Pass 1: invoices that stored ItemNo consume the matching source line only
+            for (int b = 0; b < billed.Count; b++)
+            {
+                if (string.IsNullOrWhiteSpace(billed[b].ItemNo)) continue;
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (!ItemNosMatch(GetRowString(dt.Rows[i], "ItemNo"), billed[b].ItemNo)) continue;
+                    invoiced[i] += billed[b].Qty;
+                    billed[b].Allocated = true;
+                    break;
+                }
+            }
+
+            // Pass 2: legacy invoices with blank ItemNo (or unmatched ItemNo) consume by product identity
+            for (int b = 0; b < billed.Count; b++)
+            {
+                if (billed[b].Allocated) continue;
+                decimal remaining = billed[b].Qty;
+                int firstMatch = -1;
+
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (!ProductsMatch(GetRowString(dt.Rows[i], "TrueID"), GetRowString(dt.Rows[i], "TrueHSN"), billed[b].ProductId, billed[b].ProductCode))
+                        continue;
+
+                    if (firstMatch < 0) firstMatch = i;
+                    decimal quoted = ParseQty(dt.Rows[i]["QuotedQty"]);
+                    decimal pendingLeft = quoted - invoiced[i];
+                    if (pendingLeft <= 0) continue;
+
+                    decimal take = remaining < pendingLeft ? remaining : pendingLeft;
+                    invoiced[i] += take;
+                    remaining -= take;
+                    if (remaining <= 0) break;
+                }
+
+                // Over-invoice leftover still belongs on the first matching product line
+                if (remaining > 0 && firstMatch >= 0)
+                    invoiced[firstMatch] += remaining;
+
+                billed[b].Allocated = true;
+            }
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                decimal quoted = ParseQty(dt.Rows[i]["QuotedQty"]);
+                dt.Rows[i]["QuotedQty"] = quoted;
+                dt.Rows[i]["InvoicedQty"] = invoiced[i];
+                dt.Rows[i]["PendingQty"] = quoted - invoiced[i];
+            }
+        }
+
+        private List<PriorInvoiceLine> LoadPriorInvoiceLines(string docNo, int companyId, SqlConnection conn)
+        {
+            List<PriorInvoiceLine> list = new List<PriorInvoiceLine>();
+            string sql = @"
+                SELECT d.ItemNo, d.Product_id, d.Product_Code, d.Quantity, h.status2
+                FROM tbl_Invoice_details d
+                INNER JOIN tbl_Invoice h ON d.Invoice_No = h.Invoice_No
+                WHERE h.CompanyID = @CompanyID
+                  AND ISNULL(h.status2, 'Active') <> 'Block'
+                  AND (
+                        LTRIM(RTRIM(ISNULL(d.Quotation_no, ''))) = @Ref
+                     OR LTRIM(RTRIM(ISNULL(h.Quotation_No, ''))) = @Ref
+                  )";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                cmd.Parameters.AddWithValue("@Ref", docNo == null ? "" : docNo.Trim());
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        string status = dr["status2"] == DBNull.Value ? "" : dr["status2"].ToString().Trim();
+                        if (status.Equals("Block", StringComparison.OrdinalIgnoreCase)
+                            || status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        PriorInvoiceLine line = new PriorInvoiceLine();
+                        line.ItemNo = GetDbString(dr["ItemNo"]);
+                        line.ProductId = GetDbString(dr["Product_id"]);
+                        line.ProductCode = GetDbString(dr["Product_Code"]);
+                        line.Qty = ParseQty(dr["Quantity"]);
+                        line.Allocated = false;
+                        if (line.Qty != 0)
+                            list.Add(line);
+                    }
+                }
+            }
+            return list;
+        }
+
+        private static string GetDbString(object value)
+        {
+            return value == null || value == DBNull.Value ? "" : value.ToString().Trim();
+        }
+
+        private static string GetRowString(DataRow row, string column)
+        {
+            if (row == null || !row.Table.Columns.Contains(column) || row[column] == DBNull.Value) return "";
+            return row[column].ToString().Trim();
+        }
+
+        private static decimal ParseQty(object value)
+        {
+            if (value == null || value == DBNull.Value) return 0;
+            if (value is decimal) return (decimal)value;
+            if (value is double) return Convert.ToDecimal((double)value);
+            if (value is float) return Convert.ToDecimal((float)value);
+            if (value is int) return (int)value;
+            decimal q;
+            decimal.TryParse(value.ToString().Trim(), out q);
+            return q;
+        }
+
+        private static bool ItemNosMatch(string sourceItemNo, string invoiceItemNo)
+        {
+            if (string.IsNullOrWhiteSpace(sourceItemNo) || string.IsNullOrWhiteSpace(invoiceItemNo)) return false;
+            int srcNo, invNo;
+            if (int.TryParse(sourceItemNo.Trim(), out srcNo) && int.TryParse(invoiceItemNo.Trim(), out invNo))
+                return srcNo == invNo && srcNo > 0;
+            return sourceItemNo.Trim().Equals(invoiceItemNo.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool ProductsMatch(string sourceTrueId, string sourceHsn, string invoiceProductId, string invoiceProductCode)
+        {
+            List<string> sourceKeys = new List<string>();
+            if (!string.IsNullOrWhiteSpace(sourceTrueId)) sourceKeys.Add(sourceTrueId.Trim().ToUpperInvariant());
+            if (!string.IsNullOrWhiteSpace(sourceHsn)) sourceKeys.Add(sourceHsn.Trim().ToUpperInvariant());
+            if (sourceKeys.Count == 0) return false;
+
+            string invId = string.IsNullOrWhiteSpace(invoiceProductId) ? "" : invoiceProductId.Trim().ToUpperInvariant();
+            string invCode = string.IsNullOrWhiteSpace(invoiceProductCode) ? "" : invoiceProductCode.Trim().ToUpperInvariant();
+            return (!string.IsNullOrEmpty(invId) && sourceKeys.Contains(invId))
+                || (!string.IsNullOrEmpty(invCode) && sourceKeys.Contains(invCode));
         }
         #endregion
 
@@ -1119,16 +1281,21 @@ namespace Bill_Software.corporate.business.app
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
                 // Added h.status2 to explicitly fetch the status
-                string sql = @"SELECT h.Invoice_No, CONVERT(varchar, h.Invoice_Date, 106) as InvDate, CAST(d.Quantity AS DECIMAL(18,2)) as Qty, h.status2 
+                string sql = @"SELECT h.Invoice_No, CONVERT(varchar, h.Invoice_Date, 106) as InvDate, d.Quantity as Qty, h.status2,
+                                      d.Product_id, d.Product_Code
                                FROM tbl_Invoice_details d
-                               INNER JOIN tbl_Invoice h ON d.Invoice_No = h.Invoice_No AND d.CompanyID = h.CompanyID
-                               WHERE d.Quotation_no = @RefNo AND d.Product_id = @PID AND d.CompanyID = @CompID
+                               INNER JOIN tbl_Invoice h ON d.Invoice_No = h.Invoice_No
+                               WHERE h.CompanyID = @CompID
+                                 AND (
+                                       LTRIM(RTRIM(ISNULL(d.Quotation_no, ''))) = @RefNo
+                                    OR LTRIM(RTRIM(ISNULL(h.Quotation_No, ''))) = @RefNo
+                                 )
                                ORDER BY h.ID ASC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@RefNo", refNo);
-                    cmd.Parameters.AddWithValue("@PID", productId);
+                    cmd.Parameters.AddWithValue("@RefNo", refNo == null ? "" : refNo.Trim());
+                    cmd.Parameters.AddWithValue("@PID", productId == null ? "" : productId.Trim());
                     cmd.Parameters.AddWithValue("@CompID", companyId);
 
                     conn.Open();
@@ -1137,15 +1304,18 @@ namespace Bill_Software.corporate.business.app
                         bool hasData = false;
                         while (dr.Read())
                         {
+                            if (!ProductsMatch(productId, "", GetDbString(dr["Product_id"]), GetDbString(dr["Product_Code"])))
+                                continue;
+
                             hasData = true;
-                            decimal q = Convert.ToDecimal(dr["Qty"]);
-                            string status = dr["status2"].ToString();
+                            decimal q = ParseQty(dr["Qty"]);
+                            string status = GetDbString(dr["status2"]);
 
                             string trStyle = "";
                             string statusBadge = "";
 
                             // Determine if Invoice is Valid or Cancelled
-                            if (status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+                            if (string.IsNullOrEmpty(status) || status.Equals("Active", StringComparison.OrdinalIgnoreCase) || status.Equals("Yes", StringComparison.OrdinalIgnoreCase))
                             {
                                 totalActiveQty += q;
                             }
