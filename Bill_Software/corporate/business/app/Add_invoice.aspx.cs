@@ -788,26 +788,32 @@ namespace Bill_Software.corporate.business.app
                     logEntry.AppendLine("");
                     System.IO.File.AppendAllText(logFilePath, logEntry.ToString());
 
-                    // 6. CRM Pipeline Integration — Mark Sales Visit as Productive
-                    string sqlVisitUpdate = @"
-                        UPDATE v
-                        SET v.IsProductive = 1, 
-                            v.RevenueRealized = ISNULL(v.RevenueRealized, 0) + @NetAmt
-                        FROM tbl_SalesVisitReport v
-                        INNER JOIN tbl_Quotation q ON v.Id = q.VisitId AND q.CompanyID = @CompanyID
-                        WHERE q.Quotation_no = @RefNo 
-                          AND v.CompanyID = @CompanyID";
-
-                    using (SqlCommand cmdVisit = new SqlCommand(sqlVisitUpdate, conn, tran))
+                    // 6. CRM Pipeline Integration — Mark Sales Visit as Productive (Quotation/PO only)
+                    bool isCrmLogged = false;
+                    string docType = hdnSelectedDocType.Value;
+                    if (docType == "Quotation" || docType == "Purchase Order")
                     {
-                        cmdVisit.Parameters.Add("@NetAmt", SqlDbType.Decimal).Value = headerNet;
-                        cmdVisit.Parameters.AddWithValue("@RefNo", refNo);
-                        cmdVisit.Parameters.AddWithValue("@CompanyID", companyId);
-                        int rowsAffected = cmdVisit.ExecuteNonQuery();
+                        string sqlVisitUpdate = @"
+                            UPDATE v
+                            SET v.IsProductive = 1, 
+                                v.RevenueRealized = ISNULL(v.RevenueRealized, 0) + @NetAmt
+                            FROM tbl_SalesVisitReport v
+                            INNER JOIN tbl_Quotation q ON v.Id = q.VisitId AND q.CompanyID = @CompanyID
+                            WHERE q.Quotation_no = @RefNo 
+                              AND v.CompanyID = @CompanyID";
 
-                        if (rowsAffected > 0)
+                        using (SqlCommand cmdVisit = new SqlCommand(sqlVisitUpdate, conn, tran))
                         {
-                            InsertSystemNotification("CRM", "Success", "Sales Target Achieved!", $"Invoice generated for {headerNet}. Revenue successfully tied to the original Sales Visit.", uid, companyId, conn, tran);
+                            cmdVisit.Parameters.Add("@NetAmt", SqlDbType.Decimal).Value = headerNet;
+                            cmdVisit.Parameters.AddWithValue("@RefNo", refNo);
+                            cmdVisit.Parameters.AddWithValue("@CompanyID", companyId);
+                            int rowsAffected = cmdVisit.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                InsertSystemNotification("CRM", "Success", "Sales Target Achieved!", $"Invoice generated for {headerNet}. Revenue successfully tied to the original Sales Visit.", uid, companyId, conn, tran);
+                                isCrmLogged = true;
+                            }
                         }
                     }
 
@@ -817,16 +823,19 @@ namespace Bill_Software.corporate.business.app
                     // === PROACTIVE NOTIFICATION LOGGING (Step 7) ===
                     try
                     {
-                        InsertSystemNotification(
-                            "New Invoice Created",
-                            "Invoice " + invNo + " created for " + clientName + " (Ref: " + refNo + ") Amount: " + headerNet.ToString("N2"),
-                            "Invoice",
-                            "Info",
-                            uid,
-                            companyId,
-                            conn,
-                            null
-                        );
+                        if (!isCrmLogged)
+                        {
+                            InsertSystemNotification(
+                                "New Invoice Created",
+                                "Invoice " + invNo + " created for " + clientName + " (Ref: " + refNo + ") Amount: " + headerNet.ToString("N2"),
+                                "Invoice",
+                                "Info",
+                                uid,
+                                companyId,
+                                conn,
+                                null
+                            );
+                        }
                     }
                     catch { /* Notification failure should not crash invoice save */ }
 
