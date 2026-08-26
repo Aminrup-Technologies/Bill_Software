@@ -15,7 +15,13 @@
     </asp:ContentPlaceHolder>
     <style type="text/css">
         html, body { height: 100%; margin: 0; overflow: hidden; }
-        form#form1 { height: 100%; margin: 0; }
+        form {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+        }
 
         .top-header-bar {
             display: flex;
@@ -30,15 +36,10 @@
             position: relative;
             z-index: 999;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            flex-shrink: 0;
         }
 
-        .header-brand {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-            min-width: 0;
-        }
+        .header-brand { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
 
         .header-logo {
             object-fit: contain;
@@ -55,24 +56,27 @@
             white-space: nowrap;
         }
 
-        .header-nav {
+        .main-nav {
             flex: 1;
-            min-width: 0;
             display: flex;
             align-items: center;
-            overflow: visible;
-            margin: 0 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            margin: 0 15px;
+            padding-bottom: 2px;
+            min-width: 0;
         }
+        .main-nav::-webkit-scrollbar { height: 4px; display: none; }
 
-        .header-nav .menu { width: 100%; height: 60px; background: none; float: none; }
-        .header-nav #nav {
+        .main-nav .menu { width: 100%; height: 60px; background: none; float: none; }
+        .main-nav #nav {
             display: flex;
             flex-wrap: nowrap;
             align-items: center;
             margin: 0;
             height: 60px;
         }
-        .header-nav #nav > li {
+        .main-nav #nav > li {
             float: none;
             line-height: 60px;
             height: 60px;
@@ -82,16 +86,11 @@
             font: normal 11px/60px Arial, Helvetica, sans-serif;
             white-space: nowrap;
         }
-        .header-nav #nav > li:hover,
-        .header-nav #nav > li:hover > a { background: #1a4f80; color: #fff; }
+        .main-nav #nav > li:hover,
+        .main-nav #nav > li:hover > a { background: #1a4f80; color: #fff; }
+        .main-nav .menu ul { z-index: 1000; }
 
-        .header-tools {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 10px;
-            flex-shrink: 0;
-        }
+        .header-profile { flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
 
         .top-header-bar .clock_style {
             margin: 0;
@@ -108,7 +107,7 @@
         }
 
         .header-user-text { display: flex; flex-direction: column; text-align: right; line-height: 1.2; }
-        .header-profile {
+        .header-avatar {
             width: 32px;
             height: 32px;
             border-radius: 50%;
@@ -124,21 +123,25 @@
         }
 
         .app-content {
-            height: calc(100vh - 60px);
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
-            overflow-x: auto;
+            overflow-x: hidden;
+            padding: 15px;
+            background: #f4f7f6;
+            position: relative;
             box-sizing: border-box;
-            padding: 8px 12px 12px;
-            background: #fff;
         }
 
         .app-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid #eee;
+            flex-shrink: 0;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+            z-index: 10;
+            padding: 8px 15px;
             font: normal 11px/18px Arial, Helvetica, sans-serif;
             color: #666;
         }
@@ -209,7 +212,6 @@
             margin-top: 15px;
         }
 
-        .header-nav .menu ul { z-index: 1000; }
     </style>
 
     <script>
@@ -279,7 +281,7 @@
                 <asp:Label ID="lblCompanyName" runat="server" CssClass="header-company"></asp:Label>
             </div>
 
-            <nav class="header-nav">
+            <nav class="main-nav">
                 <div class="menu">
                     <ul id="nav" style="margin: 0 0 0 0;">
                         <li style="border-left: 1px solid #2268a9;" id="Home" runat="server">Home
@@ -487,7 +489,7 @@
                 </div>
             </nav>
 
-            <div class="header-tools">
+            <div class="header-profile">
                 <div class="clock_style" id="txt"></div>
                 <asp:DropDownList ID="ddlCompany" runat="server" AutoPostBack="true"
                     OnSelectedIndexChanged="ddlCompany_SelectedIndexChanged"
@@ -500,7 +502,7 @@
                         </span>
                         <asp:Label ID="lblRole" runat="server" Font-Size="11px" ForeColor="#e0e0e0" Font-Italic="true"></asp:Label>
                     </div>
-                    <asp:Image ID="imgProfile" runat="server" ImageUrl="~/corporate/business/WebImages/representative.png" CssClass="header-profile" />
+                    <asp:Image ID="imgProfile" runat="server" ImageUrl="~/corporate/business/WebImages/representative.png" CssClass="header-avatar" />
                 </div>
                 <asp:LinkButton ID="btnLogOut" runat="server" class="logout" OnClick="btnLogOut_Click" OnClientClick="return confirm('Are you sure you want to Logout ...?')">Logout</asp:LinkButton>
             </div>
@@ -511,15 +513,15 @@
                 <uc:GlobalNotification runat="server" ID="GlobalNotification" />
                 <p>&nbsp;</p>
             </asp:ContentPlaceHolder>
-
-            <div class="app-footer">
-                <span>
-                    <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />
-                    <sup><asp:Label ID="lbl_crntyr" runat="server" Text="2026"></asp:Label></sup>
-                </span>
-                <span><sup>©</sup><a href="https://www.aminruptechnologies.co.in/" target="_blank" style="text-decoration: none;">Aminrup Technologies, JSR</a></span>
-            </div>
         </div>
+
+        <footer class="app-footer">
+            <span>
+                <asp:Image ID="Image3" runat="server" ImageUrl="~/corporate/business/WebImages/oh4y.png" Width="25px" />
+                <sup><asp:Label ID="lbl_crntyr" runat="server" Text="2026"></asp:Label></sup>
+            </span>
+            <span><sup>©</sup><a href="https://www.aminruptechnologies.co.in/" target="_blank" style="text-decoration: none;">Aminrup Technologies, JSR</a></span>
+        </footer>
 
         <div class="support-btn-floating" onclick="toggleSupportModal()">💬 Raise a Concern</div>
         <div id="supportModal" class="support-modal-overlay">
