@@ -14,6 +14,9 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm69 : System.Web.UI.Page
     {
+        protected HiddenField hfFormState;
+        protected DropDownList ddlFilterType;
+        protected DropDownList ddlFilterCategory;
         DB_UTILITY DbCL = new DB_UTILITY();
         string ConnString { get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; } }
 
@@ -245,6 +248,8 @@ namespace Bill_Software.corporate.business.app
         {
             cmdProduct.Items.Clear();
             cmdProduct.Items.Add(new ListItem("--Select--", ""));
+            ddlFilterCategory.Items.Clear();
+            ddlFilterCategory.Items.Insert(0, new ListItem("All Categories", "0"));
             using (SqlConnection conn = new SqlConnection(ConnString))
             using (SqlCommand cmd = new SqlCommand(
                 "SELECT id, ProductOrServiceCat FROM tbl_NewparentProduct WHERE CompanyID=@CompanyID ORDER BY ProductOrServiceCat ASC", conn))
@@ -254,7 +259,12 @@ namespace Bill_Software.corporate.business.app
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     while (rdr.Read())
-                        cmdProduct.Items.Add(new ListItem(rdr["ProductOrServiceCat"].ToString(), rdr["id"].ToString()));
+                    {
+                        string text = rdr["ProductOrServiceCat"].ToString();
+                        string val = rdr["id"].ToString();
+                        cmdProduct.Items.Add(new ListItem(text, val));
+                        ddlFilterCategory.Items.Add(new ListItem(text, val));
+                    }
                 }
             }
         }
@@ -279,6 +289,12 @@ namespace Bill_Software.corporate.business.app
                            WHERE CompanyID=@CompanyID AND (DeleteMode=0 OR DeleteMode IS NULL)";
             if (hasParent)
                 sql += " AND parentId=@parentId";
+            bool filterType = ddlFilterType.SelectedIndex > 0;
+            if (filterType)
+                sql += " AND Type=@FilterType";
+            bool filterCat = ddlFilterCategory.SelectedIndex > 0;
+            if (filterCat)
+                sql += " AND ProductOrServiceCat=@FilterCat";
             if (search.Length > 0)
                 sql += @" AND (ProductName LIKE '%' + @Search + '%' OR Product_code LIKE '%' + @Search + '%'
                               OR ProductID LIKE '%' + @Search + '%' OR Brand LIKE '%' + @Search + '%'
@@ -292,6 +308,10 @@ namespace Bill_Software.corporate.business.app
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 if (hasParent)
                     cmd.Parameters.AddWithValue("@parentId", parentId);
+                if (filterType)
+                    cmd.Parameters.AddWithValue("@FilterType", ddlFilterType.SelectedItem.Text);
+                if (filterCat)
+                    cmd.Parameters.AddWithValue("@FilterCat", ddlFilterCategory.SelectedItem.Text);
                 if (search.Length > 0)
                     cmd.Parameters.AddWithValue("@Search", search);
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))
@@ -448,6 +468,7 @@ namespace Bill_Software.corporate.business.app
         {
             ApplyFormDefaults();
             BindProductsGrid();
+            hfFormState.Value = "expanded";
         }
 
         private bool TryValidateUpload(FileUpload fu, string label, out string ext)
@@ -527,26 +548,37 @@ namespace Bill_Software.corporate.business.app
             sb.Append("if(el){el.src='").Append(clientUrl).Append("';el.className='img-preview is-on';}");
         }
 
+        protected void FilterGrid_Changed(object sender, EventArgs e)
+        {
+            hfFormState.Value = "collapsed";
+            gridProducts.PageIndex = 0;
+            BindProductsGrid();
+        }
+
         protected void btnSearch_Click(object sender, EventArgs e)
         {
+            hfFormState.Value = "collapsed";
             gridProducts.PageIndex = 0;
             BindProductsGrid();
         }
 
         protected void ddlPageSize_SelectedIndexChanged(object sender, EventArgs e)
         {
+            hfFormState.Value = "collapsed";
             gridProducts.PageIndex = 0;
             BindProductsGrid();
         }
 
         protected void gridProducts_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
+            hfFormState.Value = "collapsed";
             gridProducts.PageIndex = e.NewPageIndex;
             BindProductsGrid();
         }
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
+            hfFormState.Value = "expanded";
             if (string.IsNullOrWhiteSpace(txtProductCode.Text))
             {
                 ShowErr("Please enter a Product Code.");
@@ -819,6 +851,7 @@ namespace Bill_Software.corporate.business.app
             }
 
             BindProductsGrid();
+            hfFormState.Value = "expanded";
         }
 
         public class NameAvailabilityResult
@@ -1077,6 +1110,7 @@ namespace Bill_Software.corporate.business.app
 
                     btnSave.Text = "Update Product";
                     ShowOk("Editing product Id=" + idVal + " (Product ID locked). Update and save.");
+                    hfFormState.Value = "expanded";
                 }
             }
         }

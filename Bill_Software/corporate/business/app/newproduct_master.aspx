@@ -42,8 +42,9 @@
         }
         .form-grid-aligned select,
         .form-grid-aligned .dropdown_style,
-        .grid-toolbar select,
-        .grid-toolbar .dropdown_style {
+        .search-area select,
+        .search-area .dropdown_style,
+        .search-area .form-control {
             color: #0f172a !important;
             background-color: #ffffff !important;
             -webkit-text-fill-color: #0f172a !important;
@@ -54,8 +55,9 @@
         }
         .form-grid-aligned select option,
         .form-grid-aligned .dropdown_style option,
-        .grid-toolbar select option,
-        .grid-toolbar .dropdown_style option {
+        .search-area select option,
+        .search-area .dropdown_style option,
+        .search-area .form-control option {
             color: #0f172a;
             background-color: #ffffff;
         }
@@ -89,8 +91,44 @@
         .span-4 { grid-column: span 4; }
         .action-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .grid-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-        .grid-toolbar .search-wrap { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .search-area {
+            background-color: #f9f9f9;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eaeaea;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .search-area .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 140px;
+            margin-bottom: 0;
+        }
+        .search-area .form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+        }
+        .search-area .btn-group { display: flex; gap: 8px; }
+        .search-area .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: bold;
+            font-size: 12px;
+            height: 35px;
+        }
+        .search-area .btn-search { background-color: #005b8f; }
+        .search-area .btn-search:hover { background-color: #004d73; }
         .alert-ok, .alert-err { padding: 10px 12px; border-radius: 4px; margin-bottom: 14px; }
         .prod-primary { font-weight: 700; color: #0f172a; margin-bottom: 4px; }
         .badge {
@@ -737,6 +775,31 @@
             if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) return false;
             return true;
         }
+        function pageLoad() {
+            var hf = document.getElementById('<%= hfFormState.ClientID %>');
+            var wrap = document.getElementById('formCollapseWrapper');
+            var icon = document.getElementById('formToggleIcon');
+            if (!hf) return;
+            if (hf.value === 'collapsed') {
+                if (wrap) wrap.style.display = 'none';
+                if (icon) icon.textContent = '▼';
+            } else {
+                if (wrap) wrap.style.display = '';
+                if (icon) icon.textContent = '▲';
+            }
+        }
+        function toggleMasterForm() {
+            var hf = document.getElementById('<%= hfFormState.ClientID %>');
+            if (!hf) return;
+            hf.value = hf.value === 'collapsed' ? 'expanded' : 'collapsed';
+            pageLoad();
+        }
+        function autoCollapseForm() {
+            var hf = document.getElementById('<%= hfFormState.ClientID %>');
+            if (!hf) return;
+            hf.value = 'collapsed';
+            pageLoad();
+        }
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -752,6 +815,7 @@
         });
     </script>
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true"></asp:ScriptManager>
+    <asp:HiddenField ID="hfFormState" runat="server" Value="expanded" />
     <asp:HiddenField ID="hfEditProductID" runat="server" Value="" />
     <asp:HiddenField ID="hfModalEditId" runat="server" Value="" />
     <asp:Button ID="btnModalEdit" runat="server" style="display:none;" CausesValidation="false"
@@ -761,14 +825,20 @@
     <div class="page-header">
         <div class="hdr-icon">P</div>
         <div class="hdr-text">
-            <div class="breadcrumb">Masters / Catalog</div>
+            <div class="breadcrumb">Masters / Catalog / <span style="color:#FFD700;font-weight:bold;">Manage Products</span></div>
             <h1>Product &amp; Service Master</h1>
         </div>
     </div>
 
     <div class="stacked-container">
         <div class="box-panel">
-            <div class="box-title">Product / Service Master</div>
+            <div class="box-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleMasterForm()">
+                <div>Category Form</div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <span title="This form auto-folds when interacting with the grid to maximize your viewing area." style="cursor:help;font-size:14px;">ℹ️</span>
+                    <span id="formToggleIcon">▼</span>
+                </div>
+            </div>
 
             <asp:Panel ID="PanelOK" runat="server" CssClass="alert-ok" BackColor="#EEFFDD"
                 BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" style="display:none;">
@@ -782,7 +852,16 @@
                 &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
             </asp:Panel>
 
+            <div id="formCollapseWrapper">
             <div class="form-grid-aligned">
+                <div class="form-group">
+                    <label><asp:Label ID="Label17" runat="server" Text="*" CssClass="req"></asp:Label> Type</label>
+                    <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style">
+                        <asp:ListItem>--Select--</asp:ListItem>
+                        <asp:ListItem>Product</asp:ListItem>
+                        <asp:ListItem>Service</asp:ListItem>
+                    </asp:DropDownList>
+                </div>
                 <div class="form-group span-2">
                     <label><asp:Label ID="Label16" runat="server" Text="*" CssClass="req"></asp:Label> Category</label>
                     <asp:DropDownList ID="cmdProduct" runat="server" CssClass="dropdown_style" AutoPostBack="True" OnSelectedIndexChanged="cmdProduct_SelectedIndexChanged"></asp:DropDownList>
@@ -800,15 +879,6 @@
                         <br />
                         <asp:Label ID="lblSimilar" runat="server" ForeColor="Gray" />
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label><asp:Label ID="Label17" runat="server" Text="*" CssClass="req"></asp:Label> Type</label>
-                    <asp:DropDownList ID="ddlProOrSer" runat="server" CssClass="dropdown_style">
-                        <asp:ListItem>--Select--</asp:ListItem>
-                        <asp:ListItem>Product</asp:ListItem>
-                        <asp:ListItem>Service</asp:ListItem>
-                    </asp:DropDownList>
                 </div>
                 <div class="form-group">
                     <label>Product ID</label>
@@ -928,17 +998,33 @@
                 <asp:Button ID="btnreset" runat="server" CssClass="btn_style" Text="Reset"
                     OnClientClick="return prepareReset();" OnClick="btnreset_Click" />
             </div>
+            </div>
         </div>
 
         <div class="box-panel">
             <div class="box-title">Product Catalog / Data Directory</div>
-            <div class="grid-toolbar">
-                <div class="search-wrap">
-                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="textbox_U_style" Width="240px" placeholder="Search name / HSN / ID / brand / category"></asp:TextBox>
-                    <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn_style" OnClick="btnSearch_Click" />
+            <div class="search-area">
+                <div class="form-group">
+                    <label>Filter by Type</label>
+                    <asp:DropDownList ID="ddlFilterType" runat="server" AutoPostBack="true" OnSelectedIndexChanged="FilterGrid_Changed" CssClass="form-control">
+                        <asp:ListItem Text="All Types" Value="0"></asp:ListItem>
+                        <asp:ListItem Text="Product" Value="Product"></asp:ListItem>
+                        <asp:ListItem Text="Service" Value="Service"></asp:ListItem>
+                    </asp:DropDownList>
                 </div>
-                <div class="search-wrap">
-                    <span style="font-size:12px;color:#64748b;">Page size</span>
+                <div class="form-group">
+                    <label>Filter by Category</label>
+                    <asp:DropDownList ID="ddlFilterCategory" runat="server" AutoPostBack="true" OnSelectedIndexChanged="FilterGrid_Changed" CssClass="form-control"></asp:DropDownList>
+                </div>
+                <div class="form-group" style="flex:2;">
+                    <label>Global Search</label>
+                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="form-control" placeholder="Search by name, ID, HSN, Brand..."></asp:TextBox>
+                </div>
+                <div class="btn-group">
+                    <asp:Button ID="btnSearch" runat="server" CssClass="btn btn-search" Text="Search" OnClick="btnSearch_Click" />
+                </div>
+                <div class="form-group">
+                    <label>Page size</label>
                     <asp:DropDownList ID="ddlPageSize" runat="server" AutoPostBack="true" CssClass="dropdown_style"
                         OnSelectedIndexChanged="ddlPageSize_SelectedIndexChanged" Width="80px">
                         <asp:ListItem Text="10" Value="10" Selected="True"></asp:ListItem>
@@ -1038,7 +1124,7 @@
                                         data-isfast='<%# Eval("IsFastMoving") %>'
                                         data-created='<%# Server.HtmlEncode(FormatAuditTrail(Eval("AddedbyUserId"), Eval("AddedOn"))) %>'
                                         data-modified='<%# Server.HtmlEncode(FormatAuditTrail(Eval("ModifiedByUserId"), Eval("ModifiedOn"))) %>'
-                                        onclick="return showProductModal(this);">View More</button>
+                                        onclick="autoCollapseForm(); return showProductModal(this);">View More</button>
                                     <asp:ImageButton ID="ImageButton3" runat="server" CommandName="EditProduct" CommandArgument='<%# Eval("Id") %>'
                                         ImageUrl="~/corporate/business/WebImages/edit1.png" ToolTip="Edit" />
                                     <asp:ImageButton ID="ImageButton1" runat="server" CommandName="DeleteProduct" CommandArgument='<%# Eval("Id") %>'
