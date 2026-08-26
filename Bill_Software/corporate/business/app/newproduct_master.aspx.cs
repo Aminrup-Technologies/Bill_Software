@@ -14,6 +14,7 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm69 : System.Web.UI.Page
     {
+        protected HiddenField hfFormState;
         DB_UTILITY DbCL = new DB_UTILITY();
         string ConnString { get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; } }
 
@@ -448,6 +449,7 @@ namespace Bill_Software.corporate.business.app
         {
             ApplyFormDefaults();
             BindProductsGrid();
+            hfFormState.Value = "expanded";
         }
 
         private bool TryValidateUpload(FileUpload fu, string label, out string ext)
@@ -547,6 +549,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
+            hfFormState.Value = "expanded";
             if (string.IsNullOrWhiteSpace(txtProductCode.Text))
             {
                 ShowErr("Please enter a Product Code.");
@@ -819,6 +822,7 @@ namespace Bill_Software.corporate.business.app
             }
 
             BindProductsGrid();
+            hfFormState.Value = "expanded";
         }
 
         public class NameAvailabilityResult
@@ -1077,6 +1081,7 @@ namespace Bill_Software.corporate.business.app
 
                     btnSave.Text = "Update Product";
                     ShowOk("Editing product Id=" + idVal + " (Product ID locked). Update and save.");
+                    hfFormState.Value = "expanded";
                 }
             }
         }

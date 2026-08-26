@@ -737,6 +737,41 @@
             if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) return false;
             return true;
         }
+        function applyFormState() {
+            var hf = document.getElementById('<%= hfFormState.ClientID %>');
+            var wrap = document.getElementById('formCollapseWrapper');
+            var icon = document.getElementById('formToggleIcon');
+            if (!hf || !wrap) return;
+            var on = hf.value !== 'collapsed';
+            wrap.style.display = on ? '' : 'none';
+            if (icon) icon.innerHTML = on ? '▼' : '▲';
+        }
+        function toggleMasterForm() {
+            var hf = document.getElementById('<%= hfFormState.ClientID %>');
+            if (!hf) return;
+            hf.value = hf.value === 'collapsed' ? 'expanded' : 'collapsed';
+            applyFormState();
+        }
+        function autoCollapseForm() {
+            var hf = document.getElementById('<%= hfFormState.ClientID %>');
+            var wrap = document.getElementById('formCollapseWrapper');
+            var icon = document.getElementById('formToggleIcon');
+            if (!hf || !wrap) return;
+            hf.value = 'collapsed';
+            wrap.style.display = 'none';
+            if (icon) icon.innerHTML = '▲';
+        }
+        window.onload = function () {
+            applyFormState();
+            if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager && !window._hfFormStateEndReq) {
+                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(applyFormState);
+                window._hfFormStateEndReq = 1;
+            }
+        };
+        if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager && !window._hfFormStateEndReq) {
+            Sys.WebForms.PageRequestManager.getInstance().add_endRequest(applyFormState);
+            window._hfFormStateEndReq = 1;
+        }
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -752,6 +787,7 @@
         });
     </script>
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true"></asp:ScriptManager>
+    <asp:HiddenField ID="hfFormState" runat="server" Value="expanded" />
     <asp:HiddenField ID="hfEditProductID" runat="server" Value="" />
     <asp:HiddenField ID="hfModalEditId" runat="server" Value="" />
     <asp:Button ID="btnModalEdit" runat="server" style="display:none;" CausesValidation="false"
@@ -768,7 +804,7 @@
 
     <div class="stacked-container">
         <div class="box-panel">
-            <div class="box-title">Product / Service Master</div>
+            <div class="box-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleMasterForm()">Product / Service Master<span id="formToggleIcon">▼</span></div>
 
             <asp:Panel ID="PanelOK" runat="server" CssClass="alert-ok" BackColor="#EEFFDD"
                 BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" style="display:none;">
@@ -782,6 +818,7 @@
                 &nbsp;<asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
             </asp:Panel>
 
+            <div id="formCollapseWrapper">
             <div class="form-grid-aligned">
                 <div class="form-group span-2">
                     <label><asp:Label ID="Label16" runat="server" Text="*" CssClass="req"></asp:Label> Category</label>
@@ -928,13 +965,14 @@
                 <asp:Button ID="btnreset" runat="server" CssClass="btn_style" Text="Reset"
                     OnClientClick="return prepareReset();" OnClick="btnreset_Click" />
             </div>
+            </div>
         </div>
 
         <div class="box-panel">
             <div class="box-title">Product Catalog / Data Directory</div>
             <div class="grid-toolbar">
                 <div class="search-wrap">
-                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="textbox_U_style" Width="240px" placeholder="Search name / HSN / ID / brand / category"></asp:TextBox>
+                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="textbox_U_style" Width="240px" placeholder="Search name / HSN / ID / brand / category" onfocus="autoCollapseForm()"></asp:TextBox>
                     <asp:Button ID="btnSearch" runat="server" Text="Search" CssClass="btn_style" OnClick="btnSearch_Click" />
                 </div>
                 <div class="search-wrap">
@@ -1038,7 +1076,7 @@
                                         data-isfast='<%# Eval("IsFastMoving") %>'
                                         data-created='<%# Server.HtmlEncode(FormatAuditTrail(Eval("AddedbyUserId"), Eval("AddedOn"))) %>'
                                         data-modified='<%# Server.HtmlEncode(FormatAuditTrail(Eval("ModifiedByUserId"), Eval("ModifiedOn"))) %>'
-                                        onclick="return showProductModal(this);">View More</button>
+                                        onclick="autoCollapseForm(); return showProductModal(this);">View More</button>
                                     <asp:ImageButton ID="ImageButton3" runat="server" CommandName="EditProduct" CommandArgument='<%# Eval("Id") %>'
                                         ImageUrl="~/corporate/business/WebImages/edit1.png" ToolTip="Edit" />
                                     <asp:ImageButton ID="ImageButton1" runat="server" CommandName="DeleteProduct" CommandArgument='<%# Eval("Id") %>'
