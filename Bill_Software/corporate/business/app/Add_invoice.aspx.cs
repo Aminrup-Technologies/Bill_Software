@@ -681,13 +681,8 @@ namespace Bill_Software.corporate.business.app
                 SELECT 
                     cd.Product_id AS TrueID, cd.Product_code AS TrueHSN, cd.Product_name, 
                     CAST(cd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
-<<<<<<< HEAD
                     ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice iv ON id.Invoice_No = iv.Invoice_No WHERE id.Quotation_no = cd.Challan_No AND id.Product_id = cd.Product_id AND ISNULL(id.ItemNo, '') = ISNULL(cd.ItemNo, '') AND id.CompanyID = @CompanyID AND iv.status2 = 'Active'), 0) AS InvoicedQty,
                     CAST(cd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice iv ON id.Invoice_No = iv.Invoice_No WHERE id.Quotation_no = cd.Challan_No AND id.Product_id = cd.Product_id AND ISNULL(id.ItemNo, '') = ISNULL(cd.ItemNo, '') AND id.CompanyID = @CompanyID AND iv.status2 = 'Active'), 0) AS PendingQty,
-=======
-                    CAST(0 AS DECIMAL(18,2)) AS InvoicedQty,
-                    CAST(cd.Quantity AS DECIMAL(18,2)) AS PendingQty,
->>>>>>> 824f75ffdbc359503c6ea96317e92faff7142dd8
                     ISNULL(qd.sail_rate, 0) AS sail_rate, ISNULL(qd.discount_rate, 0) AS discountRate, ISNULL(qd.Service_tax_rate, 0) AS Service_tax_rate, ISNULL(qd.specification, '') AS specification, ISNULL(np.Quantity, '0') AS AvailableStock,
                     ISNULL(cd.ItemNo, '') AS ItemNo, ISNULL(cd.MaterialNo, '') AS MaterialNo, ISNULL(cd.PackSize, '') AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
                 FROM tbl_Challan_details cd
@@ -1229,7 +1224,6 @@ namespace Bill_Software.corporate.business.app
                     {
                         tran.Rollback(); throw ex;
                     }
-<<<<<<< HEAD
 
                     logEntry.AppendLine("==================================================");
                     logEntry.AppendLine("");
@@ -1296,8 +1290,6 @@ namespace Bill_Software.corporate.business.app
                 {
                     tran.Rollback();
                     ShowMsg("Error saving invoice: " + ex.Message, false);
-=======
->>>>>>> 824f75ffdbc359503c6ea96317e92faff7142dd8
                 }
             }
             catch (Exception ex) { ShowMsg("Error: " + ex.Message, false); }
