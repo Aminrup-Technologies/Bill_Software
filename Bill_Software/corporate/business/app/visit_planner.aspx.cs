@@ -43,11 +43,12 @@ namespace Bill_Software.corporate.business.app
             {
                 string query = @"SELECT Id, VisitDate, VisitEndDate, CustomerName, VisitPhase 
                                  FROM tbl_SalesVisitReport 
-                                 WHERE CreatedByCode = @UserId";
+                                 WHERE CreatedByCode = @UserId AND CompanyID = @CompanyID";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
@@ -122,19 +123,20 @@ namespace Bill_Software.corporate.business.app
                     INSERT INTO tbl_SalesVisitReport (
                         VisitDate, VisitEndDate, Salesperson, CustomerName, Department, ContactPerson, 
                         VisitType, DiscussionPoints, VisitPhase, Status, FollowUpRequired, 
-                        CreatedDate, CreatedByCode, ParentVisitId
+                        CreatedDate, CreatedByCode, ParentVisitId, CompanyID
                     )
                     SELECT 
                         @NextFollowUpDate, DATEADD(hour, 1, @NextFollowUpDate), Salesperson, CustomerName, Department, ContactPerson, 
                         VisitType, 'Automated Follow-up regarding: ' + @DiscussionPoints, 
-                        'Planned', 'Pending', 'No', GETDATE(), CreatedByCode, @Id
+                        'Planned', 'Pending', 'No', GETDATE(), CreatedByCode, @Id, @CompanyID
                     FROM tbl_SalesVisitReport 
-                    WHERE Id = @Id;
+                    WHERE Id = @Id AND CompanyID = @CompanyID;
                 END";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         cmd.Parameters.AddWithValue("@Latitude", string.IsNullOrEmpty(latitude) ? (object)DBNull.Value : Convert.ToDecimal(latitude));
                         cmd.Parameters.AddWithValue("@Longitude", string.IsNullOrEmpty(longitude) ? (object)DBNull.Value : Convert.ToDecimal(longitude));
 
@@ -163,13 +165,36 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
+                // Proactive notification logging
+                try
+                {
+                    using (SqlConnection logConn = new SqlConnection(connStr))
+                    {
+                        string notifQuery = @"INSERT INTO tbl_SystemNotification 
+                            (CompanyID, Title, Message, Module, Type, UserId, CreatedOn) 
+                            VALUES (@CompanyID, @Title, @Message, @Module, @Type, @UserId, GETDATE())";
+                        using (SqlCommand notifCmd = new SqlCommand(notifQuery, logConn))
+                        {
+                            notifCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                            notifCmd.Parameters.AddWithValue("@Title", "Visit Executed");
+                            notifCmd.Parameters.AddWithValue("@Message", $"Visit #{visitId} was executed by {Session["USERID"]}. Follow-up: {ddlExecFollowUp.SelectedValue}.");
+                            notifCmd.Parameters.AddWithValue("@Module", "Sales Visit");
+                            notifCmd.Parameters.AddWithValue("@Type", "Success");
+                            notifCmd.Parameters.AddWithValue("@UserId", Session["USERID"]);
+                            logConn.Open();
+                            notifCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch { /* Soft catch: don't crash main transaction if logging fails */ }
+
                 txtExecDiscussion.Text = "";
                 txtExecNextDate.Text = "";
                 Response.Redirect(Request.RawUrl);
             }
             catch (Exception ex)
             {
-                Response.Write("<script>alert('Error: " + ex.Message + "');</script>");
+                Response.Write("<script>alert('An error occurred while saving the visit. Please try again.');</script>");
             }
         }
 
@@ -182,11 +207,12 @@ namespace Bill_Software.corporate.business.app
                 string query = @"SELECT CustomerName, VisitDate, ExecutionDateTime, DiscussionPoints, Status, 
                                 Salesperson, Department, ContactPerson, VisitType, FollowUpRequired, 
                                 NextFollowUpDate, AttachmentName, Latitude, Longitude
-                         FROM tbl_SalesVisitReport WHERE Id = @Id";
+                         FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", visitId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {

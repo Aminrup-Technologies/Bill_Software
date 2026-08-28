@@ -40,10 +40,11 @@ namespace Bill_Software.corporate.business.app
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    string query = "SELECT CustomerName, VisitDate, DiscussionPoints FROM tbl_SalesVisitReport WHERE Id = @Id";
+                    string query = "SELECT CustomerName, VisitDate, DiscussionPoints FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         conn.Open();
                         using (SqlDataReader rdr = cmd.ExecuteReader())
                         {
@@ -59,9 +60,9 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                lblErrorMsg.Text = "Error loading visit details: " + ex.Message;
+                lblErrorMsg.Text = "Error loading visit details. Please try again.";
                 PanelError.Visible = true;
             }
         }
@@ -74,11 +75,12 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string query = @"SELECT ExpenseDate, ExpenseCategory, Description, Amount, ApprovalStatus 
-                                     FROM tbl_Expenses WHERE VisitId = @VisitId ORDER BY Id DESC";
+                                     FROM tbl_Expenses WHERE VisitId = @VisitId AND CompanyID = @CompanyID ORDER BY Id DESC";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@VisitId", visitId);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    cmd.Parameters.AddWithValue("@VisitId", visitId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         da.Fill(dt);
 
@@ -107,14 +109,15 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string query = @"INSERT INTO tbl_Expenses 
-                                    (UserCode, ExpenseDate, VisitId, ExpenseCategory, Amount, Description, AttachmentName, CreatedDate) 
+                                    (UserCode, CompanyID, ExpenseDate, VisitId, ExpenseCategory, Amount, Description, AttachmentName, CreatedDate) 
                                      VALUES 
-                                    (@UserCode, @ExpenseDate, @VisitId, @ExpenseCategory, @Amount, @Description, @AttachmentName, GETDATE())";
+                                    (@UserCode, @CompanyID, @ExpenseDate, @VisitId, @ExpenseCategory, @Amount, @Description, @AttachmentName, GETDATE())";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@UserCode", userId);
-                        cmd.Parameters.AddWithValue("@ExpenseDate", txtExpenseDate.Text.Trim());
+                    cmd.Parameters.AddWithValue("@UserCode", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.AddWithValue("@ExpenseDate", txtExpenseDate.Text.Trim());
                         cmd.Parameters.AddWithValue("@ExpenseCategory", ddlCategory.SelectedValue);
                         cmd.Parameters.AddWithValue("@Amount", Convert.ToDecimal(txtAmount.Text.Trim()));
                         cmd.Parameters.AddWithValue("@Description", txtDescription.Text.Trim());
@@ -155,9 +158,9 @@ namespace Bill_Software.corporate.business.app
                     BindExpenses(Convert.ToInt32(hfVisitId.Value));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                lblErrorMsg.Text = "An error occurred: " + ex.Message;
+                lblErrorMsg.Text = "An unexpected error occurred while saving the expense. Please try again.";
                 PanelError.Visible = true;
             }
         }

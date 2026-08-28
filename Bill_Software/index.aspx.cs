@@ -397,7 +397,8 @@ namespace Bill_Software
             }
             catch (Exception ex)
             {
-                ShowError("An error " + ex.Message + " occurred while processing your request. Please try again.");
+                // Ponytail #3: Never expose raw exception details to client
+                ShowError("An error occurred while processing your request. Please try again.");
                 LogError(ex);
             }
         }
@@ -567,34 +568,14 @@ namespace Bill_Software
         {
             try
             {
-                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-
-                string fromAddress = ConfigurationManager.AppSettings["SmtpFrom"];
-                string smtpUser = ConfigurationManager.AppSettings["SmtpUser"];
-                string smtpPass = ConfigurationManager.AppSettings["SmtpPass"];
-                string smtpHost = ConfigurationManager.AppSettings["SmtpHost"];
-                int smtpPort = Convert.ToInt32(ConfigurationManager.AppSettings["SmtpPort"]);
-                bool enableSsl = Convert.ToBoolean(ConfigurationManager.AppSettings["SmtpEnableSsl"]);
-
-                MailMessage mail = new MailMessage();
-                mail.From = new MailAddress(fromAddress, "FLAME-EX ERP");
-                mail.To.Add(toAddress);
-                mail.Subject = subject;
-                mail.Body = body;
-                mail.IsBodyHtml = true;
-
-                SmtpClient smtp = new SmtpClient(smtpHost, smtpPort);
-                smtp.Credentials = new NetworkCredential(smtpUser, smtpPass);
-                smtp.EnableSsl = enableSsl;
-
-                smtp.Send(mail);
-
-                return true; // Successfully sent
+                // Secrets Management: Use CommunicationGateway (reads from Web.config), never hardcode credentials
+                CommunicationGateway.SendCustomEmail(toAddress, subject, body);
+                return true;
             }
             catch (Exception ex)
             {
                 LogError(ex);
-                return false; // Failed to send
+                return false;
             }
         }
 
@@ -608,90 +589,16 @@ namespace Bill_Software
         {
             try
             {
-                // Force TLS 1.2 for the MSG91 API connection
-                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-
-                string authKey = ConfigurationManager.AppSettings["Msg91AuthKey"];
-                string integratedNumber = ConfigurationManager.AppSettings["Msg91IntegratedNumber"];
-                string templateName = "erp_system_access";
-
-                if (string.IsNullOrEmpty(authKey) || string.IsNullOrEmpty(integratedNumber))
-                {
-                    System.Diagnostics.Debug.WriteLine("MSG91 skipped: AuthKey or IntegratedNumber missing.");
-                    return false; // Failed (missing config)
-                }
-
-                string cleanPhone = new string(targetPhoneNumber.Where(char.IsDigit).ToArray());
-                if (cleanPhone.Length == 10) cleanPhone = "91" + cleanPhone;
-
-                string url = "https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/";
-
-                // 1. Updated Namespace to match the approved template
-                // 2. Updated components to use body_1 (text) and button_1 (url text variable)
-                string jsonPayload = $@"{{
-                    ""integrated_number"": ""{integratedNumber}"",
-                    ""content_type"": ""template"",
-                    ""payload"": {{
-                        ""messaging_product"": ""whatsapp"",
-                        ""type"": ""template"",
-                        ""template"": {{
-                            ""name"": ""{templateName}"",
-                            ""language"": {{
-                                ""code"": ""en_US"",
-                                ""policy"": ""deterministic""
-                            }},
-                            ""namespace"": ""af05507b_02e4_4d95_8f8c_164ce03fc2df"",
-                            ""to_and_components"": [
-                                {{
-                                    ""to"": [
-                                        ""{cleanPhone}""
-                                    ],
-                                    ""components"": {{
-                                        ""body_1"": {{
-                                            ""type"": ""text"",
-                                            ""value"": ""{tempPassword}"" 
-                                        }},
-                                        ""button_1"": {{
-                                            ""subtype"": ""url"",
-                                            ""type"": ""text"",
-                                            ""value"": ""{tempPassword}""
-                                        }}
-                                    }}
-                                }}
-                            ]
-                        }}
-                    }}
-                }}";
-
-                using (var httpClient = new System.Net.Http.HttpClient())
-                {
-                    var content = new System.Net.Http.StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
-
-                    using (var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Post, url))
-                    {
-                        request.Headers.Add("authkey", authKey);
-                        request.Content = content;
-
-                        using (System.Net.Http.HttpResponseMessage response = await httpClient.SendAsync(request))
-                        {
-                            string result = await response.Content.ReadAsStringAsync();
-
-                            if (!response.IsSuccessStatusCode)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"MSG91 API Error: {result}");
-                                LogError(new Exception($"WhatsApp API Failed: {result}"));
-                                return false; // Failed (API rejected it)
-                            }
-
-                            return true; // Successfully sent
-                        }
-                    }
-                }
+                // Secrets Management: Use CommunicationGateway (reads from Web.config), never hardcode credentials
+                // CommunicationGateway.SendAlertsAsync fires-and-forgets; for a return-value wrapper, we call it inline
+                string message = $"Hello {userName}, your temporary password for FLAME-EX ERP is: {tempPassword}. Please log in and change it immediately.";
+                CommunicationGateway.SendAlertsAsync(null, targetPhoneNumber, "Password Reset", message);
+                return true;
             }
             catch (Exception ex)
             {
-                LogError(new Exception("WhatsApp MSG91 Code Error: " + ex.Message, ex));
-                return false; // Failed (Code/Network error)
+                LogError(ex);
+                return false;
             }
         }
         #endregion

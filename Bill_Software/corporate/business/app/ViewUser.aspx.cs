@@ -607,9 +607,10 @@ namespace Bill_Software.corporate.business.app
                     SendTempPasswordEmail(email, userId, tempPassword, isFirstTime);
                     ShowOk("Credentials generated and successfully emailed to user.");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    ShowError("Credentials reset, but failed to send email: " + ex.Message);
+                    // Ponytail Standard #3: Never expose raw exception details to client
+                    ShowError("Credentials reset, but the notification email could not be sent. Please verify SMTP configuration.");
                 }
             }
             else
@@ -652,10 +653,13 @@ namespace Bill_Software.corporate.business.app
             if (string.IsNullOrWhiteSpace(toEmail))
                 throw new Exception("Cannot send email: user has no email.");
 
-            string fromApp = ConfigurationManager.AppSettings["SmtpFrom"] ?? "Flame-Ex ERP Mailer | Aminrup Technologies";
-            string smtpUserApp = ConfigurationManager.AppSettings["SmtpUser"] ?? "it.support@aminruptechnologies.co.in";
-            string smtpPassApp = ConfigurationManager.AppSettings["SmtpPass"] ?? "TPw800QrVMU2";
-            string smtpHostApp = ConfigurationManager.AppSettings["SmtpHost"] ?? "smtp.zoho.in";
+            string fromApp = ConfigurationManager.AppSettings["SmtpFrom"];
+            string smtpUserApp = ConfigurationManager.AppSettings["SmtpUser"];
+            string smtpPassApp = ConfigurationManager.AppSettings["SmtpPass"];
+            string smtpHostApp = ConfigurationManager.AppSettings["SmtpHost"];
+
+            if (string.IsNullOrWhiteSpace(smtpUserApp) || string.IsNullOrWhiteSpace(smtpPassApp) || string.IsNullOrWhiteSpace(smtpHostApp))
+                throw new Exception("SMTP is not configured. Please add SmtpUser, SmtpPass, and SmtpHost to AppSettings.");
 
             int smtpPortApp = 587;
             int p;
@@ -911,12 +915,15 @@ namespace Bill_Software.corporate.business.app
                         }
                     }
                 }
-            }
-            catch (Exception ex)
+            }            catch (Exception)
             {
-                return ex.Message;
+                // Ponytail Standard #3: Never expose raw exception details to client
+                return "An unexpected error occurred while saving geo-fence settings.";
             }
         }
+
+
+
 
         private static void InsertSystemNotification(string title, string message, string moduleCode, string severity, string userId)
         {

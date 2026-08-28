@@ -29,73 +29,76 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSertch_Click(object sender, EventArgs e)
         {
-            string cmdstring = "";
-            if (RadioButtonList1.SelectedIndex == 0)
-            {
-                BuindCompanyId();
-                //cmdstring = "select  tbl_Proforma.ID,tbl_Proforma.mail_Date,tbl_Proforma.Invoice_No,tbl_Proforma.Invoice_Date,tbl_Proforma.Quotation_No,tbl_Proforma.Quotation_Date,tbl_Proforma.Net_Amount,tbl_Client.Client_Name from tbl_Proforma inner join tbl_Client on tbl_Proforma.Client_ID=tbl_Client.Client_Id where tbl_Proforma.Client_ID='" + lblclientId.Text + "' order by cast(tbl_Proforma.Invoice_Date as datetime) desc";
-                cmdstring = "select a.ID,a.Invoice_No,a.Invoice_Date,a.Quotation_No,a.Quotation_Date,a.Net_Amount,a.mail_Date,a.subtotal,(a.Net_Amount-a.subtotal) as Gst,b.Client_Name,c.PServiceName from tbl_Proforma as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID where a.Client_ID='" + lblclientId.Text + "' order by a.ID desc";
-                Buinddatagrid(cmdstring);
-            }
-            else if (RadioButtonList1.SelectedIndex == 1)
-            {
-                //cmdstring = "select  tbl_Proforma.ID,tbl_Proforma.mail_Date,tbl_Proforma.Invoice_No,tbl_Proforma.Invoice_Date,tbl_Proforma.Quotation_No,tbl_Proforma.Quotation_Date,tbl_Proforma.Net_Amount,tbl_Client.Client_Name from tbl_Proforma inner join tbl_Client on tbl_Proforma.Client_ID=tbl_Client.Client_Id where cast(tbl_Proforma.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by cast(tbl_Proforma.Invoice_Date as datetime) desc";
-                cmdstring = "select a.ID,a.Invoice_No,a.Invoice_Date,a.Quotation_No,a.Quotation_Date,a.Net_Amount,a.mail_Date,a.subtotal,(a.Net_Amount-a.subtotal) as Gst,b.Client_Name,c.PServiceName from tbl_Proforma as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID where cast(a.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by a.ID desc";
-                Buinddatagrid(cmdstring);
-            }
-            else
-            {
-                BuindCompanyId();
-                //cmdstring = "select  tbl_Proforma.ID,tbl_Proforma.mail_Date,tbl_Proforma.Invoice_No,tbl_Proforma.Invoice_Date,tbl_Proforma.Quotation_No,tbl_Proforma.Quotation_Date,tbl_Proforma.Net_Amount,tbl_Client.Client_Name from tbl_Proforma inner join tbl_Client on tbl_Proforma.Client_ID=tbl_Client.Client_Id where tbl_Proforma.Client_ID='" + lblclientId.Text + "' and cast(tbl_Proforma.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by cast(tbl_Proforma.Invoice_Date as datetime) desc";
-                cmdstring = "select a.ID,a.Invoice_No,a.Invoice_Date,a.Quotation_No,a.Quotation_Date,a.Net_Amount,a.mail_Date,a.subtotal,(a.Net_Amount-a.subtotal) as Gst,b.Client_Name,c.PServiceName from tbl_Proforma as a left outer join tbl_QuoPriSerTogather as c on a.Quotation_No=c.qutno left outer join tbl_Client as b on b.Client_Id=a.Client_ID where a.Client_ID='" + lblclientId.Text + "' and cast(a.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by a.ID desc";
-                Buinddatagrid(cmdstring);
-            }
-            btnSertch.Visible = false;
+            string baseQuery = @"SELECT a.ID, a.Invoice_No, a.Invoice_Date, a.Quotation_No, a.Quotation_Date, a.Net_Amount, a.mail_Date, a.subtotal, (a.Net_Amount - a.subtotal) AS Gst, b.Client_Name, c.PServiceName 
+                FROM tbl_Proforma AS a 
+                LEFT OUTER JOIN tbl_QuoPriSerTogather AS c ON a.Quotation_No = c.qutno 
+                LEFT OUTER JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID 
+                WHERE 1=1";
 
+            if (RadioButtonList1.SelectedIndex == 0 || RadioButtonList1.SelectedIndex == 2)
+            {
+                BuindCompanyId();
+                baseQuery += " AND a.Client_ID = @ClientId";
+            }
+            if (RadioButtonList1.SelectedIndex == 1 || RadioButtonList1.SelectedIndex == 2)
+            {
+                baseQuery += " AND CAST(a.Invoice_Date AS datetime) BETWEEN @FromDate AND @ToDate";
+            }
+            baseQuery += " ORDER BY a.ID DESC";
+
+            Buinddatagrid(baseQuery);
+            btnSertch.Visible = false;
         }
         private void Buinddatagrid(string cmdstring)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(cmdstring, conn))
             {
-                Buinddatagrid1(cmdstring);
+                // Add parameters based on what was set in btnSertch_Click
+                if (cmdstring.Contains("@ClientId"))
+                    cmd.Parameters.AddWithValue("@ClientId", lblclientId.Text);
+                if (cmdstring.Contains("@FromDate"))
+                {
+                    cmd.Parameters.AddWithValue("@FromDate", txttodate.Text);
+                    cmd.Parameters.AddWithValue("@ToDate", txtfromDate.Text);
+                }
+
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        DataList1.DataSource = dt;
+                        DataList1.DataBind();
+                    }
+                    else
+                    {
+                        PanelError.Visible = true;
+                        lblErrorMsg.Text = "No Data Found...";
+                    }
+                }
             }
-            else
-            {
-                PanelError.Visible = true;
-                lblErrorMsg.Text = "No Data Found...";
-
-            }
-            DbCL.Conn.Close();
-        }
-
-        private void Buinddatagrid1(string cmdstring)
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-
-            SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
-            DataList1.DataSource = cmd1.ExecuteReader();
-            DataList1.DataBind();
-            DbCL.Conn.Close();
-
         }
 
         private void BuindCompanyId()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Client_Id from tbl_Client where Client_Name='" + cmbvendor.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                lblclientId.Text = re["Client_Id"].ToString();
+                string cmdstring = "SELECT Client_Id FROM tbl_Client WHERE Client_Name = @Name AND CompanyID = @CompanyID";
+                using (SqlCommand cmd = new SqlCommand(cmdstring, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Name", cmbvendor.Text);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null)
+                    {
+                        lblclientId.Text = result.ToString();
+                    }
+                }
             }
-            DbCL.Conn.Close();
         }
 
         protected void btnreset_Click(object sender, EventArgs e)

@@ -2,8 +2,6 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
-using System.Net.Mail;
-using System.Net;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -49,16 +47,17 @@ namespace Bill_Software.corporate.business.app
         {
             string user = HttpContext.Current.Session["USERID"]?.ToString() ?? "";
 
-            // Base query
+            // Base query — strict tenant isolation
             string query = @"
             SELECT Id, VisitDate, CustomerName, VisitType, Status, ApprovalStatus 
             FROM tbl_SalesVisitReport
-            WHERE CreatedByCode = @CreatedByCode ";
+            WHERE CreatedByCode = @CreatedByCode AND CompanyID = @CompanyID ";
 
             // Dynamically build WHERE clause based on filters
+            // CAST(VisitDate AS DATE) strips the time component to prevent midnight-boundary edge cases
             if (!string.IsNullOrEmpty(txtSearchFrom.Text) && !string.IsNullOrEmpty(txtSearchTo.Text))
             {
-                query += " AND CAST(VisitDate AS DATE) BETWEEN CAST(@FromDate AS DATE) AND CAST(@ToDate AS DATE) ";
+                query += " AND CAST(VisitDate AS DATE) BETWEEN @FromDate AND @ToDate ";
             }
             if (ddlSearchStatus.SelectedValue != "")
             {
@@ -71,8 +70,16 @@ namespace Bill_Software.corporate.business.app
             using (SqlCommand cmd = new SqlCommand(query, con))
             {
                 cmd.Parameters.AddWithValue("@CreatedByCode", user);
-                if (!string.IsNullOrEmpty(txtSearchFrom.Text)) cmd.Parameters.AddWithValue("@FromDate", txtSearchFrom.Text);
-                if (!string.IsNullOrEmpty(txtSearchTo.Text)) cmd.Parameters.AddWithValue("@ToDate", txtSearchTo.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                if (!string.IsNullOrEmpty(txtSearchFrom.Text) && !string.IsNullOrEmpty(txtSearchTo.Text))
+                {
+                    // Pass DateTime objects, not strings — eliminates midnight-boundary ambiguity
+                    DateTime dtFrom, dtTo;
+                    DateTime.TryParse(txtSearchFrom.Text, out dtFrom);
+                    DateTime.TryParse(txtSearchTo.Text, out dtTo);
+                    cmd.Parameters.Add("@FromDate", SqlDbType.Date).Value = dtFrom.Date;
+                    cmd.Parameters.Add("@ToDate", SqlDbType.Date).Value = dtTo.Date;
+                }
                 if (ddlSearchStatus.SelectedValue != "") cmd.Parameters.AddWithValue("@Status", ddlSearchStatus.SelectedValue);
 
                 con.Open();
@@ -119,16 +126,17 @@ namespace Bill_Software.corporate.business.app
             {
                 con.Open();
 
-                // 1. Load Core Details with subquery to prevent DataReader crashes
+                // 1. Load Core Details with subquery — CompanyID-isolated
                 string query = @"
                     SELECT v.*, 
                            (SELECT COUNT(*) FROM tbl_SalesVisitResponses r WHERE r.VisitId = v.Id AND r.RespondentRole = 'Manager') AS MgrCommentCount
                     FROM tbl_SalesVisitReport v 
-                    WHERE v.Id = @Id";
+                    WHERE v.Id = @Id AND v.CompanyID = @CompanyID";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@Id", visitId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
@@ -238,13 +246,14 @@ namespace Bill_Software.corporate.business.app
                     SET VisitDate = @VisitDate, CustomerName = @CustomerName, Department = @Department, ContactPerson = @ContactPerson,
                         VisitType = @VisitType, DiscussionPoints = @DiscussionPoints, FollowUpRequired = @FollowUpRequired, 
                         NextFollowUpDate = @NextFollowUpDate, Status = @Status, AttachmentName = COALESCE(@AttachmentName, AttachmentName)
-                    WHERE Id = @Id 
+                    WHERE Id = @Id AND CompanyID = @CompanyID
                       AND ApprovalStatus = 'Pending' 
                       AND NOT EXISTS (SELECT 1 FROM tbl_SalesVisitResponses WHERE VisitId = tbl_SalesVisitReport.Id AND RespondentRole = 'Manager')";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         cmd.Parameters.AddWithValue("@VisitDate", Convert.ToDateTime(edit_txtVisitDate.Text));
                         cmd.Parameters.AddWithValue("@CustomerName", edit_txtCustomerName.Text.Trim());
                         cmd.Parameters.AddWithValue("@Department", edit_txtDepartment.Text.Trim());
@@ -287,7 +296,7 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                lblErrorMsg.Text = "Error updating file: " + ex.Message;
+                lblErrorMsg.Text = "Error updating file. Please try again.";
                 PanelError.Visible = true;
             }
         }
@@ -358,11 +367,12 @@ namespace Bill_Software.corporate.business.app
         private string GetVisitEmailBody(string visitId, SqlConnection con)
         {
             string htmlDetails = "";
-            string visitQuery = "SELECT v.*, mgr.Name AS ApprovedByName FROM tbl_SalesVisitReport v LEFT JOIN tbl_login mgr ON v.ApprovedBy = mgr.User_Id WHERE v.Id = @Id";
+            string visitQuery = "SELECT v.*, mgr.Name AS ApprovedByName FROM tbl_SalesVisitReport v LEFT JOIN tbl_login mgr ON v.ApprovedBy = mgr.User_Id WHERE v.Id = @Id AND v.CompanyID = @CompanyID";
 
             using (SqlCommand cmd = new SqlCommand(visitQuery, con))
             {
                 cmd.Parameters.AddWithValue("@Id", visitId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     if (rdr.Read())
@@ -424,13 +434,14 @@ namespace Bill_Software.corporate.business.app
                         FROM tbl_SalesVisitReport SVR 
                         INNER JOIN tbl_login Creator ON Creator.User_Id = SVR.CreatedByCode 
                         LEFT JOIN tbl_login Manager ON Manager.User_Id = Creator.ReportingManagerId
-                        WHERE SVR.Id = @Id";
+                        WHERE SVR.Id = @Id AND SVR.CompanyID = @CompanyID";
 
                     string emailTo = "";
                     string customerName = "";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -454,21 +465,8 @@ namespace Bill_Software.corporate.business.app
                             </div>
                             </body></html>";
 
-                    using (MailMessage mail = new MailMessage())
-                    {
-                        mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer");
-                        mail.To.Add(emailTo);
-                        mail.Subject = $"Sales Visit Report - Salesperson Reply";
-                        mail.Body = body;
-                        mail.IsBodyHtml = true;
-
-                        using (SmtpClient smtp = new SmtpClient("smtp.zoho.in", 587))
-                        {
-                            smtp.Credentials = new NetworkCredential("it.support@aminruptechnologies.co.in", "TPw800QrVMU2");
-                            smtp.EnableSsl = true;
-                            smtp.Send(mail);
-                        }
-                    }
+                    // Secrets Management: Use CommunicationGateway (reads from Web.config), never hardcode credentials
+                    CommunicationGateway.SendCustomEmail(emailTo, $"Sales Visit Report - Salesperson Reply", body);
                 }
             }
             catch (Exception) { /* Fail silently */ }

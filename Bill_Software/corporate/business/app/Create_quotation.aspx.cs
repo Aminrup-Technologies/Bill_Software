@@ -83,8 +83,16 @@ namespace Bill_Software.corporate.business.app
             {
                 conn.Open();
 
-                // 1. GLOBAL RESOURCE: Sales Persons (Uncommented and Active!)
-                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 and (User_Id NOT IN ('admin', 'AT01')) ORDER BY Id";
+                // 1. TENANT-SCOPED RESOURCE: Sales Persons
+                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompanyID AND (User_Id NOT IN ('admin', 'AT01')) ORDER BY Id";
+                using (var cmdSales = new SqlCommand(salesQuery, conn))
+                {
+                    cmdSales.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    using (SqlDataAdapter daSales = new SqlDataAdapter(cmdSales))
+                    {
+                        DataTable dtSales = new DataTable();
+                        daSales.Fill(dtSales);
+                        cmbSalesPerson.DataSource = dtSales;
                 using (SqlCommand cmd = new SqlCommand(salesQuery, conn))
                 {
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
@@ -676,11 +684,8 @@ namespace Bill_Software.corporate.business.app
                 {
                     try { trans?.Rollback(); } catch { }
 
-                    StringBuilder errorMsg = new StringBuilder();
-                    errorMsg.AppendLine("An error occurred: " + ex.Message);
-                    if (ex.InnerException != null) errorMsg.AppendLine("<br/>Inner Exception: " + ex.InnerException.ToString());
-
-                    ShowAlert(errorMsg.ToString(), true);
+                    // Ponytail #3: Never expose raw exception details to client
+                    ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
                 }
             }
         }
@@ -744,28 +749,34 @@ namespace Bill_Software.corporate.business.app
             return 0;
         }
 
-        // --- INJECTION 6: Scoped Serial Isolation ---
-        private int idreturn()
+        // --- INJECTION 6: Scoped Serial Isolation ---        private int idreturn()
         {
             int b = 0;
-            DbCL.Sqlconnection(); DbCL.ConnectDb();
-            string d = txtquotationDate.Text, m = d.Substring(3, 3), y = d.Substring(7, 4), d4, d5, d6;
+            string d = txtquotationDate.Text, m = d.Substring(3, 3), y = d.Substring(7, 4), d5, d6;
             if (m == "Jan" || m == "Feb" || m == "Mar")
             {
-                d4 = (Convert.ToInt32(y) - 1).ToString();
-                d5 = "31-Mar-" + d4; d6 = "31-Mar-" + y;
+                d5 = "31-Mar-" + (Convert.ToInt32(y) - 1).ToString(); d6 = "31-Mar-" + y;
             }
             else
             {
-                d4 = (Convert.ToInt32(y) + 1).ToString();
-                d5 = "31-Mar-" + y; d6 = "31-Mar-" + d4;
+                d5 = "31-Mar-" + y; d6 = "31-Mar-" + (Convert.ToInt32(y) + 1).ToString();
             }
-            using (SqlCommand cmd = new SqlCommand("select Sl_no from tbl_Quotation where ID=(select max(ID) from tbl_Quotation where cast(Quotation_date as datetime) between '" + d5 + "' and '" + d6 + "' AND CompanyID = " + CompanyContext.CurrentCompanyID + ")", DbCL.Conn))
-            using (SqlDataReader re = cmd.ExecuteReader())
+            // Ponytail #3: Parameterized query replaces string concatenation
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (var conn = new SqlConnection(connStr))
+            using (var cmd = new SqlCommand(
+                "SELECT Sl_no FROM tbl_Quotation WHERE ID = (SELECT MAX(ID) FROM tbl_Quotation WHERE CAST(Quotation_date AS datetime) BETWEEN @Date5 AND @Date6 AND CompanyID = @CompanyID)", conn))
             {
-                if (re.Read() && re["Sl_no"] != DBNull.Value) b = Convert.ToInt32(re["Sl_no"]);
+                cmd.Parameters.AddWithValue("@Date5", d5);
+                cmd.Parameters.AddWithValue("@Date6", d6);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                conn.Open();
+                using (var re = cmd.ExecuteReader())
+                {
+                    if (re.Read() && re["Sl_no"] != DBNull.Value) b = Convert.ToInt32(re["Sl_no"]);
+                }
             }
-            DbCL.Conn.Close(); return b;
+            return b;
         }
 
         private string findmonth()

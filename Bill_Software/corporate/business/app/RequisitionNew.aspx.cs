@@ -857,7 +857,8 @@ namespace Bill_Software.corporate.business.app
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowError((submit ? "Submit" : "Save") + " failed: " + ex.Message);
+                    // Ponytail #3: Never expose raw exception details to client
+                    ShowError((submit ? "Submit" : "Save") + " failed. Please try again.");
                 }
             }
         }
@@ -951,7 +952,8 @@ namespace Bill_Software.corporate.business.app
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowError("Cancel failed: " + ex.Message);
+                    // Ponytail #3: Never expose raw exception details to client
+                    ShowError("Cancel failed. Please try again.");
                 }
             }
         }

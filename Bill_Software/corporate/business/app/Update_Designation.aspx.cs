@@ -44,8 +44,9 @@ namespace Bill_Software.corporate.business.app
         private void LoadAvailableRoles()
         {
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM dbo.Roles ORDER BY RoleName", cn))
+            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM dbo.Roles WHERE CompanyID = @CompanyID ORDER BY RoleName", cn))
             {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 var dt = new DataTable();
                 var da = new SqlDataAdapter(cmd);
                 da.Fill(dt);
@@ -66,9 +67,10 @@ namespace Bill_Software.corporate.business.app
                 cn.Open();
 
                 // 1. Get the numeric Id and Name from tbl_login
-                using (var cmdUser = new SqlCommand("SELECT Id, Name FROM dbo.tbl_login WHERE User_Id = @UserId", cn))
+                using (var cmdUser = new SqlCommand("SELECT Id, Name FROM dbo.tbl_login WHERE User_Id = @UserId AND CompanyID = @CompanyID", cn))
                 {
                     cmdUser.Parameters.AddWithValue("@UserId", userIdString);
+                    cmdUser.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     using (var rdr = cmdUser.ExecuteReader())
                     {
                         if (rdr.Read())
@@ -142,10 +144,11 @@ namespace Bill_Software.corporate.business.app
                         transaction.Commit();
                         ShowOk("Roles successfully updated for " + lblEmpName.Text);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         transaction.Rollback();
-                        ShowError("Error updating roles: " + ex.Message);
+                        // Ponytail Standard #3: Never expose raw exception details to client
+                        ShowError("An unexpected error occurred while updating roles. Please try again.");
                     }
                 }
             }

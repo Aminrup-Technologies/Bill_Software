@@ -18,7 +18,7 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbState, "SELECT State_Name FROM tbl_State ORDER BY State_Name");
+                DbCL.FillCombo(cmbState, "SELECT State_Name FROM tbl_State WHERE CompanyID = " + CompanyContext.CurrentCompanyID + " ORDER BY State_Name");
             }
         }
 
@@ -115,27 +115,30 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                // Handle Exceptions gracefully
+                PanelError.Visible = true;
+                PanelOK.Visible = false;
+                lblErrorMsg.Text = "An error occurred while saving the vendor. Please try again.";
             }
         }
 
         private void InsertCity()
         {
-            // SECURED: Ensure parameterized checks to avoid Injection
-            string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName";
-            using (SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn))
-            {
-                checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
-                checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
-                int count = (int)checkCmd.ExecuteScalar();
+            // SECURED: Ensure parameterized checks to avoid Injection                    string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName AND CompanyID = @CompanyID";
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
+                        checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+                        checkCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        int count = (int)checkCmd.ExecuteScalar();
 
-                if (count == 0)
-                {
-                    string insertQuery = "INSERT INTO tbl_City (City_Name, State_Name) VALUES (@CityName, @StateName)";
+                        if (count == 0)
+                        {
+                            string insertQuery = "INSERT INTO tbl_City (City_Name, State_Name, CompanyID) VALUES (@CityName, @StateName, @CompanyID)";
                     using (SqlCommand insertCmd = new SqlCommand(insertQuery, DbCL.Conn))
                     {
                         insertCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
                         insertCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+                        insertCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         insertCmd.ExecuteNonQuery();
                     }
                 }

@@ -33,33 +33,37 @@ namespace Bill_Software.corporate.business.app
             {
                 cn.Open();
 
-                // 1. Load Roles
-                using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles ORDER BY RoleName", cn))
+                // 1. Load Roles (Ponytail #1: Tenant-scoped)
+                using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM Roles WHERE CompanyID = @CompanyID ORDER BY RoleName", cn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     var dt = new DataTable(); new SqlDataAdapter(cmd).Fill(dt);
                     ddlRole.DataSource = dt; ddlRole.DataTextField = "RoleName"; ddlRole.DataValueField = "RoleId"; ddlRole.DataBind();
                     ddlRole.Items.Insert(0, new ListItem("-- Select System Role --", ""));
                 }
 
-                // 2. Load Departments
-                using (var cmd = new SqlCommand("SELECT DepartmentID, DepartmentName FROM tbl_Departments WHERE IsActive = 1 ORDER BY DepartmentName", cn))
+                // 2. Load Departments (Ponytail #1: Tenant-scoped)
+                using (var cmd = new SqlCommand("SELECT DepartmentID, DepartmentName FROM tbl_Departments WHERE IsActive = 1 AND CompanyID = @CompanyID ORDER BY DepartmentName", cn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     var dt = new DataTable(); new SqlDataAdapter(cmd).Fill(dt);
                     ddlDepartment.DataSource = dt; ddlDepartment.DataTextField = "DepartmentName"; ddlDepartment.DataValueField = "DepartmentID"; ddlDepartment.DataBind();
                     ddlDepartment.Items.Insert(0, new ListItem("-- None --", ""));
                 }
 
-                // 3. Load Designations
-                using (var cmd = new SqlCommand("SELECT DesignationID, DesignationName FROM tbl_Designations WHERE IsActive = 1 ORDER BY DesignationName", cn))
+                // 3. Load Designations (Ponytail #1: Tenant-scoped)
+                using (var cmd = new SqlCommand("SELECT DesignationID, DesignationName FROM tbl_Designations WHERE IsActive = 1 AND CompanyID = @CompanyID ORDER BY DesignationName", cn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     var dt = new DataTable(); new SqlDataAdapter(cmd).Fill(dt);
                     ddlDesignation.DataSource = dt; ddlDesignation.DataTextField = "DesignationName"; ddlDesignation.DataValueField = "DesignationID"; ddlDesignation.DataBind();
                     ddlDesignation.Items.Insert(0, new ListItem("-- None --", ""));
                 }
 
-                // 4. Load Managers
-                using (var cmd = new SqlCommand("SELECT User_Id, Name FROM tbl_login WHERE IsActive = 1 AND User_Id NOT IN ('admin', 'AT01') ORDER BY Name", cn))
+                // 4. Load Managers (Ponytail #1: Tenant-scoped)
+                using (var cmd = new SqlCommand("SELECT User_Id, Name FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompanyID AND User_Id NOT IN ('admin', 'AT01') ORDER BY Name", cn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     var dt = new DataTable(); new SqlDataAdapter(cmd).Fill(dt);
                     ddlManager.DataSource = dt; ddlManager.DataTextField = "Name"; ddlManager.DataValueField = "User_Id"; ddlManager.DataBind();
                     ddlManager.Items.Insert(0, new ListItem("-- Select Manager --", ""));
@@ -89,10 +93,12 @@ namespace Bill_Software.corporate.business.app
                     LEFT JOIN tbl_login mgr ON u.ReportingManagerId = mgr.User_Id
                     WHERE u.User_Id NOT IN ('admin', 'AT01') 
                       AND u.IsActive = 1 
+                      AND u.CompanyID = @CompanyID
                     ORDER BY u.Id DESC";
 
                 using (var cmd = new SqlCommand(cmdstring, cn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     var dt = new DataTable();
                     new SqlDataAdapter(cmd).Fill(dt);
                     gvRecentUsers.DataSource = dt;
@@ -183,10 +189,10 @@ namespace Bill_Software.corporate.business.app
                             // Commit the transaction if all 3 queries succeed
                             tran.Commit();
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             tran.Rollback();
-                            throw new Exception("Transaction failed: " + ex.Message);
+                            throw; // Re-throw to be caught by outer handler
                         }
                     }
                 }
@@ -195,9 +201,10 @@ namespace Bill_Software.corporate.business.app
                 ClearFields();
                 BindGrid();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ShowMessage("Error saving user: " + ex.Message, false);
+                // Ponytail Standard #3: Never expose raw exception details to client
+                ShowMessage("An unexpected error occurred while creating the user account. Please try again.", false);
             }
         }
 
@@ -208,10 +215,11 @@ namespace Bill_Software.corporate.business.app
                 int id = Convert.ToInt32(e.CommandArgument);
                 using (var cn = new SqlConnection(ConnString))
                 {
-                    string query = "UPDATE tbl_login SET IsActive = 0 WHERE Id = @Id";
+                    string query = "UPDATE tbl_login SET IsActive = 0 WHERE Id = @Id AND CompanyID = @CompanyID";
                     using (var cmd = new SqlCommand(query, cn))
                     {
                         cmd.Parameters.AddWithValue("@Id", id);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         cn.Open();
                         cmd.ExecuteNonQuery();
                     }
@@ -277,9 +285,10 @@ namespace Bill_Software.corporate.business.app
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (var cn = new SqlConnection(connStr))
             {
-                string query = "SELECT Email, Phone_no FROM tbl_login WHERE Email = @Email OR Phone_no = @Phone";
+                string query = "SELECT Email, Phone_no FROM tbl_login WHERE CompanyID = @CompanyID AND (Email = @Email OR Phone_no = @Phone)";
                 using (var cmd = new SqlCommand(query, cn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     cmd.Parameters.AddWithValue("@Email", cleanEmail);
                     cmd.Parameters.AddWithValue("@Phone", cleanPhone);
 

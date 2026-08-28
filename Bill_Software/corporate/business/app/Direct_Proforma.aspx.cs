@@ -136,12 +136,39 @@ namespace Bill_Software.corporate.business.app
         // ==========================================================================================
         private void BindClients()
         {
-            DbCL.FillCombo(cmbClient, "select Client_Name from tbl_Client order by Client_Name");
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                string query = "SELECT Client_Name FROM tbl_Client WHERE CompanyID = @CompanyID ORDER BY Client_Name";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        cmbClient.DataSource = rdr;
+                        cmbClient.DataTextField = "Client_Name";
+                        cmbClient.DataBind();
+                    }
+                }
+            }
             cmbClient.Items.Insert(0, "-- Select Client --");
         }
         private void BindCategories()
         {
-            DbCL.FillCombo(cmbproduct_service, "select ProductOrServiceCat from tbl_NewparentProduct order by ProductOrServiceCat");
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                string query = "SELECT ProductOrServiceCat FROM tbl_NewparentProduct ORDER BY ProductOrServiceCat";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        cmbproduct_service.DataSource = rdr;
+                        cmbproduct_service.DataTextField = "ProductOrServiceCat";
+                        cmbproduct_service.DataBind();
+                    }
+                }
+            }
             cmbproduct_service.Items.Insert(0, "-- Select Category --");
         }
 
@@ -150,8 +177,8 @@ namespace Bill_Software.corporate.business.app
             if (cmbClient.SelectedIndex > 0)
             {
                 DbCL.Sqlconnection(); DbCL.ConnectDb();
-                string query = "SELECT Client_Id, Address1, Address2, City, State, pin, Service_tax_no FROM tbl_Client WHERE Client_Name=@Name";
-                SqlParameter[] pram = { new SqlParameter("@Name", cmbClient.Text) };
+                string query = "SELECT Client_Id, Address1, Address2, City, State, pin, Service_tax_no FROM tbl_Client WHERE Client_Name=@Name AND CompanyID = @CompanyID";
+                SqlParameter[] pram = { new SqlParameter("@Name", cmbClient.Text), new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID) };
                 DataTable dt = DbCL.SPreturn_dt(query, pram);
                 if (dt.Rows.Count > 0)
                 {
@@ -432,7 +459,7 @@ namespace Bill_Software.corporate.business.app
             catch (Exception ex)
             {
                 WriteLog("Error: " + ex.Message);
-                lblMessage.Text = "Error: " + ex.Message;
+                lblMessage.Text = "An error occurred while saving the proforma invoice. Please try again.";
                 lblMessage.ForeColor = System.Drawing.Color.Red;
                 PanelMsg.Visible = true;
             }
@@ -450,29 +477,34 @@ namespace Bill_Software.corporate.business.app
 
         private int idreturn()
         {
-            DbCL.Sqlconnection(); DbCL.ConnectDb();
             string date1 = txtinvoiceDate.Text;
             string date2 = date1.Substring(3, 3);
             string date3 = date1.Substring(7, 4);
-            string date4, date5, date6;
+            string date5, date6;
 
             if (date2 == "Jan" || date2 == "Feb" || date2 == "Mar")
             {
-                date4 = (Convert.ToInt32(date3) - 1).ToString();
-                date5 = "31-Mar-" + date4; date6 = "31-Mar-" + date3;
+                string prevYear = (Convert.ToInt32(date3) - 1).ToString();
+                date5 = "31-Mar-" + prevYear; date6 = "31-Mar-" + date3;
             }
             else
             {
-                date4 = (Convert.ToInt32(date3) + 1).ToString();
-                date5 = "31-Mar-" + date3; date6 = "31-Mar-" + date4;
+                string nextYear = (Convert.ToInt32(date3) + 1).ToString();
+                date5 = "31-Mar-" + date3; date6 = "31-Mar-" + nextYear;
             }
 
-            string cmdstring = "select Sl_no from tbl_Proforma where ID=(select max(ID) from tbl_Proforma where cast(Invoice_Date as datetime) between '" + date5 + "' and '" + date6 + "')";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            object res = cmd.ExecuteScalar();
-            int b = (res != null && res != DBNull.Value) ? Convert.ToInt32(res) : 0;
-            DbCL.Conn.Close();
-            return b;
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                string cmdstring = "SELECT Sl_no FROM tbl_Proforma WHERE ID = (SELECT MAX(ID) FROM tbl_Proforma WHERE CAST(Invoice_Date AS datetime) BETWEEN @Date5 AND @Date6)";
+                using (SqlCommand cmd = new SqlCommand(cmdstring, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Date5", date5);
+                    cmd.Parameters.AddWithValue("@Date6", date6);
+                    conn.Open();
+                    object res = cmd.ExecuteScalar();
+                    return (res != null && res != DBNull.Value) ? Convert.ToInt32(res) : 0;
+                }
+            }
         }
 
         private string findmonth()

@@ -37,8 +37,9 @@ namespace Bill_Software.corporate.business.app
         private void LoadRoles()
         {
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM dbo.Roles ORDER BY RoleName", cn))
+            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM dbo.Roles WHERE CompanyID = @CompanyID ORDER BY RoleName", cn))
             {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 var dt = new DataTable();
                 var da = new SqlDataAdapter(cmd);
                 da.Fill(dt);
@@ -217,7 +218,8 @@ namespace Bill_Software.corporate.business.app
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        ShowError("Failed to save permissions: " + ex.Message);
+                        // Ponytail Standard #3: Never expose raw exception details to client
+                        ShowError("An unexpected error occurred while saving permissions. Please try again.");
                     }
                 }
             }
@@ -249,7 +251,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowError("Error creating role: " + ex.Message);
+                // Ponytail Standard #3: Never expose raw exception details to client
+                ShowError("An unexpected error occurred while creating the role. Please try again.");
             }
         }
 
