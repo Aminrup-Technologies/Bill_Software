@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Web.UI.WebControls;
@@ -139,11 +139,11 @@ namespace Bill_Software.corporate.business.app
                 SqlCommand cmd = new SqlCommand("SELECT Client_Id FROM tbl_Client WHERE Client_Name=@Name AND CompanyID=@CompanyID", conn);
                 cmd.Parameters.AddWithValue("@Name", clientName);
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                object cid = cmd.ExecuteScalar();
-                if (cid != null)
+                object res = cmd.ExecuteScalar();
+                if (res != null)
                 {
-                    lblclientId.Text = cid.ToString();
-                    LoadAddresses(cid.ToString(), conn);
+                    lblclientId.Text = res.ToString();
+                    LoadAddresses(lblclientId.Text, conn);
                 }
             }
         }
@@ -151,155 +151,275 @@ namespace Bill_Software.corporate.business.app
         private void LoadAddresses(string cid, SqlConnection conn)
         {
             List_BillingAddress.Items.Clear();
-            string addrQuery = "SELECT Billing_Address FROM tbl_Client_BillingAddress WHERE Client_Id=@CID AND CompanyID=@CompanyID";
-            using (SqlCommand cmd = new SqlCommand(addrQuery, conn))
+            List_ShippingAddress.Items.Clear();
+
+            // 1. Load Main HQ Address
+            SqlCommand cmd1 = new SqlCommand("SELECT Address1+', '+City+', '+pin+', '+State FROM tbl_Client WHERE Client_Id=@CID AND CompanyID=@CompanyID", conn);
+            cmd1.Parameters.AddWithValue("@CID", cid);
+            cmd1.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+            using (SqlDataReader dr = cmd1.ExecuteReader())
             {
-                cmd.Parameters.AddWithValue("@CID", cid);
-                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                using (SqlDataReader dr = cmd.ExecuteReader())
+                while (dr.Read())
                 {
-                    while (dr.Read())
-                        List_BillingAddress.Items.Add(dr["Billing_Address"].ToString());
+                    List_BillingAddress.Items.Add(dr[0].ToString());
+                    List_ShippingAddress.Items.Add(dr[0].ToString());
                 }
             }
+
+            // 2. Load Branch/Site Addresses
+            SqlCommand cmd2 = new SqlCommand("SELECT Address+', '+State+', '+City+', '+pin FROM tbl_ClientRegAddress WHERE Client_Id=@CID AND CompanyID=@CompanyID", conn);
+            cmd2.Parameters.AddWithValue("@CID", cid);
+            cmd2.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+            using (SqlDataReader dr = cmd2.ExecuteReader())
+            {
+                while (dr.Read())
+                {
+                    List_BillingAddress.Items.Add(dr[0].ToString());
+                    List_ShippingAddress.Items.Add(dr[0].ToString());
+                }
+            }
+
+            pnlAddress.Visible = true;
             if (List_BillingAddress.Items.Count > 0)
-                pnlAddress.Visible = true;
+            {
+                List_BillingAddress.SelectedIndex = 0;
+                List_ShippingAddress.SelectedIndex = 0;
+            }
+
+            // Run UI Sync
+            ScriptManager.RegisterStartupScript(this, GetType(), "syncAddr", "setTimeout(syncAddresses, 100);", true);
         }
         #endregion
 
+        #region SMART SEARCH & GRID BINDING
         //protected void btnSertch_Click(object sender, EventArgs e)
         //{
-        //    string cmdstring = "";
-        //    if (RadioButtonList1.SelectedIndex == 0)
-        //    {
-        //        BuindCompanyId();
-        //        cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' order by tbl_Quotation.ID desc";
+        //    string docType = ddlDocType.SelectedValue;
+        //    string qry = "";
+        //    string colDate = "";
+        //    string recordType = "";
+        //    string searchDoc = txtSourceDocNo.Text.Trim();
 
-        //        //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and tbl_Quotation.Status2='No' order by tbl_Quotation.ID desc";
-        //        Buinddatagrid(cmdstring);
+        //    DateTime fromDate = DateTime.MinValue, toDate = DateTime.MinValue;
+        //    bool hasFrom = false, hasTo = false;
+
+        //    if (docType == "Quotation" || docType == "Purchase Order")
+        //    {
+        //        colDate = "t.Quotation_date";
+        //        recordType = docType == "Quotation" ? "Quotation" : "Purchase Order";
+        //        string extRefColumn = docType == "Purchase Order" ? "t.PO_Number" : "t.Quotation_no";
+
+        //        qry = $@"SELECT TOP 100 t.Quotation_no AS DocNo, t.Quotation_date AS DocDate, ISNULL(c.Client_Name, 'Unknown') AS Client_Name, 
+        //                 ISNULL({extRefColumn}, 'N/A') AS ExtRef, ISNULL(l.Name, 'System') AS CreatedBy, ISNULL(t.status1, 'Pending') AS Status,
+        //                 t.Net_amount 
+        //                 FROM tbl_Quotation t 
+        //                 LEFT JOIN tbl_Client c ON t.Client_Id = c.Client_Id 
+        //                 LEFT JOIN tbl_login l ON t.AddedById = l.User_Id
+        //                 WHERE t.CompanyID = @CompanyID AND t.RecordType = @RecordType";
         //    }
-        //    else if (RadioButtonList1.SelectedIndex == 1)
+        //    else if (docType == "Delivery Challan")
         //    {
-        //        //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Status2='No' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-        //        cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+        //        colDate = "t.Chalan_Date";
+        //        qry = $@"SELECT TOP 100 t.Chalan_No AS DocNo, t.Chalan_Date AS DocDate, ISNULL(c.Client_Name, 'Unknown') AS Client_Name, 
+        //                 ISNULL(t.PO_Number, 'N/A') AS ExtRef, ISNULL(l.Name, 'System') AS CreatedBy, ISNULL(t.Status, 'Pending') AS Status,
+        //                 0.00 AS Net_amount 
+        //                 FROM tbl_Chalan t 
+        //                 LEFT JOIN tbl_Client c ON t.Client_ID = c.Client_Id 
+        //                 LEFT JOIN tbl_login l ON t.AddedById = l.User_Id
+        //                 WHERE t.CompanyID = @CompanyID";
+        //    }
+        //    else if (docType == "Proforma")
+        //    {
+        //        colDate = "t.Invoice_Date";
+        //        qry = $@"SELECT TOP 100 t.Invoice_No AS DocNo, t.Invoice_Date AS DocDate, ISNULL(c.Client_Name, 'Unknown') AS Client_Name, 
+        //                 ISNULL(t.PO_Number, 'N/A') AS ExtRef, ISNULL(l.Name, 'System') AS CreatedBy, ISNULL(t.status1, 'Pending') AS Status,
+        //                 CAST(ISNULL(t.Net_Amount, '0') AS DECIMAL(18,2)) AS Net_amount 
+        //                 FROM tbl_Proforma t 
+        //                 LEFT JOIN tbl_Client c ON t.Client_ID = c.Client_Id 
+        //                 LEFT JOIN tbl_login l ON t.AddedById = l.User_Id
+        //                 WHERE t.CompanyID = @CompanyID";
+        //    }
 
-        //        Buinddatagrid(cmdstring);
+        //    if (!string.IsNullOrEmpty(searchDoc))
+        //    {
+        //        if (docType == "Delivery Challan") qry += " AND t.Chalan_No LIKE '%' + @DocRef + '%'";
+        //        else if (docType == "Proforma") qry += " AND t.Invoice_No LIKE '%' + @DocRef + '%'";
+        //        else if (docType == "Purchase Order") qry += " AND t.PO_Number LIKE '%' + @DocRef + '%'";
+        //        else qry += " AND t.Quotation_no LIKE '%' + @DocRef + '%'";
         //    }
         //    else
         //    {
-        //        BuindCompanyId();
-        //        cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+        //        if (cmbvendor.SelectedIndex > 0) qry += " AND t.Client_Id = @CID";
 
-        //        //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Status2='No' and tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-        //        Buinddatagrid(cmdstring);
+        //        hasFrom = DateTime.TryParse(txtfromDate.Text, out fromDate);
+        //        hasTo = DateTime.TryParse(txttodate.Text, out toDate);
+
+        //        if (hasFrom && hasTo) qry += $" AND CAST({colDate} AS DATE) >= @From AND CAST({colDate} AS DATE) <= @To";
+        //        else if (hasFrom) qry += $" AND CAST({colDate} AS DATE) >= @From";
+        //        else if (hasTo) qry += $" AND CAST({colDate} AS DATE) <= @To";
         //    }
-        //    btnSertch.Visible = false;
 
-        //}
-        //private void Buinddatagrid(string cmdstring)
-        //{
-        //    DbCL.Sqlconnection();
-        //    DbCL.ConnectDb();
-        //    SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-        //    SqlDataReader re = cmd.ExecuteReader();
-        //    if (re.Read())
+        //    qry += $" ORDER BY CAST({colDate} AS DATE) DESC";
+
+        //    using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
         //    {
-        //        Buinddatagrid1(cmdstring);
+        //        using (SqlCommand cmd = new SqlCommand(qry, conn))
+        //        {
+        //            cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+        //            if (!string.IsNullOrEmpty(recordType)) cmd.Parameters.AddWithValue("@RecordType", recordType);
+
+        //            if (!string.IsNullOrEmpty(searchDoc))
+        //            {
+        //                cmd.Parameters.AddWithValue("@DocRef", searchDoc);
+        //            }
+        //            else
+        //            {
+        //                if (cmbvendor.SelectedIndex > 0) cmd.Parameters.AddWithValue("@CID", lblclientId.Text);
+        //                if (hasFrom) cmd.Parameters.AddWithValue("@From", fromDate);
+        //                if (hasTo) cmd.Parameters.AddWithValue("@To", toDate);
+        //            }
+
+        //            using (SqlDataAdapter sda = new SqlDataAdapter(cmd))
+        //            {
+        //                DataTable dt = new DataTable();
+        //                sda.Fill(dt);
+        //                gvSearchDocs.DataSource = dt;
+        //                gvSearchDocs.DataBind();
+        //            }
+        //        }
         //    }
-        //    else
-        //    {
-        //        PanelError.Visible = true;
-        //        lblErrorMsg.Text = "No Data Found...";
-        //    }
-        //    DbCL.Conn.Close();
         //}
 
-        //private void Buinddatagrid1(string cmdstring)
-        //{
-        //    DbCL.Sqlconnection();
-        //    DbCL.ConnectDb();
-        //    SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
-        //    DataList1.DataSource = cmd1.ExecuteReader();
-        //    DataList1.DataBind();
-        //    DbCL.Conn.Close();
-        //}
 
-        //private void BuindCompanyId()
-        //{
-        //    string sql = "select CompanyID from tbl_login where User_Id='" + Session["USERID"].ToString() + "'";
-        //    DbCL.Sqlconnection();
-        //    DbCL.ConnectDb();
-        //    SqlCommand cmd = new SqlCommand(sql, DbCL.Conn);
-        //    lblclientId.Text = cmd.ExecuteScalar().ToString();
-        //    DbCL.Conn.Close();
-        //}
-
-        #region DOCUMENT SEARCH
         protected void btnSertch_Click(object sender, EventArgs e)
         {
-            pnlSearchResults.Visible = false;
-            lblSearchMsg.Text = "";
+            string docType = ddlDocType.SelectedValue;
+            string qry = "";
+            string colDate = "";
+            string recordType = "";
+            string searchDoc = txtSourceDocNo.Text.Trim();
 
-            string docNo = txtSearchDocNo.Text.Trim();
-            string vendorName = cmbvendor.SelectedValue;
-            DateTime fromDate, toDate;
+            DateTime fromDate = DateTime.MinValue, toDate = DateTime.MinValue;
+            bool hasFrom = false, hasTo = false;
 
-            if (!DateTime.TryParse(txtfromDate.Text, out fromDate)) fromDate = DateTime.Now.AddMonths(-6);
-            if (!DateTime.TryParse(txttodate.Text, out toDate)) toDate = DateTime.Now;
+            // ==========================================
+            // 1. DYNAMIC SELECT QUERIES & EXT-REF FORMATTING
+            // ==========================================
+            if (docType == "Quotation" || docType == "Purchase Order")
+            {
+                colDate = "t.Quotation_date";
+                recordType = docType == "Quotation" ? "Quotation" : "Purchase Order";
 
+                // For POs, explicitly show both PO and DO numbers in the ExtRef column
+                string extRefColumn = docType == "Purchase Order"
+                    ? "ISNULL(t.PO_Number, 'N/A') + ' / ' + ISNULL(t.DO_Number, 'N/A')"
+                    : "ISNULL(t.PO_Number, 'N/A')";
+
+                qry = $@"SELECT TOP 100 t.Quotation_no AS DocNo, t.Quotation_date AS DocDate, ISNULL(c.Client_Name, 'Unknown') AS Client_Name, 
+                         {extRefColumn} AS ExtRef, ISNULL(l.Name, 'System') AS CreatedBy, ISNULL(t.status1, 'Pending') AS Status,
+                         t.Net_amount 
+                         FROM tbl_Quotation t 
+                         LEFT JOIN tbl_Client c ON t.Client_Id = c.Client_Id 
+                         LEFT JOIN tbl_login l ON t.AddedById = l.User_Id
+                         WHERE t.CompanyID = @CompanyID AND t.RecordType = @RecordType";
+            }
+            else if (docType == "Delivery Challan")
+            {
+                colDate = "t.Chalan_Date";
+
+                // FIX: Swapped PO_Number for Quotation_No. 
+                // FIX: Removed tbl_login join and hardcoded 'System' and 'Delivered' since those columns don't exist in tbl_Chalan.
+                qry = $@"SELECT TOP 100 
+                         t.Chalan_No AS DocNo, 
+                         t.Chalan_Date AS DocDate, 
+                         ISNULL(c.Client_Name, 'Unknown') AS Client_Name, 
+                         ISNULL(t.Quotation_No, 'N/A') AS ExtRef, 
+                         'System' AS CreatedBy, 
+                         'Delivered' AS Status,
+                         0.00 AS Net_amount 
+                         FROM tbl_Chalan t 
+                         LEFT JOIN tbl_Client c ON t.Client_ID = c.Client_Id 
+                         WHERE t.CompanyID = @CompanyID";
+            }
+            else if (docType == "Proforma")
+            {
+                colDate = "t.Invoice_Date";
+
+                // FIX: Swapped PO_Number for Quotation_No.
+                // FIX: Removed tbl_login join. Hardcoded 'System' and 'Generated' to satisfy the GridView schema.
+                qry = $@"SELECT TOP 100 
+                         t.Invoice_No AS DocNo, 
+                         t.Invoice_Date AS DocDate, 
+                         ISNULL(c.Client_Name, 'Unknown') AS Client_Name, 
+                         ISNULL(t.Quotation_No, 'N/A') AS ExtRef, 
+                         'System' AS CreatedBy, 
+                         'Generated' AS Status,
+                         CAST(ISNULL(NULLIF(t.Net_Amount, ''), '0') AS DECIMAL(18,2)) AS Net_amount 
+                         FROM tbl_Proforma t 
+                         LEFT JOIN tbl_Client c ON t.Client_ID = c.Client_Id 
+                         WHERE t.CompanyID = @CompanyID";
+            }
+
+            // ==========================================
+            // 2. THE OMNI-SEARCH FILTERS
+            // ==========================================
+            if (!string.IsNullOrEmpty(searchDoc))
+            {
+                if (docType == "Delivery Challan")
+                    qry += " AND (t.Chalan_No LIKE '%' + @DocRef + '%' OR t.Quotation_No LIKE '%' + @DocRef + '%')";
+
+                // FIX: Search against Quotation_No instead of PO_Number for Proformas
+                else if (docType == "Proforma")
+                    qry += " AND (t.Invoice_No LIKE '%' + @DocRef + '%' OR t.Quotation_No LIKE '%' + @DocRef + '%')";
+
+                else if (docType == "Purchase Order")
+                    qry += " AND (t.Quotation_no LIKE '%' + @DocRef + '%' OR t.PO_Number LIKE '%' + @DocRef + '%' OR t.DO_Number LIKE '%' + @DocRef + '%')";
+
+                else // Quotation
+                    qry += " AND (t.Quotation_no LIKE '%' + @DocRef + '%' OR t.PO_Number LIKE '%' + @DocRef + '%')";
+            }
+            else
+            {
+                if (cmbvendor.SelectedIndex > 0) qry += " AND t.Client_Id = @CID";
+
+                hasFrom = DateTime.TryParse(txtfromDate.Text, out fromDate);
+                hasTo = DateTime.TryParse(txttodate.Text, out toDate);
+
+                if (hasFrom && hasTo) qry += $" AND CAST({colDate} AS DATE) >= @From AND CAST({colDate} AS DATE) <= @To";
+                else if (hasFrom) qry += $" AND CAST({colDate} AS DATE) >= @From";
+                else if (hasTo) qry += $" AND CAST({colDate} AS DATE) <= @To";
+            }
+
+            qry += $" ORDER BY CAST({colDate} AS DATE) DESC";
+
+            // ==========================================
+            // 3. SECURE EXECUTION
+            // ==========================================
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                conn.Open();
-                int companyId = CompanyContext.CurrentCompanyID;
-
-                StringBuilder sb = new StringBuilder();
-                sb.Append(@"
-                    SELECT 
-                        d.DocumentNo, d.DocumentType, d.DocumentDate, d.ClientName,
-                        d.TotalAmount, d.Status, d.AddedByName,
-                        ISNULL((SELECT COUNT(*) FROM vw_InvDocLineItems i WHERE i.RefDocumentNo = d.DocumentNo AND i.CompanyID = @CID AND i.IsInvoiced = 1), 0) AS InvoicedCount,
-                        ISNULL((SELECT COUNT(*) FROM vw_InvDocLineItems i WHERE i.RefDocumentNo = d.DocumentNo AND i.CompanyID = @CID AND i.IsInvoiced = 0), 0) AS PendingCount
-                    FROM vw_InvDocumentSearch d
-                    WHERE d.CompanyID = @CID AND d.Status = 'Active'");
-
-                List<SqlParameter> parms = new List<SqlParameter>();
-                parms.Add(new SqlParameter("@CID", companyId));
-
-                if (!string.IsNullOrEmpty(docNo))
+                using (SqlCommand cmd = new SqlCommand(qry, conn))
                 {
-                    sb.Append(" AND d.DocumentNo LIKE @DocNo");
-                    parms.Add(new SqlParameter("@DocNo", "%" + docNo + "%"));
-                }
-                if (!string.IsNullOrEmpty(vendorName) && vendorName != "0")
-                {
-                    sb.Append(" AND d.ClientName = @Vendor");
-                    parms.Add(new SqlParameter("@Vendor", vendorName));
-                }
-                sb.Append(" AND CAST(d.DocumentDate AS DATE) BETWEEN @FD AND @TD");
-                parms.Add(new SqlParameter("@FD", fromDate));
-                parms.Add(new SqlParameter("@TD", toDate));
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    if (!string.IsNullOrEmpty(recordType)) cmd.Parameters.AddWithValue("@RecordType", recordType);
 
-                sb.Append(" ORDER BY d.DocumentDate DESC");
+                    if (!string.IsNullOrEmpty(searchDoc))
+                    {
+                        // Secure Injection: SQL evaluates string parameters properly, preventing the numeric casting crash
+                        cmd.Parameters.AddWithValue("@DocRef", searchDoc);
+                    }
+                    else
+                    {
+                        if (cmbvendor.SelectedIndex > 0) cmd.Parameters.AddWithValue("@CID", lblclientId.Text);
+                        if (hasFrom) cmd.Parameters.AddWithValue("@From", fromDate);
+                        if (hasTo) cmd.Parameters.AddWithValue("@To", toDate);
+                    }
 
-                using (SqlCommand cmd = new SqlCommand(sb.ToString(), conn))
-                {
-                    cmd.Parameters.AddRange(parms.ToArray());
                     using (SqlDataAdapter sda = new SqlDataAdapter(cmd))
                     {
                         DataTable dt = new DataTable();
                         sda.Fill(dt);
-                        if (dt.Rows.Count > 0)
-                        {
-                            gvSearchDocs.DataSource = dt;
-                            gvSearchDocs.DataBind();
-                            pnlSearchResults.Visible = true;
-                        }
-                        else
-                        {
-                            lblSearchMsg.Text = "No documents found matching your criteria.";
-                            lblSearchMsg.ForeColor = System.Drawing.Color.OrangeRed;
-                            pnlSearchMsg.Visible = true;
-                        }
+                        gvSearchDocs.DataSource = dt;
+                        gvSearchDocs.DataBind();
                     }
                 }
             }
@@ -307,103 +427,226 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnResetSearch_Click(object sender, EventArgs e)
         {
-            txtSearchDocNo.Text = "";
-            txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
-            txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
-            cmbvendor.SelectedIndex = 0;
-            pnlSearchResults.Visible = false;
-            pnlSearchMsg.Visible = false;
+            // 1. Clear text inputs
+            txtSourceDocNo.Text = string.Empty;
+            txtfromDate.Text = string.Empty;
+            txttodate.Text = string.Empty;
+
+            // 2. Reset Dropdowns (Safely)
+            if (cmbvendor.Items.Count > 0)
+            {
+                cmbvendor.ClearSelection();
+                cmbvendor.SelectedIndex = 0;
+            }
+
+            if (ddlDocType.Items.Count > 0)
+            {
+                ddlDocType.ClearSelection();
+                ddlDocType.SelectedIndex = 0; // Usually defaults back to 'Quotation'
+            }
+
+            // 3. Clear any selected client ID references
+            lblclientId.Text = string.Empty;
+
+            // 4. Fire the search event again to load the default top 100 unfiltered records
+            btnSertch_Click(sender, e);
+
+            // 5. Re-trigger the JS to fix the Omni-Search placeholder text
+            ScriptManager.RegisterStartupScript(this, GetType(), "ResetUI", "setTimeout(updateDocPlaceholder, 100);", true);
         }
 
         protected void gvSearchDocs_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName != "Select") return;
-            int idx = Convert.ToInt32(e.CommandArgument);
-            GridViewRow row = gvSearchDocs.Rows[idx];
-            string docNo = row.Cells[0].Text.Trim();
-            string docType = row.Cells[1].Text.Trim();
-            string clientName = row.Cells[3].Text.Trim();
-            hdnSelectedDocNo.Value = docNo;
-            hdnSelectedDocType.Value = docType;
+            // 1. Early Exit: Reduces deep nesting
+            if (e.CommandName != "SelectDoc") return;
 
-            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            GridViewRow row = (GridViewRow)(((Button)e.CommandSource).NamingContainer);
+            string clientName = HttpUtility.HtmlDecode(row.Cells[2].Text);
+
+            // 2. Sync Client Dropdown safely
+            if (cmbvendor.SelectedItem == null || cmbvendor.SelectedItem.Text.Trim() != clientName.Trim())
             {
-                conn.Open();
-                int companyId = CompanyContext.CurrentCompanyID;
+                ListItem item = cmbvendor.Items.FindByText(clientName);
+                if (item == null)
+                {
+                    foreach (ListItem li in cmbvendor.Items)
+                    {
+                        if (li.Text.Trim().Equals(clientName.Trim(), StringComparison.OrdinalIgnoreCase))
+                        {
+                            item = li; break;
+                        }
+                    }
+                }
 
-                // 1. Fetch Document Metadata (Invoice History)
+                if (item != null)
+                {
+                    cmbvendor.ClearSelection();
+                    item.Selected = true;
+                    LoadClientDataByName(item.Text);
+                }
+                else
+                {
+                    ShowMsg($"Client '{clientName}' not found in active list.", false);
+                    return;
+                }
+            }
+
+            // 3. Address Validations
+            if (List_BillingAddress.Items.Count == 0) { ShowMsg("No address found for this client.", false); return; }
+            if (List_BillingAddress.SelectedIndex == -1) List_BillingAddress.SelectedIndex = 0;
+
+            // ==========================================
+            // 🚀 INITIALIZE CONTEXT STATE
+            // ==========================================
+            string docNo = e.CommandArgument.ToString();
+            string docType = ddlDocType.SelectedValue;
+            int companyId = CompanyContext.CurrentCompanyID;
+
+            ViewState["SelectedDocNo"] = docNo;
+            ViewState["SelectedDocType"] = docType;
+            ViewState["RemovedItems"] = null;
+            btnRestore.Visible = false;
+            hdnRefNo.Value = docNo;
+
+            // Map UI Headers (LHS & RHS)
+            lblConfirmClient.Text = cmbvendor.SelectedItem != null && cmbvendor.SelectedIndex > 0 ? cmbvendor.SelectedItem.Text : clientName;
+            lblBillingAddress.Text = List_BillingAddress.SelectedItem != null ? List_BillingAddress.SelectedItem.Text : "Billing Address Not Provided";
+            lblConfirmAddress.Text = List_ShippingAddress.SelectedItem != null ? List_ShippingAddress.SelectedItem.Text : "Shipping Address Not Provided";
+
+            lblConfirmDoc.Text = $"{docType.ToUpper()} NO: {docNo}";
+            lblDocTypeView.Text = docType;
+
+            // ==========================================
+            // 🚀 SINGLE-CONNECTION DATABASE FETCH
+            // ==========================================
+            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open(); // Open once, use for both MetaData and Line Items
+
+                // --- A. Fetch MetaData (RHS Card) ---
                 FetchDocumentMetadata(conn, docNo, docType, companyId);
 
-                // 2. Fetch Line Items (items to invoice)
+                // --- B. Fetch Line Items ---
                 string itemQuery = GetItemQueryByDocType(docType);
+
                 using (SqlCommand cmd = new SqlCommand(itemQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@Ref", docNo);
                     cmd.Parameters.AddWithValue("@CompanyID", companyId);
+
                     using (SqlDataAdapter sda = new SqlDataAdapter(cmd))
                     {
-                        dtItems = new DataTable();
-                        sda.Fill(dtItems);
+                        DataTable dt = new DataTable();
+                        sda.Fill(dt);
+
+                        // Subtract already-invoiced qty (ItemNo when present, else product identity)
+                        ReconcilePendingQuantities(dt, docNo, companyId, conn);
+
+                        // ==========================================
+                        // 🚀 SMART GATEKEEPER & AUTO-FILTER
+                        // ==========================================
+                        decimal totalPendingForDoc = 0;
+
+                        // Loop backward to safely delete rows from the DataTable in-memory
+                        for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                        {
+                            decimal pending = 0;
+                            if (dt.Rows[i]["PendingQty"] != DBNull.Value)
+                                decimal.TryParse(dt.Rows[i]["PendingQty"].ToString(), out pending);
+
+                            if (pending <= 0)
+                            {
+                                dt.Rows[i].Delete(); // Strip out fully billed items
+                            }
+                            else
+                            {
+                                totalPendingForDoc += pending;
+                            }
+                        }
+                        dt.AcceptChanges();
+
+                        // Gatekeeper Block
+                        if (totalPendingForDoc <= 0 || dt.Rows.Count == 0)
+                        {
+                            ShowMsg($"Document {docNo} has already been fully invoiced. No pending items remain.", false);
+                            return; // Hard Stop: Keep user on Tab 1
+                        }
+
+                        // Push to ViewState & Bind
+                        ViewState["InvoiceItems"] = dt;
+                        BindProductsGrid();
                     }
                 }
-
-                // 3. Refresh invoice history from DB (overrides any stale memory state)
-                BindInvoiceHistory(docNo);
-
-                // 4. Bind the Products Grid
-                BindProductsGrid();
-
-                // 5. Update UI State
-                lblClientName.Text = clientName;
-                lblSelectedDoc.Text = docNo + " (" + docType + ")";
-                btnProceedToInvoice.Visible = true;
-                btnBackSetup.Visible = true;
-                mvInvoice.ActiveViewIndex = 1;
             }
+
+            // Finalize transition to Tab 2
+            BindInvoiceHistory(docNo);
+            mvInvoice.ActiveViewIndex = 1;
         }
+
+        // ==========================================
+        // 🛠️ HELPER METHODS (Add these just below)
+        // ==========================================
 
         private void FetchDocumentMetadata(SqlConnection conn, string docNo, string docType, int companyId)
         {
-            string metaQuery = "";
+            string metaSql = "";
             if (docType == "Quotation" || docType == "Purchase Order")
-                metaQuery = "SELECT TOP 1 Gross, discount, sub_total, Net_Amount, Quotation_Date AS DocDate FROM tbl_Quotation WHERE Quotation_no = @DocNo AND CompanyID = @CID";
-            else if (docType == "Proforma")
-                metaQuery = "SELECT TOP 1 Gross, discount, sub_total, Net_Amount, Invoice_Date AS DocDate FROM tbl_Proforma WHERE Invoice_No = @DocNo AND CompanyID = @CID";
-            else
-                metaQuery = "SELECT TOP 1 Gross, discount, sub_total, Net_Amount, Challan_Date AS DocDate FROM tbl_Chalan WHERE Chalan_No = @DocNo AND CompanyID = @CID";
-
-            using (SqlCommand cmd = new SqlCommand(metaQuery, conn))
             {
-                cmd.Parameters.AddWithValue("@DocNo", docNo);
-                cmd.Parameters.AddWithValue("@CID", companyId);
-                using (SqlDataReader dr = cmd.ExecuteReader())
+                metaSql = @"SELECT DO_Number, PO_Number, CONVERT(varchar, PO_Date, 106) as PODate, 
+                           CONVERT(varchar, Validity_StartDate, 106) as VStart, CONVERT(varchar, Validity_EndDate, 106) as VEnd 
+                    FROM tbl_Quotation WHERE Quotation_no = @DocNo AND CompanyID = @CompanyID";
+            }
+            else if (docType == "Delivery Challan")
+            {
+                metaSql = @"SELECT '' as DO_Number, PO_Number, CONVERT(varchar, PO_Date, 106) as PODate, 
+                           '' as VStart, '' as VEnd 
+                    FROM tbl_Chalan WHERE Chalan_No = @DocNo AND CompanyID = @CompanyID";
+            }
+
+            if (string.IsNullOrEmpty(metaSql)) return;
+
+            try
+            {
+                using (SqlCommand cmdMeta = new SqlCommand(metaSql, conn))
                 {
-                    if (dr.Read())
+                    cmdMeta.Parameters.AddWithValue("@DocNo", docNo);
+                    cmdMeta.Parameters.AddWithValue("@CompanyID", companyId);
+
+                    using (SqlDataReader drMeta = cmdMeta.ExecuteReader())
                     {
-                        decimal gross = dr["Gross"] != DBNull.Value ? Convert.ToDecimal(dr["Gross"]) : 0;
-                        decimal discount = dr["discount"] != DBNull.Value ? Convert.ToDecimal(dr["discount"]) : 0;
-                        decimal netAmt = dr["Net_Amount"] != DBNull.Value ? Convert.ToDecimal(dr["Net_Amount"]) : 0;
-                        DateTime docDate = dr["DocDate"] != DBNull.Value ? Convert.ToDateTime(dr["DocDate"]) : DateTime.Now;
-
-                        // Update Memory Row 0
-                        if (dtItems.Rows.Count > 0)
+                        if (drMeta.Read())
                         {
-                            dtItems.Rows[0]["Gross"] = gross;
-                            dtItems.Rows[0]["discount"] = discount;
-                            dtItems.Rows[0]["Net_Amount"] = netAmt;
-                        }
+                            // 1. Safely extract strings (C# 5.0 compatible)
+                            string doNum = drMeta["DO_Number"] != DBNull.Value ? drMeta["DO_Number"].ToString() : "";
+                            string poNum = drMeta["PO_Number"] != DBNull.Value ? drMeta["PO_Number"].ToString() : "";
+                            string poDate = drMeta["PODate"] != DBNull.Value ? drMeta["PODate"].ToString() : "";
+                            string vStart = drMeta["VStart"] != DBNull.Value ? drMeta["VStart"].ToString() : "";
+                            string vEnd = drMeta["VEnd"] != DBNull.Value ? drMeta["VEnd"].ToString() : "";
 
-                        txtinvoiceDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
-                        txtInDocDate.Text = docDate.ToString("dd-MMM-yyyy");
+                            // 2. Assign to labels with whitespace validation
+                            lblConfirmDO.Text = !string.IsNullOrWhiteSpace(doNum) ? doNum : "N/A";
+                            lblConfirmPONum.Text = !string.IsNullOrWhiteSpace(poNum) ? poNum : "N/A";
+                            lblConfirmPODate.Text = !string.IsNullOrWhiteSpace(poDate) ? poDate : "N/A";
+                            lblConfirmValStart.Text = !string.IsNullOrWhiteSpace(vStart) ? vStart : "N/A";
+                            lblConfirmValEnd.Text = !string.IsNullOrWhiteSpace(vEnd) ? vEnd : "N/A";
+                        }
                     }
                 }
             }
+            catch
+            {
+                // Fail gracefully
+                lblConfirmDO.Text = "N/A"; lblConfirmPONum.Text = "N/A"; lblConfirmPODate.Text = "N/A";
+                lblConfirmValStart.Text = "N/A"; lblConfirmValEnd.Text = "N/A";
+            }
         }
-        #endregion
 
-        #region PRODUCT FETCHING (GETITEMQUERYBYDOCTYPE) — 3-WAY BRANCHING SQL
         private string GetItemQueryByDocType(string docType)
         {
+            // InvoicedQty / PendingQty are placeholders. ReconcilePendingQuantities
+            // overwrites them using the same Quoted - Consumed rule as add_chalan.
             if (docType == "Quotation" || docType == "Purchase Order")
             {
                 return @"
@@ -438,351 +681,555 @@ namespace Bill_Software.corporate.business.app
                 SELECT 
                     cd.Product_id AS TrueID, cd.Product_code AS TrueHSN, cd.Product_name, 
                     CAST(cd.Quantity AS DECIMAL(18,2)) AS QuotedQty,
+<<<<<<< HEAD
                     ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice iv ON id.Invoice_No = iv.Invoice_No WHERE id.Quotation_no = cd.Challan_No AND id.Product_id = cd.Product_id AND ISNULL(id.ItemNo, '') = ISNULL(cd.ItemNo, '') AND id.CompanyID = @CompanyID AND iv.status2 = 'Active'), 0) AS InvoicedQty,
                     CAST(cd.Quantity AS DECIMAL(18,2)) - ISNULL((SELECT SUM(CAST(id.Quantity AS DECIMAL(18,2))) FROM tbl_Invoice_details id INNER JOIN tbl_Invoice iv ON id.Invoice_No = iv.Invoice_No WHERE id.Quotation_no = cd.Challan_No AND id.Product_id = cd.Product_id AND ISNULL(id.ItemNo, '') = ISNULL(cd.ItemNo, '') AND id.CompanyID = @CompanyID AND iv.status2 = 'Active'), 0) AS PendingQty,
+=======
+                    CAST(0 AS DECIMAL(18,2)) AS InvoicedQty,
+                    CAST(cd.Quantity AS DECIMAL(18,2)) AS PendingQty,
+>>>>>>> 824f75ffdbc359503c6ea96317e92faff7142dd8
                     ISNULL(qd.sail_rate, 0) AS sail_rate, ISNULL(qd.discount_rate, 0) AS discountRate, ISNULL(qd.Service_tax_rate, 0) AS Service_tax_rate, ISNULL(qd.specification, '') AS specification, ISNULL(np.Quantity, '0') AS AvailableStock,
-                    '' AS ItemNo, '' AS MaterialNo, '' AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
+                    ISNULL(cd.ItemNo, '') AS ItemNo, ISNULL(cd.MaterialNo, '') AS MaterialNo, ISNULL(cd.PackSize, '') AS PackSize, '' AS Unit, '' AS DeliveryDate, '' AS Department, '' AS ItemRemarks
                 FROM tbl_Challan_details cd
                 LEFT JOIN tbl_Chalan ch ON cd.Challan_no = ch.Chalan_No AND ch.CompanyID = @CompanyID
                 LEFT JOIN tbl_Quotaion_details qd ON ch.Quotation_No = qd.Quotation_no AND qd.Product_Code = cd.Product_id AND qd.CompanyID = @CompanyID
                 LEFT JOIN tbl_NewProduct np ON np.ProductID = cd.Product_id AND np.CompanyID = @CompanyID
                 WHERE cd.Challan_no = @Ref AND cd.CompanyID = @CompanyID";
         }
+
+        private class PriorInvoiceLine
+        {
+            public string ItemNo;
+            public string ProductId;
+            public string ProductCode;
+            public decimal Qty;
+            public bool Allocated;
+        }
+
+        // Same pending rule as add_chalan: QuotedQty - already billed qty.
+        // ItemNo match when both sides have a line no; otherwise product identity
+        // (Product_id / Product_Code either way) so legacy invoices without ItemNo still consume qty.
+        private void ReconcilePendingQuantities(DataTable dt, string docNo, int companyId, SqlConnection conn)
+        {
+            if (dt == null || dt.Rows.Count == 0) return;
+
+            List<PriorInvoiceLine> billed = LoadPriorInvoiceLines(docNo, companyId, conn);
+            decimal[] invoiced = new decimal[dt.Rows.Count];
+
+            // Pass 1: invoices that stored ItemNo consume the matching source line only
+            for (int b = 0; b < billed.Count; b++)
+            {
+                if (string.IsNullOrWhiteSpace(billed[b].ItemNo)) continue;
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (!ItemNosMatch(GetRowString(dt.Rows[i], "ItemNo"), billed[b].ItemNo)) continue;
+                    invoiced[i] += billed[b].Qty;
+                    billed[b].Allocated = true;
+                    break;
+                }
+            }
+
+            // Pass 2: legacy invoices with blank ItemNo (or unmatched ItemNo) consume by product identity
+            for (int b = 0; b < billed.Count; b++)
+            {
+                if (billed[b].Allocated) continue;
+                decimal remaining = billed[b].Qty;
+                int firstMatch = -1;
+
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    if (!ProductsMatch(GetRowString(dt.Rows[i], "TrueID"), GetRowString(dt.Rows[i], "TrueHSN"), billed[b].ProductId, billed[b].ProductCode))
+                        continue;
+
+                    if (firstMatch < 0) firstMatch = i;
+                    decimal quoted = ParseQty(dt.Rows[i]["QuotedQty"]);
+                    decimal pendingLeft = quoted - invoiced[i];
+                    if (pendingLeft <= 0) continue;
+
+                    decimal take = remaining < pendingLeft ? remaining : pendingLeft;
+                    invoiced[i] += take;
+                    remaining -= take;
+                    if (remaining <= 0) break;
+                }
+
+                // Over-invoice leftover still belongs on the first matching product line
+                if (remaining > 0 && firstMatch >= 0)
+                    invoiced[firstMatch] += remaining;
+
+                billed[b].Allocated = true;
+            }
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                decimal quoted = ParseQty(dt.Rows[i]["QuotedQty"]);
+                dt.Rows[i]["QuotedQty"] = quoted;
+                dt.Rows[i]["InvoicedQty"] = invoiced[i];
+                dt.Rows[i]["PendingQty"] = quoted - invoiced[i];
+            }
+        }
+
+        private List<PriorInvoiceLine> LoadPriorInvoiceLines(string docNo, int companyId, SqlConnection conn)
+        {
+            List<PriorInvoiceLine> list = new List<PriorInvoiceLine>();
+            string sql = @"
+                SELECT d.ItemNo, d.Product_id, d.Product_Code, d.Quantity, h.status2
+                FROM tbl_Invoice_details d
+                INNER JOIN tbl_Invoice h ON d.Invoice_No = h.Invoice_No
+                WHERE h.CompanyID = @CompanyID
+                  AND ISNULL(h.status2, 'Active') <> 'Block'
+                  AND (
+                        LTRIM(RTRIM(ISNULL(d.Quotation_no, ''))) = @Ref
+                     OR LTRIM(RTRIM(ISNULL(h.Quotation_No, ''))) = @Ref
+                  )";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                cmd.Parameters.AddWithValue("@Ref", docNo == null ? "" : docNo.Trim());
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        string status = dr["status2"] == DBNull.Value ? "" : dr["status2"].ToString().Trim();
+                        if (status.Equals("Block", StringComparison.OrdinalIgnoreCase)
+                            || status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        PriorInvoiceLine line = new PriorInvoiceLine();
+                        line.ItemNo = GetDbString(dr["ItemNo"]);
+                        line.ProductId = GetDbString(dr["Product_id"]);
+                        line.ProductCode = GetDbString(dr["Product_Code"]);
+                        line.Qty = ParseQty(dr["Quantity"]);
+                        line.Allocated = false;
+                        if (line.Qty != 0)
+                            list.Add(line);
+                    }
+                }
+            }
+            return list;
+        }
+
+        private static string GetDbString(object value)
+        {
+            return value == null || value == DBNull.Value ? "" : value.ToString().Trim();
+        }
+
+        private static string GetRowString(DataRow row, string column)
+        {
+            if (row == null || !row.Table.Columns.Contains(column) || row[column] == DBNull.Value) return "";
+            return row[column].ToString().Trim();
+        }
+
+        private static decimal ParseQty(object value)
+        {
+            if (value == null || value == DBNull.Value) return 0;
+            if (value is decimal) return (decimal)value;
+            if (value is double) return Convert.ToDecimal((double)value);
+            if (value is float) return Convert.ToDecimal((float)value);
+            if (value is int) return (int)value;
+            decimal q;
+            decimal.TryParse(value.ToString().Trim(), out q);
+            return q;
+        }
+
+        private static bool ItemNosMatch(string sourceItemNo, string invoiceItemNo)
+        {
+            if (string.IsNullOrWhiteSpace(sourceItemNo) || string.IsNullOrWhiteSpace(invoiceItemNo)) return false;
+            int srcNo, invNo;
+            if (int.TryParse(sourceItemNo.Trim(), out srcNo) && int.TryParse(invoiceItemNo.Trim(), out invNo))
+                return srcNo == invNo && srcNo > 0;
+            return sourceItemNo.Trim().Equals(invoiceItemNo.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool ProductsMatch(string sourceTrueId, string sourceHsn, string invoiceProductId, string invoiceProductCode)
+        {
+            List<string> sourceKeys = new List<string>();
+            if (!string.IsNullOrWhiteSpace(sourceTrueId)) sourceKeys.Add(sourceTrueId.Trim().ToUpperInvariant());
+            if (!string.IsNullOrWhiteSpace(sourceHsn)) sourceKeys.Add(sourceHsn.Trim().ToUpperInvariant());
+            if (sourceKeys.Count == 0) return false;
+
+            string invId = string.IsNullOrWhiteSpace(invoiceProductId) ? "" : invoiceProductId.Trim().ToUpperInvariant();
+            string invCode = string.IsNullOrWhiteSpace(invoiceProductCode) ? "" : invoiceProductCode.Trim().ToUpperInvariant();
+            return (!string.IsNullOrEmpty(invId) && sourceKeys.Contains(invId))
+                || (!string.IsNullOrEmpty(invCode) && sourceKeys.Contains(invCode));
+        }
         #endregion
 
-        #region PRODUCTS GRID BINDING & EDITING (MEMORY TABLE)
+        #region STEP 2: PRODUCT MANAGEMENT, BULK/SINGLE DELETE & UNDO
         private void BindProductsGrid()
         {
-            GridView1.DataSource = dtItems;
+            DataTable dtActive = ViewState["InvoiceItems"] as DataTable;
+            DataTable dtRemoved = ViewState["RemovedItems"] as DataTable;
+
+            GridView1.DataSource = dtActive;
             GridView1.DataBind();
+
+            // Update item counters in header
+            lblActiveCount.Text = dtActive != null ? dtActive.Rows.Count.ToString() : "0";
+            lblRemovedCount.Text = dtRemoved != null ? dtRemoved.Rows.Count.ToString() : "0";
+
+            ScriptManager.RegisterStartupScript(this, GetType(), "calc", "setTimeout(function(){ var rows=document.getElementById('" + GridView1.ClientID + "').getElementsByTagName('tr'); for(var i=1;i<rows.length;i++){ var t=rows[i].querySelector(\"input[id*='txtqnty']\"); if(t) CalculateRow(t,'MAIN'); } }, 500);", true);
         }
 
         protected void gvGrid1_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            // Row editing handled by standard controls
+            if (e.CommandName == "RemoveItem")
+            {
+                int index = Convert.ToInt32(e.CommandArgument);
+                DataTable dt = (DataTable)ViewState["InvoiceItems"];
+                SyncGridToTable(dt);
+
+                DataTable dtRemoved = ViewState["RemovedItems"] as DataTable ?? dt.Clone();
+                dtRemoved.ImportRow(dt.Rows[index]);
+                ViewState["RemovedItems"] = dtRemoved;
+
+                dt.Rows[index].Delete();
+                dt.AcceptChanges();
+                ViewState["InvoiceItems"] = dt;
+
+                BindProductsGrid();
+                btnRestore.Visible = true;
+            }
         }
 
         protected void btnRemoveBulk_Click(object sender, EventArgs e)
         {
-            List<int> removeIndices = new List<int>();
-            foreach (GridViewRow row in GridView1.Rows)
+            DataTable dt = (DataTable)ViewState["InvoiceItems"];
+            if (dt == null) return;
+
+            SyncGridToTable(dt);
+
+            DataTable dtRemoved = ViewState["RemovedItems"] as DataTable ?? dt.Clone();
+            bool itemsRemoved = false;
+
+            for (int i = GridView1.Rows.Count - 1; i >= 0; i--)
             {
+                GridViewRow row = GridView1.Rows[i];
                 CheckBox chk = (CheckBox)row.FindControl("chkSelect");
                 if (chk != null && chk.Checked)
-                    removeIndices.Add(row.RowIndex);
+                {
+                    dtRemoved.ImportRow(dt.Rows[i]);
+                    dt.Rows[i].Delete();
+                    itemsRemoved = true;
+                }
             }
 
-            foreach (int idx in removeIndices.OrderByDescending(x => x))
+            if (itemsRemoved)
             {
-                if (idx < dtItems.Rows.Count)
-                    dtItems.Rows[idx].Delete();
-            }
+                ViewState["RemovedItems"] = dtRemoved;
+                dt.AcceptChanges();
+                ViewState["InvoiceItems"] = dt;
 
-            SyncGridToTable(dtItems);
-            BindProductsGrid();
-            ShowMsg("Selected items removed.", true);
+                BindProductsGrid();
+                btnRestore.Visible = true;
+                ShowMsg("Selected items removed. You can undo this action if needed.", true);
+            }
+            else
+            {
+                ShowMsg("Please check the box next to at least one item to remove.", false);
+            }
         }
 
+        // NEW: Instantly clean up all rows where Bill Qty is 0
         protected void btnRemoveZeroQty_Click(object sender, EventArgs e)
         {
-            // Sync GridView TextBoxes back to Memory Table before filtering
-            SyncGridToTable(dtItems);
+            DataTable dt = (DataTable)ViewState["InvoiceItems"];
+            if (dt == null) return;
 
-            List<DataRow> toRemove = new List<DataRow>();
-            foreach (DataRow row in dtItems.Rows)
+            // 1. Sync any typing the user just did before cleaning
+            SyncGridToTable(dt);
+
+            DataTable dtRemoved = ViewState["RemovedItems"] as DataTable ?? dt.Clone();
+            bool itemsRemoved = false;
+            int removedCount = 0;
+
+            // 2. Loop backwards to safely delete multiple rows
+            for (int i = dt.Rows.Count - 1; i >= 0; i--)
             {
                 decimal qty = 0;
-                decimal.TryParse(row["QuotedQty"].ToString(), out qty);
+                if (dt.Rows[i]["PendingQty"] != DBNull.Value)
+                {
+                    decimal.TryParse(dt.Rows[i]["PendingQty"].ToString(), out qty);
+                }
+
+                // If Bill Qty is 0 (or somehow negative), move it to the recycle bin
                 if (qty <= 0)
-                    toRemove.Add(row);
+                {
+                    dtRemoved.ImportRow(dt.Rows[i]);
+                    dt.Rows[i].Delete();
+                    itemsRemoved = true;
+                    removedCount++;
+                }
             }
 
-            foreach (DataRow row in toRemove)
-                dtItems.Rows.Remove(row);
+            // 3. Process the cleanup
+            if (itemsRemoved)
+            {
+                ViewState["RemovedItems"] = dtRemoved; // Save to Undo memory
+                dt.AcceptChanges();
+                ViewState["InvoiceItems"] = dt;
 
-            SyncGridToTable(dtItems);
-            BindProductsGrid();
-            ShowMsg("Zero-quantity items removed.", true);
+                BindProductsGrid();
+                btnRestore.Visible = true; // Show the Undo button
+                ShowMsg($"Cleaned up {removedCount} zero-quantity items.", true);
+            }
+            else
+            {
+                ShowMsg("Grid is already clean! No zero-quantity items found.", false);
+            }
         }
 
         protected void btnRestore_Click(object sender, EventArgs e)
         {
-            // Re-fetch from DB using the saved document reference
-            string docNo = hdnSelectedDocNo.Value;
-            string docType = hdnSelectedDocType.Value;
-            if (string.IsNullOrEmpty(docNo)) return;
+            DataTable dtActive = (DataTable)ViewState["InvoiceItems"];
+            DataTable dtRemoved = (DataTable)ViewState["RemovedItems"];
 
-            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            if (dtActive != null && dtRemoved != null && dtRemoved.Rows.Count > 0)
             {
-                conn.Open();
-                int companyId = CompanyContext.CurrentCompanyID;
-                string itemQuery = GetItemQueryByDocType(docType);
-                using (SqlCommand cmd = new SqlCommand(itemQuery, conn))
+                SyncGridToTable(dtActive);
+
+                foreach (DataRow row in dtRemoved.Rows)
                 {
-                    cmd.Parameters.AddWithValue("@Ref", docNo);
-                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
-                    using (SqlDataAdapter sda = new SqlDataAdapter(cmd))
-                    {
-                        dtItems = new DataTable();
-                        sda.Fill(dtItems);
-                    }
+                    dtActive.ImportRow(row);
                 }
+
+                ViewState["InvoiceItems"] = dtActive;
+                ViewState["RemovedItems"] = null;
+
+                BindProductsGrid();
+                btnRestore.Visible = false;
+                ShowMsg("Restored items successfully!", true);
             }
-            BindProductsGrid();
-            ShowMsg("Items restored from source document.", true);
         }
 
         private void SyncGridToTable(DataTable dt)
         {
-            foreach (GridViewRow row in GridView1.Rows)
+            for (int i = 0; i < GridView1.Rows.Count; i++)
             {
-                if (row.RowIndex >= dt.Rows.Count) break;
-                DataRow dr = dt.Rows[row.RowIndex];
+                GridViewRow row = GridView1.Rows[i];
+                TextBox tQty = (TextBox)row.FindControl("txtqnty");
+                TextBox tRate = (TextBox)row.FindControl("txtsailrate");
+                TextBox tDisc = (TextBox)row.FindControl("txtDiscPer");
+                TextBox tSpec = (TextBox)row.FindControl("txtdes");
 
-                decimal q = 0, r = 0, dPer = 0, tPer = 0, totalRowDisc = 0;
-                decimal.TryParse(((TextBox)row.FindControl("txtqnty")).Text, out q);
-                decimal.TryParse(((TextBox)row.FindControl("txtsailrate")).Text, out r);
-                decimal.TryParse(((TextBox)row.FindControl("txtDiscPer")).Text, out dPer);
-                decimal.TryParse(((TextBox)row.FindControl("txtDiscAmt")).Text, out totalRowDisc);
-                decimal.TryParse(((Label)row.FindControl("lblGstRate")).Text, out tPer);
+                if (tQty != null && i < dt.Rows.Count)
+                {
+                    decimal q = 0, r = 0, d = 0;
+                    decimal.TryParse(tQty.Text, out q);
+                    decimal.TryParse(tRate.Text, out r);
+                    decimal.TryParse(tDisc.Text, out d);
 
-                dr["QuotedQty"] = q;
-                dr["sail_rate"] = r;
-                dr["discountRate"] = dPer;
-                dr["Service_tax_rate"] = tPer;
-
-                // Recalculate dependent columns
-                decimal gross = Math.Round(q * r, 2);
-                decimal taxable = Math.Round(gross - totalRowDisc, 2);
-                dr["Gross"] = gross;
-                dr["discount"] = totalRowDisc;
-                dr["Net_Amount"] = Math.Round(taxable + (taxable * tPer / 100), 2);
-                dr["Total_Rate1"] = taxable;
-                dr["Total_Rate2"] = gross;
+                    dt.Rows[i]["PendingQty"] = q;
+                    dt.Rows[i]["sail_rate"] = r;
+                    dt.Rows[i]["discountRate"] = d;
+                    dt.Rows[i]["specification"] = tSpec.Text;
+                }
             }
         }
 
         protected void btnBackSetup_Click(object sender, EventArgs e) { mvInvoice.ActiveViewIndex = 0; }
         #endregion
 
-        #region SAVE INVOICE (Button1_Click — REAL PERSISTENCE)
+        #region FINAL SAVE TO DB
         protected void Button1_Click(object sender, EventArgs e)
         {
-            // 0. Null Guard — Prevents "Thread was being aborted" crash
-            if (dtItems == null || dtItems.Rows.Count == 0)
+            try
             {
-                ShowMsg("No items to save. Please add items first.", false);
-                return;
-            }
+                SyncGridToTable((DataTable)ViewState["InvoiceItems"]);
 
-            // Sync the GridView TextBoxes to the Memory Table (so the user's edits are saved)
-            SyncGridToTable(dtItems);
+                if (string.IsNullOrEmpty(txtExtInvoiceDate.Text)) { ShowMsg("Action Blocked: Please provide an Ext. ERP Date.", false); return; }
 
-            // 1. SECURITY: Read values from server-side session — NOT from Label.Text
-            string invNo = txtInInvoiceNo.Text.Trim();
-            string clientName = lblClientName.Text.Trim();
-            string uid = Session["USERID"].ToString();
-            int companyId = CompanyContext.CurrentCompanyID;
-            DateTime invDate;
-            if (!DateTime.TryParse(txtinvoiceDate.Text, out invDate)) invDate = DateTime.Now;
-            DateTime extDate;
-            if (!DateTime.TryParse(txtInExtDate.Text, out extDate)) extDate = DateTime.MinValue;
-            string extNo = txtInExtNo.Text.Trim();
-            string billingAddress = List_BillingAddress.SelectedValue;
-            string salesPersonCode = cmbSalesPerson.SelectedValue;
+                string uid = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+                string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
-            // Server-side Validate: Check if Invoice Number already exists
-            using (SqlConnection chkConn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-            {
-                chkConn.Open();
-                SqlCommand chkCmd = new SqlCommand("SELECT COUNT(*) FROM tbl_Invoice WHERE Invoice_No = @Inv AND CompanyID = @CID", chkConn);
-                chkCmd.Parameters.AddWithValue("@Inv", invNo);
-                chkCmd.Parameters.AddWithValue("@CID", companyId);
-                int existingCount = (int)chkCmd.ExecuteScalar();
-                if (existingCount > 0)
+                string docType = ViewState["SelectedDocType"]?.ToString() ?? "Quotation";
+                string selNo = ViewState["SelectedDocNo"]?.ToString();
+                string refNo = string.IsNullOrEmpty(selNo) ? "N/A" : selNo;
+
+                decimal gGross = 0, gDisc = 0, gTax = 0, gNet = 0;
+
+                foreach (GridViewRow row in GridView1.Rows)
                 {
-                    ShowMsg("Invoice Number '" + invNo + "' already exists! Please use a unique number.", false);
-                    return;
+                    decimal q = 0, r = 0, dPer = 0, tPer = 0;
+                    decimal.TryParse(((TextBox)row.FindControl("txtqnty")).Text, out q);
+
+                    if (q <= 0) continue;
+
+                    decimal.TryParse(((TextBox)row.FindControl("txtsailrate")).Text, out r);
+                    decimal.TryParse(((TextBox)row.FindControl("txtDiscPer")).Text, out dPer);
+                    decimal.TryParse(((Label)row.FindControl("lblGstRate")).Text, out tPer);
+
+                    decimal rowGross = Math.Round(q * r, 2);
+                    decimal rowDisc = Math.Round((rowGross * dPer) / 100, 2);
+                    decimal taxable = Math.Round(rowGross - rowDisc, 2);
+                    decimal rowTax = Math.Round((taxable * tPer) / 100, 2);
+
+                    gGross += rowGross; gDisc += rowDisc; gTax += rowTax; gNet += (taxable + rowTax);
                 }
-            }
 
-            string refNo = hdnSelectedDocNo.Value;
+                decimal frt = 0, oth = 0;
+                decimal.TryParse(txt_delivery_amnt.Text, out frt);
+                decimal.TryParse(txt_othr_amnt.Text, out oth);
 
-            // 2. Start SQL Transaction (Atomic Operation)
-            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
-            {
-                conn.Open();
-                SqlTransaction tran = conn.BeginTransaction();
-                try
+                gNet += Math.Round(frt, 2) + Math.Round(oth, 2);
+                gNet = Math.Round(gNet, 2);
+
+                if (gNet <= 0) return;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    // Calculate Header Totals from the Memory Table
-                    decimal headerGross = 0, headerDiscount = 0, headerSubTotal = 0, headerNet = 0;
-                    foreach (DataRow rowG in dtItems.Rows)
+                    conn.Open();
+                    SqlTransaction tran = conn.BeginTransaction();
+                    try
                     {
-                        headerGross += rowG["Gross"] != DBNull.Value ? Convert.ToDecimal(rowG["Gross"]) : 0;
-                        headerDiscount += rowG["discount"] != DBNull.Value ? Convert.ToDecimal(rowG["discount"]) : 0;
-                        headerNet += rowG["Net_Amount"] != DBNull.Value ? Convert.ToDecimal(rowG["Net_Amount"]) : 0;
-                    }
-                    headerSubTotal = Math.Round(headerNet, 2);
+                        int slNo = 1;
+                        SqlCommand cmdSl = new SqlCommand("SELECT ISNULL(MAX(CAST(CASE WHEN ISNULL(Sl_no, '') = '' OR ISNUMERIC(Sl_no) = 0 THEN '0' ELSE Sl_no END AS INT)), 0) + 1 FROM tbl_Invoice WHERE CompanyID=@CompanyID", conn, tran);
+                        cmdSl.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        object slRes = cmdSl.ExecuteScalar();
+                        if (slRes != null && slRes != DBNull.Value) slNo = Convert.ToInt32(slRes);
 
-                    decimal cgstOrsgst = 0, igst = 0;
-                    string stateCodeClient = "", stateCodeCompany = "";
-                    using (SqlCommand cmdState = new SqlCommand("SELECT TOP 1 StateCode FROM tbl_Client WHERE Client_Name = @Name AND CompanyID = @CID", conn, tran))
-                    {
-                        cmdState.Parameters.AddWithValue("@Name", clientName);
-                        cmdState.Parameters.AddWithValue("@CID", companyId);
-                        object sc = cmdState.ExecuteScalar();
-                        if (sc != null) stateCodeClient = sc.ToString();
-                    }
-                    using (SqlCommand cmdStateC = new SqlCommand("SELECT TOP 1 StateCode FROM tbl_CompanyDetails WHERE CompanyID = @CID", conn, tran))
-                    {
-                        cmdStateC.Parameters.AddWithValue("@CID", companyId);
-                        object sc = cmdStateC.ExecuteScalar();
-                        if (sc != null) stateCodeCompany = sc.ToString();
-                    }
+                        DateTime dt = DateTime.Parse(txtinvoiceDate.Text);
+                        string yy = dt.Month >= 4 ? dt.Year.ToString().Substring(2) + "-" + (dt.Year + 1).ToString().Substring(2) : (dt.Year - 1).ToString().Substring(2) + "-" + dt.Year.ToString().Substring(2);
+                        string invNo = "INV/C/" + yy + "/" + slNo;
 
-                    if (stateCodeClient == stateCodeCompany)
-                    {
-                        decimal halfGst = Math.Round(headerSubTotal / 2, 2);
-                        cgstOrsgst = halfGst;
-                        igst = 0;
-                    }
-                    else
-                    {
-                        cgstOrsgst = 0;
-                        igst = headerSubTotal;
-                    }
+                        string intra = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
+                        string inter = RadioButtonGst.SelectedIndex == 1 ? "YES" : "";
 
-                    // INSERT into tbl_Invoice (Header)
-                    string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1_name, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, ExtInvoiceNo, ExtInvoiceDate, BillingAddress) VALUES (@Inv, @Date, @PO, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @OthName, @Oth, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @ExtNo, @ExtDate, @BillingAddress)";
-
-                    using (SqlCommand cmdH = new SqlCommand(sqlH, conn, tran))
-                    {
+                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1_name, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, ExtInvoiceNo, ExtInvoiceDate, BillingAddress) VALUES (@Inv, @Date, @PO, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @OthName, @Oth, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @ExtNo, @ExtDate, @BillingAddress)";
+                        SqlCommand cmdH = new SqlCommand(sqlH, conn, tran);
                         cmdH.Parameters.AddWithValue("@Inv", invNo);
-                        cmdH.Parameters.AddWithValue("@Date", invDate);
+                        cmdH.Parameters.AddWithValue("@Date", txtinvoiceDate.Text);
                         cmdH.Parameters.AddWithValue("@PO", refNo);
-                        cmdH.Parameters.AddWithValue("@CID", clientName);
-                        cmdH.Parameters.AddWithValue("@Gr", headerGross);
-                        cmdH.Parameters.AddWithValue("@Di", headerDiscount);
-                        cmdH.Parameters.AddWithValue("@Sub", headerSubTotal);
-                        cmdH.Parameters.AddWithValue("@Tax", 0);
-                        cmdH.Parameters.AddWithValue("@Net", headerNet);
-                        cmdH.Parameters.AddWithValue("@Sl", 0);
-                        cmdH.Parameters.AddWithValue("@Frt", 0);
-                        cmdH.Parameters.AddWithValue("@OthName", DBNull.Value);
-                        cmdH.Parameters.AddWithValue("@Oth", 0);
-                        cmdH.Parameters.AddWithValue("@Intra", cgstOrsgst);
-                        cmdH.Parameters.AddWithValue("@Inter", igst);
+                        cmdH.Parameters.AddWithValue("@CID", lblclientId.Text);
+                        cmdH.Parameters.Add("@Gr", SqlDbType.Decimal).Value = gGross;
+                        cmdH.Parameters.Add("@Di", SqlDbType.Decimal).Value = gDisc;
+                        cmdH.Parameters.Add("@Sub", SqlDbType.Decimal).Value = Math.Round(gGross - gDisc, 2);
+                        cmdH.Parameters.Add("@Tax", SqlDbType.Decimal).Value = gTax;
+                        cmdH.Parameters.Add("@Net", SqlDbType.Decimal).Value = gNet;
+                        cmdH.Parameters.AddWithValue("@Sl", slNo);
+                        cmdH.Parameters.Add("@Frt", SqlDbType.Decimal).Value = frt;
+                        cmdH.Parameters.AddWithValue("@OthName", TextBox1.Text.Trim());
+                        cmdH.Parameters.Add("@Oth", SqlDbType.Decimal).Value = oth;
+                        cmdH.Parameters.AddWithValue("@Intra", string.IsNullOrEmpty(intra) ? (object)DBNull.Value : intra);
+                        cmdH.Parameters.AddWithValue("@Inter", string.IsNullOrEmpty(inter) ? (object)DBNull.Value : inter);
                         cmdH.Parameters.AddWithValue("@User", uid);
-                        cmdH.Parameters.AddWithValue("@CompanyID", companyId);
-                        cmdH.Parameters.AddWithValue("@SalesPerson", salesPersonCode);
-                        cmdH.Parameters.AddWithValue("@ExtNo", extNo);
-                        cmdH.Parameters.AddWithValue("@ExtDate", extDate == DateTime.MinValue ? (object)DBNull.Value : extDate);
-                        cmdH.Parameters.AddWithValue("@BillingAddress", billingAddress);
+                        cmdH.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmdH.Parameters.AddWithValue("@SalesPerson", cmbSalesPerson.SelectedValue);
+                        cmdH.Parameters.AddWithValue("@ExtNo", string.IsNullOrWhiteSpace(txtExtInvoiceNo.Text) ? (object)DBNull.Value : txtExtInvoiceNo.Text.Trim());
+                        cmdH.Parameters.AddWithValue("@ExtDate", string.IsNullOrWhiteSpace(txtExtInvoiceDate.Text) ? (object)DBNull.Value : txtExtInvoiceDate.Text.Trim());
+                        cmdH.Parameters.AddWithValue("@BillingAddress", List_BillingAddress.SelectedItem != null ? List_BillingAddress.SelectedItem.Text : "N/A");
                         cmdH.ExecuteNonQuery();
-                    }
 
-                    // 3. Loop through GridView Rows to INSERT into tbl_Invoice_details (Line Items)
-                    for (int i = 0; i < GridView1.Rows.Count; i++)
-                    {
-                        GridViewRow row = GridView1.Rows[i];
-                        DataRow memRow = dtItems.Rows[i]; // Matches exact row index
+                        // 1. Grab the memory table to safely read underlying data (ignoring HTML formatting)
+                        DataTable dtItems = (DataTable)ViewState["InvoiceItems"];
 
-                        decimal q = 0, r = 0, dPer = 0, tPer = 0, totalRowDisc = 0;
-                        decimal.TryParse(((TextBox)row.FindControl("txtqnty")).Text, out q);
-
-                        if (q <= 0) continue;
-
-                        decimal.TryParse(((TextBox)row.FindControl("txtsailrate")).Text, out r);
-                        decimal.TryParse(((TextBox)row.FindControl("txtDiscPer")).Text, out dPer);
-                        decimal.TryParse(((TextBox)row.FindControl("txtDiscAmt")).Text, out totalRowDisc); // NEW: Read exact amount from UI
-                        decimal.TryParse(((Label)row.FindControl("lblGstRate")).Text, out tPer);
-
-                        // SECURE MATH: Use the exact discount amount from the frontend
-                        decimal rowGross = Math.Round(q * r, 2);
-                        decimal taxable = Math.Round(rowGross - totalRowDisc, 2); // Avoids % rounding drift
-                        decimal rowTax = Math.Round((taxable * tPer) / 100, 2);
-                        decimal rowNet = Math.Round(taxable + rowTax, 2);
-
-                        // Pull Product Info securely from Memory Table
-                        string trueProductID = memRow["TrueID"].ToString();
-                        string pname = memRow["Product_name"].ToString();
-                        string hsnCode = memRow["TrueHSN"].ToString();
-                        string spec = ((TextBox)row.FindControl("txtdes")).Text;
-                        string itemNo = memRow["ItemNo"] != DBNull.Value ? memRow["ItemNo"].ToString() : "";
-
-                        string sqlD = "INSERT INTO tbl_Invoice_details (Invoice_No, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, discountRate, Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification, ItemNo, AddedById, CompanyID) VALUES (@Inv, @RefNo, @PID, @HSN, @Name, @Qty, @Rate, @DPer, @TPer, @Net, @Base, @Brand, @ItemNo, @User, @CompanyID)";
-
-                        SqlCommand cmdD = new SqlCommand(sqlD, conn, tran);
-                        cmdD.Parameters.AddWithValue("@Inv", invNo);
-                        cmdD.Parameters.AddWithValue("@RefNo", refNo);
-                        cmdD.Parameters.AddWithValue("@PID", trueProductID);
-                        cmdD.Parameters.AddWithValue("@HSN", hsnCode);
-                        cmdD.Parameters.AddWithValue("@Name", HttpUtility.HtmlDecode(pname));
-                        cmdD.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
-                        cmdD.Parameters.Add("@Rate", SqlDbType.Decimal).Value = r;
-                        cmdD.Parameters.Add("@DPer", SqlDbType.Decimal).Value = dPer; // Preserved for legacy records
-                        cmdD.Parameters.Add("@TPer", SqlDbType.Decimal).Value = tPer;
-
-                        // Standardizing the Columns: Net -> Rate1, Taxable Base -> Rate2
-                        cmdD.Parameters.Add("@Net", SqlDbType.Decimal).Value = rowNet;
-                        cmdD.Parameters.Add("@Base", SqlDbType.Decimal).Value = taxable;
-                        cmdD.Parameters.AddWithValue("@Brand", spec);
-                        cmdD.Parameters.AddWithValue("@ItemNo", itemNo);
-                        cmdD.Parameters.AddWithValue("@User", uid);
-                        cmdD.Parameters.AddWithValue("@CompanyID", companyId);
-                        cmdD.ExecuteNonQuery();
-                    }
-
-                    // 4. INSERT into tbl_InvSiteAddress
-                    if (!string.IsNullOrEmpty(billingAddress))
-                    {
-                        string[] addresses = billingAddress.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                        int addrSeq = 0;
-                        foreach (string addr in addresses)
+                        // 2. Use a standard FOR loop so we can match GridView rows exactly to memory rows
+                        for (int i = 0; i < GridView1.Rows.Count; i++)
                         {
-                            string trimmedAddr = addr.Trim();
-                            if (!string.IsNullOrEmpty(trimmedAddr))
+                            GridViewRow row = GridView1.Rows[i];
+                            DataRow memRow = dtItems.Rows[i]; // Matches exact row index
+
+                            decimal q = 0, r = 0, dPer = 0, tPer = 0, totalRowDisc = 0;
+                            decimal.TryParse(((TextBox)row.FindControl("txtqnty")).Text, out q);
+
+                            if (q <= 0) continue;
+
+                            decimal.TryParse(((TextBox)row.FindControl("txtsailrate")).Text, out r);
+                            decimal.TryParse(((TextBox)row.FindControl("txtDiscPer")).Text, out dPer);
+                            decimal.TryParse(((TextBox)row.FindControl("txtDiscAmt")).Text, out totalRowDisc); // NEW: Read exact amount from UI
+                            decimal.TryParse(((Label)row.FindControl("lblGstRate")).Text, out tPer);
+
+                            // SECURE MATH: Use the exact discount amount from the frontend
+                            decimal rowGross = Math.Round(q * r, 2);
+                            decimal taxable = Math.Round(rowGross - totalRowDisc, 2); // Avoids % rounding drift
+                            decimal rowTax = Math.Round((taxable * tPer) / 100, 2);
+                            decimal rowNet = Math.Round(taxable + rowTax, 2);
+
+                            // Pull Product Info securely from Memory Table
+                            string trueProductID = memRow["TrueID"].ToString();
+                            string pname = memRow["Product_name"].ToString();
+                            string hsnCode = memRow["TrueHSN"].ToString();
+                            string spec = ((TextBox)row.FindControl("txtdes")).Text;
+                            string itemNo = memRow["ItemNo"] != DBNull.Value ? memRow["ItemNo"].ToString() : "";
+
+                            string sqlD = "INSERT INTO tbl_Invoice_details (Invoice_No, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, discountRate, Service_tax_rate, Total_sail_rate1, Total_sail_rate2, specification, ItemNo, AddedById, CompanyID) VALUES (@Inv, @RefNo, @PID, @HSN, @Name, @Qty, @Rate, @DPer, @TPer, @Net, @Base, @Brand, @ItemNo, @User, @CompanyID)";
+
+                            SqlCommand cmdD = new SqlCommand(sqlD, conn, tran);
+                            cmdD.Parameters.AddWithValue("@Inv", invNo);
+                            cmdD.Parameters.AddWithValue("@RefNo", refNo);
+                            cmdD.Parameters.AddWithValue("@PID", trueProductID);
+                            cmdD.Parameters.AddWithValue("@HSN", hsnCode);
+                            cmdD.Parameters.AddWithValue("@Name", HttpUtility.HtmlDecode(pname));
+                            cmdD.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
+                            cmdD.Parameters.Add("@Rate", SqlDbType.Decimal).Value = r;
+                            cmdD.Parameters.Add("@DPer", SqlDbType.Decimal).Value = dPer; // Preserved for legacy records
+                            cmdD.Parameters.Add("@TPer", SqlDbType.Decimal).Value = tPer;
+
+                            // Standardizing the Columns: Net -> Rate1, Taxable Base -> Rate2
+                            cmdD.Parameters.Add("@Net", SqlDbType.Decimal).Value = rowNet;
+                            cmdD.Parameters.Add("@Base", SqlDbType.Decimal).Value = taxable;
+
+                            cmdD.Parameters.AddWithValue("@Brand", spec);
+                            cmdD.Parameters.AddWithValue("@ItemNo", itemNo);
+                            cmdD.Parameters.AddWithValue("@User", uid);
+                            cmdD.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                            cmdD.ExecuteNonQuery();
+
+                            // Stock Deduction
+                            if (docType != "Delivery Challan")
+                            {
+                                string sqlStock = "UPDATE tbl_NewProduct SET Quantity = CAST(CASE WHEN ISNULL(Quantity, '') = '' THEN '0' ELSE Quantity END AS DECIMAL(18,2)) - @Qty WHERE ProductID = @TruePID AND CompanyID = @CompanyID";
+                                SqlCommand cmdS = new SqlCommand(sqlStock, conn, tran);
+                                cmdS.Parameters.Add("@Qty", SqlDbType.Decimal).Value = q;
+                                cmdS.Parameters.Add("@TruePID", SqlDbType.VarChar).Value = trueProductID;
+                                cmdS.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                cmdS.ExecuteNonQuery();
+                            }
+                        }
+
+                        foreach (ListItem itm in List_BillingAddress.Items)
+                        {
+                            if (itm.Selected)
                             {
                                 SqlCommand cmdA = new SqlCommand("INSERT INTO tbl_InvSiteAddress (invoice_no, SiteAddress, CompanyID) VALUES (@Inv, @Addr, @CompanyID)", conn, tran);
                                 cmdA.Parameters.AddWithValue("@Inv", invNo);
-                                cmdA.Parameters.AddWithValue("@Addr", trimmedAddr);
-                                cmdA.Parameters.AddWithValue("@CompanyID", companyId);
+                                cmdA.Parameters.AddWithValue("@Addr", itm.Text);
+                                cmdA.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                                 cmdA.ExecuteNonQuery();
-                                addrSeq++;
                             }
                         }
+
+                        // Save Shipping Address
+                        foreach (ListItem itm in List_ShippingAddress.Items)
+                        {
+                            if (itm.Selected)
+                            {
+                                SqlCommand cmdA = new SqlCommand("INSERT INTO tbl_InvSiteAddress (invoice_no, SiteAddress, CompanyID) VALUES (@Inv, @Addr, @CompanyID)", conn, tran);
+                                cmdA.Parameters.AddWithValue("@Inv", invNo);
+                                cmdA.Parameters.AddWithValue("@Addr", itm.Text);
+                                cmdA.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                cmdA.ExecuteNonQuery();
+                            }
+                        }
+
+                        InsertSystemNotification("Tax Invoice Generated", $"Invoice #{invNo} created for {cmbvendor.SelectedItem.Text} from {docType} {refNo}.", "INVOICE", "Success", uid, CompanyContext.CurrentCompanyID, conn, tran);
+
+                        tran.Commit();
+                        ShowMsg("Success! Invoice Generated: " + invNo, true);
+
+                        ViewState["InvoiceItems"] = null;
+                        ViewState["RemovedItems"] = null;
+                        GridView1.DataSource = null;
+                        GridView1.DataBind();
+                        txt_delivery_amnt.Text = "0"; txt_othr_amnt.Text = "0"; TextBox1.Text = ""; cmbSalesPerson.SelectedIndex = -1; txtExtInvoiceNo.Text = ""; txtExtInvoiceDate.Text = "";
+                        btnRestore.Visible = false;
+                        mvInvoice.ActiveViewIndex = 0;
                     }
-
-                    // 5. Write to InvoiceLogFile (File-based Audit Log)
-                    string logDirectory = Server.MapPath("~/Uploads/InvoiceLogs");
-                    if (!System.IO.Directory.Exists(logDirectory))
-                        System.IO.Directory.CreateDirectory(logDirectory);
-
-                    string logFilePath = System.IO.Path.Combine(logDirectory, "Log.txt");
-                    StringBuilder logEntry = new StringBuilder();
-                    logEntry.AppendLine("==================================================");
-                    logEntry.AppendLine("Timestamp      : " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                    logEntry.AppendLine("Invoice No     : " + invNo);
-                    logEntry.AppendLine("Client         : " + clientName);
-                    logEntry.AppendLine("Ref Doc No     : " + refNo);
-                    logEntry.AppendLine("Ref Doc Type   : " + hdnSelectedDocType.Value);
-                    logEntry.AppendLine("User           : " + uid);
-                    logEntry.AppendLine("Gross          : " + headerGross.ToString("F2"));
-                    logEntry.AppendLine("Discount       : " + headerDiscount.ToString("F2"));
-                    logEntry.AppendLine("Sub Total      : " + headerSubTotal.ToString("F2"));
-                    logEntry.AppendLine("Net Amount     : " + headerNet.ToString("F2"));
-                    logEntry.AppendLine("CGST/SGST      : " + cgstOrsgst.ToString("F2"));
-                    logEntry.AppendLine("IGST           : " + igst.ToString("F2"));
-                    logEntry.AppendLine("Intra/Inter    : " + (stateCodeClient == stateCodeCompany ? "Intra-State" : "Inter-State"));
-
-                    logEntry.AppendLine("--- LINE ITEMS ---");
-                    foreach (DataRow rowL in dtItems.Rows)
+                    catch (Exception ex)
                     {
-                        decimal lineQty = rowL["QuotedQty"] != DBNull.Value ? Convert.ToDecimal(rowL["QuotedQty"]) : 0;
-                        if (lineQty <= 0) continue;
-                        logEntry.AppendLine("Product: " + rowL["Product_name"] + " | Qty: " + lineQty + " | Rate: " + (rowL["sail_rate"] != DBNull.Value ? rowL["sail_rate"].ToString() : "0") + " | Net: " + (rowL["Net_Amount"] != DBNull.Value ? rowL["Net_Amount"].ToString() : "0"));
+                        tran.Rollback(); throw ex;
                     }
+<<<<<<< HEAD
 
                     logEntry.AppendLine("==================================================");
                     logEntry.AppendLine("");
@@ -849,73 +1296,130 @@ namespace Bill_Software.corporate.business.app
                 {
                     tran.Rollback();
                     ShowMsg("Error saving invoice: " + ex.Message, false);
+=======
+>>>>>>> 824f75ffdbc359503c6ea96317e92faff7142dd8
                 }
             }
+            catch (Exception ex) { ShowMsg("Error: " + ex.Message, false); }
         }
 
         private void InsertSystemNotification(string title, string message, string module, string type, string userId, int companyId, SqlConnection conn, SqlTransaction tran)
         {
-            string query = @"INSERT INTO tbl_SystemNotifications (Title, Message, Module, Type, UserId, CompanyID, IsRead, CreatedAt) 
-                           VALUES (@Title, @Message, @Module, @Type, @UserId, @CompanyID, 0, GETDATE())";
+            // Mapped exactly to your provided SQL schema
+            string sql = @"INSERT INTO tbl_SystemNotification 
+                           (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CompanyID) 
+                           VALUES 
+                           (@Title, @Msg, @Mod, @Type, GETDATE(), DATEADD(day, 30, GETDATE()), 1, @User, @Comp)";
 
-            bool needsClose = false;
-            if (conn.State == ConnectionState.Closed)
-            {
-                conn.Open();
-                needsClose = true;
-            }
+            SqlCommand cmd = new SqlCommand(sql, conn, tran);
+            cmd.Parameters.AddWithValue("@Title", title);
+            cmd.Parameters.AddWithValue("@Msg", message);
+            cmd.Parameters.AddWithValue("@Mod", module);
+            cmd.Parameters.AddWithValue("@Type", type); // Maps to 'Severity'
+            cmd.Parameters.AddWithValue("@User", userId);
+            cmd.Parameters.AddWithValue("@Comp", companyId);
 
-            using (SqlCommand cmd = new SqlCommand(query, conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@Title", title);
-                cmd.Parameters.AddWithValue("@Message", message);
-                cmd.Parameters.AddWithValue("@Module", module);
-                cmd.Parameters.AddWithValue("@Type", type);
-                cmd.Parameters.AddWithValue("@UserId", userId);
-                cmd.Parameters.AddWithValue("@CompanyID", companyId);
-                cmd.ExecuteNonQuery();
-            }
-
-            if (needsClose) conn.Close();
+            cmd.ExecuteNonQuery();
         }
 
         private void ShowMsg(string msg, bool isSuccess)
         {
-            pnlMsg.Visible = true;
-            lblMsg.Text = msg;
-            lblMsg.CssClass = isSuccess ? "alert alert-success" : "alert alert-danger";
+            if (string.IsNullOrEmpty(msg)) return;
+            string icon = isSuccess ? "success" : "error";
+
+            // FIX: Strip out quotes and line breaks so SQL exceptions don't break JavaScript execution
+            string cleanMsg = msg.Replace("'", "\\'").Replace("\r", " ").Replace("\n", " ");
+            int timer = isSuccess ? 4000 : 6000;
+
+            // FIX: Rendered as a single line string literal to guarantee safe browser execution
+            string script = "Swal.fire({ title: '" + cleanMsg + "', icon: '" + icon + "', toast: true, position: 'top-end', showConfirmButton: false, timer: " + timer + " });";
+
+            ScriptManager.RegisterStartupScript(this, GetType(), "swalMsg", script, true);
         }
 
+        #region AJAX ITEM RECONCILIATION
+        [WebMethod(EnableSession = true)]
         public static string GetReconciliation(string refNo, string productId)
         {
+            if (HttpContext.Current.Session["USERID"] == null) return "<div style='color:red;'>Session Expired. Please reload.</div>";
+
+            int companyId = CompanyContext.CurrentCompanyID;
+
+            StringBuilder html = new StringBuilder();
+            html.Append("<table style='width:100%; font-size:13px; text-align:left; border-collapse:collapse;'>");
+            html.Append("<thead><tr><th style='background:#006699; color:white; padding:8px; border:1px solid #ddd;'>Invoice No</th><th style='background:#006699; color:white; padding:8px; border:1px solid #ddd;'>Date</th><th style='background:#006699; color:white; padding:8px; text-align:right; border:1px solid #ddd;'>Qty Billed</th></tr></thead>");
+            html.Append("<tbody>");
+
+            decimal totalActiveQty = 0;
+
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                conn.Open();
-                string query = @"SELECT 
-                    ISNULL(SUM(CASE WHEN inv.status2 = 'Active' THEN CAST(id.Quantity AS DECIMAL(18,2)) ELSE 0 END), 0) AS InvoicedQty,
-                    ISNULL((SELECT CAST(qd.Quantity AS DECIMAL(18,2)) FROM tbl_Quotaion_details qd WHERE qd.Quotation_no = @RefNo AND qd.Product_id = @ProductID AND qd.CompanyID = (SELECT TOP 1 CompanyID FROM tbl_Invoice_details WHERE Quotation_no = @RefNo)), 0) AS QuotedQty
-                FROM tbl_Invoice_details id
-                INNER JOIN tbl_Invoice inv ON id.Invoice_No = inv.Invoice_No AND id.CompanyID = inv.CompanyID
-                WHERE id.Quotation_no = @RefNo AND id.Product_id = @ProductID";
+                // Added h.status2 to explicitly fetch the status
+                string sql = @"SELECT h.Invoice_No, CONVERT(varchar, h.Invoice_Date, 106) as InvDate, d.Quantity as Qty, h.status2,
+                                      d.Product_id, d.Product_Code
+                               FROM tbl_Invoice_details d
+                               INNER JOIN tbl_Invoice h ON d.Invoice_No = h.Invoice_No
+                               WHERE h.CompanyID = @CompID
+                                 AND (
+                                       LTRIM(RTRIM(ISNULL(d.Quotation_no, ''))) = @RefNo
+                                    OR LTRIM(RTRIM(ISNULL(h.Quotation_No, ''))) = @RefNo
+                                 )
+                               ORDER BY h.ID ASC";
 
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@RefNo", refNo);
-                    cmd.Parameters.AddWithValue("@ProductID", productId);
+                    cmd.Parameters.AddWithValue("@RefNo", refNo == null ? "" : refNo.Trim());
+                    cmd.Parameters.AddWithValue("@PID", productId == null ? "" : productId.Trim());
+                    cmd.Parameters.AddWithValue("@CompID", companyId);
 
+                    conn.Open();
                     using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        if (dr.Read())
+                        bool hasData = false;
+                        while (dr.Read())
                         {
-                            decimal invoiced = Convert.ToDecimal(dr["InvoicedQty"]);
-                            decimal quoted = Convert.ToDecimal(dr["QuotedQty"]);
-                            decimal pending = quoted - invoiced;
-                            return "Quoted: " + quoted.ToString("F2") + " | Invoiced: " + invoiced.ToString("F2") + " | Pending: " + pending.ToString("F2");
+                            if (!ProductsMatch(productId, "", GetDbString(dr["Product_id"]), GetDbString(dr["Product_Code"])))
+                                continue;
+
+                            hasData = true;
+                            decimal q = ParseQty(dr["Qty"]);
+                            string status = GetDbString(dr["status2"]);
+
+                            string trStyle = "";
+                            string statusBadge = "";
+
+                            // Determine if Invoice is Valid or Cancelled
+                            if (string.IsNullOrEmpty(status) || status.Equals("Active", StringComparison.OrdinalIgnoreCase) || status.Equals("Yes", StringComparison.OrdinalIgnoreCase))
+                            {
+                                totalActiveQty += q;
+                            }
+                            else
+                            {
+                                trStyle = "text-decoration: line-through; color: #999; background: #fdfdfd;";
+                                statusBadge = " <span style='background:#dc3545; color:white; padding:2px 4px; border-radius:3px; font-size:9px;'>Cancelled</span>";
+                            }
+
+                            html.AppendFormat("<tr style='{0}'><td style='padding:8px; border-bottom:1px solid #eee;'><strong>{1}</strong>{4}</td><td style='padding:8px; border-bottom:1px solid #eee;'>{2}</td><td style='padding:8px; border-bottom:1px solid #eee; text-align:right; color:#dc3545; font-weight:bold;'>{3}</td></tr>",
+                                trStyle, dr["Invoice_No"], dr["InvDate"], q, statusBadge);
+                        }
+
+                        if (!hasData)
+                        {
+                            html.Append("<tr><td colspan='3' style='text-align:center; padding:15px; color:#666;'>No previous billing history found for this item.</td></tr>");
                         }
                     }
                 }
             }
-            return "N/A";
+
+            if (totalActiveQty > 0)
+            {
+                html.AppendFormat("<tr style='background:#f8fafc;'><td colspan='2' style='padding:8px; text-align:right; font-weight:bold;'>Valid Active Total:</td><td style='padding:8px; text-align:right; font-weight:bold; color:#dc3545; font-size:15px;'>{0}</td></tr>", totalActiveQty);
+            }
+
+            html.Append("</tbody></table>");
+            return html.ToString();
         }
+        #endregion
+        #endregion
     }
 }

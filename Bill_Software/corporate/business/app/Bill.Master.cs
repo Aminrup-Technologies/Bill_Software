@@ -37,13 +37,22 @@ namespace Bill_Software.corporate.business.app
 
     public partial class Bill : System.Web.UI.MasterPage
     {
-        DB_UTILITY DbCL = new DB_UTILITY();
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+
+        private SqlParameter CompanyIdParam()
+        {
+            return new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID };
+        }
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // 1. Validate Core Session
-            if (Session["USERID"] == null || Session["SessionToken"] == null)
+            if (Session["USERID"] == null)
+            {
+                Response.Redirect("~/index.aspx", false);
+                return;
+            }
+
+            if (Session["SessionToken"] == null)
             {
                 Response.Redirect("~/index.aspx", false);
                 return;
@@ -96,31 +105,22 @@ namespace Bill_Software.corporate.business.app
             }
             // ==========================================
 
-            // 4. Load Normal UI Elements (Only executes if NOT locked out)
             if (!IsPostBack)
             {
                 int currentYear = DateTime.Now.Year;
                 lbl_crntyr.Text = $"{currentYear - 2}-{currentYear}";
 
-                GetMenuControl();
-
-                // MULTI-COMPANY INITIALIZATION
                 BindCompanies();
+                EnsureSessionCompanyId();
 
-                if (Session["CompanyID"] != null)
-                {
+                if (Session["CompanyID"] != null && ddlCompany.Items.FindByValue(Session["CompanyID"].ToString()) != null)
                     ddlCompany.SelectedValue = Session["CompanyID"].ToString();
-                }
-                else if (ddlCompany.Items.Count > 0)
-                {
-                    Session["CompanyID"] = ddlCompany.Items[0].Value;
-                }
 
+                GetMenuControl();
                 LoadCompanyHeader();
             }
             else
             {
-                // Ensure dynamic header loads on every postback
                 LoadCompanyHeader();
             }
 
@@ -129,14 +129,32 @@ namespace Bill_Software.corporate.business.app
 
         // --- MULTI-COMPANY METHODS ---
 
+        private void EnsureSessionCompanyId()
+        {
+            if (Session["CompanyID"] != null) return;
+
+            using (var cn = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand("SELECT CompanyID FROM tbl_login WHERE User_Id = @UserId", cn))
+            {
+                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = Session["USERID"].ToString() });
+                cn.Open();
+                object result = cmd.ExecuteScalar();
+                if (result != null && result != DBNull.Value)
+                    Session["CompanyID"] = Convert.ToInt32(result);
+            }
+
+            if (Session["CompanyID"] == null && ddlCompany.Items.Count > 0)
+                Session["CompanyID"] = ddlCompany.Items[0].Value;
+        }
+
         private void BindCompanies()
         {
-            using (SqlConnection con = new SqlConnection(ConnString))
+            using (var con = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand("SELECT ID, Name FROM tbl_Company WHERE IsActive = 1 OR IsActive IS NULL ORDER BY ID ASC", con))
+            using (var da = new SqlDataAdapter(cmd))
             {
-                SqlDataAdapter da = new SqlDataAdapter("SELECT ID, Name FROM tbl_Company WHERE IsActive = 1 OR IsActive IS NULL ORDER BY ID ASC", con);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-
                 ddlCompany.DataSource = dt;
                 ddlCompany.DataTextField = "Name";
                 ddlCompany.DataValueField = "ID";
@@ -146,36 +164,27 @@ namespace Bill_Software.corporate.business.app
 
         private void LoadCompanyHeader()
         {
-            if (Session["CompanyID"] == null) return;
+            if (CompanyContext.CurrentCompanyID == 0) return;
 
-            int companyId = Convert.ToInt32(Session["CompanyID"]);
-
-            using (SqlConnection con = new SqlConnection(ConnString))
+            using (var con = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand("SELECT Name, Address, Signe, ShortCode FROM tbl_Company WHERE ID = @CompanyID", con))
             {
-                // ADDED 'ShortCode' to the SELECT query
-                SqlCommand cmd = new SqlCommand("SELECT Name, Address, Signe, ShortCode FROM tbl_Company WHERE ID=@ID", con);
-                cmd.Parameters.AddWithValue("@ID", companyId);
-
+                cmd.Parameters.Add(CompanyIdParam());
                 con.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-
-                if (dr.Read())
+                using (SqlDataReader dr = cmd.ExecuteReader())
                 {
-                    lblCompanyName.Text = dr["Name"].ToString();
+                    if (!dr.Read()) return;
 
-                    // --- NEW: Save the ShortCode into the Session ---
+                    lblCompanyName.Text = dr["Name"].ToString();
                     Session["CompanyCode"] = dr["ShortCode"] != DBNull.Value ? dr["ShortCode"].ToString() : "FE";
 
-                    // Convert raw binary image to base64 for seamless display
                     if (!Convert.IsDBNull(dr["Signe"]))
                     {
                         byte[] bytes = (byte[])dr["Signe"];
-                        string base64 = Convert.ToBase64String(bytes);
-                        Image2.ImageUrl = "data:image/png;base64," + base64;
+                        Image2.ImageUrl = "data:image/png;base64," + Convert.ToBase64String(bytes);
                     }
                     else
                     {
-                        // Fallback image if company has no logo configured
                         Image2.ImageUrl = "../WebImages/aagrouplogo.png";
                     }
                 }
@@ -193,46 +202,39 @@ namespace Bill_Software.corporate.business.app
         {
             if (Session["USERID"] == null) return;
 
-            string UserName = Session["USERID"].ToString();
-            string cmdString = @"
+            const string sql = @"
                 SELECT u.Name, r.RoleName, u.ProfilePictureUrl 
                 FROM tbl_login u 
-                LEFT JOIN Roles r ON u.RoleId = r.RoleId 
-                WHERE u.User_Id=@UserId";
+                LEFT JOIN Roles r ON u.RoleId = r.RoleId AND r.CompanyID = @CompanyID
+                WHERE u.User_Id = @UserId AND u.CompanyID = @CompanyID
+                UNION ALL
+                SELECT u.Name, r.RoleName, u.ProfilePictureUrl 
+                FROM tbl_login u 
+                LEFT JOIN Roles r ON u.RoleId = r.RoleId AND r.CompanyID = @CompanyID
+                WHERE u.User_Id = @UserId
+                  AND NOT EXISTS (
+                      SELECT 1 FROM tbl_login x
+                      WHERE x.User_Id = @UserId AND x.CompanyID = @CompanyID)";
 
-            try
+            using (var cn = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand(sql, cn))
             {
-                DbCL.Sqlconnection();
-                DbCL.ConnectDb();
-                using (SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn))
+                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = Session["USERID"].ToString() });
+                cmd.Parameters.Add(CompanyIdParam());
+                cn.Open();
+                using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    cmd.Parameters.AddWithValue("@UserId", UserName);
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        if (rdr.Read())
-                        {
-                            lblName.Text = rdr["Name"] != DBNull.Value ? rdr["Name"].ToString() : "Unknown User";
+                    if (!rdr.Read()) return;
 
-                            Label lblRole = this.FindControl("lblRole") as Label;
-                            if (lblRole != null)
-                            {
-                                string role = rdr["RoleName"] != DBNull.Value ? rdr["RoleName"].ToString() : "";
-                                lblRole.Text = string.IsNullOrEmpty(role) ? "Standard User" : role;
-                            }
-
-                            Image imgProfile = this.FindControl("imgProfile") as Image;
-                            if (imgProfile != null)
-                            {
-                                string picUrl = rdr["ProfilePictureUrl"] != DBNull.Value ? rdr["ProfilePictureUrl"].ToString() : "";
-                                imgProfile.ImageUrl = string.IsNullOrEmpty(picUrl)
-                                    ? "~/corporate/business/WebImages/representative.png"
-                                    : picUrl;
-                            }
-                        }
-                    }
+                    lblName.Text = rdr["Name"] != DBNull.Value ? rdr["Name"].ToString() : "Unknown User";
+                    string role = rdr["RoleName"] != DBNull.Value ? rdr["RoleName"].ToString() : "";
+                    lblRole.Text = string.IsNullOrEmpty(role) ? "Standard User" : role;
+                    string picUrl = rdr["ProfilePictureUrl"] != DBNull.Value ? rdr["ProfilePictureUrl"].ToString() : "";
+                    imgProfile.ImageUrl = string.IsNullOrEmpty(picUrl)
+                        ? "~/corporate/business/WebImages/representative.png"
+                        : picUrl;
                 }
             }
-            finally { DbCL.DisconnectDb(); }
         }
 
         private void GetMenuControl()
@@ -257,15 +259,35 @@ namespace Bill_Software.corporate.business.app
                     FROM dbo.Permissions p
                     INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
                     INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
-                    INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id
+                    INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id AND u.CompanyID = @CompanyID
                     WHERE u.User_Id = @UserId";
 
                 using (var cmdUser = new SqlCommand(sqlUserPerms, cn))
                 {
-                    cmdUser.Parameters.AddWithValue("@UserId", UserName);
+                    cmdUser.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = UserName });
+                    cmdUser.Parameters.Add(CompanyIdParam());
                     using (var rdrUser = cmdUser.ExecuteReader())
                     {
                         while (rdrUser.Read()) userGrantedPermissions.Add(rdrUser.GetString(0));
+                    }
+                }
+
+                if (userGrantedPermissions.Count == 0)
+                {
+                    const string sqlUserPermsFallback = @"
+                        SELECT DISTINCT p.PermissionKey 
+                        FROM dbo.Permissions p
+                        INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
+                        INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
+                        INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id
+                        WHERE u.User_Id = @UserId";
+                    using (var cmdFb = new SqlCommand(sqlUserPermsFallback, cn))
+                    {
+                        cmdFb.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = UserName });
+                        using (var rdrFb = cmdFb.ExecuteReader())
+                        {
+                            while (rdrFb.Read()) userGrantedPermissions.Add(rdrFb.GetString(0));
+                        }
                     }
                 }
             }
@@ -320,18 +342,17 @@ namespace Bill_Software.corporate.business.app
         private string GetUserEmailFromDatabase(string userId)
         {
             string email = "Not Provided";
-            string query = "SELECT Email FROM tbl_login WHERE User_Id = @UserId";
+            string query = "SELECT Email FROM tbl_login WHERE User_Id = @UserId AND CompanyID = @CompanyID";
             try
             {
                 using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(query, cn))
                 {
-                    using (var cmd = new SqlCommand(query, cn))
-                    {
-                        cmd.Parameters.AddWithValue("@UserId", userId);
-                        cn.Open();
-                        object result = cmd.ExecuteScalar();
-                        if (result != null && result != DBNull.Value) email = result.ToString();
-                    }
+                    cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = userId });
+                    cmd.Parameters.Add(CompanyIdParam());
+                    cn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value) email = result.ToString();
                 }
             }
             catch { }
