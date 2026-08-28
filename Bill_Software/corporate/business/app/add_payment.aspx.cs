@@ -223,7 +223,7 @@ namespace Bill_Software.corporate.business.app
             // copy from quantum add_Bill.aspx
 
             string currancy = "";
-            string rs_value = "";
+            //string rs_value = "";
             string given_amount = "";
             string given_amount1 = "";
             double tdsamount = 0;
@@ -232,7 +232,7 @@ namespace Bill_Software.corporate.business.app
             if (lblcurrancy.Text == "INR")
             {
                 currancy = RadioButtonList1.Text;
-                rs_value = "Rs.";
+                //rs_value = "Rs.";
                 //given_amount = fetchgivenanount();
                 given_amount = txtpaymentamount.Text;
                 given_amount1 = given_amount.ToString();
@@ -260,7 +260,7 @@ namespace Bill_Software.corporate.business.app
                 no = txtDDno.Text + comma;
                 bank = txtBankName.Text;
                 currancy = lblcurrancy1.Text;
-                rs_value = "";
+                //rs_value = "";
                 given_amount = txtpaymentamount.Text;
                 given_amount1 = txtpaymentamount.Text;
 

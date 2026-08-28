@@ -1,379 +1,234 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="New_vendor.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm5" %>
+﻿<%@ Page Title="Create Vendor" Language="C#" MasterPageFile="~/corporate/business/app/Bill.Master" AutoEventWireup="true" CodeBehind="New_vendor.aspx.cs" Inherits="Bill_Software.corporate.business.app.WebForm5" %>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-     <style type="text/css">
-    .style1
-    {
-        width: 100%;
-    }
-    .style2
-    {
-        color: #FFFFFF;
-        font-weight: bold;
-    }
-    .style3
-    {
-        color: #FF3300;
-    }
-        .style4
-        {
-            text-align: center;
+    <style>
+        .box-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #19658A;
+            border-bottom: 2px solid #19658A;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background: #19658A;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .req {
+            color: red;
         }
     </style>
     <script type="text/javascript">
         function ValidateField() {
-            if (document.getElementById('<%=txtvendorName.ClientID%>').value == "") {
-                alert("Provide Vendor Name.");
-                document.getElementById('<%=txtvendorName.ClientID%>').focus();
-        return false;
-    }
+            if (document.getElementById('<%=txtvendorName.ClientID%>').value == "") { alert("Provide Vendor Name."); return false; }
+            if (document.getElementById('<%=txtAddress1.ClientID%>').value == "") { alert("Provide Address 1."); return false; }
+            if (document.getElementById('<%=cmbState.ClientID%>').selectedIndex == 0) { alert("Please Select State."); return false; }
+            if (document.getElementById('<%=txtPin.ClientID%>').value == "") { alert("Provide PIN Code."); return false; }
+            return true;
+        }
+        function ValidateVendorData() {
+            // 1. Basic Empty Checks
+            if (document.getElementById('<%=txtvendorName.ClientID%>').value.trim() == "") { alert("Provide Vendor Name."); return false; }
+            if (document.getElementById('<%=txtAddress1.ClientID%>').value.trim() == "") { alert("Provide Vendor Address 1."); return false; }
+            if (document.getElementById('<%=cmbState.ClientID%>').selectedIndex == 0) { alert("Please Select State."); return false; }
+            if (document.getElementById('<%=txtPin.ClientID%>').value.trim() == "") { alert("Provide Vendor PIN."); return false; }
 
-    if (document.getElementById('<%=txtAddress1.ClientID%>').value == "") {
-                alert("Provide Vendor Address ");
-                document.getElementById('<%=txtAddress1.ClientID%>').focus();
-        return false;
-    }
-
-    if (document.getElementById('<%=cmbcity.ClientID%>').selectedIndex == 0) {
-                alert("Please Select City.");
-                document.getElementById('<%=cmbcity.ClientID%>').focus();
-        return false;
-    }
-    if (document.getElementById('<%=cmbState.ClientID%>').selectedIndex == 0) {
-                alert("Please Select State.");
-                document.getElementById('<%=cmbState.ClientID%>').focus();
+            // 2. Email Format Validation (If provided)
+            var email = document.getElementById('<%=txtEmail.ClientID%>').value.trim();
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email !== "" && !emailRegex.test(email)) {
+                alert("Please enter a valid Company Email ID (e.g., info@company.com).");
                 return false;
             }
-            if (document.getElementById('<%=txtPin.ClientID%>').value == "") {
-                alert("Provide Vendor Pin");
-                document.getElementById('<%=txtPin.ClientID%>').focus();
-        return false;
-    }
 
-    if (document.getElementById('<%=txtRepresentativeName.ClientID%>').value == "") {
-                alert("Provide Representatives Name");
-                document.getElementById('<%=txtRepresentativeName.ClientID%>').focus();
-        return false;
-    }
-    if (document.getElementById('<%=txtRepresantativeDesig.ClientID%>').value == "") {
-                alert("Provide Representatives Designation.");
-                document.getElementById('<%=txtRepresantativeDesig.ClientID%>').focus();
-        return false;
-    }
-
-
-
-
-}
-</script>
-
-<script type="text/javascript">
-    //Function to allow only numbers to textbox
-    function validate(key) {
-        //getting key code of pressed key
-        var keycode = (key.which) ? key.which : key.keyCode;
-        var phn = document.getElementById('txtfillrequar');
-        //comparing pressed keycodes
-        if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) {
-            return false;
-        }
-        else {
-            //Condition to check textbox contains ten numbers or not
-            if (phn.value.length < 50) {
-                return true;
-            }
-            else {
+            // 3. Phone/Mobile Validation (10 to 15 digits)
+            var phone = document.getElementById('<%=txtPhone.ClientID%>').value.trim();
+            var phoneRegex = /^\d{10,15}$/;
+            if (phone !== "" && !phoneRegex.test(phone)) {
+                alert("Please enter a valid Phone Number (10 to 15 digits, no spaces or dashes).");
                 return false;
             }
+
+            // 4. PAN Number Validation (Indian Standard: 5 Letters, 4 Numbers, 1 Letter)
+            var pan = document.getElementById('<%=txtpanNo.ClientID%>').value.trim().toUpperCase();
+            var panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+            if (pan !== "" && !panRegex.test(pan)) {
+                alert("Invalid PAN Number format. Example: ABCDE1234F");
+                return false;
+            }
+
+                // 5. GSTIN Validation (Indian Standard: 15 alphanumeric characters)
+            var gst = document.getElementById('<%=txtservicetaxNo.ClientID%>').value.trim().toUpperCase();
+            var gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            if (gst !== "" && !gstRegex.test(gst)) {
+                alert("Invalid GSTIN format. Please check the 15-character code.");
+                return false;
+            }
+
+            return true; // All validations passed!
         }
-    }
-</script>
+
+        // Ensures only numbers can be typed in numeric fields
+        function validateNumber(event) {
+            var keycode = (event.which) ? event.which : event.keyCode;
+            if (!(keycode == 8 || keycode == 46) && (keycode < 48 || keycode > 57)) return false;
+            return true;
+        }
+    </script>
 </asp:Content>
+
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    <table class="style1">
-    <tr>
-        <td bgcolor="#19658A" colspan="6">
-            &nbsp;<span class="style2">Create Vendor</span>&nbsp;</td>
-    </tr>
-    <tr>
-        <td width="10%">
-            &nbsp;</td>
-        <td colspan="2" width="40%">
-            &nbsp;</td>
-        <td colspan="2" width="40%">
-            &nbsp;</td>
-        <td width="10%">
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="4">
-                <asp:Panel ID="PanelOK" runat="server" BackColor="#EEFFDD" 
-                    BorderColor="#006600" BorderStyle="Solid" BorderWidth="1px" Visible="False">
-                    &nbsp;<asp:Image ID="imageTick" runat="server" 
-                        ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
-                    &nbsp;<asp:Label ID="lblOk" runat="server"></asp:Label>
-                </asp:Panel>
-        
-            </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;<span class="style3">*</span>Vendor Name&nbsp;</td>
-        <td width="25%">
-            <asp:TextBox ID="txtvendorName" runat="server" CssClass="textbox_style" 
-                Width="250px"></asp:TextBox>
-        </td>
-        <td width="15%">
-            &nbsp;<span class="style3">*</span>Address 1</td>
-        <td width="25%">
-            <asp:TextBox ID="txtAddress1" runat="server" CssClass="textbox_style" 
-                Width="250px"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-   
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Address 2</td>
-        <td width="25%">
-            <asp:TextBox ID="txtAddress2" runat="server" CssClass="textbox_style" 
-                Width="250px"></asp:TextBox>
-        </td>
-        <td width="15%">
-            <span class="style3">*</span>City</td>
-        <td width="25%">
-            <asp:DropDownList ID="cmbcity" runat="server" CssClass="dropdown_style">
-            </asp:DropDownList>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            <span class="style3">*</span>State&nbsp;</td>
-        <td width="25%">
-            <asp:DropDownList ID="cmbState" runat="server" CssClass="dropdown_style">
-            </asp:DropDownList>
-        </td>
-        <td width="15%">
-            <span class="style3">*</span>Pin&nbsp;&nbsp;</td>
-        <td width="25%">
-            <asp:TextBox ID="txtPin" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Company <span>Website</span></td>
-        <td width="25%">
-            <asp:TextBox ID="txtWebsite" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            <span>Company Email ID</span></td>
-        <td width="25%">
-            <asp:TextBox ID="txtEmail" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            <span>Company Phone No</span></td>
-        <td width="25%">
-            <asp:TextBox ID="txtPhone" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            <span>Company Fax Number</span></td>
-        <td width="25%">
-            <asp:TextBox ID="txtFax" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            <span class="style3">*</span>Representatives Name</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresentativeName" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            <span class="style3">*</span>Designation</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresantativeDesig" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Phone No.</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresentativePhone" runat="server" CssClass="textbox_style" onkeypress="return validate(event)"></asp:TextBox>
-        </td>
-        <td width="15%">
-            Email</td>
-        <td width="25%">
-            <asp:TextBox ID="txtRepresentativeEmail" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Service Tax No</td>
-        <td width="25%">
-            <asp:TextBox ID="txtservicetaxNo" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            Pan No</td>
-        <td width="25%">
-            <asp:TextBox ID="txtpanNo" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            Vat No</td>
-        <td width="25%">
-            <asp:TextBox ID="txtvat" runat="server" CssClass="textbox_style"></asp:TextBox>
-        </td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td width="15%">
-            &nbsp;</td>
-        <td width="25%">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="4" class="style4">
-            <asp:Button ID="btnSave" runat="server" CssClass="btn_style" 
-                onclick="btnSave_Click" Text="Save" onclientclick="return ValidateField();"/>
-&nbsp;
-            <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn_style" OnClick="btnReset_Click" />
-        </td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td colspan="2">
-            &nbsp;</td>
-        <td>
-            &nbsp;</td>
-    </tr>
-</table>
+    <div class="box-panel">
+        <h3 style="color: #19658A; margin-top: 0;">Create New Vendor (Principle)</h3>
+
+        <asp:Panel ID="PanelOK" runat="server" BackColor="#D4EDDA" BorderColor="#C3E6CB" BorderStyle="Solid" BorderWidth="1px" Visible="False" Style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #155724;">
+            <strong>Success:</strong>
+            <asp:Label ID="lblOk" runat="server"></asp:Label>
+        </asp:Panel>
+
+        <div class="section-title">Primary Details</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label><span class="req">*</span> Vendor Name</label>
+                <asp:TextBox ID="txtvendorName" runat="server" CssClass="form-control" placeholder="Enter Vendor Name"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Principle Vendor Code</label>
+                <asp:TextBox ID="txt_pvc" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+        </div>
+
+        <div class="section-title">Location & Contact Details</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label><span class="req">*</span> Address 1</label>
+                <asp:TextBox ID="txtAddress1" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Address 2</label>
+                <asp:TextBox ID="txtAddress2" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label><span class="req">*</span> State</label>
+                <asp:DropDownList ID="cmbState" runat="server" CssClass="form-control"></asp:DropDownList>
+            </div>
+            <div class="form-group">
+                <label><span class="req">*</span> City</label>
+                <asp:TextBox ID="txtCity" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label><span class="req">*</span> PIN Code</label>
+                <asp:TextBox ID="txtPin" runat="server" CssClass="form-control" onkeypress="return validateNumber(event)"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Company Phone</label>
+                <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Company Email ID</label>
+                <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Company Website</label>
+                <asp:TextBox ID="txtWebsite" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Fax Number</label>
+                <asp:TextBox ID="txtFax" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+        </div>
+
+        <div class="section-title">Primary Representative</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label>Representative Name</label>
+                <asp:TextBox ID="txtRepresentativeName" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Designation</label>
+                <asp:TextBox ID="txtRepresantativeDesig" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Rep Phone No.</label>
+                <asp:TextBox ID="txtRepresentativePhone" runat="server" CssClass="form-control" onkeypress="return validateNumber(event)"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Rep Email ID</label>
+                <asp:TextBox ID="txtRepresentativeEmail" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+        </div>
+
+        <div class="section-title">Compliance & Banking Details</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label>GSTIN No.</label>
+                <asp:TextBox ID="txtservicetaxNo" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>PAN No.</label>
+                <asp:TextBox ID="txtpanNo" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Bank Account No.</label>
+                <asp:TextBox ID="txt_vndr_bankacc" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>IFSC Code</label>
+                <asp:TextBox ID="txt_ifsc" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+            <div class="form-group">
+                <label>Account Name</label>
+                <asp:TextBox ID="txt_accholdername" runat="server" CssClass="form-control"></asp:TextBox>
+            </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 20px;">
+            <asp:Button ID="btnSave" runat="server" CssClass="btn-primary" OnClick="btnSave_Click" Text="Save Vendor" OnClientClick="if(ValidateVendorData()) { this.value='Saving...'; this.style.pointerEvents='none'; this.style.opacity='0.7'; return true; } else { return false; }" />
+            <asp:Button ID="btnReset" runat="server" CssClass="btn-secondary" OnClick="btnReset_Click" Text="Reset" CausesValidation="false" />
+        </div>
+    </div>
 </asp:Content>

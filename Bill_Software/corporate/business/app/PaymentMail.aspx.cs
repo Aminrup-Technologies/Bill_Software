@@ -324,8 +324,8 @@ namespace Bill_Software.corporate.business.app
                         string LastName = ((Label)GridRep.Rows[i].FindControl("re_lname")).Text;
                         string RepTitle = ((Label)GridRep.Rows[i].FindControl("re_tilal")).Text;
                         string RepEmai = ((Label)GridRep.Rows[i].FindControl("re_email")).Text;
-                        //string RepEmai = "advisory@quantumsystems.in";
-                        SendMail(RepEmai, RepTitle, LastName);
+                        //string RepEmai = "advisory@aminruptechnologies.co.in";
+                        //SendMail(RepEmai, RepTitle, LastName);
 
                         string status = "Yes";
                         DateTime now = DateTime.Now;
@@ -356,13 +356,13 @@ namespace Bill_Software.corporate.business.app
 
                 SmtpClient smtpClient = new SmtpClient();
                 MailMessage message = new MailMessage();
-                MailAddress fromAddress = new MailAddress("info@i2iinc.in", "I2I INC");
+                MailAddress fromAddress = new MailAddress("info@aminruptechnologies.co.in", "Aminrup Technologies");
                 smtpClient.Host = "199.79.63.186";
 
                 smtpClient.Port = 25;
                 smtpClient.EnableSsl = false;
                 smtpClient.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
-                smtpClient.Credentials = new NetworkCredential("info@i2iinc.in", "drL^x089");
+                smtpClient.Credentials = new NetworkCredential("info@aminruptechnologies.co.in", "drL^x089");
                 smtpClient.Timeout = 20000;
 
                 message.From = fromAddress;
@@ -379,7 +379,7 @@ namespace Bill_Software.corporate.business.app
 
                 if (Session["Due_amount"].ToString() == "0.00")
                 {
-                    string s = "http://i2isoft.i2iinc.in/corporate/business/print/NewPaymentInvoice.aspx?Payment_ID=" + Session["Payment_ID"].ToString();
+                    string s = "http://i2isoft.aminruptechnologies.co.in/corporate/business/print/NewPaymentInvoice.aspx?Payment_ID=" + Session["Payment_ID"].ToString();
                     
                     message.Subject = "Acknowledgement for the Receipt of " + Session["Given_amount"].ToString() + " against Tax Invoice Number " + Session["InvoiceNo"].ToString() + " for " + Session["PrimaryService"].ToString() + " at " + cname + " ";
                     //sb = "We are pleased to acknowledge the receipt of the Full & Final Amount of " + Session["Net_amount"].ToString() + " against " + Session["type"].ToString() + " " + Session["Ch_date"].ToString() + " issued from " + Session["Ch_bank"].ToString() + " against the " + Session["PrimaryService"].ToString() + " at " + cname + " ";
@@ -392,7 +392,7 @@ namespace Bill_Software.corporate.business.app
 
                     mad.Append("<html><table style='width:100%;'>");
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>" + mail_head.ToString() + "</span></td></tr>");
-                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Thank you for providing I2I INC an opportunity to serve you.</span></td></tr>");
+                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Thank you for providing Aminrup Technologies an opportunity to serve you.</span></td></tr>");
                     // mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>" + mailstr + "</span></td></tr>");
 
                     if (Session["type"].ToString() == "Cash")
@@ -416,11 +416,11 @@ namespace Bill_Software.corporate.business.app
 
                     }
 
-                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Please Click on the Link “" + s.ToString() + "” to Open & View the Payment Invoice((Payment Invoice Number: " + Session["InvoiceNo"].ToString() + ") with the detailed description of the Payments received by I2I INC from " + cname + ". In case if you wish to convert the Web Page to PDF Format, Please Click on the “Control + P” Keys on your Computer Keyboard and select the “PDF” or “Microsoft Print to PDF” Option whichever is available in the “Print Dialogue Box” and Click “OK” to Save the File in PDF Format on your System.</td></tr>");
+                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Please Click on the Link “" + s.ToString() + "” to Open & View the Payment Invoice((Payment Invoice Number: " + Session["InvoiceNo"].ToString() + ") with the detailed description of the Payments received by Aminrup Technologies from " + cname + ". In case if you wish to convert the Web Page to PDF Format, Please Click on the “Control + P” Keys on your Computer Keyboard and select the “PDF” or “Microsoft Print to PDF” Option whichever is available in the “Print Dialogue Box” and Click “OK” to Save the File in PDF Format on your System.</td></tr>");
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>We greatly appreciate your Prompt Payment against the raised Tax Invoice and look forward to serving you at all times.</span></td></tr>");
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Should you have any questions, please do not hesitate to contact us.</span></td></tr>");
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Thanks & Regards,</span></td></tr>");
-                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Mr. Avijit Das<br>CEO <br>I2I INC<br>Tel: +91 91 9674897316<br></span><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='#' style='text-decoration:none;color:#c8152a;'>E-mail: info@i2iinc.in</a></span><br><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='' style='text-decoration:none;color:#c8152a;'>URL: www.i2iinc.in</a></span></td></tr>");
+                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Mr. Avijit Das<br>CEO <br>Aminrup Technologies<br>Tel: +91 91 9674897316<br></span><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='#' style='text-decoration:none;color:#c8152a;'>E-mail: info@aminruptechnologies.co.in</a></span><br><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='' style='text-decoration:none;color:#c8152a;'>URL: www.aminruptechnologies.co.in</a></span></td></tr>");
                     mad.Append("</table></html>");
 
                 }
@@ -435,7 +435,7 @@ namespace Bill_Software.corporate.business.app
 
                     mad.Append("<html><table style='width:100%;'>");
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>" + mail_head.ToString() + "</span></td></tr>");
-                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Thank you for providing I2I INC an opportunity to serve you.</span></td></tr>");
+                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Thank you for providing Aminrup Technologies an opportunity to serve you.</span></td></tr>");
                    // mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>" + mailstr + "</span></td></tr>");
 
                     if (Session["type"].ToString() == "Cash")
@@ -462,18 +462,18 @@ namespace Bill_Software.corporate.business.app
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>We greatly appreciate your Prompt Payment against the raised Quotation and look forward to serving you at all times.</span></td></tr>");
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Should you have any questions, please do not hesitate to contact us.</span></td></tr>");
                     mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Thanks & Regards,</span></td></tr>");
-                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Mr. Avijit Das<br>CEO <br>I2I INC<br>Tel: +91 91 9674897316<br></span><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='#' style='text-decoration:none;color:#c8152a;'>E-mail: info@i2iinc.in</a></span><br><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='' style='text-decoration:none;color:#c8152a;'>URL: www.i2iinc.in</a></span></td></tr>");
+                    mad.Append("<tr><td style='padding:5px 0px;'><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold;'>Mr. Avijit Das<br>CEO <br>Aminrup Technologies<br>Tel: +91 91 9674897316<br></span><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='#' style='text-decoration:none;color:#c8152a;'>E-mail: info@aminruptechnologies.co.in</a></span><br><span style='text-align:left; color:#c8152a; font:italic normal 12px/15px Century Gothic;font-weight:bold; text-decoration:none'><a href='' style='text-decoration:none;color:#c8152a;'>URL: www.aminruptechnologies.co.in</a></span></td></tr>");
                     mad.Append("</table></html>");
                 }
 
 
                
 
-                message.Bcc.Add(new MailAddress("info@i2iinc.in"));
-                message.Bcc.Add(new MailAddress("advisory@quantumsystems.in"));
-                message.Bcc.Add(new MailAddress("info@quantumsystems.in"));
-                message.Bcc.Add(new MailAddress("akansha@quantumsystems.in"));
-                message.Bcc.Add(new MailAddress("support@quantumsystems.in"));
+                message.Bcc.Add(new MailAddress("info@aminruptechnologies.co.in"));
+                message.Bcc.Add(new MailAddress("advisory@aminruptechnologies.co.in"));
+                message.Bcc.Add(new MailAddress("info@aminruptechnologies.co.in"));
+                message.Bcc.Add(new MailAddress("akansha@aminruptechnologies.co.in"));
+                message.Bcc.Add(new MailAddress("support@aminruptechnologies.co.in"));
 
 
                 message.IsBodyHtml = true;

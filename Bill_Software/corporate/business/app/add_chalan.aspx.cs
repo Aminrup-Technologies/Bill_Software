@@ -1,20 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Data;
-using System.Data.SqlClient;
+using System.Web.Services;
+using System.Linq;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm38 : System.Web.UI.Page
     {
         DB_UTILITY DbCL = new DB_UTILITY();
-        public static DataTable dt_first;
-        DataTable MainDt = new DataTable();
-        DataTable dtPCat = new DataTable();
+        //private int totalQuoted = 0;
+        //private int totalDelivered = 0;
+        //private int totalDue = 0;
+        private decimal totalQuoted = 0;
+        private decimal totalDelivered = 0;
+        private decimal totalDue = 0;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -23,82 +29,129 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbvendor, "select Client_Name from tbl_Client order by Client_Name");
-                txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
-                txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
+                //DbCL.FillCombo(cmbvendor, "select Client_Name from tbl_Client order by Client_Name");
+
+                // Keep the default dates empty so users can search strictly by PO/RecordType if they want.
+                // Or you can retain the original logic: DateTime.Now.ToString("dd-MMM-yyyy")
+                txtfromDate.Text = "";
+                txttodate.Text = "";
                 txtinvoiceDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
             }
-
         }
 
         protected void btnSertch_Click(object sender, EventArgs e)
         {
-            string cmdstring = "";
-            if (RadioButtonList1.SelectedIndex == 0)
-            {
-                BuindCompanyId();
-                //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "'  order by tbl_Quotation.ID desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id = tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id = '" + lblclientId.Text + "' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
-            }
-            else if (RadioButtonList1.SelectedIndex == 1)
-            {
-                //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where  cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
+            // 1. SAFETY FIRST: Clear old ViewState and hide the details panel
+            ViewState["ViewQProductData"] = null;
+            Panel1.Visible = false;
 
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
-            }
-            else
-            {
-                BuindCompanyId();
-                //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where  tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
-            }
-            btnSertch.Visible = false;
+            // 1. Build Smart Search Query using parameters
+            string baseQuery = @"
+                SELECT tbl_QuoPriSerTogather.PServiceName, tbl_Quotation.ID, tbl_Quotation.service_tax1, 
+                       tbl_Quotation.sub_total, tbl_Quotation.DO_Number, tbl_Quotation.PO_Number, 
+                       tbl_Quotation.Quotation_no, tbl_Quotation.Quotation_date, tbl_Quotation.Gross, 
+                       tbl_Quotation.Service_tax, tbl_Quotation.Net_amount, tbl_Quotation.mailStatusDate, 
+                       tbl_Client.Client_Name 
+                FROM tbl_Quotation 
+                LEFT OUTER JOIN tbl_Client ON tbl_Quotation.Client_Id = tbl_Client.Client_Id 
+                LEFT OUTER JOIN tbl_QuoPriSerTogather ON tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no 
+                     AND tbl_QuoPriSerTogather.TimeStamp = tbl_Quotation.TimsStamp 
+                WHERE 1=1 ";
 
+            List<SqlParameter> parameters = new List<SqlParameter>();
+
+            // Client Filter
+            //if (cmbvendor.SelectedIndex > 0 && !string.IsNullOrEmpty(cmbvendor.SelectedValue))
+            //{
+            //    BuindCompanyId(); // Translates name to ID
+            //    baseQuery += " AND tbl_Quotation.Client_Id = @ClientId ";
+            //    parameters.Add(new SqlParameter("@ClientId", lblclientId.Text));
+            //}
+
+            // REPLACE your Client Filter block with this:
+            if (!string.IsNullOrEmpty(txtClientName.Text.Trim()))
+            {
+                BuindCompanyId(); // Translates name to ID
+                baseQuery += " AND tbl_Quotation.Client_Id = @ClientId ";
+                parameters.Add(new SqlParameter("@ClientId", lblclientId.Text));
+            }
+
+            // Record Type Filter (Quotation vs Purchase Order)
+            if (cmbRecordType.SelectedIndex > 0 && !string.IsNullOrEmpty(cmbRecordType.SelectedValue))
+            {
+                baseQuery += " AND tbl_Quotation.RecordType = @RecordType ";
+                parameters.Add(new SqlParameter("@RecordType", cmbRecordType.SelectedValue));
+            }
+
+            // Date Filter
+            if (!string.IsNullOrEmpty(txtfromDate.Text) && !string.IsNullOrEmpty(txttodate.Text))
+            {
+                baseQuery += " AND CAST(tbl_Quotation.Quotation_date AS datetime) BETWEEN @FromDate AND @ToDate ";
+                parameters.Add(new SqlParameter("@FromDate", txtfromDate.Text));
+                parameters.Add(new SqlParameter("@ToDate", txttodate.Text));
+            }
+
+            // Smart Document Filter (PO / DO / QTN No)
+            string docSearch = txtDocNumber.Text.Trim();
+            if (!string.IsNullOrEmpty(docSearch))
+            {
+                baseQuery += " AND (tbl_Quotation.Quotation_no LIKE @DocNo OR tbl_Quotation.PO_Number LIKE @DocNo OR tbl_Quotation.DO_Number LIKE @DocNo) ";
+                parameters.Add(new SqlParameter("@DocNo", "%" + docSearch + "%"));
+            }
+
+            baseQuery += " ORDER BY CAST(tbl_Quotation.Quotation_date AS datetime) DESC";
+
+            Buinddatagrid(baseQuery, parameters.ToArray());
         }
-        private void Buinddatagrid(string cmdstring)
+
+        private void Buinddatagrid(string cmdstring, SqlParameter[] parameters)
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
-            {
-                Buinddatagrid1(cmdstring);
-            }
-            else
-            {
-                PanelError.Visible = true;
-                lblErrorMsg.Text = "No Data Found...";
 
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
+            {
+                if (parameters != null && parameters.Length > 0)
+                {
+                    cmd.Parameters.AddRange(parameters);
+                }
+
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    if (re.HasRows)
+                    {
+                        DataList1.DataSource = re;
+                        DataList1.DataBind();
+                        PanelError.Visible = false;
+                        lblErrorMsg.Text = String.Empty;
+                    }
+                    else
+                    {
+                        DataList1.DataSource = null;
+                        DataList1.DataBind();
+                        PanelError.Visible = true;
+                        lblErrorMsg.Text = "No Data Found based on your search filters...";
+                    }
+                }
             }
             DbCL.Conn.Close();
-        }
-
-        private void Buinddatagrid1(string cmdstring)
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-
-            SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
-            DataList1.DataSource = cmd1.ExecuteReader();
-            DataList1.DataBind();
-            DbCL.Conn.Close();
-
         }
 
         private void BuindCompanyId()
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Client_Id from tbl_Client where Client_Name='" + cmbvendor.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            string cmdstring = "select Client_Id from tbl_Client where Client_Name=@ClientName";
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                lblclientId.Text = re["Client_Id"].ToString();
+                cmd.Parameters.AddWithValue("@ClientName", txtClientName.Text.Trim());
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    if (re.Read())
+                    {
+                        lblclientId.Text = re["Client_Id"].ToString();
+                    }
+                }
             }
             DbCL.Conn.Close();
         }
@@ -106,319 +159,1069 @@ namespace Bill_Software.corporate.business.app
         protected void btnreset_Click(object sender, EventArgs e)
         {
             Response.Redirect("~/corporate/business/app/add_chalan.aspx");
-
-        }
-
-        protected void Button1_Click(object sender, EventArgs e)
-        {
-
-            if (FactoryAddress.SelectedIndex!=-1)
-            {
-
-            
-            string invoice_no = BindInvoiceNo();
-            int k = 1;
-            DataTable dt1;
-
-            //dt1 = dt_first;
-            dt1 =(DataTable) ViewState["ViewQProductData"];
-            if (dt1 != null)
-            {
-                Int32 i;
-                for (i = 0; i <= dt1.Rows.Count - 1; i++)
-                {
-                    CheckBox chk = (CheckBox)(gd_Quotation.Rows[i].FindControl("chk"));
-
-                    if (chk.Checked == true)
-                    {
-
-                        //string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_id")).Text;
-                        //string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("Product_name")).Text;
-
-                        string Product_id = ((Label)gd_Quotation.Rows[i].FindControl("Product_code")).Text;
-                        string Product_name = ((Label)gd_Quotation.Rows[i].FindControl("ProductName")).Text;
-
-                        string Qty = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text;
-                        int quantity = Convert.ToInt32(Qty);
-                        if (quantity>0)
-                        {
-                            DbCL.executeRdr("insert into tbl_Challan_details(Sl_no,Challan_no,Product_id,Product_name,Quantity)values('" + k.ToString() + "','" + invoice_no.ToString() + "','" + Product_id + "','" + Product_name + "','" + Qty + "')");
-                            k = k + 1;
-                        }
-                        //DbCL.executeRdr("insert into tbl_Challan_details(Sl_no,Challan_no,Product_id,Product_name,Quantity)values('" + k.ToString() + "','" + invoice_no.ToString() + "','" + Product_id + "','" + Product_name + "','" + Qty + "')");
-                        //k = k + 1;
-                    }
-
-
-                }
-            }
-
-            int j = idreturn();
-            j = j + 1;
-            DbCL.executeRdr("insert into tbl_Chalan(Chalan_No,Chalan_Date,Quotation_No,Quotation_Date,Client_ID,Sl_no)values('" + invoice_no.ToString() + "','" + txtinvoiceDate.Text + "','" + lblQuotation_no.Text + "','" + lblQuotation_date.Text + "','" + lblClient_Id.Text + "','" + j.ToString() + "')");
-            //DbCL.executeRdr("update tbl_Quotation set Status3='Yes' where Quotation_no='" + lblQuotation_no.Text + "'");
-
-            insertCorRegFacAddress(invoice_no);
-            Button1.Visible = false;
-            PanelOK.Visible = true;
-            lblOk.Text = "Data Save Successfull...";
-
-            }
-            PanelError.Visible = true;
-            lblErrorMsg.Text = "Please Select Delivery Address....";
-        }
-
-        private void insertCorRegFacAddress(string invoice_no)
-        {
-            int selectedSite = 0;
-
-            string listsite_details = null;
-            int slno22 = 1;
-            for (int i = 0; i < FactoryAddress.Items.Count; i++)
-            {
-                if (FactoryAddress.Items[i].Selected)
-                {
-                    selectedSite = selectedSite + 1;
-                    listsite_details = FactoryAddress.Items[i].Text;
-
-                    string query = "insert into tbl_ChaSiteAddress(Cha_no,SiteAddress) values (@Cha_no,@SiteAddress)";
-                    SqlParameter[] pram = {
-                         new SqlParameter("@Cha_no",invoice_no),
-                         new SqlParameter("@SiteAddress",listsite_details)
-                    };
-
-                    DbCL.SPExecDB(query, pram);
-                    slno22 = slno22 + 1;
-                }
-            }
         }
 
         protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
         {
-            string Quotation_no = Convert.ToString(e.CommandArgument);
-
-
-
-            if (e.CommandName == "Select")
+            try
             {
-                Panel1.Visible = true;
-                Binddetails(Quotation_no);
-                Bindquotationdetails(Quotation_no);
+                string Quotation_no = Convert.ToString(e.CommandArgument);
+                if (e.CommandName == "Select")
+                {
+                    // 1. SAFETY FIRST: Clear the old ViewState before loading new data
+                    ViewState["ViewQProductData"] = null;
+
+                    // 2. Setup the UI Panels
+                    Panel1.Visible = true;
+                    Panel2.Visible = false; // Hide the search results
+                    PanelError.Visible = false;
+                    PanelOK.Visible = false;
+
+                    // 3. Load the fresh data
+                    Binddetails(Quotation_no);
+                    Bindquotationdetails(Quotation_no);
+                    BindPastChallanHistory(Quotation_no);
+                }
+            }
+            catch (Exception ex)
+            {
+                PanelError.Visible = true;
+                lblErrorMsg.Text = "An error occurred while loading details. Please contact admin.";
+            }
+        }
+
+        // PERFORMANCE FIX: Pre-fetch all delivered quantities for this document to avoid N+1 query lag
+        private Dictionary<string, decimal> GetAllDeliveredQuantities_OLD(string quotationNo)
+        {
+            Dictionary<string, decimal> deliveredDict = new Dictionary<string, decimal>();
+
+            string query = @"
+                SELECT cd.ItemNo, cd.Product_id, SUM(CAST(cd.Quantity as decimal(18,2))) as DeliveredQnt 
+                FROM tbl_Challan_details cd
+                INNER JOIN tbl_Chalan c ON cd.Challan_no = c.Chalan_No
+                WHERE c.Quotation_No = @QuotationNo
+                GROUP BY cd.ItemNo, cd.Product_id";
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
+            {
+                cmd.Parameters.AddWithValue("@QuotationNo", quotationNo);
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        string itemNo = rdr["ItemNo"].ToString();
+                        string productId = rdr["Product_id"].ToString();
+                        decimal qty = rdr["DeliveredQnt"] != DBNull.Value ? Convert.ToDecimal(rdr["DeliveredQnt"]) : 0;
+
+                        string key = $"{itemNo}_{productId}";
+                        deliveredDict[key] = qty;
+                    }
+                }
+            }
+            DbCL.Conn.Close();
+            return deliveredDict;
+        }
+
+        private void BindPastChallanHistory(string quotationNo)
+        {
+            // Full-Stack CompanyContext segregation fix applied
+            string query = @"
+        SELECT 
+            ROW_NUMBER() OVER(ORDER BY CAST(c.Chalan_Date AS DATE) DESC) as Sl,
+            c.Chalan_No, 
+            c.Chalan_Date, 
+            ISNULL(SUM(CAST(cd.Quantity AS DECIMAL(18,2))), 0) AS TotalQtyDelivered
+        FROM tbl_Chalan c
+        INNER JOIN tbl_Challan_details cd ON c.Chalan_No = cd.Challan_no AND cd.CompanyID = @CompanyID
+        WHERE c.Quotation_No = @QuotationNo AND c.CompanyID = @CompanyID
+        GROUP BY c.Chalan_No, c.Chalan_Date
+        ORDER BY CAST(c.Chalan_Date AS DATE) DESC";
+
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@QuotationNo", quotationNo);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+
+                    using (SqlDataAdapter sda = new SqlDataAdapter(cmd))
+                    {
+                        DataTable dtHistory = new DataTable();
+                        sda.Fill(dtHistory);
+
+                        if (dtHistory.Rows.Count > 0)
+                        {
+                            gvPastChallans.DataSource = dtHistory;
+                            gvPastChallans.DataBind();
+                            pnlPastChallans.Visible = true; // Show the grid
+                        }
+                        else
+                        {
+                            gvPastChallans.DataSource = null;
+                            gvPastChallans.DataBind();
+                            pnlPastChallans.Visible = false; // Hide it if it's the first delivery
+                        }
+                    }
+                }
+            }
+        }
+
+        private Dictionary<string, decimal> GetAllDeliveredQuantities_OLD2(string quotationNo)
+        {
+            Dictionary<string, decimal> deliveredDict = new Dictionary<string, decimal>();
+
+            // FIX: Grouping by ItemNo AND both Product columns to handle missing ItemNos safely
+            string query = @"
+        SELECT 
+            cd.ItemNo, 
+            cd.Product_id, 
+            cd.Product_code, 
+            SUM(CAST(ISNULL(NULLIF(cd.Quantity, ''), '0') AS DECIMAL(18,2))) AS DeliveredQnt 
+        FROM tbl_Challan_details cd
+        INNER JOIN tbl_Chalan c ON cd.Challan_no = c.Chalan_No AND c.CompanyID = @CompanyID
+        WHERE c.Quotation_No = @QuotationNo AND cd.CompanyID = @CompanyID
+        GROUP BY cd.ItemNo, cd.Product_id, cd.Product_code";
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
+            {
+                cmd.Parameters.AddWithValue("@QuotationNo", quotationNo.Trim());
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID); // Strict Tenant Segregation
+
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        int itemNoInt = 0;
+                        int.TryParse(rdr["ItemNo"].ToString().Trim(), out itemNoInt);
+
+                        string prodId1 = rdr["Product_id"].ToString().Trim().ToUpper();
+                        string prodId2 = rdr["Product_code"].ToString().Trim().ToUpper();
+                        decimal qty = rdr["DeliveredQnt"] != DBNull.Value ? Convert.ToDecimal(rdr["DeliveredQnt"]) : 0;
+
+                        if (itemNoInt > 0)
+                        {
+                            // TIER 1: We have a valid Item Number. This is the safest key.
+                            string key = "ITEM_" + itemNoInt.ToString();
+                            deliveredDict[key] = deliveredDict.ContainsKey(key) ? deliveredDict[key] + qty : qty;
+                        }
+                        else
+                        {
+                            // TIER 2: Legacy Data Fallback. Store against BOTH IDs to defeat the swap bug.
+                            // (We divide the logic when reading to prevent double counting).
+                            if (!string.IsNullOrEmpty(prodId1))
+                            {
+                                string key1 = "SKU_" + prodId1;
+                                deliveredDict[key1] = deliveredDict.ContainsKey(key1) ? deliveredDict[key1] + qty : qty;
+                            }
+                            if (!string.IsNullOrEmpty(prodId2))
+                            {
+                                string key2 = "SKU_" + prodId2;
+                                deliveredDict[key2] = deliveredDict.ContainsKey(key2) ? deliveredDict[key2] + qty : qty;
+                            }
+                        }
+                    }
+                }
+            }
+            DbCL.Conn.Close();
+            return deliveredDict;
+        }
+
+        private List<DeliveredAggregate> GetAllDeliveredQuantities_New(string quotationNo)
+        {
+            List<DeliveredAggregate> deliveredList = new List<DeliveredAggregate>();
+
+            string query = @"
+        SELECT
+            TRY_CAST(LTRIM(RTRIM(cd.ItemNo)) AS INT) AS CleanItemNo,
+            UPPER(LTRIM(RTRIM(cd.Product_id))) AS ProdCol1,
+            UPPER(LTRIM(RTRIM(cd.Product_code))) AS ProdCol2,
+            SUM(
+                ISNULL(
+                    TRY_CAST(
+                        NULLIF(LTRIM(RTRIM(cd.Quantity)), '') 
+                        AS DECIMAL(18,2)
+                    ),
+                    0
+                )
+            ) AS TotalDelivered
+        FROM tbl_Challan_details cd
+        INNER JOIN tbl_Chalan c
+            ON cd.Challan_no = c.Chalan_No
+           AND c.CompanyID = @CompanyID
+        WHERE c.Quotation_No = @QuotationNo
+          AND cd.CompanyID = @CompanyID
+        GROUP BY
+            TRY_CAST(LTRIM(RTRIM(cd.ItemNo)) AS INT),
+            UPPER(LTRIM(RTRIM(cd.Product_id))),
+            UPPER(LTRIM(RTRIM(cd.Product_code)))";
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
+                {
+                    cmd.Parameters.AddWithValue(
+                        "@QuotationNo",
+                        quotationNo.Trim()
+                    );
+
+                    cmd.Parameters.AddWithValue(
+                        "@CompanyID",
+                        CompanyContext.CurrentCompanyID
+                    );
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            DeliveredAggregate item = new DeliveredAggregate();
+
+                            item.CleanItemNo =
+                                rdr["CleanItemNo"] == DBNull.Value
+                                ? 0
+                                : Convert.ToInt32(rdr["CleanItemNo"]);
+
+                            item.ProdCol1 =
+                                rdr["ProdCol1"] == DBNull.Value
+                                ? ""
+                                : rdr["ProdCol1"].ToString().Trim().ToUpper();
+
+                            item.ProdCol2 =
+                                rdr["ProdCol2"] == DBNull.Value
+                                ? ""
+                                : rdr["ProdCol2"].ToString().Trim().ToUpper();
+
+                            item.TotalDelivered =
+                                rdr["TotalDelivered"] == DBNull.Value
+                                ? 0
+                                : Convert.ToDecimal(rdr["TotalDelivered"]);
+
+                            deliveredList.Add(item);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if (DbCL.Conn != null &&
+                    DbCL.Conn.State != ConnectionState.Closed)
+                {
+                    DbCL.Conn.Close();
+                }
             }
 
+            return deliveredList;
+        }
+
+        private DeliveredQuantityResult GetAllDeliveredQuantities(string quotationNo)
+        {
+            DeliveredQuantityResult result = new DeliveredQuantityResult();
+
+            string query = @"
+        SELECT
+            TRY_CAST(LTRIM(RTRIM(cd.ItemNo)) AS INT) AS CleanItemNo,
+            UPPER(LTRIM(RTRIM(cd.Product_id))) AS ProdCol1,
+            UPPER(LTRIM(RTRIM(cd.Product_code))) AS ProdCol2,
+            SUM(
+                ISNULL(
+                    TRY_CAST(
+                        NULLIF(LTRIM(RTRIM(cd.Quantity)), '')
+                        AS DECIMAL(18,2)
+                    ),
+                    0
+                )
+            ) AS TotalDelivered
+        FROM tbl_Challan_details cd
+        INNER JOIN tbl_Chalan c
+            ON cd.Challan_no = c.Chalan_No
+           AND c.CompanyID = @CompanyID
+        WHERE c.Quotation_No = @QuotationNo
+          AND cd.CompanyID = @CompanyID
+        GROUP BY
+            TRY_CAST(LTRIM(RTRIM(cd.ItemNo)) AS INT),
+            UPPER(LTRIM(RTRIM(cd.Product_id))),
+            UPPER(LTRIM(RTRIM(cd.Product_code)))";
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
+                {
+                    cmd.Parameters.AddWithValue(
+                        "@QuotationNo",
+                        quotationNo.Trim()
+                    );
+
+                    cmd.Parameters.AddWithValue(
+                        "@CompanyID",
+                        CompanyContext.CurrentCompanyID
+                    );
+
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            int cleanItemNo = 0;
+
+                            if (rdr["CleanItemNo"] != DBNull.Value)
+                            {
+                                cleanItemNo =
+                                    Convert.ToInt32(rdr["CleanItemNo"]);
+                            }
+
+                            string prodCol1 =
+                                rdr["ProdCol1"] == DBNull.Value
+                                    ? ""
+                                    : rdr["ProdCol1"].ToString()
+                                        .Trim()
+                                        .ToUpper();
+
+                            string prodCol2 =
+                                rdr["ProdCol2"] == DBNull.Value
+                                    ? ""
+                                    : rdr["ProdCol2"].ToString()
+                                        .Trim()
+                                        .ToUpper();
+
+                            decimal totalDelivered =
+                                rdr["TotalDelivered"] == DBNull.Value
+                                    ? 0
+                                    : Convert.ToDecimal(
+                                        rdr["TotalDelivered"]
+                                    );
+
+                            // ==============================================
+                            // SCENARIO A
+                            // Valid ItemNo
+                            // ==============================================
+                            if (cleanItemNo > 0)
+                            {
+                                decimal existingQty = 0;
+
+                                if (result.ByItemNo.TryGetValue(
+                                    cleanItemNo,
+                                    out existingQty))
+                                {
+                                    result.ByItemNo[cleanItemNo] =
+                                        existingQty + totalDelivered;
+                                }
+                                else
+                                {
+                                    result.ByItemNo.Add(
+                                        cleanItemNo,
+                                        totalDelivered
+                                    );
+                                }
+                            }
+
+                            // ==============================================
+                            // SCENARIO B
+                            // Legacy ItemNo
+                            // ==============================================
+                            else
+                            {
+                                result.LegacyItems.Add(
+                                    new LegacyDeliveredAggregate
+                                    {
+                                        ProdCol1 = prodCol1,
+                                        ProdCol2 = prodCol2,
+                                        TotalDelivered = totalDelivered
+                                    }
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if (DbCL.Conn != null &&
+                    DbCL.Conn.State != ConnectionState.Closed)
+                {
+                    DbCL.Conn.Close();
+                }
+            }
+
+            return result;
+        }
+
+        private class DeliveredAggregate
+        {
+            public int CleanItemNo { get; set; }
+            public string ProdCol1 { get; set; }   // Challan Product_id
+            public string ProdCol2 { get; set; }   // Challan Product_code
+            public decimal TotalDelivered { get; set; }
+        }
+
+        private class LegacyDeliveredAggregate
+        {
+            public string ProdCol1 { get; set; }
+            public string ProdCol2 { get; set; }
+            public decimal TotalDelivered { get; set; }
+        }
+
+        private class DeliveredQuantityResult
+        {
+            public Dictionary<int, decimal> ByItemNo { get; set; }
+            public List<LegacyDeliveredAggregate> LegacyItems { get; set; }
+
+            public DeliveredQuantityResult()
+            {
+                ByItemNo = new Dictionary<int, decimal>();
+                LegacyItems = new List<LegacyDeliveredAggregate>();
+            }
+        }
+
+        private void Bindquotationdetails_OLD(string Quotation_no)
+        {
+            // 1. Fetch delivered quantities upfront
+            Dictionary<string, decimal> deliveredQtys = GetAllDeliveredQuantities_OLD2(Quotation_no);
+
+            // 2. Setup Memory DataTable
+            DataTable dtPCat = new DataTable();
+            dtPCat.Columns.Add(new DataColumn("Product_id", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveredQnt", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("RemainQny", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ItemNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("MaterialNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("PackSize", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Department", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveryDate", typeof(string)));
+
+            // 3. Process records locally without hitting DB in a loop
+            string cmdstring = "select Sl_no,Product_id,Product_Code, (Product_name+' '+specification) as Product_name,Quantity,sail_rate, Service_tax_rate,Total_sail_rate2, ItemNo, MaterialNo, PackSize, Department, DeliveryDate from tbl_Quotaion_details where Quotation_no=@Quotation_no and IsDeleted=0 and IsLatest=1 order by CAST(Sl_no as int)";
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
+            {
+                cmd.Parameters.AddWithValue("@Quotation_no", Quotation_no);
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    while (re.Read())
+                    {
+                        string Product_id = re["Product_id"].ToString();
+                        string Product_Code = re["Product_Code"].ToString();
+                        string Product_name = re["Product_name"].ToString();
+                        string ItemNo = re["ItemNo"].ToString();
+
+                        decimal qtyInt = 0;
+                        decimal.TryParse(re["Quantity"] == DBNull.Value ? "0" : re["Quantity"].ToString().Trim(), out qtyInt);
+
+                        decimal deliveredInt = 0;
+                        string dictKey = $"{ItemNo}_{Product_id}";
+                        if (deliveredQtys.ContainsKey(dictKey))
+                        {
+                            deliveredInt = deliveredQtys[dictKey];
+                        }
+
+                        decimal RemainQnt = qtyInt - deliveredInt;
+
+                        DataRow dr = dtPCat.NewRow();
+                        dr[0] = Product_id;
+                        dr[1] = Product_Code;
+                        dr[2] = Product_name;
+                        dr[3] = qtyInt.ToString();
+                        dr[4] = deliveredInt.ToString();
+                        dr[5] = RemainQnt.ToString();
+                        dr[6] = ItemNo;
+                        dr[7] = re["MaterialNo"].ToString();
+                        dr[8] = re["PackSize"].ToString();
+                        dr[9] = re["Department"].ToString();
+                        dr[10] = re["DeliveryDate"].ToString();
+
+                        dtPCat.Rows.Add(dr);
+                    }
+                }
+            }
+            DbCL.Conn.Close();
+
+            // 4. Bind and store in ViewState ONCE
+            gd_Quotation.DataSource = dtPCat;
+            gd_Quotation.DataBind();
+            ViewState["ViewQProductData"] = dtPCat;
         }
 
         private void Bindquotationdetails(string Quotation_no)
         {
+            DeliveredQuantityResult deliveredQtys = GetAllDeliveredQuantities(Quotation_no);
+
+            DataTable dtPCat = new DataTable();
+
+            dtPCat.Columns.Add(new DataColumn("Product_id", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveredQnt", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("RemainQny", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ItemNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("MaterialNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("PackSize", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Department", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveryDate", typeof(string)));
+
+            string cmdstring = @"
+                SELECT
+                    Sl_no,
+                    Product_id,
+                    Product_Code,
+                    LTRIM(RTRIM(
+                        ISNULL(Product_name, '') + ' ' + ISNULL(specification, '')
+                    )) AS Product_name,
+                    Quantity,
+                    sail_rate,
+                    Service_tax_rate,
+                    Total_sail_rate2,
+                    ItemNo,
+                    MaterialNo,
+                    PackSize,
+                    Department,
+                    DeliveryDate
+                FROM tbl_Quotaion_details
+                WHERE Quotation_no = @Quotation_no
+                  AND IsDeleted = 0
+                  AND IsLatest = 1
+                  AND CompanyID = @CompanyID
+                ORDER BY TRY_CAST(Sl_no AS INT)";
+
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Sl_no,Product_id,(Product_name+' '+specification) as Product_name,Quantity,sail_rate,Service_tax_rate,Total_sail_rate2 from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
-            {
-                MainDt = DbCL.GetDataTable(cmdstring);
-                //dt_first = dt;
 
-                for (int i = 0; i < MainDt.Rows.Count; i++)
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
                 {
+                    cmd.Parameters.AddWithValue(
+                        "@Quotation_no",
+                        Quotation_no.Trim()
+                    );
 
-                    string Sl_no = MainDt.Rows[i]["Sl_no"].ToString();
-                    string Product_id = MainDt.Rows[i]["Product_id"].ToString();
-                    string Product_name = MainDt.Rows[i]["Product_name"].ToString();
-                    string Quantity = MainDt.Rows[i]["Quantity"].ToString();
-                    string sail_rate = MainDt.Rows[i]["sail_rate"].ToString();
-                    string Service_tax_rate = MainDt.Rows[i]["Service_tax_rate"].ToString();
-                    string Total_sail_rate2 = MainDt.Rows[i]["Total_sail_rate2"].ToString();
+                    cmd.Parameters.AddWithValue(
+                        "@CompanyID",
+                        CompanyContext.CurrentCompanyID
+                    );
 
-                    if (ViewState["ViewQProductData"] != null)
+                    using (SqlDataReader re = cmd.ExecuteReader())
                     {
-                            dtPCat = (DataTable)ViewState["ViewQProductData"];
-                            int count = dtPCat.Rows.Count + 1;
+                        while (re.Read())
+                        {
+                            // =====================================================
+                            // Clean ItemNo
+                            // SQL equivalent:
+                            // TRY_CAST(TRIM(qd.ItemNo) AS INT)
+                            // =====================================================
+                            int itemNoInt = 0;
 
-                            SearchProductCatwise(count, Sl_no, Product_id, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no);
+                            int.TryParse(
+                                re["ItemNo"] == DBNull.Value
+                                    ? ""
+                                    : re["ItemNo"].ToString().Trim(),
+                                out itemNoInt
+                            );
 
+                            // =====================================================
+                            // Clean Product Columns
+                            // =====================================================
+                            string prodId1 =
+                                re["Product_id"] == DBNull.Value
+                                ? ""
+                                : re["Product_id"].ToString()
+                                    .Trim()
+                                    .ToUpper();
+
+                            string prodId2 =
+                                re["Product_Code"] == DBNull.Value
+                                ? ""
+                                : re["Product_Code"].ToString()
+                                    .Trim()
+                                    .ToUpper();
+
+                            // =====================================================
+                            // Quoted Quantity
+                            // =====================================================
+                            decimal quotedQty = 0;
+
+                            decimal.TryParse(
+                                re["Quantity"] == DBNull.Value
+                                    ? "0"
+                                    : re["Quantity"].ToString().Trim(),
+                                out quotedQty
+                            );
+
+                            decimal deliveredQty = 0;
+
+                            // =====================================================
+                            // SCENARIO A
+                            // Valid ItemNo - authoritative matching
+                            // =====================================================
+                            if (itemNoInt > 0)
+                            {
+                                // Scenario A
+                                deliveredQtys.ByItemNo.TryGetValue(
+                                    itemNoInt,
+                                    out deliveredQty
+                                );
+                            }
+
+                            // =====================================================
+                            // SCENARIO B
+                            // Legacy ItemNo = NULL / Blank / 0
+                            //
+                            // Product_Code is the SKU.
+                            // Due to historical column swapping, the SKU may
+                            // exist in either Challan Product_id or Product_code.
+                            //
+                            // Product_id from quotation is intentionally NOT used
+                            // because it may contain a common HSN.
+                            // =====================================================
+                            else
+                            {
+                                if (!string.IsNullOrWhiteSpace(prodId2))
+                                {
+                                    deliveredQty = deliveredQtys.LegacyItems
+                                        .Where(x =>
+                                               x.ProdCol1 == prodId2
+                                            || x.ProdCol2 == prodId2
+                                        )
+                                        .Sum(x => x.TotalDelivered);
+                                }
+                            }
+
+                            // =====================================================
+                            // Pending Quantity
+                            //
+                            // Same behavior as validated SQL.
+                            // Negative values are intentionally preserved.
+                            // =====================================================
+                            decimal remainQty =
+                                quotedQty - deliveredQty;
+
+                            // =====================================================
+                            // Populate DataTable
+                            // =====================================================
+                            DataRow dr = dtPCat.NewRow();
+
+                            dr["Product_id"] =
+                                re["Product_id"].ToString();
+
+                            dr["Product_code"] =
+                                re["Product_Code"].ToString();
+
+                            dr["ProductName"] =
+                                re["Product_name"].ToString();
+
+                            dr["Quantity"] =
+                                quotedQty.ToString("0.00");
+
+                            dr["DeliveredQnt"] =
+                                deliveredQty.ToString("0.00");
+
+                            dr["RemainQny"] =
+                                remainQty.ToString("0.00");
+
+                            dr["ItemNo"] =
+                                re["ItemNo"].ToString();
+
+                            dr["MaterialNo"] =
+                                re["MaterialNo"].ToString();
+
+                            dr["PackSize"] =
+                                re["PackSize"].ToString();
+
+                            dr["Department"] =
+                                re["Department"].ToString();
+
+                            dr["DeliveryDate"] =
+                                re["DeliveryDate"].ToString();
+
+                            dtPCat.Rows.Add(dr);
+                        }
                     }
-                    else
-                    {
-                            SearchProductCatwise(1, Sl_no, Product_id, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, Quotation_no);
-                    }
-                    
                 }
-
-
-                //gd_Quotation.DataSource = DbCL.GetDataTable(cmdstring);
-                //gd_Quotation.DataBind();
-
             }
-
-            DbCL.Conn.Close();
-        }
-
-        private void SearchProductCatwise(int count, string sl_no, string product_id, string product_name, string quantity, string sail_rate, string service_tax_rate, string total_sail_rate2,string Quotation_no)
-        {
-            string Chalanno = "";
-            Chalanno = bindChalanno(Quotation_no);
-            if (Chalanno=="")
+            finally
             {
-                Chalanno = "('')";
-            }
-            else {
-                Chalanno = "(" + Chalanno + ")";
-            }
-            
-
-            string DeliveredQnt = "";
-            DeliveredQnt = bindPreQnt(product_name, Quotation_no, Chalanno);
-
-
-            string RemainQnt = "";
-            RemainQnt = (Convert.ToInt32(quantity) - Convert.ToInt32(DeliveredQnt)).ToString();
-
-            DataRow dr;
-            if (count == 1)
-            {
-                dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
-                dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
-                dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
-                dtPCat.Columns.Add(new DataColumn("DeliveredQnt", typeof(string)));
-                dtPCat.Columns.Add(new DataColumn("RemainQny", typeof(string)));
-
-            }
-            if (ViewState["ViewQProductData"] != null)
-            {
-                for (int i = 0; i < dtPCat.Rows.Count + 1; i++)
+                if (DbCL.Conn != null &&
+                    DbCL.Conn.State != ConnectionState.Closed)
                 {
-                    dtPCat = (DataTable)ViewState["ViewQProductData"];
-                    if (dtPCat.Rows.Count > 0)
-                    {
-                        dr = dtPCat.NewRow();
-                        dr[0] = dtPCat.Rows[0][0].ToString();
-                        dr[1] = dtPCat.Rows[0][1].ToString();
-                        dr[2] = dtPCat.Rows[0][2].ToString();
-                        dr[3] = dtPCat.Rows[0][3].ToString();
-                        dr[4] = dtPCat.Rows[0][4].ToString();
-                        
-                    }
+                    DbCL.Conn.Close();
                 }
-                dr = dtPCat.NewRow();
-                dr[0] = product_id;
-                dr[1] = product_name;
-                dr[2] = quantity;
-                dr[3] = DeliveredQnt;
-                dr[4] = RemainQnt;
-               
+            }
 
-                dtPCat.Rows.Add(dr);
-            }
-            else
-            {
-                dr = dtPCat.NewRow();
-                dr[0] = product_id;
-                dr[1] = product_name;
-                dr[2] = quantity;
-                dr[3] = DeliveredQnt;
-                dr[4] = RemainQnt;
-              
-                dtPCat.Rows.Add(dr);
+            gd_Quotation.DataSource = dtPCat;
+            gd_Quotation.DataBind();
 
-            }
-            if (ViewState["ViewQProductData"] != null)
-            {
-                gd_Quotation.DataSource = (DataTable)ViewState["ViewQProductData"];
-                gd_Quotation.DataBind();
-            }
-            else
-            {
-                gd_Quotation.DataSource = dtPCat;
-                gd_Quotation.DataBind();
-            }
             ViewState["ViewQProductData"] = dtPCat;
         }
 
-        private string bindPreQnt(string product_name, string quotation_no, string chalanno)
+        private void Bindquotationdetails_New(string Quotation_no)
         {
-            string deliQnt = "0";
-            string query = "select sum(CAST(Quantity as int)) as DeliveredQnt,Product_name from tbl_Challan_details where Challan_no in "+ chalanno + " and Product_name='"+ product_name + "' group by Product_name";
-            //SqlParameter[] pram = {
-            //    new SqlParameter("@chno",chalanno),
-            //    new SqlParameter("@pname",product_name),
-            //};
-            //DataTable dgdft = DbCL.SPreturn_dt(query, pram);
-            //if (dgdft.Rows.Count>0)
-            //{
-            //    deliQnt = dgdft.Rows[0]["DeliveredQnt"].ToString();
-            //}
-            SqlDataReader rdr1 = DbCL.SPReturnRdr(query, null);
-            if (rdr1.Read())
+            List<DeliveredAggregate> deliveredQtys =
+                GetAllDeliveredQuantities_New(Quotation_no);
+
+            DataTable dtPCat = new DataTable();
+
+            dtPCat.Columns.Add(new DataColumn("Product_id", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveredQnt", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("RemainQny", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ItemNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("MaterialNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("PackSize", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Department", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveryDate", typeof(string)));
+
+            string cmdstring = @"
+        SELECT
+            Sl_no,
+            Product_id,
+            Product_Code,
+            (Product_name + ' ' + specification) AS Product_name,
+            Quantity,
+            sail_rate,
+            Service_tax_rate,
+            Total_sail_rate2,
+            ItemNo,
+            MaterialNo,
+            PackSize,
+            Department,
+            DeliveryDate
+        FROM tbl_Quotaion_details
+        WHERE Quotation_no = @Quotation_no
+          AND IsDeleted = 0
+          AND IsLatest = 1
+          AND CompanyID = @CompanyID
+        ORDER BY CAST(Sl_no AS INT)";
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            try
             {
-                deliQnt = rdr1["DeliveredQnt"].ToString();
+                using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
+                {
+                    cmd.Parameters.AddWithValue(
+                        "@Quotation_no",
+                        Quotation_no.Trim()
+                    );
+
+                    cmd.Parameters.AddWithValue(
+                        "@CompanyID",
+                        CompanyContext.CurrentCompanyID
+                    );
+
+                    using (SqlDataReader re = cmd.ExecuteReader())
+                    {
+                        while (re.Read())
+                        {
+                            // =====================================================
+                            // Clean Quotation ItemNo
+                            // =====================================================
+                            int itemNoInt = 0;
+
+                            int.TryParse(
+                                re["ItemNo"] == DBNull.Value
+                                    ? ""
+                                    : re["ItemNo"].ToString().Trim(),
+                                out itemNoInt
+                            );
+
+                            // =====================================================
+                            // Clean Product Columns
+                            // =====================================================
+                            string prodId1 =
+                                re["Product_id"] == DBNull.Value
+                                ? ""
+                                : re["Product_id"].ToString().Trim().ToUpper();
+
+                            string prodId2 =
+                                re["Product_Code"] == DBNull.Value
+                                ? ""
+                                : re["Product_Code"].ToString().Trim().ToUpper();
+
+                            // =====================================================
+                            // Quoted Quantity
+                            // =====================================================
+                            decimal quotedQty = 0;
+
+                            decimal.TryParse(
+                                re["Quantity"] == DBNull.Value
+                                    ? "0"
+                                    : re["Quantity"].ToString().Trim(),
+                                out quotedQty
+                            );
+
+                            decimal deliveredQty = 0;
+
+                            // =====================================================
+                            // SCENARIO A
+                            // Valid ItemNo -> Match strictly by Clean ItemNo
+                            // =====================================================
+                            if (itemNoInt > 0)
+                            {
+                                deliveredQty = deliveredQtys
+                                    .Where(x =>
+                                        x.CleanItemNo == itemNoInt
+                                    )
+                                    .Sum(x => x.TotalDelivered);
+                            }
+
+                            // =====================================================
+                            // SCENARIO B
+                            // Missing/0 ItemNo -> Legacy cross-match
+                            // =====================================================
+                            //else
+                            //{
+                            //    deliveredQty = deliveredQtys
+                            //        .Where(x =>
+                            //               x.ProdCol1 == prodId1
+                            //            || x.ProdCol2 == prodId2
+                            //            || x.ProdCol1 == prodId2
+                            //            || x.ProdCol2 == prodId1
+                            //        )
+                            //        .Sum(x => x.TotalDelivered);
+                            //}
+
+                            else
+                            {
+                                if (!string.IsNullOrWhiteSpace(prodId2))
+                                {
+                                    deliveredQty = deliveredQtys
+                                        .Where(x =>
+                                               x.ProdCol1 == prodId2
+                                            || x.ProdCol2 == prodId2
+                                        )
+                                        .Sum(x => x.TotalDelivered);
+                                }
+                            }
+
+                            // =====================================================
+                            // Same as SQL PendingQty
+                            // DO NOT clamp to zero.
+                            // Negative = over-delivery.
+                            // =====================================================
+                            decimal remainQty =
+                                quotedQty - deliveredQty;
+
+                            // =====================================================
+                            // Populate Grid Data
+                            // =====================================================
+                            DataRow dr = dtPCat.NewRow();
+
+                            dr["Product_id"] =
+                                re["Product_id"].ToString();
+
+                            dr["Product_code"] =
+                                re["Product_Code"].ToString();
+
+                            dr["ProductName"] =
+                                re["Product_name"].ToString();
+
+                            dr["Quantity"] =
+                                quotedQty.ToString("0.00");
+
+                            dr["DeliveredQnt"] =
+                                deliveredQty.ToString("0.00");
+
+                            dr["RemainQny"] =
+                                remainQty.ToString("0.00");
+
+                            dr["ItemNo"] =
+                                re["ItemNo"].ToString();
+
+                            dr["MaterialNo"] =
+                                re["MaterialNo"].ToString();
+
+                            dr["PackSize"] =
+                                re["PackSize"].ToString();
+
+                            dr["Department"] =
+                                re["Department"].ToString();
+
+                            dr["DeliveryDate"] =
+                                re["DeliveryDate"].ToString();
+
+                            dtPCat.Rows.Add(dr);
+                        }
+                    }
+                }
             }
-            return deliQnt;
+            finally
+            {
+                if (DbCL.Conn != null &&
+                    DbCL.Conn.State != ConnectionState.Closed)
+                {
+                    DbCL.Conn.Close();
+                }
+            }
+
+            gd_Quotation.DataSource = dtPCat;
+            gd_Quotation.DataBind();
+
+            ViewState["ViewQProductData"] = dtPCat;
         }
 
-        private string bindChalanno(string quotation_no)
+        private void Bindquotationdetails_OLD2(string Quotation_no)
         {
-            string chano = "";
-            string query = "select Chalan_No from tbl_Chalan where Quotation_no=@quotation_no";
-            SqlParameter[] pram = {
-                new SqlParameter("@quotation_no",quotation_no)
-            };
-            SqlDataReader rdr = DbCL.SPReturnRdr(query, pram);
-            int i = 0;
-            while (rdr.Read())
+            Dictionary<string, decimal> deliveredQtys = GetAllDeliveredQuantities_OLD2(Quotation_no);
+
+            DataTable dtPCat = new DataTable();
+            dtPCat.Columns.Add(new DataColumn("Product_id", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Product_code", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ProductName", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Quantity", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveredQnt", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("RemainQny", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("ItemNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("MaterialNo", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("PackSize", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("Department", typeof(string)));
+            dtPCat.Columns.Add(new DataColumn("DeliveryDate", typeof(string)));
+
+            string cmdstring = @"SELECT Sl_no, Product_id, Product_Code, (Product_name+' '+specification) as Product_name, 
+                                Quantity, sail_rate, Service_tax_rate, Total_sail_rate2, ItemNo, MaterialNo, 
+                                PackSize, Department, DeliveryDate 
+                         FROM tbl_Quotaion_details 
+                         WHERE Quotation_no=@Quotation_no AND IsDeleted=0 AND IsLatest=1 AND CompanyID=@CompanyID 
+                         ORDER BY CAST(Sl_no as int)";
+
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                string Chano1 = rdr["Chalan_No"].ToString();
-                Chano1 = "'" + Chano1 + "'";
-                if (i == 0)
+                cmd.Parameters.AddWithValue("@Quotation_no", Quotation_no.Trim());
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+
+                using (SqlDataReader re = cmd.ExecuteReader())
                 {
-                    chano = Chano1;
+                    while (re.Read())
+                    {
+                        int itemNoInt = 0;
+                        int.TryParse(re["ItemNo"].ToString().Trim(), out itemNoInt);
+
+                        string prodId1 = re["Product_id"].ToString().Trim().ToUpper();
+                        string prodId2 = re["Product_Code"].ToString().Trim().ToUpper();
+
+                        decimal qtyInt = 0;
+                        decimal.TryParse(re["Quantity"] == DBNull.Value ? "0" : re["Quantity"].ToString().Trim(), out qtyInt);
+
+                        decimal deliveredInt = 0;
+
+                        // --- THE HYBRID LOOKUP LOGIC ---
+                        if (itemNoInt > 0)
+                        {
+                            // TIER 1: Trust the ItemNo
+                            string itemKey = "ITEM_" + itemNoInt.ToString();
+                            if (deliveredQtys.ContainsKey(itemKey))
+                            {
+                                deliveredInt = deliveredQtys[itemKey];
+                            }
+                        }
+                        else
+                        {
+                            // TIER 2: Legacy fallback. Check BOTH columns to bypass the swap bug!
+                            string skuKey1 = "SKU_" + prodId1;
+                            string skuKey2 = "SKU_" + prodId2;
+
+                            if (deliveredQtys.ContainsKey(skuKey1))
+                            {
+                                deliveredInt = deliveredQtys[skuKey1];
+                            }
+                            else if (deliveredQtys.ContainsKey(skuKey2))
+                            {
+                                // If it wasn't under Product_id, it must have gotten swapped to Product_code!
+                                deliveredInt = deliveredQtys[skuKey2];
+                            }
+                        }
+
+                        decimal RemainQnt = qtyInt - deliveredInt;
+
+                        DataRow dr = dtPCat.NewRow();
+                        dr[0] = re["Product_id"].ToString();
+                        dr[1] = re["Product_Code"].ToString();
+                        dr[2] = re["Product_name"].ToString();
+                        dr[3] = qtyInt.ToString("0.00");
+                        dr[4] = deliveredInt.ToString("0.00");
+                        dr[5] = RemainQnt.ToString("0.00");
+                        dr[6] = re["ItemNo"].ToString();
+                        dr[7] = re["MaterialNo"].ToString();
+                        dr[8] = re["PackSize"].ToString();
+                        dr[9] = re["Department"].ToString();
+                        dr[10] = re["DeliveryDate"].ToString();
+
+                        dtPCat.Rows.Add(dr);
+                    }
                 }
-                else
-                {
-                    chano = chano + " , " + Chano1;
-                }
-                i++;
             }
-            return chano;
+            DbCL.Conn.Close();
+
+            gd_Quotation.DataSource = dtPCat;
+            gd_Quotation.DataBind();
+            ViewState["ViewQProductData"] = dtPCat;
         }
 
         private void Binddetails(string Quotation_no)
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select * from tbl_Quotation where Quotation_no='" + Quotation_no.ToString() + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            string cmdstring = "select * from tbl_Quotation where Quotation_no=@Quotation_no";
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                lblClient_Id.Text = re["Client_Id"].ToString();
-                lblQuotation_no.Text = re["Quotation_no"].ToString();
-                lblQuotation_date.Text = re["Quotation_date"].ToString();
-                lblGross_amount.Text = re["Gross"].ToString();
-                lblservicetax.Text = re["Service_tax"].ToString();
-                lblNet_amount.Text = re["Net_amount"].ToString();
-                string clientcode= re["Client_Id"].ToString();
-                bindFactoryAddress(clientcode);
+                cmd.Parameters.AddWithValue("@Quotation_no", Quotation_no);
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    if (re.Read())
+                    {
+                        lblClient_Id.Text = re["Client_Id"].ToString();
+                        lblQuotation_no.Text = re["Quotation_no"].ToString();
+                        lblQuotation_date.Text = re["Quotation_date"].ToString();
+                        lblGross_amount.Text = re["Gross"].ToString();
+                        lblservicetax.Text = re["Service_tax"].ToString();
+                        lblNet_amount.Text = re["Net_amount"].ToString();
+                        lbl_ponumber.Text = re["PO_Number"].ToString();
+                        lbl_donumber.Text = re["DO_Number"].ToString();
+
+                        string clientcode = re["Client_Id"].ToString();
+                        bindFactoryAddress(clientcode);
+                    }
+                }
             }
             DbCL.Conn.Close();
             BindclientName();
-            BindInvoiceNo();
-            //cmbaddressfor.Items.Add("Corporate office");
-            //DbCL.FillCombo10(cmbaddressfor, "select Factory_name from tbl_Factory where Client_id='" + lblClient_Id.Text + "' order by Factory_name");
         }
 
         private void bindFactoryAddress(string clientcode)
         {
+            FactoryAddress.Items.Clear(); // Clear before adding to avoid duplication on re-click
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             string cmdstring = "select Address1+', '+City+', '+pin+', '+State from tbl_Client where Client_Id='" + clientcode + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            SqlDataReader DR1 = cmd.ExecuteReader();
-            while (DR1.Read())
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
+                using (SqlDataReader DR1 = cmd.ExecuteReader())
+                {
+                    while (DR1.Read())
+                    {
+                        FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
+                    }
+                }
             }
             DbCL.Conn.Close();
             bindRegAddress(clientcode);
@@ -430,12 +1233,15 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             string cmdstring = "select [Address1] +', '+ [Address2]+', '+[city]+', '+[State]+', '+[pin] as address from tbl_Factory where Client_id='" + clientcode + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            SqlDataReader DR1 = cmd.ExecuteReader();
-            while (DR1.Read())
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
+                using (SqlDataReader DR1 = cmd.ExecuteReader())
+                {
+                    while (DR1.Read())
+                    {
+                        FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
+                    }
+                }
             }
             DbCL.Conn.Close();
         }
@@ -445,32 +1251,237 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
             string cmdstring = "select Address+', '+State+', '+City+', '+pin as regadd from tbl_ClientRegAddress where Client_Id='" + clientcode + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            SqlDataReader DR1 = cmd.ExecuteReader();
-            while (DR1.Read())
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
+                using (SqlDataReader DR1 = cmd.ExecuteReader())
+                {
+                    while (DR1.Read())
+                    {
+                        FactoryAddress.Items.Add(DR1.GetValue(0).ToString());
+                    }
+                }
             }
             DbCL.Conn.Close();
         }
 
-        private string BindInvoiceNo()
+        private void BindclientName()
         {
-            
-           
-            string f = "";
-            
-            f = "I2I"  + "/";
-            string ss = findmonth();
-            f = f + ss;
-            int j = idreturn();
-            j = j + 1;
-            f = f + j.ToString();
-            return f;
+            DbCL.Sqlconnection();
+            DbCL.ConnectDb();
+            string cmdstring = "select Client_Name from tbl_Client where Client_Id='" + lblClient_Id.Text + "'";
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
+            {
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    if (re.Read())
+                    {
+                        lblClientName.Text = re["Client_Name"].ToString();
+                    }
+                }
+            }
+            DbCL.Conn.Close();
         }
 
-        private int idreturn()
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            // 1. Ensure at least one address is selected
+            if (FactoryAddress.GetSelectedIndices().Length == 0)
+            {
+                PanelError.Visible = true;
+                lblErrorMsg.Text = "Please Select Delivery Address....";
+                return;
+            }
+
+            // 2. Generate the necessary IDs BEFORE starting the transaction
+            string invoice_no = BindInvoiceNo();
+            int j = idreturn_OLD() + 1;
+
+            DataTable dt1 = (DataTable)ViewState["ViewQProductData"];
+            if (dt1 == null || dt1.Rows.Count == 0)
+            {
+                PanelError.Visible = true;
+                lblErrorMsg.Text = "No product data available to create a Challan.";
+                return;
+            }
+
+            // 3. Set up the SQL Connection and Transaction
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                con.Open();
+
+                // Begin the transaction!
+                using (SqlTransaction transaction = con.BeginTransaction())
+                {
+                    try
+                    {
+                        // --- INSERT 1: Main Challan Record ---
+                        string queryChalan = @"INSERT INTO tbl_Chalan (Chalan_No, Chalan_Date, Quotation_No, Quotation_Date, Client_ID, Sl_no) 
+                                       VALUES (@ChalanNo, @ChalanDate, @QuotationNo, @QuotationDate, @ClientID, @SlNo)";
+                        using (SqlCommand cmd = new SqlCommand(queryChalan, con, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@ChalanNo", invoice_no);
+                            cmd.Parameters.AddWithValue("@ChalanDate", txtinvoiceDate.Text);
+                            cmd.Parameters.AddWithValue("@QuotationNo", lblQuotation_no.Text);
+                            cmd.Parameters.AddWithValue("@QuotationDate", lblQuotation_date.Text);
+                            cmd.Parameters.AddWithValue("@ClientID", lblClient_Id.Text);
+                            cmd.Parameters.AddWithValue("@SlNo", j);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // --- INSERT 2: Challan Details (Looping through Grid) ---
+                        string queryDetails = @"INSERT INTO tbl_Challan_details (Sl_no, Challan_no, Product_id, Product_code, Product_name, Quantity, ItemNo, MaterialNo, PackSize) 
+                                        VALUES (@SlNoDetail, @ChallanNo, @ProductId, @ProductCode, @ProductName, @Quantity, @ItemNo, @MaterialNo, @PackSize)";
+
+                        int k = 1;
+                        for (int i = 0; i < dt1.Rows.Count; i++)
+                        {
+                            CheckBox chk = (CheckBox)gd_Quotation.Rows[i].FindControl("chk");
+
+                            if (chk != null && chk.Checked)
+                            {
+                                string QtyText = ((TextBox)gd_Quotation.Rows[i].FindControl("Qty")).Text?.Trim() ?? "";
+                                decimal quantity = 0;
+                                decimal.TryParse(QtyText, out quantity);
+
+                                if (quantity > 0)
+                                {
+                                    using (SqlCommand cmd = new SqlCommand(queryDetails, con, transaction))
+                                    {
+                                        cmd.Parameters.AddWithValue("@SlNoDetail", k);
+                                        cmd.Parameters.AddWithValue("@ChallanNo", invoice_no);
+                                        cmd.Parameters.AddWithValue("@ProductId", ((Label)gd_Quotation.Rows[i].FindControl("Product_code")).Text);
+                                        cmd.Parameters.AddWithValue("@ProductCode", ((Label)gd_Quotation.Rows[i].FindControl("product_id")).Text);
+                                        cmd.Parameters.AddWithValue("@ProductName", ((Label)gd_Quotation.Rows[i].FindControl("ProductName")).Text);
+                                        cmd.Parameters.AddWithValue("@Quantity", QtyText);
+                                        cmd.Parameters.AddWithValue("@ItemNo", ((Label)gd_Quotation.Rows[i].FindControl("ItemNo")).Text);
+                                        cmd.Parameters.AddWithValue("@MaterialNo", ((Label)gd_Quotation.Rows[i].FindControl("MaterialNo")).Text);
+                                        cmd.Parameters.AddWithValue("@PackSize", ((Label)gd_Quotation.Rows[i].FindControl("PackSize")).Text);
+
+                                        cmd.ExecuteNonQuery();
+                                    }
+                                    k++;
+                                }
+                            }
+                        }
+
+                        // --- INSERT 3: Factory/Site Addresses ---
+                        string queryAddress = "INSERT INTO tbl_ChaSiteAddress(Cha_no, SiteAddress) VALUES (@Cha_no, @SiteAddress)";
+                        for (int i = 0; i < FactoryAddress.Items.Count; i++)
+                        {
+                            if (FactoryAddress.Items[i].Selected)
+                            {
+                                using (SqlCommand cmd = new SqlCommand(queryAddress, con, transaction))
+                                {
+                                    cmd.Parameters.AddWithValue("@Cha_no", invoice_no);
+                                    cmd.Parameters.AddWithValue("@SiteAddress", FactoryAddress.Items[i].Text);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        // 4. COMMIT THE TRANSACTION (If we made it this far, everything worked!)
+                        transaction.Commit();
+
+                        // 5. Update UI for Success
+                        Button1.Visible = false;
+                        PanelError.Visible = false;
+                        lblErrorMsg.Text = String.Empty;
+                        PanelOK.Visible = true;
+                        lblOk.Text = $"Data Saved Successfully! Generated Challan No: {invoice_no}";
+
+                        // 6. Clear state to prevent duplicate submissions
+                        ViewState["ViewQProductData"] = null;
+                        gd_Quotation.DataSource = null;
+                        gd_Quotation.DataBind();
+                    }
+                    catch (Exception ex)
+                    {
+                        // SOMETHING FAILED! Roll back all database changes
+                        transaction.Rollback();
+
+                        PanelError.Visible = true;
+                        lblErrorMsg.Text = "An error occurred while saving the Challan. No data was saved. Error: " + ex.Message;
+                        // Note: In a production environment, log 'ex' using your logging framework rather than displaying it fully to the user.
+                    }
+                }
+            }
+        }
+
+        private void insertCorRegFacAddress(string invoice_no)
+        {
+            for (int i = 0; i < FactoryAddress.Items.Count; i++)
+            {
+                if (FactoryAddress.Items[i].Selected)
+                {
+                    string listsite_details = FactoryAddress.Items[i].Text;
+                    string query = "insert into tbl_ChaSiteAddress(Cha_no,SiteAddress) values (@Cha_no,@SiteAddress)";
+                    SqlParameter[] pram = {
+                         new SqlParameter("@Cha_no",invoice_no),
+                         new SqlParameter("@SiteAddress",listsite_details)
+                    };
+                    DbCL.SPExecDB(query, pram);
+                }
+            }
+        }
+
+        private string BindInvoiceNo()
+        {
+            string prefix = "CHL/FE/";
+            string finYear = findmonth();
+            string fullPrefix = prefix + finYear;
+            int nextNumber = idreturn(fullPrefix);
+            string invoiceNo;
+
+            do
+            {
+                nextNumber += 1;
+                invoiceNo = fullPrefix + nextNumber.ToString();
+            }
+            while (InvoiceNoExists(invoiceNo));
+
+            return invoiceNo;
+        }
+
+        private int idreturn(string prefix)
+        {
+            int lastNumber = 0;
+            string query = "SELECT TOP 1 Chalan_No FROM tbl_Chalan WHERE Chalan_No LIKE @Prefix + '%' ORDER BY ID DESC";
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Prefix", prefix);
+                con.Open();
+                var result = cmd.ExecuteScalar();
+                if (result != null)
+                {
+                    string invoiceNo = result.ToString().Trim();
+                    string[] parts = invoiceNo.Split('/');
+                    int parsedNumber = 0;
+                    if (parts.Length >= 4 && int.TryParse(parts[parts.Length - 1], out parsedNumber))
+                    {
+                        lastNumber = parsedNumber;
+                    }
+                }
+            }
+            return lastNumber;
+        }
+
+        private bool InvoiceNoExists(string invoiceNo)
+        {
+            bool exists = false;
+            string query = "SELECT COUNT(*) FROM tbl_Chalan WHERE Chalan_No = @Chalan_No";
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Chalan_No", invoiceNo);
+                con.Open();
+                int count = (int)cmd.ExecuteScalar();
+                exists = count > 0;
+            }
+            return exists;
+        }
+
+        private int idreturn_OLD()
         {
             string a = null;
             int b = 0;
@@ -490,13 +1501,10 @@ namespace Bill_Software.corporate.business.app
             }
             DbCL.Conn.Close();
             return b;
-
         }
 
         private string findmonth()
         {
-
-
             string MonthName = "-";
             string a = txtinvoiceDate.Text.Substring(3, 3);
             string b = txtinvoiceDate.Text.Substring(9, 2);
@@ -508,23 +1516,223 @@ namespace Bill_Software.corporate.business.app
             {
                 MonthName = b + "-" + (Convert.ToInt32(b) + 1).ToString() + "/";
             }
-
             return MonthName;
-
         }
 
-        private void BindclientName()
+        protected void gd_Quotation_RowDataBound_OLD(object sender, GridViewRowEventArgs e)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Client_Name from tbl_Client where Client_Id='" + lblClient_Id.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                lblClientName.Text = re["Client_Name"].ToString();
+                if (e.Row.RowIndex == 0)
+                {
+                    totalQuoted = 0;
+                    totalDelivered = 0;
+                    totalDue = 0;
+                }
+
+                Label lblQuoted = (Label)e.Row.FindControl("Quantity");
+                Label lblDelivered = (Label)e.Row.FindControl("DeliveredQnt");
+                TextBox txtDue = (TextBox)e.Row.FindControl("Qty");
+
+                TableCell quotedCell = lblQuoted?.Parent as TableCell;
+                TableCell deliveredCell = lblDelivered?.Parent as TableCell;
+
+                int quoted = 0;
+                int delivered = 0;
+                int due = 0;
+
+                int.TryParse(Convert.ToString(DataBinder.Eval(e.Row.DataItem, "Quantity")).Trim(), out quoted);
+                int.TryParse(Convert.ToString(DataBinder.Eval(e.Row.DataItem, "DeliveredQnt")).Trim(), out delivered);
+                int.TryParse(Convert.ToString(DataBinder.Eval(e.Row.DataItem, "RemainQny")).Trim(), out due);
+
+                totalQuoted += quoted;
+                totalDelivered += delivered;
+                totalDue += due;
+
+                if (lblQuoted != null && lblDelivered != null && quotedCell != null && deliveredCell != null)
+                {
+                    if (quoted == delivered)
+                    {
+                        lblQuoted.ForeColor = System.Drawing.Color.DarkBlue;
+                        lblDelivered.ForeColor = System.Drawing.Color.DarkBlue;
+                        quotedCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#e6f2ff");
+                        deliveredCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#e6f2ff");
+                    }
+                    else if (quoted > delivered)
+                    {
+                        lblQuoted.ForeColor = System.Drawing.Color.Red;
+                        lblDelivered.ForeColor = System.Drawing.Color.OrangeRed;
+                        quotedCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#ffe6e6");
+                        deliveredCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#fff0e6");
+                    }
+                    else
+                    {
+                        lblQuoted.ForeColor = System.Drawing.Color.Orange;
+                        lblDelivered.ForeColor = System.Drawing.Color.Green;
+                        quotedCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#fff0cc");
+                        deliveredCell.BackColor = System.Drawing.ColorTranslator.FromHtml("#e6ffe6");
+                    }
+                }
             }
-            DbCL.Conn.Close();
+
+            if (e.Row.RowType == DataControlRowType.Footer)
+            {
+                Label lblTotalQuoted = (Label)e.Row.FindControl("lblTotalQuoted");
+                Label lblTotalDelivered = (Label)e.Row.FindControl("lblTotalDelivered");
+                Label lblTotalDue = (Label)e.Row.FindControl("lblTotalDue");
+
+                if (lblTotalQuoted != null) lblTotalQuoted.Text = totalQuoted.ToString();
+                if (lblTotalDelivered != null) lblTotalDelivered.Text = totalDelivered.ToString();
+                if (lblTotalDue != null) lblTotalDue.Text = totalDue.ToString();
+            }
+        }
+
+
+        protected void gd_Quotation_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                // Reset totals on the first row to prevent accumulation across multiple searches
+                if (e.Row.RowIndex == 0)
+                {
+                    totalQuoted = 0;
+                    totalDelivered = 0;
+                    totalDue = 0;
+                }
+
+                Label lblQuoted = (Label)e.Row.FindControl("Quantity");
+                Label lblDelivered = (Label)e.Row.FindControl("DeliveredQnt");
+                TextBox txtDue = (TextBox)e.Row.FindControl("Qty");
+                CheckBox chk = (CheckBox)e.Row.FindControl("chk");
+
+                decimal quoted = 0;
+                decimal delivered = 0;
+                decimal due = 0;
+
+                decimal.TryParse(Convert.ToString(DataBinder.Eval(e.Row.DataItem, "Quantity")).Trim(), out quoted);
+                decimal.TryParse(Convert.ToString(DataBinder.Eval(e.Row.DataItem, "DeliveredQnt")).Trim(), out delivered);
+                decimal.TryParse(Convert.ToString(DataBinder.Eval(e.Row.DataItem, "RemainQny")).Trim(), out due);
+
+                totalQuoted += quoted;
+                totalDelivered += delivered;
+                totalDue += due;
+
+                // =========================================================================
+                // UX SCENARIO HIGHLIGHTING & MISTAKE-PROOFING
+                // =========================================================================
+
+                if (delivered >= quoted && quoted > 0)
+                {
+                    // SCENARIO 1: FULLY DELIVERED (Or Over-Delivered)
+                    // Visual: Light Green Background, Green Text
+                    e.Row.BackColor = System.Drawing.ColorTranslator.FromHtml("#e6ffe6");
+                    if (lblDelivered != null) lblDelivered.ForeColor = System.Drawing.Color.Green;
+
+                    // Mistake-Proofing: Disable the CheckBox and Due Qty TextBox
+                    if (txtDue != null)
+                    {
+                        txtDue.Enabled = false;
+                        txtDue.BackColor = System.Drawing.ColorTranslator.FromHtml("#f0f0f0");
+                        txtDue.ToolTip = "This item has been fully delivered.";
+                    }
+                    if (chk != null)
+                    {
+                        chk.Enabled = false;
+                        chk.ToolTip = "This item has been fully delivered.";
+                    }
+                }
+                else if (delivered > 0 && delivered < quoted)
+                {
+                    // SCENARIO 2: PARTIALLY DELIVERED
+                    // Visual: Light Warning Yellow Background, Orange Text
+                    e.Row.BackColor = System.Drawing.ColorTranslator.FromHtml("#fff8e1");
+                    if (lblDelivered != null) lblDelivered.ForeColor = System.Drawing.Color.DarkOrange;
+                }
+                else if (delivered == 0)
+                {
+                    // SCENARIO 3: UNTOUCHED (Zero Delivered)
+                    // Visual: Default Background, Gray Text for Delivered
+                    if (lblDelivered != null) lblDelivered.ForeColor = System.Drawing.Color.Gray;
+                }
+            }
+
+            if (e.Row.RowType == DataControlRowType.Footer)
+            {
+                Label lblTotalQuoted = (Label)e.Row.FindControl("lblTotalQuoted");
+                Label lblTotalDelivered = (Label)e.Row.FindControl("lblTotalDelivered");
+                Label lblTotalDue = (Label)e.Row.FindControl("lblTotalDue");
+
+                // Format to 2 decimal places to keep the UI aligned
+                if (lblTotalQuoted != null) lblTotalQuoted.Text = totalQuoted.ToString("0.00");
+                if (lblTotalDelivered != null) lblTotalDelivered.Text = totalDelivered.ToString("0.00");
+                if (lblTotalDue != null) lblTotalDue.Text = totalDue.ToString("0.00");
+            }
+        }
+
+        [WebMethod]
+        public static List<string> GetDocumentNumbers(string prefixText)
+        {
+            List<string> docNumbers = new List<string>();
+
+            // Search across Quotation_no, PO_Number, and DO_Number
+            // We filter out 'N/A' and empty values to keep the suggestions clean
+            string query = @"
+                SELECT TOP 15 DocNo FROM (
+                    SELECT Quotation_no AS DocNo FROM tbl_Quotation WHERE Quotation_no LIKE @Prefix
+                    UNION
+                    SELECT PO_Number AS DocNo FROM tbl_Quotation WHERE PO_Number LIKE @Prefix AND PO_Number <> 'N/A' AND PO_Number <> ''
+                    UNION
+                    SELECT DO_Number AS DocNo FROM tbl_Quotation WHERE DO_Number LIKE @Prefix AND DO_Number <> 'N/A' AND DO_Number <> ''
+                ) AS TempDocs
+                ORDER BY DocNo";
+
+            // Use your existing connection string from Web.config
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    // Adding % wildcard to match the prefix anywhere in the document string
+                    cmd.Parameters.AddWithValue("@Prefix", "%" + prefixText + "%");
+                    conn.Open();
+
+                    using (SqlDataReader sdr = cmd.ExecuteReader())
+                    {
+                        while (sdr.Read())
+                        {
+                            docNumbers.Add(sdr["DocNo"].ToString());
+                        }
+                    }
+                }
+            }
+            return docNumbers;
+        }
+
+        [WebMethod]
+        public static List<string> GetClientNames(string prefixText)
+        {
+            List<string> clientNames = new List<string>();
+
+            // Fetch the top 15 matching client names
+            string query = "SELECT TOP 15 Client_Name FROM tbl_Client WHERE Client_Name LIKE @Prefix ORDER BY Client_Name";
+
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    // % wildcard allows searching parts of the name
+                    cmd.Parameters.AddWithValue("@Prefix", "%" + prefixText + "%");
+                    conn.Open();
+
+                    using (SqlDataReader sdr = cmd.ExecuteReader())
+                    {
+                        while (sdr.Read())
+                        {
+                            clientNames.Add(sdr["Client_Name"].ToString());
+                        }
+                    }
+                }
+            }
+            return clientNames;
         }
     }
 }

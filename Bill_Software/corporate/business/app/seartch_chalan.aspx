@@ -42,7 +42,7 @@
     <ContentTemplate>
         <table cellpadding="0" cellspacing="0" class="auto-style1">
         <tr>
-            <td colspan="6" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;Search Challan</span></td>
+            <td colspan="6" bgcolor="#19658A">&nbsp;<span class="style2">&nbsp;Search DPCC (Delivery planning cum Challan)</span></td>
         </tr>
         <tr>
             <td width="15%">&nbsp;</td>

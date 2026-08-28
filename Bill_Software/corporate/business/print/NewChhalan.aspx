@@ -66,7 +66,6 @@
             .pagebrake {
                 page-break-inside: avoid;
             }
-           
         }
 
         @page {
@@ -80,7 +79,8 @@
             <thead id="header">
                 <tr>
                     <th style="width: 100%">
-                        <img src="../WebImages/I2ILHHeader1.png" width="100%" /></th>
+                        <asp:Image ID="Image21" runat="server"
+                            Width="844px" Height="140px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" /></th>
                 </tr>
                 <tr>
                     <th></th>
@@ -107,12 +107,12 @@
                     <td id="bodycontain" width="100%" style="font-weight: bold">
 
                         <table border="0" width="100%">
-                            
+
                             <tr>
                                 <td class="sub" style="text-align: right; font-weight: bold; font-size: 30px; color: #e31e24;">DELIVERY CHALLAN</td>
                             </tr>
-                             <tr class="trheight">
-                               <td class="sub" style="text-align: right; font-weight: bold;  font-size: 15px;">Original Copy for Consignee</td>
+                            <tr class="trheight">
+                                <td class="sub" style="text-align: right; font-weight: bold; font-size: 15px;">Original Copy for Consignee</td>
                             </tr>
                             <tr>
                                 <td class="gap" style="text-align: center; font-weight: bold;">&nbsp</td>
@@ -142,7 +142,7 @@
                                                 <asp:Label ID="lbldeg" runat="server"></asp:Label></td>
                                         </tr>--%>
 
-                                       
+
                                         <tr>
                                             <td class="" style="width: 30%; vertical-align: top; padding: 1px 5px;">Bill To</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
@@ -158,33 +158,36 @@
                                             </td>
                                         </tr>
                                         <tr>
+                                            <td class="" colspan="3" style="width: 2%; vertical-align: top; padding: 1px 5px;">&nbsp;</td>
+                                        </tr>
+                                        <tr>
                                             <td class="" style="width: 30%; vertical-align: top; padding: 1px 5px;">Delivery Address</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 68%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblAddress" runat="server"></asp:Label>
                                             </td>
                                         </tr>
-                                        <asp:Panel ID="pnlTasGst" runat="server">
-                                        <tr>
+                                        <asp:Panel ID="pnlTasGst" runat="server" Visible="false">
+                                            <tr>
                                                 <td class="" style="width: 38%; vertical-align: top; padding: 1px 5px;">Client GST Number</td>
                                                 <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                                 <td class="" style="width: 60%; vertical-align: top; padding: 1px 5px;">
                                                     <asp:Label ID="lblGstno" runat="server"></asp:Label></td>
                                             </tr>
-                                         <tr>
+                                            <tr>
                                                 <td class="" style="width: 38%; vertical-align: top; padding: 1px 5px;">Client Pan Number</td>
                                                 <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                                 <td class="" style="width: 60%; vertical-align: top; padding: 1px 5px;">
                                                     <asp:Label ID="lblClientPan" runat="server"></asp:Label></td>
                                             </tr>
-                                            </asp:Panel>
+                                        </asp:Panel>
                                     </table>
                                 </td>
                                 <td style="vertical-align: top;" width="2%"></td>
                                 <td class="qno" style="vertical-align: top; background-color: #d9d3d3;" width="40%">
                                     <table border="0" width="100%" class="quotation">
                                         <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;" >Challan Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Challan Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblChano" runat="server"></asp:Label></td>
@@ -196,18 +199,30 @@
                                                 <asp:Label ID="lblChadate" runat="server"></asp:Label></td>
                                         </tr>
                                         <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Quotation Number</td>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">D.O. Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
-                                                <asp:Label ID="lblqnumber" runat="server"></asp:Label></td>
+                                                <asp:Label ID="lbldonumber" runat="server"></asp:Label></td>
                                         </tr>
-                                       <%-- <tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">P.O. /ARC Number</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblpnumber" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">P.O. Date</td>
+                                            <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
+                                            <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
+                                                <asp:Label ID="lblpdate" runat="server"></asp:Label></td>
+                                        </tr>
+                                        <%-- <tr>
                                             <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Client Code</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">
                                                 <asp:Label ID="lblClientCode" runat="server"></asp:Label></td>
                                         </tr>--%>
-                                         <tr>
+                                        <tr>
                                             <td class='' style='width: 45%; vertical-align: top; padding: 1px 5px;'>
                                                 <asp:Label ID="lblplaceofsup1" runat="server"></asp:Label></td>
                                             <td class='' style='width: 2%; vertical-align: top; padding: 1px 5px;'>
@@ -216,19 +231,18 @@
                                                 <asp:Label ID="lblplaceofsup3" runat="server"></asp:Label></td>
 
                                         </tr>
-
-                                            <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">I2I INC GST Number</td>
+                                        <tr id="gst_row" runat="server" visible="false">
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Flame-Ex GST Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">19AAEF15315E1ZL</td>
                                         </tr>
-                                            <tr>
-                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">I2I INC Pan Number</td>
+                                        <tr id="pan_row" runat="server" visible="false">
+                                            <td class="" style="width: 45%; vertical-align: top; padding: 1px 5px;">Aminrup Technologies Pan Number</td>
                                             <td class="" style="width: 2%; vertical-align: top; padding: 1px 5px;">:</td>
                                             <td class="" style="width: 53%; vertical-align: top; padding: 1px 5px;">AAEF15315E</td>
                                         </tr>
-                                        
-                                       
+
+
                                     </table>
                                 </td>
                             </tr>
@@ -239,9 +253,7 @@
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
                             <tr>
-                                <td class="" width="100%">
-
-                                </td>
+                                <td class="" width="100%"></td>
                             </tr>
                             <tr>
                                 <td class="gap" style="">&nbsp</td>
@@ -258,42 +270,30 @@
                                 <td colspan="2" class="gap" style="">&nbsp</td>
                             </tr>
                             <tr>
-                                <td class="" style="text-align: justify; font-weight: 100; font-size:10px;padding:0.5px 2px 0.5px 2px;   vertical-align: top">
-                                    1.</td>
-                                <td class="" style="text-align: justify;  font-weight: 100; font-size:10px; padding:0.5px 2px 0.5px 2px;">
-                                     	The Quality & Quantity of Materials delivered needs to be inspected by the Client at the time of Delivery itself.
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px; vertical-align: top">1.</td>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px;">The Quality & Quantity of Materials delivered needs to be inspected by the Client at the time of Delivery itself.
                                 </td>
                             </tr>
                             <tr>
-                                <td class="" style="text-align: justify; font-weight: 100;font-size:10px; padding:0.5px 2px 0.5px 2px;  vertical-align: top">
-                                    2.</td>
-                                <td class="" style="text-align: justify;  font-weight: 100; font-size:10px; padding:0.5px 2px 0.5px 2px;">
-                                     	Any Shortages or Damages or Quality Issues must be notified on the Delivery Challan with the Authorized Signatory’s Signature & Corporate Stamp at the time of Delivery itself.
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px; vertical-align: top">2.</td>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px;">Any Shortages or Damages or Quality Issues must be notified on the Delivery Challan with the Authorized Signatory’s Signature & Corporate Stamp at the time of Delivery itself.
                                 </td>
                             </tr>
                             <tr>
-                                <td class="" style="text-align: justify; font-weight: 100;font-size:10px;padding:0.5px 2px 0.5px 2px;  vertical-align: top">
-                                    3.</td>
-                                <td class="" style="text-align: justify;  font-weight: 100; font-size:10px; padding:0.5px 2px 0.5px 2px;">
-                                     	Unless the Customer has inspected the Delivered Goods and given written notice to the Company on the day of Material Delivery that the Goods do not comply with the relevant Specifications or Quality Descriptions, the Goods are deemed to have been accepted in Good Order & Condition by the Client.</td>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px; vertical-align: top">3.</td>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px;">Unless the Customer has inspected the Delivered Goods and given written notice to the Company on the day of Material Delivery that the Goods do not comply with the relevant Specifications or Quality Descriptions, the Goods are deemed to have been accepted in Good Order & Condition by the Client.</td>
                             </tr>
-                             <tr>
-                                <td class="" style="text-align: justify; font-weight: 100;font-size:10px;padding:0.5px 2px 0.5px 2px;  vertical-align: top">
-                                    4.</td>
-                                <td class="" style="text-align: justify;  font-weight: 100; font-size:10px; padding:0.5px 2px 0.5px 2px;">
-                                     	If the Client observes any Quality Related Issues with the Delivered Materials, it is recommended not to use the Defective Goods till Return of the Damaged Goods is executed.</td>
+                            <tr>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px; vertical-align: top">4.</td>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px;">If the Client observes any Quality Related Issues with the Delivered Materials, it is recommended not to use the Defective Goods till Return of the Damaged Goods is executed.</td>
                             </tr>
-                             <tr>
-                                <td class="" style="text-align: justify; font-weight: 100;font-size:10px;padding:0.5px 2px 0.5px 2px;  vertical-align: top">
-                                    5.</td>
-                                <td class="" style="text-align: justify;  font-weight: 100; font-size:10px; padding:0.5px 2px 0.5px 2px;">
-                                     	All Defective Items requested for Replacement or Return by the Client shall be thoroughly inspected and a determination will be made if eligibility of requirements is met for Replacement or Exchange.</td>
+                            <tr>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px; vertical-align: top">5.</td>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px;">All Defective Items requested for Replacement or Return by the Client shall be thoroughly inspected and a determination will be made if eligibility of requirements is met for Replacement or Exchange.</td>
                             </tr>
-                             <tr>
-                                <td class="" style="text-align: justify; font-weight: 100;font-size:10px;padding:0.5px 2px 0.5px 2px;  vertical-align: top">
-                                    6.</td>
-                                <td class="" style="text-align: justify;  font-weight: 100; font-size:10px; padding:0.5px 2px 0.5px 2px;">
-                                     In case the Company finds the Delivered Items proposed for Replacement or Return by the Client in a tampered condition, the Return Request shall not be entertained.</td>
+                            <tr>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px; vertical-align: top">6.</td>
+                                <td class="" style="text-align: justify; font-weight: 100; font-size: 10px; padding: 0.5px 2px 0.5px 2px;">In case the Company finds the Delivered Items proposed for Replacement or Return by the Client in a tampered condition, the Return Request shall not be entertained.</td>
                             </tr>
                             <tr>
                                 <td colspan="2" class="gap" style="">&nbsp</td>
@@ -305,9 +305,7 @@
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
                             <tr>
-                                <td class="" width="100%">
-
-                                </td>
+                                <td class="" width="100%"></td>
                             </tr>
                             <tr>
                                 <td class="gap" style="">&nbsp</td>
@@ -323,7 +321,7 @@
                                 <td class="qno" width="100%">
                                     <table border="0" width="100%" class="">
                                         <tr>
-                                            <td class="" style="background-color: #c8152a; color: white; text-align: center;">If you have any Question about this Chhalan, Please Contact Ms Das at +91 9674897316 or info@i2iinc.in</td>
+                                            <td class="" style="background-color: #c8152a; color: white; text-align: center;">If you have any Question about this Chhalan, Please Contact Ms Das at +91 9674897316 or info@aminruptechnologies.co.in</td>
                                         </tr>
                                     </table>
                                 </td>
@@ -335,24 +333,25 @@
 
                         <table border="0" width="100%" class="FORKVQAEAST">
                             <tr class="trheight">
-                                <td class="" style="text-align: left; font-weight: bold;">FOR I2I INC</td>
+                                <td class="" style="text-align: left; font-weight: bold;">FOR FLAME-EX</td>
                                 <td class="" style="text-align: right; font-weight: bold;"></td>
                             </tr>
-                           
+
 
                             <tr>
                                 <%--<td class="" style="text-align: left; font-weight: 100">
                                     <img src="../WebImages/Stamp.jpg" width="100PX" />
                                 </td>--%>
-                                
-                                <td><img src="../WebImages/i2i_LOGO_ad_sig.png" width="150PX" /></td>
-                            
+
+                                <td>
+                                    <img src="../WebImages/flmx_authsign.png" width="150PX" /></td>
+
                                 <td class="" style="text-align: right; font-weight: bold;"></td>
                             </tr>
 
                             <tr class="trheight">
                                 <td class="" style="text-align: left; font-weight: bold;">Authorized Signatory</td>
-                                <td class="" style="text-align: right; font-weight: bold; padding-right:75px">Receiver's Signature</td>
+                                <td class="" style="text-align: right; font-weight: bold; padding-right: 75px">Receiver's Signature</td>
                             </tr>
                         </table>
 
@@ -381,7 +380,7 @@
                             <tr>
                                 <td class="gap" style="">&nbsp</td>
                             </tr>
-                           <%-- <tr>
+                            <%-- <tr>
                                 <td class="" style="text-align: center; font-weight: bold; font-size: 14px; color: #c8152a; font-style: italic">--------------------------------Thank You For Your Business--------------------------------</td>
                             </tr>--%>
                         </table>
@@ -392,9 +391,10 @@
         <table id="footer" border="0" width="844px">
             <tr>
                 <td style="height: auto; text-align: center; font-weight: bold; font-size: 14px; font-style: italic" width="100%">
-                   <%-- <span style="padding-right:10px; color:#0026ff">Thank You For Your Business!</span>--%>
-                    <span style="padding-right:10px; color:#c8152a">------------------------------Thank You For Your Business------------------------------</span>
-                    <img src='../WebImages/I2ILHFooter.png' width='100%' />
+                    <%-- <span style="padding-right:10px; color:#0026ff">Thank You For Your Business!</span>--%>
+                    <span style="padding-right: 10px; color: #c8152a">------------------------------Thank You For Your Business------------------------------</span>
+                    <asp:Image ID="Image22" runat="server"
+                        Width="844px" Height="180px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrbtm.png" />
                 </td>
             </tr>
         </table>

@@ -45,7 +45,7 @@ namespace Bill_Software.admin
 
         protected void Button1_Click(object sender, EventArgs e)
         {
-            string a = "Yes";
+            //string a = "Yes";
             DbCL.executeRdr("update tbl_employee set Emp_ID='" + txtempid.Text + "',Name='" + txtempname.Text + "',Designation='" + txtempdesignation.Text + "',Depertment='" + txtempdepertment.Text + "' where ID='" + lblId.Text + "'");
             int length = FileUpload1.PostedFile.ContentLength;
             byte[] imgbyte = new byte[length];

@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head id="Head1" runat="server">
-    <title>i2i inc.</title>
+    <title>Aminrup Technologies.</title>
     <link rel="shortcut icon" href="corporate/business/WebImages/i2i_logo.png" />
         <style type="text/css">
             .style1
@@ -165,7 +165,7 @@
             <tr>
                 <td id="Hederprint" runat="server" colspan="2">
                     <asp:Image ID="Image21" runat="server" 
-                         Width="844px" Height="106px" ImageUrl="~/corporate/business/WebImages/i2i_lh.jpg" /></td>
+                         Width="844px" Height="106px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrtop.png" /></td>
             </tr>
            
           
@@ -494,7 +494,7 @@
             <tr>
                 <td colspan="2" style="text-align:right; padding:4px 30px 4px 2px;">
                     <span lang="en-us">&nbsp;<asp:Image ID="Image4" runat="server" 
-                        Height="73px" Width="119px" ImageUrl="~/corporate/business/WebImages/Stamp.jpg" />
+                        Height="73px" Width="119px" ImageUrl="~/corporate/business/WebImages/tick-icon.png" />
                         </span>&nbsp;</td>
             </tr>
           
@@ -521,7 +521,7 @@
                 <td id="footerrprint" runat="server" colspan="2">
                 
                 <asp:Image ID="Image22" runat="server" 
-                         Width="844px" Height="100px" ImageUrl="~/corporate/business/WebImages/i2i_lh_b.jpg" />
+                         Width="844px" Height="180px" ImageUrl="~/corporate/business/WebImages/flame-ex_hdrbtm.png" />
                         
                     </td>
             </tr>

@@ -4,7 +4,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>i2i Inc</title>
+    <title>Aminrup Technologies</title>
     <link rel="shortcut icon" href="../WebImages/KCGC.png" />
     <style type="text/css">
 

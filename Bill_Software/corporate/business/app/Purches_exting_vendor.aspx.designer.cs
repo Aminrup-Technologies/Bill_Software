@@ -22,22 +22,22 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.ScriptManager ScriptManager1;
         
         /// <summary>
-        /// UpdatePanel1 control.
+        /// hdnCurrentStep control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.UpdatePanel UpdatePanel1;
+        protected global::System.Web.UI.WebControls.HiddenField hdnCurrentStep;
         
         /// <summary>
-        /// lblvendor_id control.
+        /// UpdMsg control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblvendor_id;
+        protected global::System.Web.UI.UpdatePanel UpdMsg;
         
         /// <summary>
         /// PanelOK control.
@@ -47,15 +47,6 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel PanelOK;
-        
-        /// <summary>
-        /// imageTick control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Image imageTick;
         
         /// <summary>
         /// lblOk control.
@@ -76,15 +67,6 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Panel PanelError;
         
         /// <summary>
-        /// Image1 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Image Image1;
-        
-        /// <summary>
         /// lblErrorMsg control.
         /// </summary>
         /// <remarks>
@@ -94,13 +76,13 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Label lblErrorMsg;
         
         /// <summary>
-        /// Label2 control.
+        /// UpdVendor control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label Label2;
+        protected global::System.Web.UI.UpdatePanel UpdVendor;
         
         /// <summary>
         /// cmbvendor control.
@@ -112,6 +94,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.DropDownList cmbvendor;
         
         /// <summary>
+        /// lblvendor_id control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblvendor_id;
+        
+        /// <summary>
         /// txtAddress1 control.
         /// </summary>
         /// <remarks>
@@ -119,6 +110,24 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtAddress1;
+        
+        /// <summary>
+        /// cmbcity control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox cmbcity;
+        
+        /// <summary>
+        /// cmbState control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox cmbState;
         
         /// <summary>
         /// txtAddress2 control.
@@ -130,24 +139,6 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.TextBox txtAddress2;
         
         /// <summary>
-        /// cmbcity control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList cmbcity;
-        
-        /// <summary>
-        /// cmbState control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList cmbState;
-        
-        /// <summary>
         /// txtPin control.
         /// </summary>
         /// <remarks>
@@ -157,112 +148,76 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.TextBox txtPin;
         
         /// <summary>
-        /// txtWebsite control.
+        /// txt_invno control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtWebsite;
+        protected global::System.Web.UI.WebControls.TextBox txt_invno;
         
         /// <summary>
-        /// txtEmail control.
+        /// txtPurchesDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtEmail;
+        protected global::System.Web.UI.WebControls.TextBox txtPurchesDate;
         
         /// <summary>
-        /// txtPhone control.
+        /// txt_stockadddate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPhone;
+        protected global::System.Web.UI.WebControls.TextBox txt_stockadddate;
         
         /// <summary>
-        /// txtFax control.
+        /// DDL_ShippedTo control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtFax;
+        protected global::System.Web.UI.WebControls.DropDownList DDL_ShippedTo;
         
         /// <summary>
-        /// txtRepresentativeName control.
+        /// txt_reforder control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtRepresentativeName;
+        protected global::System.Web.UI.WebControls.TextBox txt_reforder;
         
         /// <summary>
-        /// txtRepresantativeDesig control.
+        /// txt_refordrdate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtRepresantativeDesig;
+        protected global::System.Web.UI.WebControls.TextBox txt_refordrdate;
         
         /// <summary>
-        /// txtRepresentativePhone control.
+        /// txt_narration control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtRepresentativePhone;
+        protected global::System.Web.UI.WebControls.TextBox txt_narration;
         
         /// <summary>
-        /// txtRepresentativeEmail control.
+        /// UpdItems control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtRepresentativeEmail;
-        
-        /// <summary>
-        /// txtservicetaxNo control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtservicetaxNo;
-        
-        /// <summary>
-        /// txtpanNo control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtpanNo;
-        
-        /// <summary>
-        /// txtvat control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtvat;
-        
-        /// <summary>
-        /// Label1 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label Label1;
+        protected global::System.Web.UI.UpdatePanel UpdItems;
         
         /// <summary>
         /// RadioButtonList1 control.
@@ -274,22 +229,22 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.RadioButtonList RadioButtonList1;
         
         /// <summary>
-        /// Button1 control.
+        /// divCategory control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button Button1;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divCategory;
         
         /// <summary>
-        /// Panel1 control.
+        /// ddlCategory control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel Panel1;
+        protected global::System.Web.UI.WebControls.DropDownList ddlCategory;
         
         /// <summary>
         /// cmbproduct_service control.
@@ -310,15 +265,6 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Button Button2;
         
         /// <summary>
-        /// Panel2 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel Panel2;
-        
-        /// <summary>
         /// gd_Service_Product control.
         /// </summary>
         /// <remarks>
@@ -328,49 +274,103 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.GridView gd_Service_Product;
         
         /// <summary>
-        /// txtPurchesDate control.
+        /// txt_delivery_amnt control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPurchesDate;
+        protected global::System.Web.UI.WebControls.TextBox txt_delivery_amnt;
         
         /// <summary>
-        /// RadioButtonList3 control.
+        /// txt_delivery_percent control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.RadioButtonList RadioButtonList3;
+        protected global::System.Web.UI.WebControls.TextBox txt_delivery_percent;
         
         /// <summary>
-        /// Button3 control.
+        /// DDL_vat_parsentage control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button Button3;
+        protected global::System.Web.UI.WebControls.DropDownList DDL_vat_parsentage;
         
         /// <summary>
-        /// Panel3 control.
+        /// txt_tcs_amnt control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel Panel3;
+        protected global::System.Web.UI.WebControls.TextBox txt_tcs_amnt;
         
         /// <summary>
-        /// lblpuechess_id control.
+        /// txt_tcs_percent control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblpuechess_id;
+        protected global::System.Web.UI.WebControls.TextBox txt_tcs_percent;
+        
+        /// <summary>
+        /// TextBox1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox TextBox1;
+        
+        /// <summary>
+        /// txt_othr_amnt1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txt_othr_amnt1;
+        
+        /// <summary>
+        /// TextBox2 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox TextBox2;
+        
+        /// <summary>
+        /// txt_othr_amnt2 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txt_othr_amnt2;
+        
+        /// <summary>
+        /// btnRecalculate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnRecalculate;
+        
+        /// <summary>
+        /// UpdPayment control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel UpdPayment;
         
         /// <summary>
         /// lblpaayment_amount control.
@@ -382,13 +382,31 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.Label lblpaayment_amount;
         
         /// <summary>
-        /// txtpaymentdate control.
+        /// txt_inv_amount control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtpaymentdate;
+        protected global::System.Web.UI.WebControls.TextBox txt_inv_amount;
+        
+        /// <summary>
+        /// RadioButtonList3 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButtonList RadioButtonList3;
+        
+        /// <summary>
+        /// PaymentDetailsPanel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel PaymentDetailsPanel;
         
         /// <summary>
         /// txtpaymentamount control.
@@ -398,6 +416,15 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtpaymentamount;
+        
+        /// <summary>
+        /// txtpaymentdate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtpaymentdate;
         
         /// <summary>
         /// RadioButtonList2 control.
@@ -499,12 +526,12 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.TextBox txtneftdate;
         
         /// <summary>
-        /// btnpurchess_save control.
+        /// Button3 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnpurchess_save;
+        protected global::System.Web.UI.WebControls.Button Button3;
     }
 }

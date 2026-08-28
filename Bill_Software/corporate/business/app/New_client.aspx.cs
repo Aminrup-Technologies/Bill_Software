@@ -1,125 +1,277 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
-using System.Data.SqlClient;
+using System.Configuration;
 using System.Data;
+using System.Data.SqlClient;
+using System.Web;
+using System.Web.Services;
+using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
     public partial class WebForm15 : System.Web.UI.Page
     {
-        DB_UTILITY DbCL = new DB_UTILITY();
+        private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
             {
-                Response.Redirect("~/index.aspx");
+                Response.Redirect("~/index.aspx", false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
             }
+
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
-                DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
-                DbCL.FillCombo(ddlRegState, "select State_Name from tbl_State order by State_Name");
-                DbCL.FillCombo(ddlRegCity, "select City_Name from tbl_City order by City_Name");
-                DbCL.FillCombo(cmbIndustry, "select IndustryName from tbl_Industry");
-                DbCL.FillCombo(ddlplaceofSupply, "select City_Name from tbl_City order by City_Name");
-                
-
+                BindStates();
+                BindCities();
+                // BindIndustry(); // Ensure this is bound if you have a method for it
+                findcompanyId(); // Call the corrected ID generator
             }
-
         }
 
-        protected void btnSave_Click(object sender, EventArgs e)
+        // ==========================================
+        // 1. MASTER DATA BINDING
+        // ==========================================
+        private void BindStates()
         {
-            string companyID = findcompanyId();
-            //string cmdstring = "insert into tbl_Client(Client_Id,Client_Name,Address1,Address2,City,pin,State,Com_web_site,Com_email,Com_phone,Com_Fax,Rep_Name,Rep_Desig,Rep_phone,Rep_email,Service_tax_no,Pan_no)values(@Client_Id,@Client_Name,@Address1,@Address2,@City,@pin,@State,@Com_web_site,@Com_email,@Com_phone,@Com_Fax,@Rep_Name,@Rep_Desig,@Rep_phone,@Rep_email,@Service_tax_no,@Pan_no)";
-            string cmdstring = "insert into tbl_Client(Client_Id,Client_Name,Address1,City,pin,State,Com_web_site,Com_email,Com_phone,Com_Fax,Service_tax_no,Pan_no,Industry,PlaceofSupply)values(@Client_Id,@Client_Name,@Address1,@City,@pin,@State,@Com_web_site,@Com_email,@Com_phone,@Com_Fax,@Service_tax_no,@Pan_no,@Industry,@PlaceofSupply)";
-
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            cmd.CommandType = CommandType.Text;
-            cmd.CommandTimeout = 0;
-            cmd.Parameters.AddWithValue("@Client_Id", companyID);
-            cmd.Parameters.AddWithValue("@Client_Name", txtvendorName.Text.Trim());
-            //cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
-            cmd.Parameters.AddWithValue("@Address1", txtAddress1.Text);
-            cmd.Parameters.AddWithValue("@City", cmbcity.Text.Trim());
-            cmd.Parameters.AddWithValue("@pin", txtPin.Text.Trim());
-            cmd.Parameters.AddWithValue("@State", cmbState.Text);
-            cmd.Parameters.AddWithValue("@Com_web_site", txtWebsite.Text);
-            cmd.Parameters.AddWithValue("@Com_email", txtEmail.Text);
-            cmd.Parameters.AddWithValue("@Com_phone", txtPhone.Text);
-            cmd.Parameters.AddWithValue("@Com_Fax", txtFax.Text);
-            //cmd.Parameters.AddWithValue("@Rep_Name", txtRepresentativeName.Text);
-            //cmd.Parameters.AddWithValue("@Rep_Desig", txtRepresantativeDesig.Text);
-            //cmd.Parameters.AddWithValue("@Rep_phone", txtRepresentativePhone.Text);
-           // cmd.Parameters.AddWithValue("@Rep_email", txtRepresentativeEmail.Text);
-            cmd.Parameters.AddWithValue("@Service_tax_no", txtservicetax_no.Text);
-            cmd.Parameters.AddWithValue("@Pan_no", txtpanno.Text);
-            cmd.Parameters.AddWithValue("@Industry", cmbIndustry.Text);
-            cmd.Parameters.AddWithValue("PlaceofSupply", ddlplaceofSupply.Text);
-            
-            cmd.ExecuteNonQuery();
-            DbCL.Conn.Close();
-
-            insertRegoffAdd(companyID);
-
-            PanelOK.Visible = true;
-            lblOk.Text = "Data Save Successfully...";
-            btnSave.Visible = false;
-
+            using (SqlConnection conn = new SqlConnection(ConnString))
+            {
+                string query = "SELECT State_Name FROM tbl_State WHERE CompanyID = @CompanyID AND DeleteMode = 0 ORDER BY State_Name ASC";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    cmbState.DataSource = cmd.ExecuteReader();
+                    cmbState.DataTextField = "State_Name";
+                    cmbState.DataValueField = "State_Name";
+                    cmbState.DataBind();
+                }
+            }
+            cmbState.Items.Insert(0, new ListItem("--Select--", ""));
         }
 
-        private void insertRegoffAdd(string companyID)
+        private void BindCities()
         {
-            string query = "insert into tbl_ClientRegAddress(Client_Id,Address,State,City,Phno,pin) values (@Client_Id,@Address,@State,@City,@Phno,@pin)";
-            SqlParameter[] pram = { 
-            new SqlParameter("@Client_Id", companyID),
-            new SqlParameter("@Address", txtRegAddress.Text),
-            new SqlParameter("@State",ddlRegState.Text),
-            new SqlParameter("@City",ddlRegCity.Text),
-            new SqlParameter("@Phno",txtRegPhno.Text),
-            new SqlParameter("@pin",txtRegPin.Text),
-            };
-
-            DbCL.SPExecDB(query, pram);
-
+            using (SqlConnection conn = new SqlConnection(ConnString))
+            {
+                string query = "SELECT City_Name FROM tbl_City WHERE CompanyID = @CompanyID AND DeleteMode = 0 ORDER BY City_Name ASC";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    ddlCity.DataSource = cmd.ExecuteReader();
+                    ddlCity.DataTextField = "City_Name";
+                    ddlCity.DataValueField = "City_Name";
+                    ddlCity.DataBind();
+                }
+            }
+            ddlCity.Items.Insert(0, new ListItem("--Select or Type New City--", ""));
         }
 
+        // CORRECTED: Alphanumeric ID Generator
         private string findcompanyId()
         {
-            string ComId = "";
-            string aa = "";
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdString1 = "select Id,Client_Id from tbl_Client where Id=(select max(Id)from tbl_Client)";
-            SqlCommand com1 = new SqlCommand(cmdString1, DbCL.Conn);
-            SqlDataReader DR1 = com1.ExecuteReader();
-            if (DR1.Read())
+            string ComId = "AD01";
+            using (SqlConnection conn = new SqlConnection(ConnString))
             {
-                aa = DR1.GetValue(1).ToString();
-                string bb = aa.Substring(5);
-                int k = Convert.ToInt32(bb);
-                k = k + 1;
-                string q = Convert.ToString(k);
-                ComId = "CLI00" + q;
+                string query = "SELECT TOP 1 Client_Id FROM tbl_Client WHERE CompanyID = @CompanyID ORDER BY Id DESC";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != DBNull.Value && result != null)
+                    {
+                        string lastClientId = result.ToString();
+                        if (lastClientId.Length > 2)
+                        {
+                            string numberPart = lastClientId.Substring(2);
+                            int k;
+                            if (int.TryParse(numberPart, out k))
+                            {
+                                k = k + 1;
+                                ComId = "AD" + k.ToString();
+                            }
+                        }
+                    }
+                }
             }
-            else
-            {
-                ComId = "CLI001";
-            }
-
-            DbCL.Conn.Close();
+            lbl_nxtclientid.Text = ComId;
             return ComId;
+        }
+
+        // TEXT SANITIZER (Forces Proper Noun Capitalization)
+        private string SanitizeName(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            input = input.Trim().ToLower();
+            return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
+        }
+
+        // ==========================================
+        // 2. MAIN SAVE LOGIC
+        // ==========================================
+        protected void btnSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string sanitizedName = SanitizeName(txtvendorName.Text);
+
+                using (SqlConnection conn = new SqlConnection(ConnString))
+                {
+                    conn.Open();
+
+                    // Duplicate Client Name Check (Gatekeeper)
+                    string checkQuery = "SELECT COUNT(1) FROM tbl_Client WHERE Client_Name = @ClientName AND CompanyID = @CompanyID";
+                    using (SqlCommand cmdCheck = new SqlCommand(checkQuery, conn))
+                    {
+                        cmdCheck.Parameters.AddWithValue("@ClientName", sanitizedName);
+                        cmdCheck.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        if (Convert.ToInt32(cmdCheck.ExecuteScalar()) > 0)
+                        {
+                            PanelError.Visible = true;
+                            PanelOK.Visible = false;
+                            lblErrorMsg.Text = $"A client named '{sanitizedName}' already exists.";
+                            return;
+                        }
+                    }
+
+                    string newClientId = findcompanyId(); // Grab fresh ID safely
+
+                    // CORRECTED SCHEMA: Using exact table columns
+                    string insertQuery = @"
+                        INSERT INTO tbl_Client (
+                            Client_Id, Client_Name, Industry, Address1, State, City, pin, 
+                            Com_phone, Com_Fax, Com_web_site, Com_email, Service_tax_no, Pan_no, PlaceofSupply, 
+                            CompanyID, CreatedBy, CreatedOn
+                        ) VALUES (
+                            @ClientId, @ClientName, @Industry, @Address, @State, @City, @Pin, 
+                            @Phone, @Fax, @Website, @Email, @GST, @PAN, @POS, 
+                            @CompanyID, @CreatedBy, GETDATE()
+                        )";
+
+                    using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ClientId", newClientId);
+                        cmd.Parameters.AddWithValue("@ClientName", sanitizedName); // Clean Name!
+                        cmd.Parameters.AddWithValue("@Industry", cmbIndustry.SelectedValue);
+                        cmd.Parameters.AddWithValue("@Address", txtAddress1.Text.Trim());
+                        cmd.Parameters.AddWithValue("@State", cmbState.SelectedValue);
+                        cmd.Parameters.AddWithValue("@City", ddlCity.SelectedValue); // Inline City
+                        cmd.Parameters.AddWithValue("@Pin", txtPin.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Phone", txtPhone.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Fax", txtFax.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Website", txtWebsite.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
+                        cmd.Parameters.AddWithValue("@GST", txtservicetax_no.Text.Trim().ToUpper()); // Clean GST!
+                        cmd.Parameters.AddWithValue("@PAN", txtpanno.Text.Trim().ToUpper()); // Clean PAN!
+                        cmd.Parameters.AddWithValue("@POS", txtplaceofSupply.Text.Trim());
+
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@CreatedBy", Session["USERID"].ToString());
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                // Standardized Dashboard Notification Logging
+                InsertSystemNotification(
+                    "New Client Onboarded",
+                    $"Client '{sanitizedName}' was successfully created.",
+                    "Client Management",
+                    "Success",
+                    Session["USERID"].ToString()
+                );
+
+                PanelOK.Visible = true;
+                PanelError.Visible = false;
+                lblOk.Text = "Client profile created successfully!";
+                btnReset_Click(null, null); // Clear the form
+                findcompanyId(); // Refresh the ID for the next entry
+            }
+            catch (Exception ex)
+            {
+                PanelError.Visible = true;
+                PanelOK.Visible = false;
+                lblErrorMsg.Text = "An error occurred while saving: " + ex.Message;
+            }
+        }
+
+        // ==========================================
+        // 3. AJAX WEB METHOD & HELPERS
+        // ==========================================
+        [WebMethod]
+        public static string AddNewCityInline(string cityName, string stateName)
+        {
+            if (HttpContext.Current.Session["USERID"] == null) return "ERROR: Session expired.";
+
+            try
+            {
+                string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    string dupCheck = "SELECT COUNT(1) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName AND CompanyID = @CompanyID AND DeleteMode = 0";
+                    using (SqlCommand cmdDup = new SqlCommand(dupCheck, conn))
+                    {
+                        cmdDup.Parameters.AddWithValue("@CityName", cityName.Trim());
+                        cmdDup.Parameters.AddWithValue("@StateName", stateName);
+                        cmdDup.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        if (Convert.ToInt32(cmdDup.ExecuteScalar()) > 0) return $"ERROR: '{cityName}' already exists in '{stateName}'.";
+                    }
+
+                    string insertQuery = "INSERT INTO tbl_City (City_Name, State_Name, CompanyID, ViewMode, DeleteMode) VALUES (@CityName, @StateName, @CompanyID, 1, 0); SELECT SCOPE_IDENTITY();";
+                    using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CityName", cityName.Trim());
+                        cmd.Parameters.AddWithValue("@StateName", stateName);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        return Convert.ToInt32(cmd.ExecuteScalar()).ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return "ERROR: " + ex.Message;
+            }
         }
 
         protected void btnReset_Click(object sender, EventArgs e)
         {
-            Response.Redirect("~/corporate/business/app/New_client.aspx");
+            txtvendorName.Text = ""; txtAddress1.Text = ""; txtPin.Text = "";
+            txtPhone.Text = ""; txtFax.Text = ""; txtWebsite.Text = ""; txtEmail.Text = "";
+            txtservicetax_no.Text = ""; txtpanno.Text = ""; txtplaceofSupply.Text = "";
+
+            if (cmbState.Items.Count > 0) cmbState.SelectedIndex = 0;
+            ddlCity.ClearSelection();
+            if (cmbIndustry.Items.Count > 0) cmbIndustry.SelectedIndex = 0;
+        }
+
+        // CORRECTED SCHEMA: Notification Logger
+        private void InsertSystemNotification(string title, string message, string module, string type, string userId)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ConnString))
+                {
+                    string query = @"INSERT INTO tbl_SystemNotification (CompanyID, Title, Message, Module, Type, UserId, CreatedOn) 
+                                     VALUES (@CompanyID, @Title, @Message, @Module, @Type, @UserId, GETDATE())";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@Title", title);
+                        cmd.Parameters.AddWithValue("@Message", message);
+                        cmd.Parameters.AddWithValue("@Module", module);
+                        cmd.Parameters.AddWithValue("@Type", type);
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch { /* Soft catch for audit logs */ }
         }
     }
 }

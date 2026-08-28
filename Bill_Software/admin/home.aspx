@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/admin/card.Master" AutoEventWireup="true" CodeBehind="home.aspx.cs" Inherits="Bill_Software.admin.WebForm2" %>
+﻿<%@ Page Title="Flame-Ex | Home" Language="C#" MasterPageFile="~/admin/card.Master" AutoEventWireup="true" CodeBehind="home.aspx.cs" Inherits="Bill_Software.admin.WebForm2" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
      <style type="text/css">
         .style1

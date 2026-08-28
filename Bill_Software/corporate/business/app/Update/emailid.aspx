@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <link href="../../../WebProperty/css/style.css"rel="stylesheet" type="text/css" />
-    <title>i2i inc.</title>
+    <title>Aminrup Technologies.</title>
     <link rel="shortcut icon" href="../../WebImages/i2i_logo.png" />
     <style type="text/css">
         .style1
@@ -78,7 +78,7 @@
                     Your Current Email ID : </td>
                 <td>
                     &nbsp;
-                    <asp:Label ID="lblCrntEmailId" runat="server"></asp:Label>
+                    <asp:Label ID="lblCrntEmailId" runat="server" ForeColor="Black"></asp:Label>
                 </td>
             </tr>
             <tr>

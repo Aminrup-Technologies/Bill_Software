@@ -19,7 +19,7 @@ namespace Bill_Software.corporate.business.print
         DataTable dtRep = new DataTable();
         DataTable dtChadd = new DataTable();
         StringBuilder strProduct = new StringBuilder();
-        public int TQ = 0;
+        public decimal TQ = 0;
         protected void Page_Load(object sender, EventArgs e)
         {
             string Chalan_No = Request.QueryString["Chalan_No"];
@@ -49,7 +49,7 @@ namespace Bill_Software.corporate.business.print
             }
         }
 
-        private void Buindamount(string chalan_No)
+        private void Buindamount_OLD(string chalan_No)
         {
             string query = "select Sl_no,Challan_no,Product_id,Product_name,Quantity from tbl_Challan_details where Challan_no=@Challan_no order by Product_name";
             SqlParameter[] pram = {
@@ -99,19 +99,155 @@ namespace Bill_Software.corporate.business.print
             }
         }
 
+        private void Buindamount(string Chalan_No)
+        {
+            //string query = "select Sl_no,Challan_no,Product_id,Product_code,Product_name,Quantity from tbl_Challan_details where Challan_no=@Challan_no order by Product_name";
+
+            string query = "SELECT d.Sl_no, q.Product_id as Product_code, q.Product_name, d.Quantity, q.Product_code as Product_id, q.specification, q.ItemNo, q.MaterialNo, q.PackSize, q.Unit, q.Department FROM tbl_Chalan c INNER JOIN tbl_Challan_details d ON c.Chalan_No = d.Challan_no INNER JOIN tbl_Quotaion_details q ON c.Quotation_No = q.Quotation_no AND d.Product_id =q.Product_Code and d.ItemNo = q.ItemNo where Challan_no=@Challan_no and IsDeleted=0 and IsLatest=1 order by CAST(d.Sl_no as int)";
+            SqlParameter[] pram = {
+                new SqlParameter("@Challan_no",Chalan_No)
+            };
+            dtChPro = DbCL.SPreturn_dt(query, pram);
+
+            //if (dtChPro.Rows.Count>0)
+            //{
+            //    strProduct.Append("<table class='' style='border:0' width='100%'>");
+            //    strProduct.Append("<tr>");
+            //    strProduct.Append("<td style='width:7%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white; border-right:none;'>S.NO</td>");
+            //    strProduct.Append("<td style='width:63%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>PARTICULARS</td>");
+            //    strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>HSN CODE</td>");
+            //    strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;  border-right:none;'>QUANTITY<br>(PCS)</td>");
+            //    strProduct.Append("</tr>");
+            //    strProduct.Append("</table>");
+
+            //    for (int i = 0; i < dtChPro.Rows.Count; i++)
+            //    {
+            //        string Sl_no = dtChPro.Rows[i]["Sl_no"].ToString();
+            //        string Challan_no = dtChPro.Rows[i]["Challan_no"].ToString();
+            //        string Product_id = dtChPro.Rows[i]["Product_id"].ToString();
+            //        string HSN = dtChPro.Rows[i]["Product_code"].ToString();
+            //        string Product_name = dtChPro.Rows[i]["Product_name"].ToString();
+            //        int Quantity =Convert.ToInt32(dtChPro.Rows[i]["Quantity"]);
+            //        string hsncode= dtChPro.Rows[i]["Product_id"].ToString(); ;
+            //        TQ = TQ + Quantity;
+
+            //        strProduct.Append("<table class='' style='border:0' width='100%'>");
+            //        strProduct.Append("<tr>");
+            //        strProduct.Append("<td style='width:7%; border: 1px solid #bfbfbf; font-weight: bold;  text-align: center;  border-right:none;'>" + Sl_no + "</td>");
+            //        strProduct.Append("<td style='width:63%; border: 1px solid #bfbfbf; font-weight: bold; text-align: left;   border-right:none;'>" + Product_name + "</td>");
+            //        strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; text-align: center;   border-right:none;'>" + HSN + "</td>");
+            //        strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; text-align: center;'>" + Quantity + "</td>");
+            //        strProduct.Append("</tr>");
+            //        strProduct.Append("</table>");
+            //    }
+
+            //    strProduct.Append("<table class='' style='border:0' width='100%'>");
+            //    strProduct.Append("<tr>");
+            //    strProduct.Append("<td style='width:70%; border:none; font-weight: bold;  text-align: center;' colspan='2'></td>");
+            //    strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; background-color: #e31e24; color: white; border-right:none; font-weight: bold; text-align: center;'>Total Quantity</td>");
+            //    strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; background-color: #e31e24; color: white; font-weight: bold; text-align: center;'>" + TQ.ToString() + "</td>");
+            //    strProduct.Append("</tr>");
+            //    strProduct.Append("</table>");
+
+            //    lblProductDetails.Text = strProduct.ToString();
+            //}
+
+            if (dtChPro.Rows.Count > 0)
+            {
+                strProduct.Append("<table class='' style='border:0' width='100%'>");
+                strProduct.Append("<tr>");
+                strProduct.Append("<td style='width:5%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>S.NO</td>");
+                strProduct.Append("<td style='width:15%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PRODUCT ID</td>");
+                strProduct.Append("<td style='width:45%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>PARTICULARS</td>");
+                strProduct.Append("<td style='width:10%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>HSN CODE</td>");
+                strProduct.Append("<td style='width:10%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>QUANTITY<br>(PCS)</td>");
+                strProduct.Append("<td style='width:10%; border: 1px solid #bfbfbf; font-weight: bold; background-color: #e31e24; text-align: center; color: white;'>UNIT</td>");
+                strProduct.Append("</tr>");
+
+                for (int i = 0; i < dtChPro.Rows.Count; i++)
+                {
+                    string Sl_no = dtChPro.Rows[i]["Sl_no"].ToString();
+                    string Product_id = dtChPro.Rows[i]["Product_id"].ToString();
+                    string HSN = dtChPro.Rows[i]["Product_code"].ToString();
+                    string Product_name = dtChPro.Rows[i]["Product_name"].ToString();
+                    decimal Quantity = Convert.ToDecimal(dtChPro.Rows[i]["Quantity"]);
+                    string Unit = dtChPro.Rows[i]["Unit"].ToString();
+                    string Specification = dtChPro.Rows[i]["specification"].ToString();
+                    string ItemNo = dtChPro.Rows[i]["ItemNo"].ToString();
+                    string MaterialNo = dtChPro.Rows[i]["MaterialNo"].ToString();
+                    string PackSize = dtChPro.Rows[i]["PackSize"].ToString();
+                    string Dept = dtChPro.Rows[i]["Department"].ToString();
+
+                    TQ += Quantity;
+                    string particulars = $"<b>{Product_name}</b><br/>"
+                                       + $"<span style='font-size: 11px;'>Spec: {Specification}</span><br/>"
+                                       + $"<span style='font-size: 11px;'>Item No: {ItemNo}, Material No: {MaterialNo}, Pack: {PackSize}</span><br/>"
+                                       + $"<span style='font-size: 11px;'>Department: {Dept}</span>";
+
+                    strProduct.Append("<tr>");
+                    strProduct.Append("<td style='border: 1px solid #bfbfbf; text-align: center;'>" + Sl_no + "</td>");
+                    strProduct.Append("<td style='border: 1px solid #bfbfbf; text-align: center;'>" + Product_id + "</td>");
+                    strProduct.Append("<td style='border: 1px solid #bfbfbf; text-align: left;'>" + particulars + "</td>");
+                    strProduct.Append("<td style='border: 1px solid #bfbfbf; text-align: center;'>" + HSN + "</td>");
+                    strProduct.Append("<td style='border: 1px solid #bfbfbf; text-align: center;'>" + Quantity + "</td>");
+                    strProduct.Append("<td style='border: 1px solid #bfbfbf; text-align: center;'>" + Unit + "</td>");
+                    strProduct.Append("</tr>");
+                }
+
+                strProduct.Append("<tr>");
+                strProduct.Append("<td colspan='3' style='border:none'></td>");
+                strProduct.Append("<td style='border: 1px solid #bfbfbf; background-color: #e31e24; color: white; font-weight: bold; text-align: center;'>Total</td>");
+                strProduct.Append("<td style='border: 1px solid #bfbfbf; background-color: #e31e24; color: white; font-weight: bold; text-align: center;'>" + TQ + "</td>");
+                strProduct.Append("<td style='border:none'></td>");
+                strProduct.Append("</tr>");
+                strProduct.Append("</table>");
+
+                lblProductDetails.Text = strProduct.ToString();
+            }
+
+        }
+
+        //private void buindalldata_OLD()
+        //{
+        //    DbCL.Sqlconnection();
+        //    DbCL.ConnectDb();
+        //    string cmdstring = "select * from tbl_Chalan where Chalan_No='" + lblChano.Text + "'";
+        //    SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+        //    SqlDataReader re = cmd.ExecuteReader();
+        //    if (re.Read())
+        //    {
+        //        lblChadate.Text = re["Chalan_Date"].ToString();
+        //        lblqnumber.Text = re["Quotation_No"].ToString();
+
+        //        string qno = lblqnumber.Text;
+        //        bindplaceodsupply(qno);
+        //        //lblQdate.Text = re["Quotation_Date"].ToString();
+        //        string clientid = re["Client_ID"].ToString();
+        //        //lblClientCode.Text = clientid;
+        //        representative(clientid);
+        //        string addressfor = re["addressfor"].ToString();
+        //        Bindclientdetails(clientid);
+
+        //    }
+        //}
+
         private void buindalldata()
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select * from tbl_Chalan where Chalan_No='" + lblChano.Text + "'";
+            string cmdstring = "SELECT c.Chalan_No, c.Chalan_Date, c.Quotation_No, c.Quotation_Date, c.Client_ID, c.addressfor, q.DO_Number, q.PO_Number, q.PO_Date FROM tbl_Chalan c, tbl_Quotation q where c.Quotation_No=q.Quotation_no and c.Chalan_No='" + lblChano.Text + "'";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
             {
                 lblChadate.Text = re["Chalan_Date"].ToString();
-                lblqnumber.Text = re["Quotation_No"].ToString();
+                //lblqnumber.Text = re["Quotation_No"].ToString();
+                string qno = re["Quotation_No"].ToString();
+                lblpnumber.Text = re["PO_Number"].ToString();
+                lbldonumber.Text = re["DO_Number"].ToString();
+                lblpdate.Text = re["PO_Date"].ToString();
 
-                string qno = lblqnumber.Text;
+                //string qno = lblqnumber.Text;
                 bindplaceodsupply(qno);
                 //lblQdate.Text = re["Quotation_Date"].ToString();
                 string clientid = re["Client_ID"].ToString();
@@ -119,9 +255,9 @@ namespace Bill_Software.corporate.business.print
                 representative(clientid);
                 string addressfor = re["addressfor"].ToString();
                 Bindclientdetails(clientid);
-
             }
         }
+
         private void bindplaceodsupply(string qno)
         {
             string query = "select PlaceofSupply from tbl_Quotation where Quotation_no=@Quotation_no";
