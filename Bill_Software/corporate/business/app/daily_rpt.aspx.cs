@@ -125,16 +125,20 @@ namespace Bill_Software.corporate.business.app
         private void GetAdminName()
         {
             string UserName = Session["USERID"].ToString();
-            string cmdString = "select Name from tbl_login where User_Id='" + UserName + "'";
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
-            SqlDataReader Rdr = cmd.ExecuteReader();
-            if (Rdr.Read())
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlCommand cmd = new SqlCommand("SELECT Name FROM tbl_login WHERE User_Id = @UserId", conn))
             {
-                txtSalesperson.Text = Rdr["Name"].ToString();
+                cmd.Parameters.AddWithValue("@UserId", UserName);
+                conn.Open();
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    if (rdr.Read())
+                    {
+                        txtSalesperson.Text = rdr["Name"].ToString();
+                    }
+                }
             }
-            DbCL.Conn.Close();
         }
 
         protected void btnSubmit_Click(object sender, EventArgs e)
@@ -152,10 +156,10 @@ namespace Bill_Software.corporate.business.app
                 {
                     string query = @"INSERT INTO tbl_SalesVisitReport 
                         (VisitDate, VisitEndDate, Salesperson, CustomerName, Department, ContactPerson, VisitType, DiscussionPoints, 
-                         VisitPhase, Status, FollowUpRequired, NextFollowUpDate, AttachmentName, ExecutionDateTime, CreatedDate, CreatedByCode) 
+                         VisitPhase, Status, FollowUpRequired, NextFollowUpDate, AttachmentName, ExecutionDateTime, CreatedDate, CreatedByCode, CompanyID) 
                         VALUES 
                         (@VisitDate, @VisitEndDate, @Salesperson, @CustomerName, @Department, @ContactPerson, @VisitType, @DiscussionPoints, 
-                         @VisitPhase, @Status, @FollowUpRequired, @NextFollowUpDate, @AttachmentName, @ExecutionDateTime, @CreatedDate, @CreatedByCode)";
+                         @VisitPhase, @Status, @FollowUpRequired, @NextFollowUpDate, @AttachmentName, @ExecutionDateTime, @CreatedDate, @CreatedByCode, @CompanyID)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
@@ -205,17 +209,41 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Today);
                         string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
                         cmd.Parameters.AddWithValue("@CreatedByCode", userId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
                         conn.Open();
                         cmd.ExecuteNonQuery();
                     }
                 }
 
+                // Proactive notification logging
+                try
+                {
+                    using (SqlConnection logConn = new SqlConnection(connStr))
+                    {
+                        string notifQuery = @"INSERT INTO tbl_SystemNotification 
+                            (CompanyID, Title, Message, Module, Type, UserId, CreatedOn) 
+                            VALUES (@CompanyID, @Title, @Message, @Module, @Type, @UserId, GETDATE())";
+                        using (SqlCommand notifCmd = new SqlCommand(notifQuery, logConn))
+                        {
+                            notifCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                            notifCmd.Parameters.AddWithValue("@Title", $"Visit {visitPhase}");
+                            notifCmd.Parameters.AddWithValue("@Message", $"New {visitPhase.ToLower()} visit created for {txtCustomerName.Text.Trim()} by {userId}.");
+                            notifCmd.Parameters.AddWithValue("@Module", "Sales Visit");
+                            notifCmd.Parameters.AddWithValue("@Type", "Info");
+                            notifCmd.Parameters.AddWithValue("@UserId", userId);
+                            logConn.Open();
+                            notifCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch { /* Soft catch: audit logging failure must not crash main transaction */ }
+
                 ScriptManager.RegisterStartupScript(this, GetType(), "redirect", "alert('Record saved successfully!'); window.location='visit_planner.aspx';", true);
             }
             catch (Exception ex)
             {
-                lblErrorMsg.Text = "An error occurred: " + ex.Message;
+                lblErrorMsg.Text = "An error occurred while saving the visit. Please try again.";
                 PanelError.Visible = true;
             }
         }

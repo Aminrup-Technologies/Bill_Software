@@ -234,7 +234,7 @@ namespace Bill_Software.corporate.business.app
                 }
                 catch (Exception ex)
                 {
-                    ShowMessage("Error uploading file: " + ex.Message, "danger");
+                    ShowMessage("Error uploading file. Please try again.", "danger");
                     return;
                 }
             }
@@ -487,9 +487,11 @@ namespace Bill_Software.corporate.business.app
                             else
                             {
                                 reader.Close();
-                                SqlCommand incCmd = new SqlCommand("UPDATE tbl_login SET OtpAttemptCount = OtpAttemptCount + 1 WHERE User_Id = @UserId", con);
-                                incCmd.Parameters.AddWithValue("@UserId", userId);
-                                incCmd.ExecuteNonQuery();
+                                using (SqlCommand incCmd = new SqlCommand("UPDATE tbl_login SET OtpAttemptCount = OtpAttemptCount + 1 WHERE User_Id = @UserId", con))
+                                {
+                                    incCmd.Parameters.AddWithValue("@UserId", userId);
+                                    incCmd.ExecuteNonQuery();
+                                }
                                 return false;
                             }
                         }
@@ -526,28 +528,14 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-
-                using (MailMessage mail = new MailMessage())
-                {
-                    mail.From = new MailAddress(ConfigurationManager.AppSettings["SmtpFrom"]);
-                    mail.To.Add(toEmail);
-                    mail.Subject = "Project FLMX - Security Verification";
-                    mail.Body = $"Your One Time Password (OTP) for profile updates is: <b>{otp}</b>. This code expires in 10 minutes.";
-                    mail.IsBodyHtml = true;
-
-                    using (SmtpClient smtp = new SmtpClient(ConfigurationManager.AppSettings["SmtpHost"], Convert.ToInt32(ConfigurationManager.AppSettings["SmtpPort"])))
-                    {
-                        smtp.Credentials = new NetworkCredential(ConfigurationManager.AppSettings["SmtpUser"], ConfigurationManager.AppSettings["SmtpPass"]);
-                        smtp.EnableSsl = Convert.ToBoolean(ConfigurationManager.AppSettings["SmtpEnableSsl"]);
-                        smtp.Send(mail);
-                    }
-                }
+                // Secrets Management: Use CommunicationGateway (reads from Web.config), never hardcode credentials
+                string body = $"Your One Time Password (OTP) for profile updates is: <b>{otp}</b>. This code expires in 10 minutes.";
+                CommunicationGateway.SendCustomEmail(toEmail, "Project FLMX - Security Verification", body);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ShowMessage("SMTP Error: " + ex.Message, "danger");
-                System.Diagnostics.Debug.WriteLine("SMTP Error: " + ex.Message);
+                // Ponytail #3: Never expose raw exception details to client
+                ShowMessage("Failed to send OTP email. Please try again.", "danger");
             }
         }
 
@@ -623,16 +611,16 @@ namespace Bill_Software.corporate.business.app
                         if (!response.IsSuccessStatusCode)
                         {
                             // Surface the exact MSG91 API rejection reason to the UI
-                            ShowMessage($"MSG91 API Error: {result}", "danger");
-                            System.Diagnostics.Debug.WriteLine($"MSG91 API Error for {cleanPhone}: {result}");
+                        // Ponytail #3: Never expose raw API error details to client
+                        ShowMessage("Failed to send WhatsApp OTP. Please try again.", "danger");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                ShowMessage("MSG91 Code Error: " + ex.Message, "danger");
-                System.Diagnostics.Debug.WriteLine("Error in SendWhatsAppOTPAsync: " + ex.Message);
+                // Ponytail #3: Never expose raw exception details to client
+                ShowMessage("Failed to send WhatsApp OTP. Please try again.", "danger");
             }
         }
 

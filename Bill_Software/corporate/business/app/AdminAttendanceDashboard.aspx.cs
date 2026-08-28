@@ -174,96 +174,6 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private DataTable GetAttendanceData_OLD()
-        {
-            int targetMonth = Convert.ToInt32(ddlMonth.SelectedValue);
-            int targetYear = Convert.ToInt32(ddlYear.SelectedValue);
-            string selectedEmp = ddlEmployee.SelectedValue;
-            int companyId = CompanyContext.CurrentCompanyID;
-
-            string sql = @"
-        WITH DateRange AS (
-            SELECT CAST(DATEFROMPARTS(@Year, @Month, 1) AS DATE) AS CalDate
-            UNION ALL
-            SELECT DATEADD(day, 1, CalDate)
-            FROM DateRange
-            WHERE CalDate < EOMONTH(DATEFROMPARTS(@Year, @Month, 1))
-        ),
-        TargetUsers AS (
-            SELECT User_Id, Name FROM tbl_login 
-            WHERE CompanyID = @CompanyID AND (@EmpId = 'ALL' OR User_Id = @EmpId) AND IsActive = 1
-        ),
-        UserDates AS (
-            SELECT u.User_Id, u.Name, d.CalDate 
-            FROM TargetUsers u CROSS JOIN DateRange d
-        ),
-        OfficeAttendance AS (
-            -- ADDED: AttendanceCode and PayableDay must be fetched from the physical table here!
-            SELECT UserCode, ActivityDate, PunchInTime, PunchOutTime, TotalHoursWorked, 
-                   SystemCalculatedStatus, AttendanceCode, PayableDay 
-            FROM tbl_Attendance 
-            WHERE CompanyID = @CompanyID AND MONTH(ActivityDate) = @Month AND YEAR(ActivityDate) = @Year
-        ),
-        FieldSales AS (
-            SELECT CreatedByCode as UserCode, CAST(VisitDate AS DATE) as VisitDate, 
-                   COUNT(Id) as TotalVisits, SUM(RevenueRealized) as DailyRevenue
-            FROM tbl_SalesVisitReport 
-            WHERE CompanyID = @CompanyID AND MONTH(VisitDate) = @Month AND YEAR(VisitDate) = @Year
-            GROUP BY CreatedByCode, CAST(VisitDate AS DATE)
-        ),
-        LeaveData AS (
-            SELECT UserCode, CAST(StartDate AS DATE) as LeaveDate, RequestStatus
-            FROM tbl_LeaveRequests
-            WHERE CompanyID = @CompanyID AND RequestStatus = 'Approved' 
-              AND MONTH(StartDate) = @Month AND YEAR(StartDate) = @Year
-        )
-        
-        SELECT 
-            ud.User_Id AS UserCode,
-            ud.CalDate AS ActivityDate,
-            DATENAME(weekday, ud.CalDate) AS DayOfWeek,
-            ud.Name AS EmployeeName,
-            oa.PunchInTime,
-            oa.PunchOutTime,
-            oa.TotalHoursWorked,
-            ISNULL(fs.TotalVisits, 0) AS FieldVisitsLogged,
-            ISNULL(fs.DailyRevenue, 0) AS DailyRevenue,
-            
-            -- ADDED: The new Payroll fields passed directly to your GridView BoundFields
-            ISNULL(oa.AttendanceCode, '-') AS AttendanceCode,
-            ISNULL(oa.PayableDay, 0.0) AS PayableDay,
-            
-            CASE 
-                WHEN ud.CalDate > CAST(GETDATE() AS DATE) THEN 'Upcoming'
-                WHEN ld.RequestStatus = 'Approved' THEN 'Approved Leave'
-                WHEN oa.SystemCalculatedStatus IS NOT NULL THEN 'Office (' + oa.SystemCalculatedStatus + ')'
-                WHEN fs.TotalVisits > 0 THEN 'Field Sales'
-                WHEN DATENAME(weekday, ud.CalDate) = 'Sunday' THEN 'Weekly Off'
-                ELSE 'Absent'
-            END AS CalculatedStatus
-        FROM UserDates ud
-        LEFT JOIN OfficeAttendance oa ON ud.User_Id = oa.UserCode AND ud.CalDate = oa.ActivityDate
-        LEFT JOIN FieldSales fs ON ud.User_Id = fs.UserCode AND ud.CalDate = fs.VisitDate
-        LEFT JOIN LeaveData ld ON ud.User_Id = ld.UserCode AND ud.CalDate = ld.LeaveDate
-        ORDER BY ud.Name ASC, ud.CalDate ASC
-        OPTION (MAXRECURSION 31);
-    ";
-
-            using (SqlConnection conn = new SqlConnection(ConnString))
-            using (SqlCommand cmd = new SqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@CompanyID", companyId);
-                cmd.Parameters.AddWithValue("@Month", targetMonth);
-                cmd.Parameters.AddWithValue("@Year", targetYear);
-                cmd.Parameters.AddWithValue("@EmpId", selectedEmp);
-
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-                return dt;
-            }
-        }
-
         private void GenerateReport()
         {
             DataTable dt = GetAttendanceData();
@@ -386,9 +296,9 @@ namespace Bill_Software.corporate.business.app
                 }
 
                 using (SqlConnection conn = new SqlConnection(ConnString))
+                using (SqlTransaction tran = conn.BeginTransaction())
                 {
                     conn.Open();
-                    SqlTransaction tran = conn.BeginTransaction();
 
                     try
                     {
@@ -510,36 +420,12 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ScriptManager.RegisterStartupScript(this, GetType(), "alert", $"Swal.fire('Error', '{ex.Message.Replace("'", "")}', 'error');", true);
+                // Ponytail Standard #3: Never expose raw exception details to client
+                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Error', 'An unexpected error occurred while processing attendance. Please try again.', 'error');", true);
             }
         }
-
-        //private void CalculateSummaries(DataTable dt)
-        //{
-        //    int officeDays = 0;
-        //    int fieldDays = 0;
-        //    int totalVisits = 0;
-        //    int absents = 0;
-
-        //    foreach (DataRow row in dt.Rows)
-        //    {
-        //        string status = row["CalculatedStatus"].ToString();
-
-        //        if (status.Contains("Office") || status.Contains("HR Override - Present")) officeDays++;
-        //        if (status.Contains("Field")) fieldDays++;
-        //        if (status.Contains("Absent") && !status.Contains("HR Override - Present")) absents++;
-
-        //        totalVisits += Convert.ToInt32(row["FieldVisitsLogged"]);
-        //    }
-
-        //    lblTotalOffice.Text = $"{officeDays} Days";
-        //    lblTotalField.Text = $"{fieldDays} Days";
-        //    lblTotalVisits.Text = totalVisits.ToString();
-        //    lblTotalAbsents.Text = $"{absents} Days";
-        //}
-
 
         // ==========================================
         // EXCEL EXPORT ENGINE
