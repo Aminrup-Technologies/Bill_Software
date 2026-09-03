@@ -7,6 +7,7 @@
     <title>Purchase Order Page</title>
     <link rel="shortcut icon" href="../../Image/kvqafabioc.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style type="text/css">
         /* --- Screen/Browser View Styles --- */
@@ -64,6 +65,59 @@
             box-shadow: 0 4px 24px rgba(0,0,0,0.12);
         }
 
+        .client-toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .client-toolbar[hidden],
+        .js-hidden {
+            display: none !important;
+        }
+
+        .tb-btn {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+
+        .tb-btn-primary { background: #007bff; }
+        .tb-btn-secondary { background: #555; }
+        .tb-btn-pdf { background: #e31e24; }
+
+        .tb-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .pdf-status {
+            flex-basis: 100%;
+            color: #b42318;
+            font-size: 12px;
+        }
+
+        html.pdf-capturing .client-toolbar,
+        html.pdf-capturing #print-controls,
+        html.pdf-capturing .preview-toolbar {
+            display: none !important;
+        }
+
+        html.pdf-capturing .document-shadow {
+            box-shadow: none !important;
+        }
+
+        html.pdf-capturing .page-shell,
+        html.pdf-capturing .a4-preview {
+            overflow: visible;
+        }
+
         /* Base Table Styling */
         .master-table { width: 100%; border-collapse: collapse; }
         .content-table { border-collapse: collapse; width: 100%; }
@@ -95,9 +149,10 @@
                 print-color-adjust: exact !important;
             }
 
-            /* Hide the print buttons / sticky toolbar when printing */
+            /* Hide both toolbars when printing */
             #print-controls,
-            .preview-toolbar { display: none !important; }
+            .preview-toolbar,
+            .client-toolbar { display: none !important; }
 
             .page-shell {
                 display: block;
@@ -138,6 +193,13 @@
 <body>
     <form id="form1" runat="server">
         
+        <nav id="client-toolbar" class="client-toolbar preview-toolbar" aria-label="Purchase order actions" hidden="hidden">
+            <button type="button" class="tb-btn tb-btn-primary" onclick="printWithLetterhead()">Print With Letterhead</button>
+            <button type="button" class="tb-btn tb-btn-secondary" onclick="printWithoutLetterhead()">Print Without Letterhead</button>
+            <button type="button" class="tb-btn tb-btn-pdf" onclick="exportPdf()">Export PDF</button>
+            <span id="pdf-status" role="status" aria-live="polite" class="pdf-status"></span>
+        </nav>
+
         <div id="print-controls" class="preview-toolbar">
             <asp:Button ID="Button1" runat="server" OnClick="Button1_Click" OnClientClick="document.getElementById('header').className ='header'; document.getElementById('footer').className ='footer'; window.print()" Text="Print Without Letterhead" style="padding: 10px 20px; background: #555; color: #fff; border: none; cursor: pointer; margin-right: 10px;" />
             <asp:Button ID="Button2" runat="server" OnClick="Button2_Click" OnClientClick="window.print()" Text="Print With Letterhead" style="padding: 10px 20px; background: #007bff; color: #fff; border: none; cursor: pointer;" />
@@ -403,5 +465,111 @@
         </div>
         </div>
     </form>
+    <script type="text/javascript">
+        (function () {
+            var client = document.getElementById('client-toolbar');
+            var fallback = document.getElementById('print-controls');
+            if (client) { client.removeAttribute('hidden'); }
+            if (fallback) { fallback.className = fallback.className + ' js-hidden'; }
+        })();
+
+        function printWithLetterhead() {
+            window.print();
+        }
+
+        function printWithoutLetterhead() {
+            var header = document.getElementById('header');
+            var footer = document.getElementById('footer');
+            var prevHeader = header ? header.className : '';
+            var prevFooter = footer ? footer.className : '';
+            if (header) { header.className = 'header'; }
+            if (footer) { footer.className = 'footer'; }
+            var restore = function () {
+                if (header) { header.className = prevHeader; }
+                if (footer) { footer.className = prevFooter; }
+                if (window.removeEventListener) {
+                    window.removeEventListener('afterprint', restore);
+                }
+            };
+            if (window.addEventListener) {
+                window.addEventListener('afterprint', restore);
+            }
+            window.print();
+        }
+
+        function getPoFilename() {
+            var poEl = document.getElementById('<%= lbl_ponumber.ClientID %>');
+            var doEl = document.getElementById('<%= lbl_donumber.ClientID %>');
+            var raw = (poEl && poEl.textContent) ? poEl.textContent.replace(/^\s+|\s+$/g, '') : '';
+            if (!raw && doEl && doEl.textContent) {
+                raw = doEl.textContent.replace(/^\s+|\s+$/g, '');
+            }
+            raw = raw.replace(/[\\\/:*?"<>|]+/g, '-').replace(/\s+/g, '_');
+            if (!raw) { raw = 'PO'; }
+            return 'PO_' + raw + '.pdf';
+        }
+
+        function setPdfStatus(msg) {
+            var el = document.getElementById('pdf-status');
+            if (el) { el.textContent = msg || ''; }
+        }
+
+        function exportPdf() {
+            var source = document.querySelector('.a4-preview');
+            var pdfBtn = document.querySelector('.tb-btn-pdf');
+            if (pdfBtn && pdfBtn.disabled) { return; }
+
+            if (!source) {
+                setPdfStatus('Cannot export PDF: document preview was not found.');
+                return;
+            }
+            if (typeof html2pdf !== 'function') {
+                setPdfStatus('Cannot export PDF: PDF library failed to load.');
+                return;
+            }
+
+            var finished = false;
+            var finish = function (ok) {
+                if (finished) { return; }
+                finished = true;
+                document.documentElement.className = document.documentElement.className.replace(/\bpdf-capturing\b/g, '').replace(/^\s+|\s+$/g, '');
+                if (pdfBtn) { pdfBtn.disabled = false; }
+                if (ok) { setPdfStatus(''); }
+                else { setPdfStatus('PDF export failed. Please try again.'); }
+            };
+
+            setPdfStatus('Generating PDF…');
+            if (pdfBtn) { pdfBtn.disabled = true; }
+            document.documentElement.className += (document.documentElement.className ? ' ' : '') + 'pdf-capturing';
+
+            var opt = {
+                margin: 0,
+                filename: getPoFilename(),
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: source.scrollWidth,
+                    windowHeight: Math.max(source.scrollHeight, source.offsetHeight)
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+
+            try {
+                var job = html2pdf().set(opt).from(source).save();
+                if (job && typeof job.then === 'function') {
+                    job.then(function () { finish(true); }, function () { finish(false); });
+                } else {
+                    finish(false);
+                }
+            } catch (ex) {
+                finish(false);
+            }
+        }
+    </script>
 </body>
 </html>
