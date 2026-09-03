@@ -93,14 +93,6 @@ namespace Bill_Software.corporate.business.app
                         DataTable dtSales = new DataTable();
                         daSales.Fill(dtSales);
                         cmbSalesPerson.DataSource = dtSales;
-                using (SqlCommand cmd = new SqlCommand(salesQuery, conn))
-                {
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    {
-                        DataTable dtSales = new DataTable();
-                        da.Fill(dtSales);
-
-                        cmbSalesPerson.DataSource = dtSales;
                         cmbSalesPerson.DataTextField = "DisplayName"; // Shows: Anish Dwivedi [FLM03]
                         cmbSalesPerson.DataValueField = "Id";         // Stores: 3 (The PK)
                         cmbSalesPerson.DataBind();
@@ -749,7 +741,8 @@ namespace Bill_Software.corporate.business.app
             return 0;
         }
 
-        // --- INJECTION 6: Scoped Serial Isolation ---        private int idreturn()
+        // --- INJECTION 6: Scoped Serial Isolation ---
+        private int idreturn()
         {
             int b = 0;
             string d = txtquotationDate.Text, m = d.Substring(3, 3), y = d.Substring(7, 4), d5, d6;
