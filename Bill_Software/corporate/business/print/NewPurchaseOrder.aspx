@@ -70,7 +70,7 @@
 
             .a4-container.a4-preview,
             .a4-preview {
-                width: min(92vw, 940px);
+                width: min(94vw, 1120px);
                 max-width: 100%;
                 aspect-ratio: 210 / 297;
                 min-height: auto;
@@ -79,7 +79,7 @@
 
             .a4-container {
                 max-width: 100%;
-                padding: 12px 22px 20px;
+                padding: 8px 22px 20px;
             }
 
             .a4-preview {
@@ -87,11 +87,16 @@
             }
 
             .a4-preview thead th {
-                padding-bottom: 10px !important;
+                padding-top: 0;
+                padding-bottom: 4px !important;
             }
 
             .a4-preview thead table {
-                margin-top: 8px !important;
+                margin-top: 4px !important;
+            }
+
+            .a4-preview #bodycontain > tr > td {
+                padding-top: 10px !important;
             }
 
             .a4-preview thead img,
@@ -256,6 +261,10 @@
 
         html.pdf-capturing .a4-preview thead table {
             margin-top: 15px !important;
+        }
+
+        html.pdf-capturing .a4-preview #bodycontain > tr > td {
+            padding-top: 20px !important;
         }
 
         html.pdf-capturing .a4-preview h2 {
