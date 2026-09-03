@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using System.Text;
 using System.Globalization;
 using System.Threading;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -44,6 +45,11 @@ namespace Bill_Software.corporate.business.print
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (Session["USERID"] == null || Session["CompanyID"] == null)
+            {
+                Response.Redirect("~/index.aspx");
+                return;
+            }
             if (!IsPostBack)
             {
                 string ID = Request.QueryString["ID"];
@@ -54,9 +60,10 @@ namespace Bill_Software.corporate.business.print
         private void buindalldata(string id)
         {
             // Updated query to pull the new data points (DiscountView, TCS, Freight, OtherCharges, RecordType)
-            string query = "SELECT ID, Quotation_no, Quotation_date, Client_Id, PlaceofSupply, ReferenceName, ReferenceData, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, TimsStamp, sub_total, Net_amount, cgstOrsgst, igst, DiscountView, TCS_Amount, Freight_Amount, OtherCharge_Name, OtherCharge_Amount, RecordType from tbl_Quotation where ID=@id";
+            string query = "SELECT ID, Quotation_no, Quotation_date, Client_Id, PlaceofSupply, ReferenceName, ReferenceData, ReferenceId, ReferenceDate, ValidityDays, DeliveryTenure, PackingCharges, Remarks, DetailedView, DO_Number, PO_Number, PO_Date, Validity_StartDate, Validity_EndDate, TimsStamp, sub_total, Net_amount, cgstOrsgst, igst, DiscountView, TCS_Amount, Freight_Amount, OtherCharge_Name, OtherCharge_Amount, RecordType from tbl_Quotation where ID=@id AND CompanyID=@CompanyID";
             SqlParameter[] pram = {
-                new SqlParameter("@id",id)
+                new SqlParameter("@id",id),
+                new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
             };
 
             dtmain = DbCL.SPreturn_dt(query, pram);
@@ -179,13 +186,19 @@ namespace Bill_Software.corporate.business.print
                 lblplaceofsup2.Text = ":";
                 lblplaceofsup3.Text = placeofsupply;
             }
+            else
+            {
+                Response.Write("Purchase Order Not Found.");
+                Response.End();
+            }
         }
 
         private void BuindamountByQuotation(string quotationNo)
         {
-            string chalanQuery = "SELECT Chalan_No, Chalan_Date FROM tbl_Chalan WHERE Quotation_No = @Quotation_No ORDER BY Chalan_Date";
+            string chalanQuery = "SELECT Chalan_No, Chalan_Date FROM tbl_Chalan WHERE Quotation_No = @Quotation_No AND CompanyID = @CompanyID ORDER BY Chalan_Date";
             SqlParameter[] chalanParam = {
                 new SqlParameter("@Quotation_No", quotationNo),
+                new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
             };
             DataTable dtChalanList = DbCL.SPreturn_dt(chalanQuery, chalanParam);
             if (dtChalanList.Rows.Count > 0)
@@ -233,11 +246,12 @@ namespace Bill_Software.corporate.business.print
                         INNER JOIN tbl_Chalan c ON cd.Challan_no = c.Chalan_No
                         INNER JOIN tbl_Quotaion_details qd 
                             ON cd.Product_id = qd.Product_Code AND c.Quotation_No = qd.Quotation_no and cd.ItemNo = qd.ItemNo
-                        WHERE cd.Challan_no = @Challan_no AND qd.IsDeleted!=1 AND qd.IsLatest=1
+                        WHERE cd.Challan_no = @Challan_no AND qd.IsDeleted!=1 AND qd.IsLatest=1 AND c.CompanyID = @CompanyID AND qd.CompanyID = @CompanyID
                         order by CAST(qd.Sl_no as int);";
 
                     SqlParameter[] detailParam = {
-                            new SqlParameter("@Challan_no", chalanNo)
+                            new SqlParameter("@Challan_no", chalanNo),
+                            new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
                         };
                     DataTable dtDetails = DbCL.SPreturn_dt(detailQuery, detailParam);
                     if (dtDetails.Rows.Count > 0)
@@ -311,9 +325,10 @@ namespace Bill_Software.corporate.business.print
 
         private void bindPrimaryServiceTerms(string qutno)
         {
-            string cmdstring = "select PrimaryService from  tbl_QutPrimaryService where qut_no=@qut_no";
+            string cmdstring = "select PrimaryService from  tbl_QutPrimaryService where qut_no=@qut_no AND CompanyID=@CompanyID";
             SqlParameter[] pram = {
-                                     new SqlParameter("@qut_no",qutno)
+                                     new SqlParameter("@qut_no",qutno),
+                                     new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
                                   };
             dtpr = DbCL.SPreturn_dt(cmdstring, pram);
             if (dtpr.Rows.Count > 0)
@@ -364,10 +379,11 @@ namespace Bill_Software.corporate.business.print
 
         private void bindterms(string pserv, string qutno)
         {
-            string cmdstring = "select PSerTer from tbl_QuoPserTerm where qutno=@qutno and PServiceName=@PServiceName";
+            string cmdstring = "select PSerTer from tbl_QuoPserTerm where qutno=@qutno and PServiceName=@PServiceName AND CompanyID=@CompanyID";
             SqlParameter[] pram = {
                                      new SqlParameter("@qutno",qutno),
                                      new SqlParameter("@PServiceName",pserv),
+                                     new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
 
                   };
             dtpSer = DbCL.SPreturn_dt(cmdstring, pram);
@@ -395,9 +411,10 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             // Modified to include 'Unit' column in the select statement
-            string cmdstring = "SELECT Sl_no, Product_id AS HSN, Product_name, specification, Misc, Quantity, Unit, sail_rate, Service_tax_rate, Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no AND IsLatest = 1 AND IsDeleted = 0 ORDER BY ItemNo";
+            string cmdstring = "SELECT Sl_no, Product_id AS HSN, Product_name, specification, Misc, Quantity, Unit, sail_rate, Service_tax_rate, Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no AND IsLatest = 1 AND IsDeleted = 0 AND CompanyID = @CompanyID ORDER BY ItemNo";
             SqlParameter[] pram = {
-                                          new SqlParameter("@Quotation_no",qutno)
+                                          new SqlParameter("@Quotation_no",qutno),
+                                          new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
                                       };
             dtp = DbCL.SPreturn_dt(cmdstring, pram);
             if (dtp.Rows.Count > 0)
@@ -553,9 +570,10 @@ namespace Bill_Software.corporate.business.print
 
         private void bindpayment(string qutno)
         {
-            string cmdstring = "select phase_type,PhaseDesc,amountper from tbl_QutPaymentPhase where qut_no=@qut_no order by id";
+            string cmdstring = "select phase_type,PhaseDesc,amountper from tbl_QutPaymentPhase where qut_no=@qut_no AND CompanyID=@CompanyID order by id";
             SqlParameter[] pram = {
-                 new SqlParameter("@qut_no",qutno)
+                 new SqlParameter("@qut_no",qutno),
+                 new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
             };
             dtpayphase = DbCL.SPreturn_dt(cmdstring, pram);
 
@@ -601,9 +619,10 @@ namespace Bill_Software.corporate.business.print
         private void Bindclientdetails(string clientid)
         {
             // Appended Com_email, Com_phone to SELECT query
-            string query = "select Client_Name,Address1,Address2,City,pin,State,Service_tax_no,Pan_no,PlaceofSupply,Com_email,Com_phone from tbl_Client where Client_Id=@Client_Id";
+            string query = "select Client_Name,Address1,Address2,City,pin,State,Service_tax_no,Pan_no,PlaceofSupply,Com_email,Com_phone from tbl_Client where Client_Id=@Client_Id AND CompanyID=@CompanyID";
             SqlParameter[] pram = {
-            new SqlParameter("@Client_Id",clientid)
+            new SqlParameter("@Client_Id",clientid),
+            new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
             };
             dtClient = DbCL.SPreturn_dt(query, pram);
             if (dtClient.Rows.Count > 0)
@@ -678,8 +697,9 @@ namespace Bill_Software.corporate.business.print
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-            string cmdstring = "select count(*) from tbl_QutPrimaryService where qut_no='" + qutno.ToString() + "'";
+            string cmdstring = "select count(*) from tbl_QutPrimaryService where qut_no='" + qutno.ToString() + "' AND CompanyID=@CompanyID";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
             Int32 count = Convert.ToInt32(cmd.ExecuteScalar());
             generatelavel(count, qutno);
             DbCL.Conn.Close();
@@ -692,8 +712,9 @@ namespace Bill_Software.corporate.business.print
             DbCL.ConnectDb();
             string service = null;
             int flag = 1;
-            string cmdstring = "select PrimaryService from tbl_QutPrimaryService where qut_no='" + qutno.ToString() + "' order by id";
+            string cmdstring = "select PrimaryService from tbl_QutPrimaryService where qut_no='" + qutno.ToString() + "' AND CompanyID=@CompanyID order by id";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
             SqlDataReader re = cmd.ExecuteReader();
             while (re.Read())
             {
