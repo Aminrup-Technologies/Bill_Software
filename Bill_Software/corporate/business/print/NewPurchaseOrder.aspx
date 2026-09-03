@@ -119,19 +119,31 @@
 
             .a4-preview .master-table,
             .a4-preview .content-table,
-            .a4-preview table:not(.FORKVQAEAST) {
+            .a4-preview .PaymentPhase,
+            .a4-preview table[style*="border:2px solid"] {
                 width: 100%;
                 max-width: 100%;
                 table-layout: fixed;
             }
 
-            .a4-preview table.FORKVQAEAST {
+            .a4-preview table.FORKVQAEAST,
+            .a4-preview table.info-split,
+            .a4-preview table.info-split table {
                 max-width: 100%;
                 table-layout: auto;
             }
 
             .a4-preview td,
             .a4-preview th {
+                overflow-wrap: break-word;
+            }
+
+            .a4-preview .content-table td,
+            .a4-preview .content-table th,
+            .a4-preview .PaymentPhase td,
+            .a4-preview .PaymentPhase th,
+            .a4-preview table[style*="border:2px solid"] td,
+            .a4-preview table[style*="border:2px solid"] th {
                 overflow-wrap: anywhere;
                 word-break: break-word;
             }
@@ -139,6 +151,25 @@
             .a4-preview img {
                 max-width: 100%;
                 height: auto;
+            }
+        }
+
+        @media screen and (max-width: 640px) {
+            html:not(.pdf-capturing) .a4-preview table.info-split,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td {
+                display: block;
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td.info-split-gap {
+                display: none;
+            }
+
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td + td.info-split-card {
+                margin-top: 10px;
             }
         }
 
@@ -245,6 +276,8 @@
 
         html.pdf-capturing .a4-preview .master-table,
         html.pdf-capturing .a4-preview .content-table,
+        html.pdf-capturing .a4-preview .PaymentPhase,
+        html.pdf-capturing .a4-preview table[style*="border:2px solid"],
         html.pdf-capturing .a4-preview table:not(.FORKVQAEAST) {
             table-layout: auto;
         }
@@ -253,6 +286,25 @@
         html.pdf-capturing .a4-preview th {
             overflow-wrap: normal;
             word-break: normal;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split,
+        html.pdf-capturing .a4-preview table.info-split > tbody {
+            display: table;
+            width: 100%;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split > tbody > tr {
+            display: table-row;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split > tbody > tr > td {
+            display: table-cell;
+            width: auto;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split > tbody > tr > td.info-split-gap {
+            display: table-cell;
         }
 
         /* Base Table Styling */
@@ -311,6 +363,8 @@
 
             .master-table,
             .content-table,
+            .PaymentPhase,
+            table[style*="border:2px solid"],
             table:not(.FORKVQAEAST) {
                 table-layout: auto;
             }
@@ -318,6 +372,20 @@
             td, th {
                 overflow-wrap: normal;
                 word-break: normal;
+            }
+
+            table.info-split,
+            table.info-split > tbody {
+                display: table;
+                width: 100%;
+            }
+
+            table.info-split > tbody > tr {
+                display: table-row;
+            }
+
+            table.info-split > tbody > tr > td {
+                display: table-cell;
             }
 
             .document-shadow {
@@ -389,9 +457,9 @@
                     <tr>
                         <td style="padding-top: 20px;">
                             
-                            <table border="0" width="100%">
+                            <table border="0" width="100%" class="info-split">
                                 <tr>
-                                    <td style="width: 48%; border: 1px solid #dcdcdc; background-color: #ffffff; padding: 12px; border-radius: 4px;">
+                                    <td class="info-split-card" style="width: 48%; border: 1px solid #dcdcdc; background-color: #ffffff; padding: 12px; border-radius: 4px;">
                                         <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px; color: #222;">
                                             Customer Details (From)
                                         </div>
@@ -425,9 +493,9 @@
                                         </table>
                                     </td>
 
-                                    <td style="width: 4%;"></td>
+                                    <td class="info-split-gap" style="width: 4%;"></td>
 
-                                    <td style="width: 48%; border: 1px solid #dcdcdc; background-color: #f9f9f9; padding: 12px; border-radius: 4px;">
+                                    <td class="info-split-card" style="width: 48%; border: 1px solid #dcdcdc; background-color: #f9f9f9; padding: 12px; border-radius: 4px;">
                                         <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px; color: #222;">
                                             Document Information
                                         </div>
