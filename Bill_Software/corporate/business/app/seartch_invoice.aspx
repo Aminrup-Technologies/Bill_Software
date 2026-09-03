@@ -305,7 +305,7 @@
                                         <%# Eval("Quotation_No") %>
                                     </span>
                                     <span class="meta">Quo Date: <%# FmtDate(Eval("Quotation_Date")) %></span>
-                                    <%# string.IsNullOrEmpty(FmtDate(Eval("mailDate"))) ? "" : "<span class='badge'>Mail</span> " + FmtDate(Eval("mailDate")) + "<br />" %>
+                                    <%# FmtMail(Eval("mailDate")) %>
                                     <span style="font-size: 10px; color: #666;"><%# Eval("PServiceName") %></span>
                                 </td>
                                 <td class="text-left">

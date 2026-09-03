@@ -244,8 +244,8 @@ namespace Bill_Software.corporate.business.app
                 ws.SheetView.FreezeRows(1);
 
                 FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date", "Created Timestamp" }, "dd-MMM-yyyy");
-                FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice Grand Total", "Freight", "Other Charges" }, "\"₹\"#,##0.00");
-                FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.00");
+                FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice Grand Total", "Freight", "Other Charges" }, "#,##0.00");
+                FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.###");
                 FormatNamedColumns(ws, new[] { "GST %" }, "0.00");
 
                 ws.Columns().AdjustToContents();
@@ -340,10 +340,27 @@ namespace Bill_Software.corporate.business.app
             return parsed is DateTime ? ((DateTime)parsed).ToString("dd-MMM-yyyy") : "";
         }
 
+        protected string FmtMail(object v)
+        {
+            string d = FmtDate(v);
+            return string.IsNullOrEmpty(d) ? "" : "<span class='badge'>Mail</span> " + d + "<br />";
+        }
+
         protected string FmtStamp(object v)
         {
-            object parsed = ParseDate(v);
-            return parsed is DateTime ? ((DateTime)parsed).ToString("dd-MMM-yyyy hh:mm tt") : "";
+            if (v == null || v == DBNull.Value) return "";
+            DateTime d;
+            if (v is DateTime)
+            {
+                d = (DateTime)v;
+                return d == DateTime.MinValue ? "" : d.ToString("dd-MMM-yyyy hh:mm tt");
+            }
+            string s = Convert.ToString(v);
+            if (string.IsNullOrWhiteSpace(s)) return "";
+            object parsed = ParseDate(s);
+            if (!(parsed is DateTime)) return "";
+            d = (DateTime)parsed;
+            return d == DateTime.MinValue ? "" : d.ToString("dd-MMM-yyyy hh:mm tt");
         }
 
         protected void btnClear_Click(object sender, EventArgs e)
