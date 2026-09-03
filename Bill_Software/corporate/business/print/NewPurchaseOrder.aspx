@@ -10,13 +10,38 @@
     
     <style type="text/css">
         /* --- Screen/Browser View Styles --- */
+        html, body {
+            overflow-x: clip;
+        }
+
         body {
             font-family: 'Century Gothic', sans-serif;
             font-size: 13px;
             color: #333;
             margin: 0;
-            padding: 20px 0;
-            background-color: #f4f4f4; /* Gray background to make A4 stand out on screen */
+            padding: 0;
+            background-color: #e8eaed; /* Soft gray workspace for A4 preview */
+        }
+
+        .preview-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            text-align: center;
+            padding: 12px 16px;
+            margin-bottom: 0;
+            background-color: #fff;
+            border-bottom: 1px solid #d0d5dd;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .page-shell {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px 16px 40px;
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .a4-container {
@@ -25,6 +50,18 @@
             background-color: #fff;
             padding: 20px 40px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+            box-sizing: border-box;
+        }
+
+        .a4-preview {
+            width: 210mm;
+            min-height: 297mm;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .document-shadow {
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
         }
 
         /* Base Table Styling */
@@ -58,8 +95,26 @@
                 print-color-adjust: exact !important;
             }
 
-            /* Hide the print buttons when printing */
-            #print-controls { display: none !important; }
+            /* Hide the print buttons / sticky toolbar when printing */
+            #print-controls,
+            .preview-toolbar { display: none !important; }
+
+            .page-shell {
+                display: block;
+                padding: 0;
+                background: transparent;
+                overflow: visible;
+            }
+
+            .a4-preview {
+                width: auto;
+                min-height: 0;
+                max-width: 100%;
+            }
+
+            .document-shadow {
+                box-shadow: none !important;
+            }
 
             /* Native HTML repeating headers and footers without overlapping */
             .master-table { page-break-inside: auto; }
@@ -83,12 +138,13 @@
 <body>
     <form id="form1" runat="server">
         
-        <div style="text-align: center; margin-bottom: 20px;" id="print-controls">
+        <div id="print-controls" class="preview-toolbar">
             <asp:Button ID="Button1" runat="server" OnClick="Button1_Click" OnClientClick="document.getElementById('header').className ='header'; document.getElementById('footer').className ='footer'; window.print()" Text="Print Without Letterhead" style="padding: 10px 20px; background: #555; color: #fff; border: none; cursor: pointer; margin-right: 10px;" />
             <asp:Button ID="Button2" runat="server" OnClick="Button2_Click" OnClientClick="window.print()" Text="Print With Letterhead" style="padding: 10px 20px; background: #007bff; color: #fff; border: none; cursor: pointer;" />
         </div>
 
-        <div class="a4-container">
+        <div class="page-shell">
+        <div class="a4-container a4-preview document-shadow">
             <table class="master-table">
                 
                 <thead id="header">
@@ -344,6 +400,7 @@
                 </tfoot>
 
             </table>
+        </div>
         </div>
     </form>
 </body>
