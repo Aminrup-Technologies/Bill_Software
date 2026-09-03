@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.IO;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -66,32 +65,7 @@ namespace Bill_Software.corporate.business.app
                 // -------------------------------------------------------------------------
                 query += " AND a.CompanyID = @CompanyID ";
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
-                if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
-                {
-                    query += " AND a.Invoice_No LIKE @InvNo ";
-                    cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
-                {
-                    query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
-                    cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchClient.Text))
-                {
-                    query += " AND b.Client_Name LIKE @Client ";
-                    cmd.Parameters.AddWithValue("@Client", "%" + txtSearchClient.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
-                    cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
-                }
-                if (!string.IsNullOrWhiteSpace(txtToDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
-                    cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
-                }
+                AppendInvoiceFilters(ref query, cmd);
 
                 query += " ORDER BY TRY_CONVERT(DATE, a.Invoice_Date, 106) DESC, a.ID DESC;";
 
@@ -135,7 +109,8 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnExport_Click(object sender, EventArgs e)
         {
-            // Re-run the filtered query but include Line Item Details for maximum Excel utility
+            DataTable dtExport = new DataTable();
+
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
@@ -155,7 +130,13 @@ namespace Bill_Software.corporate.business.app
                     d.Service_tax_rate AS [GST %],
                     d.Total_sail_rate1 AS [Item Net Value],
                     a.Net_Amount AS [Invoice Grand Total],
-                    a.AddedById AS [Created By]
+                    a.AddedById AS [Created By],
+                    a.Quotation_Date AS [Quotation Date],
+                    a.mailDate AS [Mail Date],
+                    CASE WHEN a.cgstOrsgst = 'YES' THEN 'CGST/SGST' WHEN a.igst = 'YES' THEN 'IGST' ELSE 'TAX' END AS [Tax Type],
+                    a.Delivery_Amount AS [Freight],
+                    a.otherAmount1 AS [Other Charges],
+                    a.TimeStamp AS [Created Timestamp]
                     FROM tbl_Invoice AS a 
                     LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID 
                     LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No 
@@ -165,33 +146,7 @@ namespace Bill_Software.corporate.business.app
 
                 query += " AND a.CompanyID = @CompanyID ";
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
-                // -- Apply exact same filters as UI --
-                if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
-                {
-                    query += " AND a.Invoice_No LIKE @InvNo ";
-                    cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
-                {
-                    query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
-                    cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchClient.Text))
-                {
-                    query += " AND b.Client_Name LIKE @Client ";
-                    cmd.Parameters.AddWithValue("@Client", "%" + txtSearchClient.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
-                    cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
-                }
-                if (!string.IsNullOrWhiteSpace(txtToDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
-                    cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
-                }
+                AppendInvoiceFilters(ref query, cmd);
 
                 query += " ORDER BY TRY_CONVERT(DATE, a.Invoice_Date, 106) DESC, a.Invoice_No DESC;";
 
@@ -199,84 +154,73 @@ namespace Bill_Software.corporate.business.app
                 cmd.Connection = DbCL.Conn;
 
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dtExport = new DataTable();
                 da.Fill(dtExport);
-
-                if (dtExport.Rows.Count > 0)
-                {
-                    ExportDataTableToExcel(dtExport, "Tax_Invoices_Export_" + DateTime.Now.ToString("yyyyMMdd"));
-
-                    // PROJECT FLMX RULE: PROACTIVE NOTIFICATION LOGGING
-                    InsertSystemNotification(
-                        "Invoices Exported",
-                        $"Successfully exported {dtExport.Rows.Count} invoice line items to Excel.",
-                        "Invoice",
-                        "Info",
-                        Session["USERID"].ToString()
-                    );
-                }
-                else
-                {
-                    ShowMsg("No records found to export.", false);
-                }
             }
             catch (Exception ex)
             {
                 ShowMsg("Error during export: " + ex.Message, false);
+                return;
             }
             finally
             {
                 if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
             }
+
+            if (dtExport.Rows.Count == 0)
+            {
+                ShowMsg("No records found to export.", false);
+                return;
+            }
+
+            InvoiceListHelper.PrepareInvoiceExport(dtExport);
+
+            InsertSystemNotification(
+                "Invoices Exported",
+                $"Successfully exported {dtExport.Rows.Count} invoice line items to Excel.",
+                "Invoice",
+                "Info",
+                Session["USERID"].ToString()
+            );
+
+            InvoiceListHelper.ExportXlsx(
+                Response,
+                dtExport,
+                "Invoice_Lines",
+                "Tax_Invoices_Export_" + DateTime.Now.ToString("yyyyMMdd"));
         }
 
-        private void ExportDataTableToExcel(DataTable dt, string filename)
+        private void AppendInvoiceFilters(ref string query, SqlCommand cmd)
         {
-            // 1. Change extension to .csv
-            string attachment = $"attachment; filename={filename}.csv";
-            Response.ClearContent();
-            Response.AddHeader("content-disposition", attachment);
-
-            // 2. Change content type to standard CSV
-            Response.ContentType = "text/csv";
-
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-            // 3. Write Columns
-            string[] columnNames = new string[dt.Columns.Count];
-            for (int i = 0; i < dt.Columns.Count; i++)
+            if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
             {
-                columnNames[i] = EscapeCsvField(dt.Columns[i].ColumnName);
+                query += " AND a.Invoice_No LIKE @InvNo ";
+                cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
             }
-            sb.AppendLine(string.Join(",", columnNames));
-
-            // 4. Write Rows
-            foreach (DataRow dr in dt.Rows)
+            if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
             {
-                string[] fields = new string[dt.Columns.Count];
-                for (int i = 0; i < dt.Columns.Count; i++)
-                {
-                    fields[i] = EscapeCsvField(dr[i].ToString());
-                }
-                sb.AppendLine(string.Join(",", fields));
+                query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
+                cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
             }
-
-            Response.Write(sb.ToString());
-            Response.End();
+            if (!string.IsNullOrWhiteSpace(txtSearchClient.Text))
+            {
+                query += " AND b.Client_Name LIKE @Client ";
+                cmd.Parameters.AddWithValue("@Client", "%" + txtSearchClient.Text.Trim() + "%");
+            }
+            if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
+            {
+                query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
+                cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
+            }
+            if (!string.IsNullOrWhiteSpace(txtToDate.Text))
+            {
+                query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
+                cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
+            }
         }
 
-        // Helper method to ensure commas or quotes inside your data don't break the Excel columns
-        private string EscapeCsvField(string field)
-        {
-            if (string.IsNullOrEmpty(field)) return "";
-
-            // If the data contains a comma, quote, or newline, we must wrap it in quotes for Excel
-            if (field.Contains(",") || field.Contains("\"") || field.Contains("\r") || field.Contains("\n"))
-            {
-                return $"\"{field.Replace("\"", "\"\"")}\"";
-            }
-            return field;
-        }
+        protected string FmtDate(object v) { return InvoiceListHelper.FmtDate(v); }
+        protected string FmtMail(object v) { return InvoiceListHelper.FmtMail(v); }
+        protected string FmtStamp(object v) { return InvoiceListHelper.FmtStamp(v); }
 
         // ---------------------------------------------------------------------------
         // PROJECT FLMX: MANDATORY PROACTIVE NOTIFICATION LOGGING METHOD
