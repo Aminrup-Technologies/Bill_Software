@@ -62,7 +62,7 @@
             box-sizing: border-box;
         }
 
-        /* Adaptive A4 viewer — screen only. Print and pdf-capturing restore the baseline above. */
+        /* Adaptive A4 viewer — screen and PDF capture. Print restores the baseline above. */
         @media screen {
             .page-shell {
                 padding: 20px 4vw 40px;
@@ -160,20 +160,20 @@
         }
 
         @media screen and (max-width: 640px) {
-            html:not(.pdf-capturing) .a4-preview table.info-split,
-            html:not(.pdf-capturing) .a4-preview table.info-split > tbody,
-            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr,
-            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td {
+            .a4-preview table.info-split,
+            .a4-preview table.info-split > tbody,
+            .a4-preview table.info-split > tbody > tr,
+            .a4-preview table.info-split > tbody > tr > td {
                 display: block;
                 width: 100% !important;
                 box-sizing: border-box;
             }
 
-            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td.info-split-gap {
+            .a4-preview table.info-split > tbody > tr > td.info-split-gap {
                 display: none;
             }
 
-            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td + td.info-split-card {
+            .a4-preview table.info-split > tbody > tr > td + td.info-split-card {
                 margin-top: 10px;
             }
         }
@@ -233,87 +233,6 @@
         html.pdf-capturing .page-shell,
         html.pdf-capturing .a4-preview {
             overflow: visible;
-        }
-
-        /* html2canvas reads screen CSS — restore the approved 210mm document for PDF. */
-        html.pdf-capturing .page-shell {
-            padding: 24px 16px 40px;
-        }
-
-        html.pdf-capturing .a4-container {
-            max-width: 844px;
-            padding: 20px 40px;
-        }
-
-        html.pdf-capturing .a4-container.a4-preview,
-        html.pdf-capturing .a4-preview {
-            width: 210mm;
-            min-height: 297mm;
-            max-width: 100%;
-            aspect-ratio: auto;
-            height: auto;
-            font-size: 13px;
-        }
-
-        html.pdf-capturing .a4-preview thead th {
-            padding-bottom: 20px !important;
-        }
-
-        html.pdf-capturing .a4-preview thead table {
-            margin-top: 15px !important;
-        }
-
-        html.pdf-capturing .a4-preview #bodycontain > tr > td {
-            padding-top: 20px !important;
-        }
-
-        html.pdf-capturing .a4-preview h2 {
-            font-size: 20px !important;
-        }
-
-        html.pdf-capturing .a4-preview h3 {
-            font-size: inherit;
-        }
-
-        html.pdf-capturing .a4-preview .term-title {
-            font-size: inherit;
-        }
-
-        html.pdf-capturing .a4-preview #bodycontain tfoot td {
-            font-size: inherit !important;
-        }
-
-        html.pdf-capturing .a4-preview .master-table,
-        html.pdf-capturing .a4-preview .content-table,
-        html.pdf-capturing .a4-preview .PaymentPhase,
-        html.pdf-capturing .a4-preview table[style*="border:2px solid"],
-        html.pdf-capturing .a4-preview table:not(.FORKVQAEAST) {
-            table-layout: auto;
-        }
-
-        html.pdf-capturing .a4-preview td,
-        html.pdf-capturing .a4-preview th {
-            overflow-wrap: normal;
-            word-break: normal;
-        }
-
-        html.pdf-capturing .a4-preview table.info-split,
-        html.pdf-capturing .a4-preview table.info-split > tbody {
-            display: table;
-            width: 100%;
-        }
-
-        html.pdf-capturing .a4-preview table.info-split > tbody > tr {
-            display: table-row;
-        }
-
-        html.pdf-capturing .a4-preview table.info-split > tbody > tr > td {
-            display: table-cell;
-            width: auto;
-        }
-
-        html.pdf-capturing .a4-preview table.info-split > tbody > tr > td.info-split-gap {
-            display: table-cell;
         }
 
         /* Base Table Styling */
@@ -758,10 +677,16 @@
                 return;
             }
 
+            var liveWidth = Math.round(source.getBoundingClientRect().width);
+            var prevInlineWidth = source.style.width;
+            var prevInlineMaxWidth = source.style.maxWidth;
+
             var finished = false;
             var finish = function (ok) {
                 if (finished) { return; }
                 finished = true;
+                source.style.width = prevInlineWidth;
+                source.style.maxWidth = prevInlineMaxWidth;
                 document.documentElement.className = document.documentElement.className.replace(/\bpdf-capturing\b/g, '').replace(/^\s+|\s+$/g, '');
                 if (pdfBtn) { pdfBtn.disabled = false; }
                 if (ok) { setPdfStatus(''); }
@@ -770,6 +695,8 @@
 
             setPdfStatus('Generating PDF…');
             if (pdfBtn) { pdfBtn.disabled = true; }
+            source.style.width = liveWidth + 'px';
+            source.style.maxWidth = liveWidth + 'px';
             document.documentElement.className += (document.documentElement.className ? ' ' : '') + 'pdf-capturing';
 
             var opt = {
@@ -782,7 +709,8 @@
                     logging: false,
                     scrollX: 0,
                     scrollY: 0,
-                    windowWidth: source.scrollWidth,
+                    width: liveWidth,
+                    windowWidth: Math.max(source.scrollWidth, liveWidth),
                     windowHeight: Math.max(source.scrollHeight, source.offsetHeight)
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
