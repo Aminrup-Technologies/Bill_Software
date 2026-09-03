@@ -697,8 +697,9 @@ namespace Bill_Software.corporate.business.print
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-            string cmdstring = "select count(*) from tbl_QutPrimaryService where qut_no='" + qutno.ToString() + "' AND CompanyID=@CompanyID";
+            string cmdstring = "select count(*) from tbl_QutPrimaryService where qut_no=@qut_no AND CompanyID=@CompanyID";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            cmd.Parameters.Add(new SqlParameter("@qut_no", qutno));
             cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
             Int32 count = Convert.ToInt32(cmd.ExecuteScalar());
             generatelavel(count, qutno);
@@ -712,8 +713,9 @@ namespace Bill_Software.corporate.business.print
             DbCL.ConnectDb();
             string service = null;
             int flag = 1;
-            string cmdstring = "select PrimaryService from tbl_QutPrimaryService where qut_no='" + qutno.ToString() + "' AND CompanyID=@CompanyID order by id";
+            string cmdstring = "select PrimaryService from tbl_QutPrimaryService where qut_no=@qut_no AND CompanyID=@CompanyID order by id";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            cmd.Parameters.Add(new SqlParameter("@qut_no", qutno));
             cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
             SqlDataReader re = cmd.ExecuteReader();
             while (re.Read())
