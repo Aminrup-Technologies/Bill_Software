@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Data;
-using System.Data.SqlClient;
+using ClosedXML.Excel;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -93,33 +95,7 @@ namespace Bill_Software.corporate.business.app
 
                 SqlCommand cmd = new SqlCommand();
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
-                // --- Dynamic Filtering ---
-                if (cmbvendor.SelectedIndex > 0)
-                {
-                    query += " AND b.Client_Name = @ClientName ";
-                    cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
-                {
-                    query += " AND a.Invoice_No LIKE @InvNo ";
-                    cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
-                {
-                    query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
-                    cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
-                    cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
-                }
-                if (!string.IsNullOrWhiteSpace(txtToDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
-                    cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
-                }
+                AppendInvoiceFilters(ref query, cmd);
 
                 query += " ORDER BY TRY_CONVERT(DATE, a.Invoice_Date, 106) DESC, a.ID DESC;";
 
@@ -156,6 +132,8 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnExport_Click(object sender, EventArgs e)
         {
+            DataTable dtExport = new DataTable();
+
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
@@ -175,7 +153,13 @@ namespace Bill_Software.corporate.business.app
                     d.Service_tax_rate AS [GST %],
                     d.Total_sail_rate1 AS [Item Net Value],
                     a.Net_Amount AS [Invoice Grand Total],
-                    a.AddedById AS [Created By]
+                    a.AddedById AS [Created By],
+                    a.Quotation_Date AS [Quotation Date],
+                    a.mailDate AS [Mail Date],
+                    CASE WHEN a.cgstOrsgst = 'YES' THEN 'CGST/SGST' WHEN a.igst = 'YES' THEN 'IGST' ELSE 'TAX' END AS [Tax Type],
+                    a.Delivery_Amount AS [Freight],
+                    a.otherAmount1 AS [Other Charges],
+                    a.TimeStamp AS [Created Timestamp]
                     FROM tbl_Invoice AS a 
                     LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID 
                     LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No 
@@ -183,33 +167,7 @@ namespace Bill_Software.corporate.business.app
 
                 SqlCommand cmd = new SqlCommand();
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
-                // --- Apply identical filters for Excel ---
-                if (cmbvendor.SelectedIndex > 0)
-                {
-                    query += " AND b.Client_Name = @ClientName ";
-                    cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
-                {
-                    query += " AND a.Invoice_No LIKE @InvNo ";
-                    cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
-                {
-                    query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
-                    cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
-                    cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
-                }
-                if (!string.IsNullOrWhiteSpace(txtToDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
-                    cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
-                }
+                AppendInvoiceFilters(ref query, cmd);
 
                 query += " ORDER BY TRY_CONVERT(DATE, a.Invoice_Date, 106) DESC, a.Invoice_No DESC;";
 
@@ -217,68 +175,175 @@ namespace Bill_Software.corporate.business.app
                 cmd.Connection = DbCL.Conn;
 
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dtExport = new DataTable();
                 da.Fill(dtExport);
-
-                if (dtExport.Rows.Count > 0)
-                {
-                    ExportDataTableToCsv(dtExport, "Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"));
-                }
-                else
-                {
-                    ShowMsg("No records found to export.", false);
-                }
             }
             catch (Exception ex)
             {
                 ShowMsg("Error during export: " + ex.Message, false);
+                return;
             }
             finally
             {
                 if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
             }
+
+            if (dtExport.Rows.Count == 0)
+            {
+                ShowMsg("No records found to export.", false);
+                return;
+            }
+
+            PrepareExportTable(dtExport);
+            ExportDataTableToXlsx(
+                dtExport,
+                "Invoice_Lines",
+                CompanyContext.CurrentCompanyCode + "_Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"));
         }
 
-        private void ExportDataTableToCsv(DataTable dt, string filename)
+        private void AppendInvoiceFilters(ref string query, SqlCommand cmd)
         {
-            string attachment = $"attachment; filename={filename}.csv";
-            Response.ClearContent();
-            Response.AddHeader("content-disposition", attachment);
-            Response.ContentType = "text/csv";
-
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-            // Write Columns
-            string[] columnNames = new string[dt.Columns.Count];
-            for (int i = 0; i < dt.Columns.Count; i++)
+            if (cmbvendor.SelectedIndex > 0)
             {
-                columnNames[i] = EscapeCsvField(dt.Columns[i].ColumnName);
+                query += " AND b.Client_Name = @ClientName ";
+                cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
             }
-            sb.AppendLine(string.Join(",", columnNames));
-
-            // Write Rows
-            foreach (DataRow dr in dt.Rows)
+            if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
             {
-                string[] fields = new string[dt.Columns.Count];
-                for (int i = 0; i < dt.Columns.Count; i++)
+                query += " AND a.Invoice_No LIKE @InvNo ";
+                cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
+            }
+            if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
+            {
+                query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
+                cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
+            }
+            if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
+            {
+                query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
+                cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
+            }
+            if (!string.IsNullOrWhiteSpace(txtToDate.Text))
+            {
+                query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
+                cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
+            }
+        }
+
+        private void ExportDataTableToXlsx(DataTable dt, string sheetName, string filename)
+        {
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                var ws = wb.Worksheets.Add(dt, sheetName);
+
+                var headerRow = ws.Row(1);
+                headerRow.Style.Font.Bold = true;
+                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#19658A");
+                headerRow.Style.Font.FontColor = XLColor.White;
+                headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                ws.SheetView.FreezeRows(1);
+
+                FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date", "Created Timestamp" }, "dd-MMM-yyyy");
+                FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice Grand Total", "Freight", "Other Charges" }, "\"₹\"#,##0.00");
+                FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.00");
+                FormatNamedColumns(ws, new[] { "GST %" }, "0.00");
+
+                ws.Columns().AdjustToContents();
+                ws.Column(7).Width = 35;
+                ws.Style.Alignment.WrapText = true;
+
+                Response.Clear();
+                Response.Buffer = true;
+                Response.Charset = "";
+                Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                Response.AddHeader("content-disposition", "attachment;filename=" + filename + ".xlsx");
+
+                using (MemoryStream MyMemoryStream = new MemoryStream())
                 {
-                    fields[i] = EscapeCsvField(dr[i].ToString());
+                    wb.SaveAs(MyMemoryStream);
+                    MyMemoryStream.WriteTo(Response.OutputStream);
+                    Response.Flush();
+                    Response.End();
                 }
-                sb.AppendLine(string.Join(",", fields));
             }
-
-            Response.Write(sb.ToString());
-            Response.End();
         }
 
-        private string EscapeCsvField(string field)
+        private static void FormatNamedColumns(IXLWorksheet ws, string[] names, string format)
         {
-            if (string.IsNullOrEmpty(field)) return "";
-            if (field.Contains(",") || field.Contains("\"") || field.Contains("\r") || field.Contains("\n"))
+            foreach (var name in names)
             {
-                return $"\"{field.Replace("\"", "\"\"")}\"";
+                var cell = ws.Row(1).CellsUsed().FirstOrDefault(c => Convert.ToString(c.Value) == name);
+                if (cell == null) continue;
+                ws.Column(cell.Address.ColumnNumber).Style.NumberFormat.Format = format;
             }
-            return field;
+        }
+
+        private static void PrepareExportTable(DataTable dt)
+        {
+            ConvertColumn(dt, "Invoice Date", typeof(DateTime), ParseDate);
+            ConvertColumn(dt, "Quotation Date", typeof(DateTime), ParseDate);
+            ConvertColumn(dt, "Mail Date", typeof(DateTime), ParseDate);
+            ConvertColumn(dt, "Created Timestamp", typeof(DateTime), ParseDate);
+            ConvertColumn(dt, "Qty", typeof(double), ParseNum);
+            ConvertColumn(dt, "Rate", typeof(double), ParseNum);
+            ConvertColumn(dt, "Taxable Value", typeof(double), ParseNum);
+            ConvertColumn(dt, "GST %", typeof(double), ParseNum);
+            ConvertColumn(dt, "Item Net Value", typeof(double), ParseNum);
+            ConvertColumn(dt, "Invoice Grand Total", typeof(double), ParseNum);
+            ConvertColumn(dt, "Freight", typeof(double), ParseNum);
+            ConvertColumn(dt, "Other Charges", typeof(double), ParseNum);
+        }
+
+        private static void ConvertColumn(DataTable dt, string name, Type type, Func<object, object> conv)
+        {
+            if (!dt.Columns.Contains(name)) return;
+            DataColumn old = dt.Columns[name];
+            DataColumn neu = new DataColumn(name + "_n", type);
+            dt.Columns.Add(neu);
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r[old] == DBNull.Value || r[old] == null)
+                    r[neu] = DBNull.Value;
+                else
+                {
+                    object parsed = conv(r[old]);
+                    r[neu] = parsed ?? (object)DBNull.Value;
+                }
+            }
+            int ord = old.Ordinal;
+            dt.Columns.Remove(old);
+            neu.ColumnName = name;
+            neu.SetOrdinal(ord);
+        }
+
+        private static object ParseDate(object v)
+        {
+            DateTime d;
+            string s = Convert.ToString(v);
+            if (DateTime.TryParseExact(s, new[] { "dd-MMM-yyyy", "dd-MM-yyyy", "yyyy-MM-dd", "dd/MM/yyyy" },
+                CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out d)) return d;
+            if (DateTime.TryParse(s, out d)) return d;
+            return null;
+        }
+
+        private static object ParseNum(object v)
+        {
+            double n;
+            if (double.TryParse(Convert.ToString(v), NumberStyles.Any, CultureInfo.InvariantCulture, out n)) return n;
+            if (double.TryParse(Convert.ToString(v), NumberStyles.Any, CultureInfo.CurrentCulture, out n)) return n;
+            return null;
+        }
+
+        protected string FmtDate(object v)
+        {
+            object parsed = ParseDate(v);
+            return parsed is DateTime ? ((DateTime)parsed).ToString("dd-MMM-yyyy") : "";
+        }
+
+        protected string FmtStamp(object v)
+        {
+            object parsed = ParseDate(v);
+            return parsed is DateTime ? ((DateTime)parsed).ToString("dd-MMM-yyyy hh:mm tt") : "";
         }
 
         protected void btnClear_Click(object sender, EventArgs e)
