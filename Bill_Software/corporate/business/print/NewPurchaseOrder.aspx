@@ -92,6 +92,17 @@
         .tb-btn-secondary { background: #555; }
         .tb-btn-pdf { background: #e31e24; }
 
+        .tb-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .pdf-status {
+            flex-basis: 100%;
+            color: #b42318;
+            font-size: 12px;
+        }
+
         html.pdf-capturing .client-toolbar,
         html.pdf-capturing #print-controls,
         html.pdf-capturing .preview-toolbar {
@@ -100,6 +111,11 @@
 
         html.pdf-capturing .document-shadow {
             box-shadow: none !important;
+        }
+
+        html.pdf-capturing .page-shell,
+        html.pdf-capturing .a4-preview {
+            overflow: visible;
         }
 
         /* Base Table Styling */
@@ -181,6 +197,7 @@
             <button type="button" class="tb-btn tb-btn-primary" onclick="printWithLetterhead()">Print With Letterhead</button>
             <button type="button" class="tb-btn tb-btn-secondary" onclick="printWithoutLetterhead()">Print Without Letterhead</button>
             <button type="button" class="tb-btn tb-btn-pdf" onclick="exportPdf()">Export PDF</button>
+            <span id="pdf-status" role="status" aria-live="polite" class="pdf-status"></span>
         </nav>
 
         <div id="print-controls" class="preview-toolbar">
@@ -492,22 +509,66 @@
             return 'PO_' + raw + '.pdf';
         }
 
+        function setPdfStatus(msg) {
+            var el = document.getElementById('pdf-status');
+            if (el) { el.textContent = msg || ''; }
+        }
+
         function exportPdf() {
             var source = document.querySelector('.a4-preview');
-            if (!source || typeof html2pdf !== 'function') { return; }
+            var pdfBtn = document.querySelector('.tb-btn-pdf');
+            if (pdfBtn && pdfBtn.disabled) { return; }
+
+            if (!source) {
+                setPdfStatus('Cannot export PDF: document preview was not found.');
+                return;
+            }
+            if (typeof html2pdf !== 'function') {
+                setPdfStatus('Cannot export PDF: PDF library failed to load.');
+                return;
+            }
+
+            var finished = false;
+            var finish = function (ok) {
+                if (finished) { return; }
+                finished = true;
+                document.documentElement.className = document.documentElement.className.replace(/\bpdf-capturing\b/g, '').replace(/^\s+|\s+$/g, '');
+                if (pdfBtn) { pdfBtn.disabled = false; }
+                if (ok) { setPdfStatus(''); }
+                else { setPdfStatus('PDF export failed. Please try again.'); }
+            };
+
+            setPdfStatus('Generating PDF…');
+            if (pdfBtn) { pdfBtn.disabled = true; }
             document.documentElement.className += (document.documentElement.className ? ' ' : '') + 'pdf-capturing';
+
             var opt = {
                 margin: 0,
                 filename: getPoFilename(),
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: source.scrollWidth,
+                    windowHeight: Math.max(source.scrollHeight, source.offsetHeight)
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['css', 'legacy'] }
             };
-            var clearCapture = function () {
-                document.documentElement.className = document.documentElement.className.replace(/\bpdf-capturing\b/g, '').replace(/^\s+|\s+$/g, '');
-            };
-            html2pdf().set(opt).from(source).save().then(clearCapture, clearCapture);
+
+            try {
+                var job = html2pdf().set(opt).from(source).save();
+                if (job && typeof job.then === 'function') {
+                    job.then(function () { finish(true); }, function () { finish(false); });
+                } else {
+                    finish(false);
+                }
+            } catch (ex) {
+                finish(false);
+            }
         }
     </script>
 </body>
