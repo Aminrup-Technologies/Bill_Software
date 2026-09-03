@@ -279,8 +279,6 @@ namespace Bill_Software.corporate.business.app
                 {
                     cmd.Parameters.AddWithValue("@Id", visitId);
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                {
-                    cmd.Parameters.AddWithValue("@Id", visitId);
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
@@ -569,7 +567,8 @@ namespace Bill_Software.corporate.business.app
                     }
 
                     // (REMOVED the bulk tbl_Expenses update from here)
-                }                    // Send Email Notification
+
+                    // Send Email Notification
                     SendApprovalNotification(visitId, status, remarks, user);
 
                     // Proactive notification logging
@@ -598,9 +597,10 @@ namespace Bill_Software.corporate.business.app
                         }
                     }
                     catch { /* Soft catch: audit logging failure must not crash approval */ }
+                }
 
-                    // Refresh UI and Close Modal
-                    Binder();
+                // Refresh UI and Close Modal
+                Binder();
                 lblOk.Text = $"Visit #{visitId} has been successfully {status}.";
                 PanelOK.Visible = true;
                 ScriptManager.RegisterStartupScript(this, GetType(), "HideMega", "hideMegaModal();", true);
