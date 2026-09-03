@@ -119,6 +119,7 @@ body.no-letterhead #footer {
         padding: 0;
         max-width: 210mm;
         width: 210mm;
+        aspect-ratio: auto;
     }
 
     * {
@@ -148,6 +149,7 @@ body.no-letterhead #footer {
         max-width: 210mm !important;
         min-height: 0 !important;
         height: auto !important;
+        aspect-ratio: auto !important;
         margin: 0;
         font-size: 13px;
     }
