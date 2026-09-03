@@ -722,15 +722,5 @@ namespace Bill_Software.corporate.business.print
             lblservice.Text = textInfo1.ToTitleCase(PrimaryService.ToString().ToLower());
             lblPrimaryService.Text = textInfo1.ToTitleCase(PrimaryService.ToString().ToLower());
         }
-
-        protected void Button1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        protected void Button2_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }

@@ -201,8 +201,8 @@
         </nav>
 
         <div id="print-controls" class="preview-toolbar">
-            <asp:Button ID="Button1" runat="server" OnClick="Button1_Click" OnClientClick="document.getElementById('header').className ='header'; document.getElementById('footer').className ='footer'; window.print()" Text="Print Without Letterhead" style="padding: 10px 20px; background: #555; color: #fff; border: none; cursor: pointer; margin-right: 10px;" />
-            <asp:Button ID="Button2" runat="server" OnClick="Button2_Click" OnClientClick="window.print()" Text="Print With Letterhead" style="padding: 10px 20px; background: #007bff; color: #fff; border: none; cursor: pointer;" />
+            <asp:Button ID="Button1" runat="server" UseSubmitBehavior="false" CausesValidation="false" OnClientClick="document.getElementById('header').className ='header'; document.getElementById('footer').className ='footer'; window.print(); return false;" Text="Print Without Letterhead" style="padding: 10px 20px; background: #555; color: #fff; border: none; cursor: pointer; margin-right: 10px;" />
+            <asp:Button ID="Button2" runat="server" UseSubmitBehavior="false" CausesValidation="false" OnClientClick="window.print(); return false;" Text="Print With Letterhead" style="padding: 10px 20px; background: #007bff; color: #fff; border: none; cursor: pointer;" />
         </div>
 
         <div class="page-shell">
