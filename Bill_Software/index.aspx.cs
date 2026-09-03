@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Mail;
 using System.IO;
 using System.Linq;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software
 {

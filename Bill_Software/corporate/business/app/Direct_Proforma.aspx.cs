@@ -8,6 +8,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 using System.IO;
+using System.Configuration;
 
 namespace Bill_Software.corporate.business.app
 {

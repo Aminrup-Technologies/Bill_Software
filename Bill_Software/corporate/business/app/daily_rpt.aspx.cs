@@ -151,6 +151,7 @@ namespace Bill_Software.corporate.business.app
                 string mode = Request.QueryString["mode"] ?? "plan";
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 string visitPhase = (mode == "past") ? "Executed" : "Planned";
+                string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -207,7 +208,6 @@ namespace Bill_Software.corporate.business.app
                         }
 
                         cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Today);
-                        string userId = HttpContext.Current.Session["USERID"]?.ToString() ?? "FLM03";
                         cmd.Parameters.AddWithValue("@CreatedByCode", userId);
                         cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 

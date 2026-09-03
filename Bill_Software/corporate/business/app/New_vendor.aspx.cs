@@ -123,17 +123,18 @@ namespace Bill_Software.corporate.business.app
 
         private void InsertCity()
         {
-            // SECURED: Ensure parameterized checks to avoid Injection                    string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName AND CompanyID = @CompanyID";
-                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn))
-                    {
-                        checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
-                        checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
-                        checkCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                        int count = (int)checkCmd.ExecuteScalar();
+            // SECURED: Ensure parameterized checks to avoid Injection
+            string checkQuery = "SELECT COUNT(*) FROM tbl_City WHERE City_Name = @CityName AND State_Name = @StateName AND CompanyID = @CompanyID";
+            using (SqlCommand checkCmd = new SqlCommand(checkQuery, DbCL.Conn))
+            {
+                checkCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
+                checkCmd.Parameters.AddWithValue("@StateName", cmbState.Text);
+                checkCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                int count = (int)checkCmd.ExecuteScalar();
 
-                        if (count == 0)
-                        {
-                            string insertQuery = "INSERT INTO tbl_City (City_Name, State_Name, CompanyID) VALUES (@CityName, @StateName, @CompanyID)";
+                if (count == 0)
+                {
+                    string insertQuery = "INSERT INTO tbl_City (City_Name, State_Name, CompanyID) VALUES (@CityName, @StateName, @CompanyID)";
                     using (SqlCommand insertCmd = new SqlCommand(insertQuery, DbCL.Conn))
                     {
                         insertCmd.Parameters.AddWithValue("@CityName", txtCity.Text.Trim());
