@@ -62,7 +62,7 @@
             box-sizing: border-box;
         }
 
-        /* Adaptive A4 viewer — screen and PDF capture. Print restores the baseline above. */
+        /* Adaptive A4 viewer — screen only. Print and PDF capture use 210mm A4. */
         @media screen {
             .page-shell {
                 padding: 20px 4vw 40px;
@@ -160,20 +160,20 @@
         }
 
         @media screen and (max-width: 640px) {
-            .a4-preview table.info-split,
-            .a4-preview table.info-split > tbody,
-            .a4-preview table.info-split > tbody > tr,
-            .a4-preview table.info-split > tbody > tr > td {
+            html:not(.pdf-capturing) .a4-preview table.info-split,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td {
                 display: block;
                 width: 100% !important;
                 box-sizing: border-box;
             }
 
-            .a4-preview table.info-split > tbody > tr > td.info-split-gap {
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td.info-split-gap {
                 display: none;
             }
 
-            .a4-preview table.info-split > tbody > tr > td + td.info-split-card {
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td + td.info-split-card {
                 margin-top: 10px;
             }
         }
@@ -235,6 +235,83 @@
             overflow: visible;
         }
 
+        html.pdf-capturing,
+        html.pdf-capturing body,
+        html.pdf-capturing form {
+            display: block;
+            height: auto;
+            overflow: visible;
+        }
+
+        html.pdf-capturing .page-shell {
+            display: block;
+            padding: 0;
+            width: auto;
+        }
+
+        html.pdf-capturing .a4-container,
+        html.pdf-capturing .a4-container.a4-preview,
+        html.pdf-capturing .a4-preview {
+            width: 210mm;
+            max-width: 210mm;
+            min-height: 0;
+            height: auto;
+            aspect-ratio: auto;
+            padding: 0;
+            box-shadow: none;
+            font-size: 13px;
+        }
+
+        html.pdf-capturing .a4-preview thead th {
+            padding-bottom: 20px !important;
+        }
+
+        html.pdf-capturing .a4-preview thead table {
+            margin-top: 15px !important;
+        }
+
+        html.pdf-capturing .a4-preview #bodycontain > tr > td {
+            padding-top: 20px !important;
+        }
+
+        html.pdf-capturing .a4-preview h2 {
+            font-size: 20px !important;
+        }
+
+        html.pdf-capturing .master-table,
+        html.pdf-capturing .content-table,
+        html.pdf-capturing .PaymentPhase,
+        html.pdf-capturing table[style*="border:2px solid"] {
+            table-layout: auto;
+        }
+
+        html.pdf-capturing table.info-split,
+        html.pdf-capturing table.info-split > tbody {
+            display: table;
+            width: 100%;
+        }
+
+        html.pdf-capturing table.info-split > tbody > tr {
+            display: table-row;
+        }
+
+        html.pdf-capturing table.info-split > tbody > tr > td {
+            display: table-cell;
+        }
+
+        html.pdf-capturing .master-table {
+            page-break-inside: auto;
+        }
+
+        html.pdf-capturing .master-table > tbody > tr,
+        html.pdf-capturing .master-table > tbody > tr > td {
+            page-break-inside: auto;
+        }
+
+        html.pdf-capturing .a4-preview table:not(.master-table) tr {
+            page-break-inside: avoid;
+        }
+
         /* Base Table Styling */
         .master-table { width: 100%; border-collapse: collapse; }
         .content-table { border-collapse: collapse; width: 100%; }
@@ -251,6 +328,16 @@
 
         /* --- THE PRINT MAGIC FIX --- */
         @media print {
+            html, body, form {
+                display: block !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+
             body { 
                 background-color: transparent; 
                 padding: 0; 
@@ -258,8 +345,8 @@
             .a4-container { 
                 box-shadow: none; 
                 padding: 0; 
-                max-width: 100%;
-                width: auto;
+                max-width: 210mm;
+                width: 210mm;
                 aspect-ratio: auto;
             }
             
@@ -274,18 +361,25 @@
             .client-toolbar { display: none !important; }
 
             .page-shell {
-                display: block;
-                padding: 0;
+                display: block !important;
+                flex-direction: unset;
+                justify-content: unset;
+                align-items: unset;
+                width: auto;
+                padding: 0 !important;
                 background: transparent;
                 overflow: visible;
             }
 
+            .a4-container.a4-preview,
             .a4-preview {
-                width: auto;
-                min-height: 0;
-                max-width: 100%;
-                aspect-ratio: auto;
-                height: auto;
+                display: block;
+                width: 210mm !important;
+                max-width: 210mm !important;
+                min-height: 0 !important;
+                height: auto !important;
+                aspect-ratio: auto !important;
+                margin: 0;
                 font-size: 13px;
             }
 
@@ -322,7 +416,15 @@
 
             /* Native HTML repeating headers and footers without overlapping */
             .master-table { page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
+            .master-table > tbody > tr,
+            .master-table > tbody > tr > td {
+                page-break-inside: auto;
+                page-break-after: auto;
+            }
+            .a4-preview table:not(.master-table) tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
             
             thead { display: table-header-group; }
             tfoot { display: table-footer-group; }
@@ -335,7 +437,8 @@
         }
 
         @page {
-            margin: 8mm 10mm; /* Standardized uniform margins */
+            size: A4 portrait;
+            margin: 8mm 10mm;
         }
     </style>
 </head>
@@ -686,9 +789,11 @@
                 return;
             }
 
-            var liveWidth = Math.round(source.getBoundingClientRect().width);
             var prevInlineWidth = source.style.width;
             var prevInlineMaxWidth = source.style.maxWidth;
+            var prevInlineMinHeight = source.style.minHeight;
+            var prevInlineHeight = source.style.height;
+            var prevInlineAspect = source.style.aspectRatio;
 
             var finished = false;
             var finish = function (ok) {
@@ -696,6 +801,9 @@
                 finished = true;
                 source.style.width = prevInlineWidth;
                 source.style.maxWidth = prevInlineMaxWidth;
+                source.style.minHeight = prevInlineMinHeight;
+                source.style.height = prevInlineHeight;
+                source.style.aspectRatio = prevInlineAspect;
                 document.documentElement.className = document.documentElement.className.replace(/\bpdf-capturing\b/g, '').replace(/^\s+|\s+$/g, '');
                 if (pdfBtn) { pdfBtn.disabled = false; }
                 if (ok) { setPdfStatus(''); }
@@ -704,12 +812,16 @@
 
             setPdfStatus('Generating PDF…');
             if (pdfBtn) { pdfBtn.disabled = true; }
-            source.style.width = liveWidth + 'px';
-            source.style.maxWidth = liveWidth + 'px';
+            source.style.width = '210mm';
+            source.style.maxWidth = '210mm';
+            source.style.minHeight = '0';
+            source.style.height = 'auto';
+            source.style.aspectRatio = 'auto';
             document.documentElement.className += (document.documentElement.className ? ' ' : '') + 'pdf-capturing';
 
+            var captureWidth = Math.round(source.getBoundingClientRect().width);
             var opt = {
-                margin: 0,
+                margin: [8, 10, 8, 10],
                 filename: getPoFilename(),
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: {
@@ -718,8 +830,8 @@
                     logging: false,
                     scrollX: 0,
                     scrollY: 0,
-                    width: liveWidth,
-                    windowWidth: Math.max(source.scrollWidth, liveWidth),
+                    width: captureWidth,
+                    windowWidth: Math.max(source.scrollWidth, captureWidth),
                     windowHeight: Math.max(source.scrollHeight, source.offsetHeight)
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
