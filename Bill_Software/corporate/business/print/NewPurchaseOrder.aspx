@@ -343,6 +343,7 @@
     <form id="form1" runat="server">
         
         <nav id="client-toolbar" class="client-toolbar preview-toolbar" aria-label="Purchase order actions" hidden="hidden">
+            <button type="button" class="tb-btn tb-btn-secondary" onclick="goBack()">← Back</button>
             <button type="button" class="tb-btn tb-btn-primary" onclick="printWithLetterhead()">Print With Letterhead</button>
             <button type="button" class="tb-btn tb-btn-secondary" onclick="printWithoutLetterhead()">Print Without Letterhead</button>
             <button type="button" class="tb-btn tb-btn-pdf" onclick="exportPdf()">Export PDF</button>
@@ -621,6 +622,14 @@
             if (client) { client.removeAttribute('hidden'); }
             if (fallback) { fallback.className = fallback.className + ' js-hidden'; }
         })();
+
+        function goBack() {
+            if (window.history.length > 1) {
+                history.back();
+            } else {
+                window.location.href = '../app/View_PurchaseOrder.aspx';
+            }
+        }
 
         function printWithLetterhead() {
             window.print();
