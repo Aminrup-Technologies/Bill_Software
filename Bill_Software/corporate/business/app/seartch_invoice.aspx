@@ -193,6 +193,18 @@
             background-color: #19658A;
             color: white;
         }
+
+        .badge-tax {
+            background-color: #e8f4fd;
+            color: #006699;
+        }
+
+        .meta {
+            font-size: 10px;
+            color: #666;
+            display: block;
+            margin-top: 2px;
+        }
         /* --- Fix Datepicker Overlap --- */
         .ui-datepicker {
             z-index: 9999 !important;
@@ -269,10 +281,10 @@
                         <th style="width: 3%;">Sl</th>
                         <th style="width: 14%;">Customer Name</th>
                         <th style="width: 9%;">Inv Date</th>
-                        <th style="width: 16%;">Invoice / Quotation Info</th>
-                        <th style="width: 12%;">ARC / PO / DO</th>
+                        <th style="width: 18%;">Invoice / Quotation Info</th>
+                        <th style="width: 11%;">ARC / PO / DO</th>
                         <th style="width: 16%;">Amount Summary</th>
-                        <th style="width: 11%;">Validity</th>
+                        <th style="width: 10%;">Validity</th>
                         <th style="width: 11%;">Created By</th>
                         <th style="width: 4%;">Buyer</th>
                         <th style="width: 4%;">Seller</th>
@@ -284,7 +296,7 @@
                             <tr>
                                 <td><%# Container.ItemIndex + 1 %></td>
                                 <td class="text-left"><strong><%# Eval("Client_Name") %></strong></td>
-                                <td><%# Eval("Invoice_Date") %></td>
+                                <td><%# FmtDate(Eval("Invoice_Date")) %></td>
                                 <td class="text-left">
                                     <span class="badge badge-blue">Inv</span> <strong><%# Eval("Invoice_No") %></strong><br />
                                     <%# string.IsNullOrWhiteSpace(Convert.ToString(Eval("ExtInvoiceNo"))) ? "" : "<span class='badge'>Ext</span> " + Eval("ExtInvoiceNo") + "<br />" %>
@@ -292,7 +304,8 @@
                                     <span style='<%# Eval("Quotation_No").ToString().ToUpper() == "VERBAL" ? "color:#d39e00; font-weight:bold;": "" %>'>
                                         <%# Eval("Quotation_No") %>
                                     </span>
-                                    <br />
+                                    <span class="meta">Quo Date: <%# FmtDate(Eval("Quotation_Date")) %></span>
+                                    <%# FmtMail(Eval("mailDate")) %>
                                     <span style="font-size: 10px; color: #666;"><%# Eval("PServiceName") %></span>
                                 </td>
                                 <td class="text-left">
@@ -300,16 +313,16 @@
                                     <span class="badge">PO/DO</span> <%# Eval("DO_Number") %>
                                 </td>
                                 <td class="text-right" style="line-height: 1.4;">
-                                    <span style="color: #666;">Gross:</span> ₹<%# Eval("Gross") %><br /><%# Convert.ToDecimal(Eval("discount") == DBNull.Value ? 0 : Eval("discount")) > 0 ? "<span style='color:red;'>Disc: -₹" + Eval("discount") + "</span><br />" : "" %><span style="color: #666;">Taxable:</span> ₹<%# Eval("sub_total") %><br /><span class="badge" style="background: #e8f4fd; color: #006699;"><%# Eval("cgstOrsgst").ToString() == "YES" ? "CGST/SGST" : (Eval("igst").ToString() == "YES" ? "IGST" : "TAX") %></span>₹<%# Eval("Gst") %><br /><%# Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1")) > 0 ? "<span style='color:#666;'>Frt/Oth:</span> ₹" + (Convert.ToDecimal(Eval("Delivery_Amount") == DBNull.Value ? 0 : Eval("Delivery_Amount")) + Convert.ToDecimal(Eval("otherAmount1") == DBNull.Value ? 0 : Eval("otherAmount1"))) + "<br />" : "" %><strong style="color: #28a745; font-size: 13px;">Total: ₹<%# Eval("Net_Amount") %></strong></td>
+                                    <span style="color: #666;">Gross:</span> ₹<%# Eval("Gross") %><br /><%# Convert.ToDecimal(Eval("discount") == DBNull.Value ? 0 : Eval("discount")) > 0 ? "<span style='color:red;'>Disc: -₹" + Eval("discount") + "</span><br />" : "" %><span style="color: #666;">Taxable:</span> ₹<%# Eval("sub_total") %><br /><span class="badge badge-tax"><%# Eval("cgstOrsgst").ToString() == "YES" ? "CGST/SGST" : (Eval("igst").ToString() == "YES" ? "IGST" : "TAX") %></span> ₹<%# Eval("Gst") %><br /><span style="color: #666;">Freight:</span> ₹<%# Eval("Delivery_Amount") %><br /><span style="color: #666;">Other:</span> ₹<%# Eval("otherAmount1") %><br /><strong style="color: #28a745; font-size: 13px;">Total: ₹<%# Eval("Net_Amount") %></strong></td>
                                 <td>
-                                    <%# Eval("Validity_StartDate") %>
+                                    <%# FmtDate(Eval("Validity_StartDate")) %>
                                     <br />
                                     to<br />
-                                    <%# Eval("Validity_EndDate") %>
+                                    <%# FmtDate(Eval("Validity_EndDate")) %>
                                 </td>
                                 <td>
                                     <span style="color: #333; font-weight: bold;"><%# Convert.ToString(Eval("AddedByName")) %></span><br />
-                                    <span style="font-size: 10px; color: #666;"><%# Convert.ToDateTime(Eval("TimeStamp")).ToString("dd-MMM-yyyy hh:mm tt") %></span>
+                                    <span class="meta"><%# FmtStamp(Eval("TimeStamp")) %></span>
                                 </td>
                                 <td>
                                     <a href="#" onclick="window.open('/corporate/business/print/NewInvoice.aspx?ID=<%# Eval("ID") %>', 'popupwindow','width=900px,height=800px,scrollbars=yes');return true">
