@@ -40,13 +40,14 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            width: 100%;
             padding: 24px 16px 40px;
             overflow-x: hidden;
             box-sizing: border-box;
         }
 
         .a4-container {
-            max-width: 844px; /* Exact A4 width approximation */
+            max-width: 844px; /* Print / PDF baseline */
             margin: 0 auto;
             background-color: #fff;
             padding: 20px 40px;
@@ -59,6 +60,122 @@
             min-height: 297mm;
             max-width: 100%;
             box-sizing: border-box;
+        }
+
+        /* Adaptive A4 viewer — screen only. Print and pdf-capturing restore the baseline above. */
+        @media screen {
+            .page-shell {
+                padding: 20px 4vw 40px;
+            }
+
+            .a4-container.a4-preview,
+            .a4-preview {
+                width: min(94vw, 1120px);
+                max-width: 100%;
+                aspect-ratio: 210 / 297;
+                min-height: auto;
+                height: auto;
+            }
+
+            .a4-container {
+                max-width: 100%;
+                padding: 8px 22px 20px;
+            }
+
+            .a4-preview {
+                font-size: 14px;
+            }
+
+            .a4-preview thead th {
+                padding-top: 0;
+                padding-bottom: 4px !important;
+            }
+
+            .a4-preview thead table {
+                margin-top: 4px !important;
+            }
+
+            .a4-preview #bodycontain > tr > td {
+                padding-top: 10px !important;
+            }
+
+            .a4-preview thead img,
+            .a4-preview tfoot img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+
+            .a4-preview h2 {
+                font-size: 17px !important;
+            }
+
+            .a4-preview h3 {
+                font-size: 16px;
+            }
+
+            .a4-preview .term-title {
+                font-size: 13px;
+            }
+
+            .a4-preview #bodycontain tfoot td {
+                font-size: 15px !important;
+            }
+
+            .a4-preview .master-table,
+            .a4-preview .content-table,
+            .a4-preview .PaymentPhase,
+            .a4-preview table[style*="border:2px solid"] {
+                width: 100%;
+                max-width: 100%;
+                table-layout: fixed;
+            }
+
+            .a4-preview table.FORKVQAEAST,
+            .a4-preview table.info-split,
+            .a4-preview table.info-split table {
+                max-width: 100%;
+                table-layout: auto;
+            }
+
+            .a4-preview td,
+            .a4-preview th {
+                overflow-wrap: break-word;
+            }
+
+            .a4-preview .content-table td,
+            .a4-preview .content-table th,
+            .a4-preview .PaymentPhase td,
+            .a4-preview .PaymentPhase th,
+            .a4-preview table[style*="border:2px solid"] td,
+            .a4-preview table[style*="border:2px solid"] th {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .a4-preview img {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+
+        @media screen and (max-width: 640px) {
+            html:not(.pdf-capturing) .a4-preview table.info-split,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr,
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td {
+                display: block;
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td.info-split-gap {
+                display: none;
+            }
+
+            html:not(.pdf-capturing) .a4-preview table.info-split > tbody > tr > td + td.info-split-card {
+                margin-top: 10px;
+            }
         }
 
         .document-shadow {
@@ -118,6 +235,87 @@
             overflow: visible;
         }
 
+        /* html2canvas reads screen CSS — restore the approved 210mm document for PDF. */
+        html.pdf-capturing .page-shell {
+            padding: 24px 16px 40px;
+        }
+
+        html.pdf-capturing .a4-container {
+            max-width: 844px;
+            padding: 20px 40px;
+        }
+
+        html.pdf-capturing .a4-container.a4-preview,
+        html.pdf-capturing .a4-preview {
+            width: 210mm;
+            min-height: 297mm;
+            max-width: 100%;
+            aspect-ratio: auto;
+            height: auto;
+            font-size: 13px;
+        }
+
+        html.pdf-capturing .a4-preview thead th {
+            padding-bottom: 20px !important;
+        }
+
+        html.pdf-capturing .a4-preview thead table {
+            margin-top: 15px !important;
+        }
+
+        html.pdf-capturing .a4-preview #bodycontain > tr > td {
+            padding-top: 20px !important;
+        }
+
+        html.pdf-capturing .a4-preview h2 {
+            font-size: 20px !important;
+        }
+
+        html.pdf-capturing .a4-preview h3 {
+            font-size: inherit;
+        }
+
+        html.pdf-capturing .a4-preview .term-title {
+            font-size: inherit;
+        }
+
+        html.pdf-capturing .a4-preview #bodycontain tfoot td {
+            font-size: inherit !important;
+        }
+
+        html.pdf-capturing .a4-preview .master-table,
+        html.pdf-capturing .a4-preview .content-table,
+        html.pdf-capturing .a4-preview .PaymentPhase,
+        html.pdf-capturing .a4-preview table[style*="border:2px solid"],
+        html.pdf-capturing .a4-preview table:not(.FORKVQAEAST) {
+            table-layout: auto;
+        }
+
+        html.pdf-capturing .a4-preview td,
+        html.pdf-capturing .a4-preview th {
+            overflow-wrap: normal;
+            word-break: normal;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split,
+        html.pdf-capturing .a4-preview table.info-split > tbody {
+            display: table;
+            width: 100%;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split > tbody > tr {
+            display: table-row;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split > tbody > tr > td {
+            display: table-cell;
+            width: auto;
+        }
+
+        html.pdf-capturing .a4-preview table.info-split > tbody > tr > td.info-split-gap {
+            display: table-cell;
+        }
+
         /* Base Table Styling */
         .master-table { width: 100%; border-collapse: collapse; }
         .content-table { border-collapse: collapse; width: 100%; }
@@ -141,7 +339,9 @@
             .a4-container { 
                 box-shadow: none; 
                 padding: 0; 
-                max-width: 100%; 
+                max-width: 100%;
+                width: auto;
+                aspect-ratio: auto;
             }
             
             * {
@@ -165,6 +365,36 @@
                 width: auto;
                 min-height: 0;
                 max-width: 100%;
+                aspect-ratio: auto;
+                height: auto;
+                font-size: 13px;
+            }
+
+            .master-table,
+            .content-table,
+            .PaymentPhase,
+            table[style*="border:2px solid"],
+            table:not(.FORKVQAEAST) {
+                table-layout: auto;
+            }
+
+            td, th {
+                overflow-wrap: normal;
+                word-break: normal;
+            }
+
+            table.info-split,
+            table.info-split > tbody {
+                display: table;
+                width: 100%;
+            }
+
+            table.info-split > tbody > tr {
+                display: table-row;
+            }
+
+            table.info-split > tbody > tr > td {
+                display: table-cell;
             }
 
             .document-shadow {
@@ -236,9 +466,9 @@
                     <tr>
                         <td style="padding-top: 20px;">
                             
-                            <table border="0" width="100%">
+                            <table border="0" width="100%" class="info-split">
                                 <tr>
-                                    <td style="width: 48%; border: 1px solid #dcdcdc; background-color: #ffffff; padding: 12px; border-radius: 4px;">
+                                    <td class="info-split-card" style="width: 48%; border: 1px solid #dcdcdc; background-color: #ffffff; padding: 12px; border-radius: 4px;">
                                         <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px; color: #222;">
                                             Customer Details (From)
                                         </div>
@@ -272,9 +502,9 @@
                                         </table>
                                     </td>
 
-                                    <td style="width: 4%;"></td>
+                                    <td class="info-split-gap" style="width: 4%;"></td>
 
-                                    <td style="width: 48%; border: 1px solid #dcdcdc; background-color: #f9f9f9; padding: 12px; border-radius: 4px;">
+                                    <td class="info-split-card" style="width: 48%; border: 1px solid #dcdcdc; background-color: #f9f9f9; padding: 12px; border-radius: 4px;">
                                         <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px; color: #222;">
                                             Document Information
                                         </div>
