@@ -39,7 +39,7 @@ namespace Bill_Software.corporate.business.print
         public string netamount = "";
         public string subamount = "";
         public double TQ = 0;
-        public static string viewtype = string.Empty;
+        private string viewtype = string.Empty;
 
         CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
 
