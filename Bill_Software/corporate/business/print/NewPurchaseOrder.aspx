@@ -40,13 +40,14 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            width: 100%;
             padding: 24px 16px 40px;
             overflow-x: hidden;
             box-sizing: border-box;
         }
 
         .a4-container {
-            max-width: 844px; /* Exact A4 width approximation */
+            max-width: 844px; /* Print / PDF baseline */
             margin: 0 auto;
             background-color: #fff;
             padding: 20px 40px;
@@ -59,6 +60,86 @@
             min-height: 297mm;
             max-width: 100%;
             box-sizing: border-box;
+        }
+
+        /* Adaptive A4 viewer — screen only. Print and pdf-capturing restore the baseline above. */
+        @media screen {
+            .page-shell {
+                padding: 20px 4vw 40px;
+            }
+
+            .a4-container.a4-preview,
+            .a4-preview {
+                width: min(92vw, 940px);
+                max-width: 100%;
+                aspect-ratio: 210 / 297;
+                min-height: auto;
+                height: auto;
+            }
+
+            .a4-container {
+                max-width: 100%;
+                padding: 12px 22px 20px;
+            }
+
+            .a4-preview {
+                font-size: 14px;
+            }
+
+            .a4-preview thead th {
+                padding-bottom: 10px !important;
+            }
+
+            .a4-preview thead table {
+                margin-top: 8px !important;
+            }
+
+            .a4-preview thead img,
+            .a4-preview tfoot img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+
+            .a4-preview h2 {
+                font-size: 17px !important;
+            }
+
+            .a4-preview h3 {
+                font-size: 16px;
+            }
+
+            .a4-preview .term-title {
+                font-size: 13px;
+            }
+
+            .a4-preview #bodycontain tfoot td {
+                font-size: 15px !important;
+            }
+
+            .a4-preview .master-table,
+            .a4-preview .content-table,
+            .a4-preview table:not(.FORKVQAEAST) {
+                width: 100%;
+                max-width: 100%;
+                table-layout: fixed;
+            }
+
+            .a4-preview table.FORKVQAEAST {
+                max-width: 100%;
+                table-layout: auto;
+            }
+
+            .a4-preview td,
+            .a4-preview th {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .a4-preview img {
+                max-width: 100%;
+                height: auto;
+            }
         }
 
         .document-shadow {
@@ -118,6 +199,62 @@
             overflow: visible;
         }
 
+        /* html2canvas reads screen CSS — restore the approved 210mm document for PDF. */
+        html.pdf-capturing .page-shell {
+            padding: 24px 16px 40px;
+        }
+
+        html.pdf-capturing .a4-container {
+            max-width: 844px;
+            padding: 20px 40px;
+        }
+
+        html.pdf-capturing .a4-container.a4-preview,
+        html.pdf-capturing .a4-preview {
+            width: 210mm;
+            min-height: 297mm;
+            max-width: 100%;
+            aspect-ratio: auto;
+            height: auto;
+            font-size: 13px;
+        }
+
+        html.pdf-capturing .a4-preview thead th {
+            padding-bottom: 20px !important;
+        }
+
+        html.pdf-capturing .a4-preview thead table {
+            margin-top: 15px !important;
+        }
+
+        html.pdf-capturing .a4-preview h2 {
+            font-size: 20px !important;
+        }
+
+        html.pdf-capturing .a4-preview h3 {
+            font-size: inherit;
+        }
+
+        html.pdf-capturing .a4-preview .term-title {
+            font-size: inherit;
+        }
+
+        html.pdf-capturing .a4-preview #bodycontain tfoot td {
+            font-size: inherit !important;
+        }
+
+        html.pdf-capturing .a4-preview .master-table,
+        html.pdf-capturing .a4-preview .content-table,
+        html.pdf-capturing .a4-preview table:not(.FORKVQAEAST) {
+            table-layout: auto;
+        }
+
+        html.pdf-capturing .a4-preview td,
+        html.pdf-capturing .a4-preview th {
+            overflow-wrap: normal;
+            word-break: normal;
+        }
+
         /* Base Table Styling */
         .master-table { width: 100%; border-collapse: collapse; }
         .content-table { border-collapse: collapse; width: 100%; }
@@ -141,7 +278,9 @@
             .a4-container { 
                 box-shadow: none; 
                 padding: 0; 
-                max-width: 100%; 
+                max-width: 100%;
+                width: auto;
+                aspect-ratio: auto;
             }
             
             * {
@@ -165,6 +304,20 @@
                 width: auto;
                 min-height: 0;
                 max-width: 100%;
+                aspect-ratio: auto;
+                height: auto;
+                font-size: 13px;
+            }
+
+            .master-table,
+            .content-table,
+            table:not(.FORKVQAEAST) {
+                table-layout: auto;
+            }
+
+            td, th {
+                overflow-wrap: normal;
+                word-break: normal;
             }
 
             .document-shadow {
