@@ -11,7 +11,7 @@
     <style type="text/css">
         /* --- Screen/Browser View Styles --- */
         html, body {
-            overflow-x: hidden;
+            overflow-x: clip;
         }
 
         body {
