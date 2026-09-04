@@ -47,9 +47,11 @@ namespace Bill_Software.corporate.business.app
             ConvertColumn(dt, "Created Timestamp", typeof(DateTime), ParseDate);
             ConvertColumn(dt, "Qty", typeof(double), ParseNum);
             ConvertColumn(dt, "Rate", typeof(double), ParseNum);
+            ConvertColumn(dt, "Line Discount %", typeof(double), ParseNum);
             ConvertColumn(dt, "Taxable Value", typeof(double), ParseNum);
             ConvertColumn(dt, "GST %", typeof(double), ParseNum);
             ConvertColumn(dt, "Item Net Value", typeof(double), ParseNum);
+            ConvertColumn(dt, "Invoice GST Amount", typeof(double), ParseNum);
             ConvertColumn(dt, "Invoice Grand Total", typeof(double), ParseNum);
             ConvertColumn(dt, "Freight", typeof(double), ParseNum);
             ConvertColumn(dt, "Other Charges", typeof(double), ParseNum);
@@ -86,9 +88,9 @@ namespace Bill_Software.corporate.business.app
 
                 FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date" }, "dd-MMM-yyyy");
                 FormatNamedColumns(ws, new[] { "Created Timestamp" }, "dd-MMM-yyyy hh:mm tt");
-                FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice Grand Total", "Freight", "Other Charges" }, "#,##0.00");
+                FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice GST Amount", "Invoice Grand Total", "Freight", "Other Charges" }, "#,##0.00");
                 FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.###");
-                FormatNamedColumns(ws, new[] { "GST %" }, "0.00");
+                FormatNamedColumns(ws, new[] { "GST %", "Line Discount %" }, "0.00");
 
                 ws.Columns().AdjustToContents();
 

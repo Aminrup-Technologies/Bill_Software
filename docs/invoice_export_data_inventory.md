@@ -31,17 +31,17 @@ This document does **not** implement additional export columns.
 | Client filter | Dropdown equality `b.Client_Name = @ClientName` | Text `b.Client_Name LIKE @Client` |
 | CompanyID | `WHERE a.CompanyID = @CompanyID` | `WHERE 1=1` then `AND a.CompanyID = @CompanyID` |
 | Grid joins | Client, primary service, quotation, login | Same |
-| Export joins | Client + details, both with `CompanyID` | Same |
+| Export joins | Client, details, quotation, aggregated primary service — all CompanyID-scoped | Same |
 | Notification | Once on search | Once on export, before `ExportXlsx` |
 | Sheet / file | `Invoice_Lines` / `{CompanyCode}_Advanced_Search_Invoices_{yyyyMMdd}` | `Invoice_Lines` / `Tax_Invoices_Export_{yyyyMMdd}` |
 
 Grid joins on `tbl_QuoPriSerTogather` are **not** CompanyID-scoped and can duplicate header rows if multiple primary-service rows exist for one quotation. Export does not use that join.
 
-Export joins `tbl_Client` on `Client_Id` **and** `b.CompanyID = @CompanyID`, and `tbl_Invoice_details` on `Invoice_No` **and** `d.CompanyID = @CompanyID`. Header filter remains `a.CompanyID = @CompanyID`. Grid BindData joins are still unscoped (not changed in this iteration).
+Export joins `tbl_Client` on `Client_Id` **and** `b.CompanyID = @CompanyID`, `tbl_Invoice_details` on `Invoice_No` **and** `d.CompanyID = @CompanyID`, `tbl_Quotation` on `Quotation_No` **and** `q.CompanyID = @CompanyID`, and a grouped `tbl_QutPrimaryService` derived table (`ps.qut_no = a.Quotation_No`, `CompanyID = @CompanyID`) so Primary Service is one comma-separated cell. Header filter remains `a.CompanyID = @CompanyID`. Grid BindData joins are still unscoped (not changed in this iteration).
 
 ---
 
-## 2. Current export column order (unchanged)
+## 2. Current export column order
 
 Both pages, line-item grain:
 
@@ -49,24 +49,30 @@ Both pages, line-item grain:
 2. Invoice Date  
 3. ERP Ref  
 4. Client Name  
-5. Item Code  
-6. HSN Code  
-7. Item Name  
-8. Qty  
-9. Rate  
-10. Taxable Value  
-11. GST %  
-12. Item Net Value  
-13. Invoice Grand Total  
-14. Created By  
-15. Quotation Date  
-16. Mail Date  
-17. Tax Type  
-18. Freight  
-19. Other Charges  
-20. Created Timestamp  
+5. Source Reference  
+6. PO Number  
+7. DO Number  
+8. Primary Service  
+9. Item Code  
+10. HSN Code  
+11. Item Name  
+12. Qty  
+13. Rate  
+14. Line Discount %  
+15. Taxable Value  
+16. GST %  
+17. Item Net Value  
+18. Invoice GST Amount  
+19. Invoice Grand Total  
+20. Freight  
+21. Other Charges  
+22. Quotation Date  
+23. Mail Date  
+24. Tax Type  
+25. Created Timestamp  
+26. Created By  
 
-Header amounts (grand total, freight, other charges) and header dates already repeat on every line of a multi-line invoice.
+Header amounts (grand total, freight, other charges, GST amount) and header references already repeat on every line of a multi-line invoice. Primary Service is aggregated to one cell per quotation so it does not multiply lines.
 
 ---
 
@@ -89,13 +95,13 @@ Written at create (`Add_invoice` / `Manual_Invoice`). List pages select a subset
 | `Invoice_Date` | Invoice date; date filters use `TRY_CONVERT(..., 106)` | invoice-header | Yes (`FmtDate`) | Yes | Via header | Yes |
 | `ExtInvoiceNo` | ERP / external invoice ref; Search/View filter | invoice-header | Conditional badge | Yes (`ERP Ref`) | Via header | Yes |
 | `ExtInvoiceDate` | External invoice date; written at create | invoice-header | No | No | Written with header | Would duplicate |
-| `Quotation_No` | Source quotation / PO / verbal ref (`VERBAL` styled in UI). Manual invoice may store PO here | quotation / reference | Yes | No | Via header | Would duplicate |
+| `Quotation_No` | Source quotation / PO / verbal ref (`VERBAL` styled in UI). Manual invoice may store PO here | quotation / reference | Yes | Yes (`Source Reference`) | Via header | Yes |
 | `Quotation_Date` | Date shown as “Quo Date”. **Not** in current `Add_invoice` INSERT | quotation / reference | Yes (`FmtDate`) | Yes | Via header | Yes |
 | `Client_ID` | FK to `tbl_Client.Client_Id` | customer | Join only | Join only | Header yes; **export join now also `b.CompanyID`**; grid join still unscoped | Would duplicate |
 | `Gross` | Header gross | invoice-header | Yes | No | Via header | Would duplicate |
 | `discount` | Header discount; UI if &gt; 0 | invoice-header | Conditional | No | Via header | Would duplicate |
 | `sub_total` | Stored header taxable. **Grid ignores this** and shows `Net_Amount - Service_Tax1` | tax | Derived UI, not stored column | No | Via header | Would duplicate |
-| `Service_Tax1` | Header GST amount (`Gst` on grid). Create writes this. Print `NewInvoice` reads `Service_Tax` instead | tax | Yes (as `Gst`) | No | Via header | Would duplicate |
+| `Service_Tax1` | Header GST amount (`Gst` on grid). Create writes this. Print `NewInvoice` reads `Service_Tax` instead | tax | Yes (as `Gst`) | Yes (`Invoice GST Amount`) | Via header | Yes |
 | `Service_Tax` | Print tax label; not selected by Search/View | tax | No (list) | No | Unknown in list SQL | Would duplicate |
 | `Net_Amount` | Header grand total | invoice-header | Yes | Yes (`Invoice Grand Total`) | Via header | **Yes — repeats per line** |
 | `Delivery_Amount` | Freight; create `@Frt`; print freight | logistics | Yes | Yes (`Freight`) | Via header | **Yes — repeats per line** |
@@ -132,7 +138,7 @@ Used only by export on Search/View (not by the repeater). Create writes the line
 | `Total_sail_rate2` | Taxable base; export `ISNULL(..., qty * rate)` | quantities/rates | No | Yes (`Taxable Value`) | Not on join | No (line) |
 | `Service_tax_rate` | Line GST % | HSN/SAC/tax | No | Yes (`GST %`) | Not on join | No (line) |
 | `Total_sail_rate1` | Line net (taxable + tax) | quantities/rates | No | Yes (`Item Net Value`) | Not on join | No (line) |
-| `discountRate` | Line discount %; create keeps it; print selects it | quantities/rates | No | No | Not on join | No (line) |
+| `discountRate` | Line discount %; create keeps it; print selects it | quantities/rates | No | Yes (`Line Discount %`) | Yes — `d.CompanyID` | No (line) |
 | `specification` | Brand/spec; print concatenates into product name | item/product | No | No | Not on join | No (line) |
 | `ItemNo` | Line identity for pending-qty matching | item/product | No | No | Not on join | No (line) |
 | `AddedById` | Line creator | audit | No | No | Not on join | Would often match header |
@@ -158,19 +164,19 @@ Grid BindData join: `b.Client_Id = a.Client_ID` only (unchanged).
 
 ### 3.4 `tbl_Quotation` (alias `q`) — quotation / PO header
 
-Search/View **grid only** (not export): `LEFT JOIN ... ON q.Quotation_no = a.Quotation_No` with **no** `q.CompanyID`. Create writes `CompanyID` on insert.
+Search/View **grid** still joins quotation without `q.CompanyID`. **Export** joins `q.Quotation_No = a.Quotation_No AND q.CompanyID = @CompanyID`.
 
 | Column | Apparent meaning from usage | Class | UI | Export | CompanyID-scoped | Duplicate on line grain |
 |---|---|---|---|---|---|---|
-| `Quotation_no` | Join key to invoice `Quotation_No` | quotation / reference | Via invoice column | No | Join unscoped | Would duplicate |
-| `PO_Number` | UI badge `ARC` | PO/DO/reference | Yes | No | Join unscoped | Would duplicate |
-| `DO_Number` | UI badge `PO/DO` | PO/DO/reference | Yes | No | Join unscoped | Would duplicate |
+| `Quotation_no` | Join key to invoice `Quotation_No` | quotation / reference | Via invoice column | Join only | **Export join yes**; grid join unscoped | Would duplicate |
+| `PO_Number` | UI badge `ARC` | PO/DO/reference | Yes | Yes (`PO Number`) | **Export join yes**; grid join unscoped | Yes |
+| `DO_Number` | UI badge `PO/DO` | PO/DO/reference | Yes | Yes (`DO Number`) | **Export join yes**; grid join unscoped | Yes |
 | `Validity_StartDate` / `Validity_EndDate` | Validity window | quotation | Yes (`FmtDate`) | No | Join unscoped | Would duplicate |
 | `PO_Date` | Print PO date | PO/DO/reference | No (list) | No | Not in list SQL | Would duplicate |
 | `PaymentStatus` | Create default `'No'`; quotation commercial | payment | No | No | Not in list SQL | Would duplicate |
 | `DeliveryTenure` | Create delivery terms (not a dispatch-mode field) | logistics | No | No | Not in list SQL | Would duplicate |
 | `PlaceofSupply` | Quotation POS; print may use it | tax | No | No | Not in list SQL | Would duplicate |
-| `CompanyID` | Written at quotation create | reference | No | No | **Not on Search/View join** | — |
+| `CompanyID` | Written at quotation create | reference | No | **Export join predicate only** | **Export join yes**; grid join no | — |
 
 No `Dispatch Mode` column appears in Search/View invoice SQL or in the quotation insert list above.
 
@@ -229,26 +235,27 @@ Facts from current code. Not a column-selection decision.
 ## 5. Isolation and grain
 
 - Preserve Search filters, View filters, `WHERE 1=1` on View, `LIKE @Client` on View, current-month default, ClosedXML, filenames, sheet name, and notification timing.
-- Export tenant predicates (this iteration): `a.CompanyID`, `b.CompanyID`, and `d.CompanyID` all equal `@CompanyID`. `CompanyID` is not selected into the workbook.
+- Export tenant predicates: `a.CompanyID`, `b.CompanyID`, `d.CompanyID`, `q.CompanyID`, and `tbl_QutPrimaryService.CompanyID` (inner and outer aggregation) all equal `@CompanyID`. `CompanyID` is not selected into the workbook.
 - Grid BindData joins for client / quotation / service / login remain unscoped (not part of this export correction).
-- Do not add a quotation join to export until a later iteration can constrain `q.CompanyID`.
+- Primary Service uses `STUFF` / `FOR XML PATH` grouped by `qut_no` so one invoice line still equals one Excel row.
 - Header money fields on a line-item sheet already repeat (`Invoice Grand Total`, `Freight`, `Other Charges`). Further header metadata increases that repetition.
 
 ---
 
 ## 6. Proposed Export Mapping — Finance / Operations Review
 
-Workbook grain stays **one row per invoice line**. Header-level fields already exported (`Invoice Grand Total`, `Freight`, `Other Charges`, dates, tax type, created-by) repeat on every line. Do not add large amounts of header metadata unless the reporting need outweighs that duplication.
+Workbook grain stays **one row per invoice line**. Header-level fields already exported (`Invoice Grand Total`, `Freight`, `Other Charges`, GST amount, dates, tax type, created-by, source/PO/DO/service) repeat on every line.
 
-`INCLUDE` / `OPTIONAL` / `EXCLUDE` below are **proposals only**. The live export SELECT list is unchanged in this iteration.
+The **INCLUDE** set below is implemented in Search/View export SQL. `OPTIONAL` / `EXCLUDE` remain deferred.
 
 ### Header-level candidates
 
 | Source table | Source column | Proposed Excel label | Grain | Why useful | Duplicates per line | CompanyID safely constrained | Recommendation |
 |---|---|---|---|---|---|---|---|
 | `tbl_Invoice` | `Quotation_No` | Source Reference | Header | Ties the invoice to quotation / PO / `VERBAL`; already on the UI | Yes | Yes — column is on header `a` already filtered by `a.CompanyID` | **INCLUDE** |
-| `tbl_Quotation` | `PO_Number` | ARC / PO Number | Header | Shown as ARC on the grid; operations matching | Yes | **Not on export today.** Needs a new `tbl_Quotation` join with `q.CompanyID = @CompanyID` | **OPTIONAL** (blocked until a tenant-safe quotation join) |
-| `tbl_Quotation` | `DO_Number` | DO Number | Header | Shown as PO/DO on the grid | Yes | Same as `PO_Number` | **OPTIONAL** (blocked until a tenant-safe quotation join) |
+| `tbl_Quotation` | `PO_Number` | PO Number | Header | Shown as ARC on the grid; operations matching | Yes | Yes — export join `q.CompanyID = @CompanyID` | **INCLUDE** |
+| `tbl_Quotation` | `DO_Number` | DO Number | Header | Shown as PO/DO on the grid | Yes | Yes — export join `q.CompanyID = @CompanyID` | **INCLUDE** |
+| `tbl_QutPrimaryService` | `PrimaryService` (aggregated) | Primary Service | Header | One comma-separated cell per quotation; `STUFF`/`FOR XML PATH` grouped by `qut_no` | Yes | Yes — aggregation `WHERE CompanyID = @CompanyID` | **INCLUDE** |
 | `tbl_Invoice` | `ExtInvoiceDate` | ERP Date | Header | Pairs with existing `ERP Ref` | Yes | Yes — on `a` | **OPTIONAL** |
 | `tbl_Invoice` | `otherAmount1_name` | Other Charges Name | Header | Labels the existing Other Charges amount | Yes | Yes — on `a` | **OPTIONAL** |
 | `tbl_Invoice` | `discount` | Invoice Discount | Header | UI already shows it when &gt; 0; explains net vs gross | Yes | Yes — on `a` | **OPTIONAL** |
@@ -280,16 +287,18 @@ Workbook grain stays **one row per invoice line**. Header-level fields already e
 
 ### Candidate list summary
 
-**INCLUDE (next implementation, no new tables):**
+**INCLUDE (implemented):**
 
 - Header: `tbl_Invoice.Quotation_No` → Source Reference
+- Header: `tbl_Quotation.PO_Number` → PO Number
+- Header: `tbl_Quotation.DO_Number` → DO Number
+- Header: aggregated `tbl_QutPrimaryService.PrimaryService` → Primary Service
 - Header: `tbl_Invoice.Service_Tax1` → Invoice GST Amount
 - Line: `tbl_Invoice_details.discountRate` → Line Discount %
 
-**OPTIONAL (only if review confirms the reporting need):**
+**OPTIONAL (deferred):**
 
 - Header: `ExtInvoiceDate`, `otherAmount1_name`, `discount`, `Gross`, `SalesPersonCode`
-- Header: `PO_Number`, `DO_Number` — only after a tenant-safe `tbl_Quotation` join (`q.CompanyID = @CompanyID`)
 - Line: `Quotation_no`, `specification`, `ItemNo`
 
 **EXCLUDE:**
@@ -304,5 +313,5 @@ Workbook grain stays **one row per invoice line**. Header-level fields already e
 
 ## 7. Stop point
 
-Do not change the exported column list until finance/operations accept the INCLUDE set. Tenant-safe export join predicates may ship independently of column enrichment.
+INCLUDE columns are in the Search/View export SELECT. Remaining OPTIONAL fields stay deferred. Do not add `CompanyID` to the workbook.
 

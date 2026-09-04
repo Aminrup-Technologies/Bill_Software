@@ -121,25 +121,46 @@ namespace Bill_Software.corporate.business.app
                     a.Invoice_Date AS [Invoice Date], 
                     a.ExtInvoiceNo AS [ERP Ref], 
                     b.Client_Name AS [Client Name], 
+                    a.Quotation_No AS [Source Reference], 
+                    q.PO_Number AS [PO Number], 
+                    q.DO_Number AS [DO Number], 
+                    ps.PrimaryService AS [Primary Service], 
                     d.Product_id AS [Item Code], 
                     d.Product_Code AS [HSN Code], 
                     d.Product_name AS [Item Name], 
                     d.Quantity AS [Qty], 
                     d.sail_rate AS [Rate], 
+                    d.discountRate AS [Line Discount %], 
                     ISNULL(d.Total_sail_rate2, (TRY_CAST(d.Quantity AS FLOAT) * TRY_CAST(d.sail_rate AS FLOAT))) AS [Taxable Value],
                     d.Service_tax_rate AS [GST %],
                     d.Total_sail_rate1 AS [Item Net Value],
+                    a.Service_Tax1 AS [Invoice GST Amount],
                     a.Net_Amount AS [Invoice Grand Total],
-                    a.AddedById AS [Created By],
+                    a.Delivery_Amount AS [Freight],
+                    a.otherAmount1 AS [Other Charges],
                     a.Quotation_Date AS [Quotation Date],
                     a.mailDate AS [Mail Date],
                     CASE WHEN a.cgstOrsgst = 'YES' THEN 'CGST/SGST' WHEN a.igst = 'YES' THEN 'IGST' ELSE 'TAX' END AS [Tax Type],
-                    a.Delivery_Amount AS [Freight],
-                    a.otherAmount1 AS [Other Charges],
-                    a.TimeStamp AS [Created Timestamp]
+                    a.TimeStamp AS [Created Timestamp],
+                    a.AddedById AS [Created By]
                     FROM tbl_Invoice AS a 
                     LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID AND b.CompanyID = @CompanyID 
                     LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No AND d.CompanyID = @CompanyID 
+                    LEFT JOIN tbl_Quotation AS q ON q.Quotation_No = a.Quotation_No AND q.CompanyID = @CompanyID 
+                    LEFT JOIN (
+                        SELECT
+                            p1.qut_no,
+                            STUFF((
+                                SELECT ', ' + p2.PrimaryService
+                                FROM tbl_QutPrimaryService p2
+                                WHERE p2.qut_no = p1.qut_no
+                                  AND p2.CompanyID = @CompanyID
+                                FOR XML PATH(''), TYPE
+                            ).value('.', 'nvarchar(max)'), 1, 2, '') AS PrimaryService
+                        FROM tbl_QutPrimaryService p1
+                        WHERE p1.CompanyID = @CompanyID
+                        GROUP BY p1.qut_no
+                    ) ps ON ps.qut_no = a.Quotation_No
                     WHERE 1=1 ";
 
                 SqlCommand cmd = new SqlCommand();
