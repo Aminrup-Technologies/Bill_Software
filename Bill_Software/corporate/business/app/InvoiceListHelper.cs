@@ -44,6 +44,7 @@ namespace Bill_Software.corporate.business.app
             ConvertColumn(dt, "Invoice Date", typeof(DateTime), ParseDate);
             ConvertColumn(dt, "Quotation Date", typeof(DateTime), ParseDate);
             ConvertColumn(dt, "Mail Date", typeof(DateTime), ParseDate);
+            ConvertColumn(dt, "Delivery Date", typeof(DateTime), ParseDate);
             ConvertColumn(dt, "Created Timestamp", typeof(DateTime), ParseDate);
             ConvertColumn(dt, "Qty", typeof(double), ParseNum);
             ConvertColumn(dt, "Rate", typeof(double), ParseNum);
@@ -86,8 +87,9 @@ namespace Bill_Software.corporate.business.app
                     usedRange.SetAutoFilter();
                 }
 
-                FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date" }, "dd-MMM-yyyy");
+                FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date", "Delivery Date" }, "dd-MMM-yyyy");
                 FormatNamedColumns(ws, new[] { "Created Timestamp" }, "dd-MMM-yyyy hh:mm tt");
+                WrapNamedColumns(ws, new[] { "Item Remarks" });
                 FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice GST Amount", "Invoice Grand Total", "Freight", "Other Charges" }, "#,##0.00");
                 FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.###");
                 FormatNamedColumns(ws, new[] { "GST %", "Line Discount %" }, "0.00");
@@ -117,6 +119,16 @@ namespace Bill_Software.corporate.business.app
                 var cell = ws.Row(1).CellsUsed().FirstOrDefault(c => Convert.ToString(c.Value) == name);
                 if (cell == null) continue;
                 ws.Column(cell.Address.ColumnNumber).Style.NumberFormat.Format = format;
+            }
+        }
+
+        private static void WrapNamedColumns(IXLWorksheet ws, string[] names)
+        {
+            foreach (var name in names)
+            {
+                var cell = ws.Row(1).CellsUsed().FirstOrDefault(c => Convert.ToString(c.Value) == name);
+                if (cell == null) continue;
+                ws.Column(cell.Address.ColumnNumber).Style.Alignment.WrapText = true;
             }
         }
 

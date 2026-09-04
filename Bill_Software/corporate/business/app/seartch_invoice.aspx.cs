@@ -144,6 +144,12 @@ namespace Bill_Software.corporate.business.app
                     q.PO_Number AS [PO Number], 
                     q.DO_Number AS [DO Number], 
                     ps.PrimaryService AS [Primary Service], 
+                    d.ItemNo AS [Item No], 
+                    qd.MaterialNo AS [Material No], 
+                    qd.PackSize AS [Pack Size], 
+                    qd.DeliveryDate AS [Delivery Date], 
+                    qd.Department AS [Department], 
+                    qd.ItemRemarks AS [Item Remarks], 
                     d.Product_id AS [Item Code], 
                     d.Product_Code AS [HSN Code], 
                     d.Product_name AS [Item Name], 
@@ -180,6 +186,11 @@ namespace Bill_Software.corporate.business.app
                         WHERE p1.CompanyID = @CompanyID
                         GROUP BY p1.qut_no
                     ) ps ON ps.qut_no = a.Quotation_No
+                    LEFT JOIN tbl_Quotaion_details AS qd
+                        ON qd.Quotation_no = d.Quotation_no
+                       AND qd.Product_Code = d.Product_id
+                       AND ISNULL(qd.ItemNo,'') = ISNULL(d.ItemNo,'')
+                       AND qd.CompanyID = @CompanyID
                     WHERE a.CompanyID = @CompanyID ";
 
                 SqlCommand cmd = new SqlCommand();
