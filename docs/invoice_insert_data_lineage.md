@@ -468,16 +468,25 @@ Solid arrows = implemented and INSERT-aligned.
 
 **Layer 3 — AGGREGATE (already shipped):** Primary Service from `tbl_QutPrimaryService`, one concatenated string per `qut_no`, `CompanyID` scoped, `GROUP BY qut_no` so lines do not multiply.
 
-**Layer 4 — JOIN detail (shipped in Search/View export):** LEFT JOIN schema table `tbl_Quotaion_details` (spelling in database; not `tbl_Quotation_details`) with:
+**Layer 4 — JOIN detail (shipped in Search/View export):** LEFT JOIN a 1-row-per-key derived table over `tbl_Quotaion_details` (schema spelling; not `tbl_Quotation_details`).
+
+Verified identity (unchanged):
 
 ```text
 qd.Quotation_no = d.Quotation_no
 AND qd.Product_Code = d.Product_id
-AND ISNULL(qd.ItemNo,'') = ISNULL(d.ItemNo,'')
+AND qd.ItemNo = ISNULL(d.ItemNo, '')
 AND qd.CompanyID = @CompanyID
 ```
 
-Export columns after Primary Service: Item No (`d.ItemNo` DIRECT), Material No, Pack Size, Delivery Date, Department, Item Remarks (`qd.*`). LEFT JOIN only. Manual / Proforma / Challan / `N/A` remain NULL when the key does not match. Grid BindData is unchanged.
+Version uniqueness (export derived table, not a raw table join):
+
+- Edit/archive writes (`Edit_quatation_v2.aspx.cs`, `Edit_quatation.aspx.cs`, `edit_purchaseorder.aspx.cs`) set previous lines `IsDeleted = 1`, `IsLatest = 0` and insert live lines `IsDeleted = 0`, `IsLatest = 1`.
+- Live readers (`PurchaseOrderPrintHelper.cs`, edit load) use `IsLatest = 1 AND IsDeleted = 0`.
+- `Create_quotation.aspx.cs` INSERT does not populate `IsLatest` / `IsDeleted`, so export cannot use equality-only `IsLatest = 1` (would miss never-edited create rows).
+- Derived table keeps `ISNULL(IsDeleted, 0) = 0`, then `ROW_NUMBER()` partitioned by `CompanyID, Quotation_no, Product_Code, ISNULL(ItemNo,'')`, ordered by print live-row first (`IsLatest = 1 AND IsDeleted = 0`), then `Version DESC`, then `Id DESC`. Filter `rn = 1`. LEFT JOIN only.
+
+Export columns after Primary Service: Item No (`d.ItemNo` DIRECT), Material No, Pack Size, Delivery Date, Department, Item Remarks (`qd.*`). Manual / Proforma / Challan / `N/A` remain NULL when the key does not match. Grid BindData is unchanged.
 
 **Not required:** a second join from invoice `Quotation_No` to `tbl_Quotation.PO_Number`. Auto Purchase Order invoices do not store `PO_Number` in `Quotation_No`.
 
@@ -494,6 +503,6 @@ Export columns after Primary Service: Item No (`d.ItemNo` DIRECT), Material No, 
 | `CompanyID` persistence | Written on Auto header, Auto details, Manual header, Manual details, both site-address inserts, both notification inserts |
 | Join keys from code, not guessed | Consume SQL in `GetItemQueryByDocType` + INSERT identity map from `TrueID`/`TrueHSN` + picker `DocNo` SQL |
 | Speculative joins | None recommended |
-| Search/View export Layer 4 | Shipped: LEFT JOIN `tbl_Quotaion_details` on verified key; Grid BindData untouched |
+| Search/View export Layer 4 | Shipped: 1-row-per-key LEFT JOIN derived table on verified key + live-row order (`IsLatest`/`IsDeleted`/`Version`/`Id`); Grid BindData untouched |
 
 **READY FOR FINANCE UAT** — Layer 4 columns are on Search/View Excel export only. Manual / Proforma / Challan quotation-detail cells stay NULL unless the verified key matches.

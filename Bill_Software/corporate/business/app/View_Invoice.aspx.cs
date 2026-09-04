@@ -167,10 +167,44 @@ namespace Bill_Software.corporate.business.app
                         WHERE p1.CompanyID = @CompanyID
                         GROUP BY p1.qut_no
                     ) ps ON ps.qut_no = a.Quotation_No
-                    LEFT JOIN tbl_Quotaion_details AS qd
+                    LEFT JOIN (
+                        SELECT
+                            ranked.Quotation_no,
+                            ranked.Product_Code,
+                            ranked.ItemNo,
+                            ranked.CompanyID,
+                            ranked.MaterialNo,
+                            ranked.PackSize,
+                            ranked.DeliveryDate,
+                            ranked.Department,
+                            ranked.ItemRemarks
+                        FROM (
+                            SELECT
+                                qdx.Quotation_no,
+                                qdx.Product_Code,
+                                ISNULL(qdx.ItemNo, '') AS ItemNo,
+                                qdx.CompanyID,
+                                qdx.MaterialNo,
+                                qdx.PackSize,
+                                qdx.DeliveryDate,
+                                qdx.Department,
+                                qdx.ItemRemarks,
+                                ROW_NUMBER() OVER (
+                                    PARTITION BY qdx.CompanyID, qdx.Quotation_no, qdx.Product_Code, ISNULL(qdx.ItemNo, '')
+                                    ORDER BY
+                                        CASE WHEN qdx.IsLatest = 1 AND qdx.IsDeleted = 0 THEN 0 ELSE 1 END,
+                                        ISNULL(qdx.Version, 0) DESC,
+                                        qdx.Id DESC
+                                ) AS rn
+                            FROM tbl_Quotaion_details AS qdx
+                            WHERE qdx.CompanyID = @CompanyID
+                              AND ISNULL(qdx.IsDeleted, 0) = 0
+                        ) ranked
+                        WHERE ranked.rn = 1
+                    ) AS qd
                         ON qd.Quotation_no = d.Quotation_no
                        AND qd.Product_Code = d.Product_id
-                       AND ISNULL(qd.ItemNo,'') = ISNULL(d.ItemNo,'')
+                       AND qd.ItemNo = ISNULL(d.ItemNo, '')
                        AND qd.CompanyID = @CompanyID
                     WHERE 1=1 ";
 
