@@ -147,7 +147,7 @@ Grid BindData join: `b.Client_Id = a.Client_ID` only (unchanged).
 
 | Column | Apparent meaning from usage | Class | UI | Export | CompanyID-scoped | Duplicate on line grain |
 |---|---|---|---|---|---|---|
-| `Client_Id` | Customer key | customer | Join / create lookup | Join only | Dropdown yes; list join no | Would duplicate |
+| `Client_Id` | Customer key | customer | Join / create lookup | Join only | Dropdown yes; **export join yes**; grid join no | Would duplicate |
 | `Client_Name` | Display name; Search equality / View `LIKE` | customer | Yes | Yes | Dropdown yes; **export join yes**; grid join no | Yes |
 | `CompanyID` | Tenant on master (`New_client` insert) | reference | Dropdown filter only | **Export join predicate only** | **Export join yes; grid join no** | — |
 | `Address1`, `City`, `pin`, `State` | Address; print + billing lookup on create | customer | No (list) | No | Print join has no CompanyID | Would duplicate |
