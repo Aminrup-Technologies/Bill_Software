@@ -18,7 +18,7 @@
 
 Supporting evidence (not modified): `Create_quotation.aspx.cs` (quotation line identity), `InvoiceMail.aspx.cs` (`mailDate` UPDATE after create). Join-key evidence is the consume SQL inside `Add_invoice.aspx.cs` (`GetItemQueryByDocType`, `ReconcilePendingQuantities`, `LoadPriorInvoiceLines`).
 
-**Not in this document:** implementation, SQL changes, UI changes, schema changes.
+**Not in this document:** schema changes, Grid/UI changes, or invoice INSERT changes. Search/View Excel export Layer 4 (quotation-detail LEFT JOIN) is recorded in section 8 as implemented.
 
 ---
 
@@ -457,11 +457,10 @@ flowchart LR
     INV -->|Client_ID + CompanyID| CLI
     INV -->|Quotation_No = q.Quotation_No + CompanyID| QH
     INV -->|Quotation_No = qut_no + CompanyID| PS
-    DET -.->|verified key only; LEFT JOIN| QD
+    DET -->|verified key; LEFT JOIN| QD
 ```
 
-Solid arrows = already implemented and INSERT-aligned.  
-Dashed arrow = **optional future** enrichment for MaterialNo / PackSize / ItemRemarks / DeliveryDate / Department.
+Solid arrows = implemented and INSERT-aligned.
 
 **Layer 1 — DIRECT (no new joins):** invoice number, dates that exist on `a`/`d`, ERP ref, source reference, item code, HSN, name, qty, rate, discount %, taxable, GST %, line net, header GST, grand total, freight, other, created-by, ItemNo from `d`.
 
@@ -469,16 +468,25 @@ Dashed arrow = **optional future** enrichment for MaterialNo / PackSize / ItemRe
 
 **Layer 3 — AGGREGATE (already shipped):** Primary Service from `tbl_QutPrimaryService`, one concatenated string per `qut_no`, `CompanyID` scoped, `GROUP BY qut_no` so lines do not multiply.
 
-**Layer 4 — JOIN detail (not shipped; only if product asks):** LEFT JOIN `tbl_Quotaion_details` with:
+**Layer 4 — JOIN detail (shipped in Search/View export):** LEFT JOIN a 1-row-per-key derived table over `tbl_Quotaion_details` (schema spelling; not `tbl_Quotation_details`).
+
+Verified identity (unchanged):
 
 ```text
 qd.Quotation_no = d.Quotation_no
 AND qd.Product_Code = d.Product_id
-AND ISNULL(qd.ItemNo,'') = ISNULL(d.ItemNo,'')
+AND qd.ItemNo = ISNULL(d.ItemNo, '')
 AND qd.CompanyID = @CompanyID
 ```
 
-Expect NULLs for Manual invoices, Proforma, Challan, `N/A`, and unmatched lines. Auto Purchase Order rows **do** carry a quotation number and should match when line identity matches. Do not INNER JOIN. Do not join on `Quotation_no` alone. Do not join `Product_id` to `Product_id`.
+Version uniqueness (export derived table, not a raw table join):
+
+- Edit/archive writes (`Edit_quatation_v2.aspx.cs`, `Edit_quatation.aspx.cs`, `edit_purchaseorder.aspx.cs`) set previous lines `IsDeleted = 1`, `IsLatest = 0` and insert live lines `IsDeleted = 0`, `IsLatest = 1`.
+- Live readers (`PurchaseOrderPrintHelper.cs`, edit load) use `IsLatest = 1 AND IsDeleted = 0`.
+- `Create_quotation.aspx.cs` INSERT does not populate `IsLatest` / `IsDeleted`, so export cannot use equality-only `IsLatest = 1` (would miss never-edited create rows).
+- Derived table keeps `ISNULL(IsDeleted, 0) = 0`, then `ROW_NUMBER()` partitioned by `CompanyID, Quotation_no, Product_Code, ISNULL(ItemNo,'')`, ordered by print live-row first (`IsLatest = 1 AND IsDeleted = 0`), then `Version DESC`, then `Id DESC`. Filter `rn = 1`. LEFT JOIN only.
+
+Export columns after Primary Service: Item No (`d.ItemNo` DIRECT), Material No, Pack Size, Delivery Date, Department, Item Remarks (`qd.*`). Manual / Proforma / Challan / `N/A` remain NULL when the key does not match. Grid BindData is unchanged.
 
 **Not required:** a second join from invoice `Quotation_No` to `tbl_Quotation.PO_Number`. Auto Purchase Order invoices do not store `PO_Number` in `Quotation_No`.
 
@@ -495,6 +503,6 @@ Expect NULLs for Manual invoices, Proforma, Challan, `N/A`, and unmatched lines.
 | `CompanyID` persistence | Written on Auto header, Auto details, Manual header, Manual details, both site-address inserts, both notification inserts |
 | Join keys from code, not guessed | Consume SQL in `GetItemQueryByDocType` + INSERT identity map from `TrueID`/`TrueHSN` + picker `DocNo` SQL |
 | Speculative joins | None recommended |
-| Implementation / SQL / UI / schema | Unchanged |
+| Search/View export Layer 4 | Shipped: 1-row-per-key LEFT JOIN derived table on verified key + live-row order (`IsLatest`/`IsDeleted`/`Version`/`Id`); Grid BindData untouched |
 
-**READY FOR EXPORT IMPLEMENTATION** — only after an explicit product decision to add Layer 4 columns, using the verified key above, LEFT JOIN, and NULL for non-quotation source documents. Existing 26-column export does not need that join.
+**READY FOR FINANCE UAT** — Layer 4 columns are on Search/View Excel export only. Manual / Proforma / Challan quotation-detail cells stay NULL unless the verified key matches.
