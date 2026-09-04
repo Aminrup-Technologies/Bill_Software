@@ -2,7 +2,9 @@
 
 **When:** 2026-09-04  
 **Why:** Column selection for the Search Invoice / View Invoice Excel export must wait until finance and operations can map fields from actual application usage, not from schema existence or speculative enrichment.  
-**What:** Read-only inventory of tables and columns involved in invoice generation and in the current Search Invoice / View Invoice display and export SQL. No new joins, filters, columns, or export-schema changes are proposed here.
+**What:** Read-only inventory of tables and columns involved in invoice generation and in the current Search Invoice / View Invoice display and export SQL, plus a proposed export mapping for finance/operations review. Export SELECT columns are not changed in this iteration.
+
+This document does **not** implement additional export columns.
 
 **Sources (code only, no live database):**
 
@@ -17,8 +19,6 @@
 
 **Out of scope for this inventory as Search/View SQL:** `tbl_invoice_payment`, `tbl_InvSiteAddress`, `tbl_representative`, `tbl_NewProduct`. Those are used by payment, print, or stock modules, not by the list/export queries.
 
-This document does **not** recommend adding or removing export columns.
-
 ---
 
 ## 1. How the two pages use data today
@@ -31,13 +31,13 @@ This document does **not** recommend adding or removing export columns.
 | Client filter | Dropdown equality `b.Client_Name = @ClientName` | Text `b.Client_Name LIKE @Client` |
 | CompanyID | `WHERE a.CompanyID = @CompanyID` | `WHERE 1=1` then `AND a.CompanyID = @CompanyID` |
 | Grid joins | Client, primary service, quotation, login | Same |
-| Export joins | Client + invoice details only | Same |
+| Export joins | Client + details, both with `CompanyID` | Same |
 | Notification | Once on search | Once on export, before `ExportXlsx` |
 | Sheet / file | `Invoice_Lines` / `{CompanyCode}_Advanced_Search_Invoices_{yyyyMMdd}` | `Invoice_Lines` / `Tax_Invoices_Export_{yyyyMMdd}` |
 
 Grid joins on `tbl_QuoPriSerTogather` are **not** CompanyID-scoped and can duplicate header rows if multiple primary-service rows exist for one quotation. Export does not use that join.
 
-Export joins `tbl_Invoice_details` on `Invoice_No` only. `Add_invoice` writes `d.CompanyID`, but Search/View export does not filter it.
+Export joins `tbl_Client` on `Client_Id` **and** `b.CompanyID = @CompanyID`, and `tbl_Invoice_details` on `Invoice_No` **and** `d.CompanyID = @CompanyID`. Header filter remains `a.CompanyID = @CompanyID`. Grid BindData joins are still unscoped (not changed in this iteration).
 
 ---
 
@@ -91,7 +91,7 @@ Written at create (`Add_invoice` / `Manual_Invoice`). List pages select a subset
 | `ExtInvoiceDate` | External invoice date; written at create | invoice-header | No | No | Written with header | Would duplicate |
 | `Quotation_No` | Source quotation / PO / verbal ref (`VERBAL` styled in UI). Manual invoice may store PO here | quotation / reference | Yes | No | Via header | Would duplicate |
 | `Quotation_Date` | Date shown as “Quo Date”. **Not** in current `Add_invoice` INSERT | quotation / reference | Yes (`FmtDate`) | Yes | Via header | Yes |
-| `Client_ID` | FK to `tbl_Client.Client_Id` | customer | Join only | Join only | Header only; client join has no `CompanyID` | Would duplicate |
+| `Client_ID` | FK to `tbl_Client.Client_Id` | customer | Join only | Join only | Header yes; **export join now also `b.CompanyID`**; grid join still unscoped | Would duplicate |
 | `Gross` | Header gross | invoice-header | Yes | No | Via header | Would duplicate |
 | `discount` | Header discount; UI if &gt; 0 | invoice-header | Conditional | No | Via header | Would duplicate |
 | `sub_total` | Stored header taxable. **Grid ignores this** and shows `Net_Amount - Service_Tax1` | tax | Derived UI, not stored column | No | Via header | Would duplicate |
@@ -136,19 +136,20 @@ Used only by export on Search/View (not by the repeater). Create writes the line
 | `specification` | Brand/spec; print concatenates into product name | item/product | No | No | Not on join | No (line) |
 | `ItemNo` | Line identity for pending-qty matching | item/product | No | No | Not on join | No (line) |
 | `AddedById` | Line creator | audit | No | No | Not on join | Would often match header |
-| `CompanyID` | Written at create | reference | No | **No — join does not use it** | Column exists; Search/View export does not filter it | Isolation gap if invoice numbers collide |
+| `CompanyID` | Written at create | reference | No | **Join predicate only; not a workbook column** | **Export join `d.CompanyID = @CompanyID`** | Isolation key |
 | `Sl_no` | Print orders by `CAST(Sl_no as int)`; create INSERT list does not include it | reference | No | No | Not on join | No (line) |
 
 ### 3.3 `tbl_Client` (alias `b`) — customer
 
 Search dropdown: `SELECT Client_Name FROM tbl_Client WHERE CompanyID = @CompanyID`.  
-List/export join: `b.Client_Id = a.Client_ID` **without** `b.CompanyID`.
+Export join: `b.Client_Id = a.Client_ID AND b.CompanyID = @CompanyID`.  
+Grid BindData join: `b.Client_Id = a.Client_ID` only (unchanged).
 
 | Column | Apparent meaning from usage | Class | UI | Export | CompanyID-scoped | Duplicate on line grain |
 |---|---|---|---|---|---|---|
 | `Client_Id` | Customer key | customer | Join / create lookup | Join only | Dropdown yes; list join no | Would duplicate |
-| `Client_Name` | Display name; Search equality / View `LIKE` | customer | Yes | Yes | Dropdown yes; list join no | Yes |
-| `CompanyID` | Tenant on master (`New_client` insert) | reference | Dropdown filter only | No | **Not applied on list/export join** | — |
+| `Client_Name` | Display name; Search equality / View `LIKE` | customer | Yes | Yes | Dropdown yes; **export join yes**; grid join no | Yes |
+| `CompanyID` | Tenant on master (`New_client` insert) | reference | Dropdown filter only | **Export join predicate only** | **Export join yes; grid join no** | — |
 | `Address1`, `City`, `pin`, `State` | Address; print + billing lookup on create | customer | No (list) | No | Print join has no CompanyID | Would duplicate |
 | `Address2` | Print only | customer | No | No | Not in these flows | Would duplicate |
 | `Service_tax_no` / `Pan_no` / `PlaceofSupply` | GSTIN / PAN / POS on print | tax / customer | No | No | Not in these flows | Would duplicate |
@@ -211,7 +212,7 @@ Facts from current code. Not a column-selection decision.
 |---|---|---|---|
 | Invoice identifiers | `Invoice_No`, `ID` (print), `ExtInvoiceNo` | Number and ERP yes; `ID` no | `ID` is print navigation, not a finance document number |
 | Quotation / reference | Header `Quotation_No` / `Quotation_Date`; line `Quotation_no` | Date yes; numbers no | Manual invoices can store PO in `Quotation_No`. Line `Quotation_no` is a **new join-free column on details** if ever added, but it is not in the export SELECT today |
-| Customer identifiers | `Client_Name`; `Client_ID` only as join | Name yes; id no | List join is not CompanyID-scoped |
+| Customer identifiers | `Client_Name`; `Client_ID` only as join | Name yes; id no | Export client join is CompanyID-scoped; grid BindData join is not |
 | Item / product | `Product_id`, `Product_name`, `ItemNo`, `specification` | Code and name yes | `ItemNo` / spec used at create and print, not list/export |
 | HSN / SAC / tax | Line `Product_Code`, `Service_tax_rate`; header GST flags and `Service_Tax1` | HSN, GST %, Tax Type yes; header GST amount no | Grid taxable is computed `Net_Amount - Service_Tax1`, not stored `sub_total`. Print uses `Service_Tax` |
 | Qty / rate / taxable | Line qty, rate, `Total_sail_rate2` / `Total_sail_rate1` | Yes | Keep existing `ISNULL` taxable fallback; do not change math |
@@ -225,15 +226,83 @@ Facts from current code. Not a column-selection decision.
 
 ---
 
-## 5. Isolation and grain (do not change in this PR)
+## 5. Isolation and grain
 
 - Preserve Search filters, View filters, `WHERE 1=1` on View, `LIKE @Client` on View, current-month default, ClosedXML, filenames, sheet name, and notification timing.
-- Do not add joins to export without a later mapping review. Grid already joins quotation / service / login; export does not.
-- Header money fields on a line-item sheet are duplicated by design today (`Invoice Grand Total`, `Freight`, `Other Charges`).
-- `tbl_Invoice_details.CompanyID` exists at write time and is unused on the export join.
+- Export tenant predicates (this iteration): `a.CompanyID`, `b.CompanyID`, and `d.CompanyID` all equal `@CompanyID`. `CompanyID` is not selected into the workbook.
+- Grid BindData joins for client / quotation / service / login remain unscoped (not part of this export correction).
+- Do not add a quotation join to export until a later iteration can constrain `q.CompanyID`.
+- Header money fields on a line-item sheet already repeat (`Invoice Grand Total`, `Freight`, `Other Charges`). Further header metadata increases that repetition.
 
 ---
 
-## 6. Stop point
+## 6. Proposed Export Mapping — Finance / Operations Review
 
-Workbook formatting in `InvoiceListHelper.ExportXlsx()` may stay (freeze row 1, table AutoFilter, header style, AutoFit, date vs timestamp number formats). Export SELECT lists stay as they were before the speculative reorder. No further enrichment or Status formatting until a data-mapping review chooses columns from this inventory.
+Workbook grain stays **one row per invoice line**. Header-level fields already exported (`Invoice Grand Total`, `Freight`, `Other Charges`, dates, tax type, created-by) repeat on every line. Do not add large amounts of header metadata unless the reporting need outweighs that duplication.
+
+`INCLUDE` / `OPTIONAL` / `EXCLUDE` below are **proposals only**. The live export SELECT list is unchanged in this iteration.
+
+### Header-level candidates
+
+| Source table | Source column | Proposed Excel label | Grain | Why useful | Duplicates per line | CompanyID safely constrained | Recommendation |
+|---|---|---|---|---|---|---|---|
+| `tbl_Invoice` | `Quotation_No` | Source Reference | Header | Ties the invoice to quotation / PO / `VERBAL`; already on the UI | Yes | Yes — column is on header `a` already filtered by `a.CompanyID` | **INCLUDE** |
+| `tbl_Quotation` | `PO_Number` | ARC / PO Number | Header | Shown as ARC on the grid; operations matching | Yes | **Not on export today.** Needs a new `tbl_Quotation` join with `q.CompanyID = @CompanyID` | **OPTIONAL** (blocked until a tenant-safe quotation join) |
+| `tbl_Quotation` | `DO_Number` | DO Number | Header | Shown as PO/DO on the grid | Yes | Same as `PO_Number` | **OPTIONAL** (blocked until a tenant-safe quotation join) |
+| `tbl_Invoice` | `ExtInvoiceDate` | ERP Date | Header | Pairs with existing `ERP Ref` | Yes | Yes — on `a` | **OPTIONAL** |
+| `tbl_Invoice` | `otherAmount1_name` | Other Charges Name | Header | Labels the existing Other Charges amount | Yes | Yes — on `a` | **OPTIONAL** |
+| `tbl_Invoice` | `discount` | Invoice Discount | Header | UI already shows it when &gt; 0; explains net vs gross | Yes | Yes — on `a` | **OPTIONAL** |
+| `tbl_Invoice` | `Gross` | Invoice Gross | Header | Header commercial total; Grand Total already exported | Yes | Yes — on `a` | **OPTIONAL** |
+| `tbl_Invoice` | `Service_Tax1` | Invoice GST Amount | Header | Grid GST amount; no GST component split exists in these queries | Yes | Yes — on `a` | **INCLUDE** |
+| `tbl_Invoice` | `SalesPersonCode` | Sales Person | Header | Written at create; ownership / commission | Yes | Yes — on `a` | **OPTIONAL** |
+| `tbl_Invoice` | `BillingAddress` | Billing Address | Header | Long text; print/create use it | Yes (wide) | Yes — on `a` | **EXCLUDE** unless finance/operations explicitly need it |
+| `tbl_Invoice` | `CompanyID` | — | Header | Tenant key | — | Isolation predicate only | **EXCLUDE** |
+| `tbl_Invoice` | `status1` | — | Header | Create inserts `'No'`; not used as invoice workflow status on these pages | Yes | On `a` | **EXCLUDE** |
+| `tbl_Invoice` | `status2` | — | Header | Active/Block at create; list does not filter it; values are not Cancelled/Pending/Credit | Yes | On `a` | **EXCLUDE** |
+| `tbl_Invoice` | `mailStatus` | — | Header | Mail module only; `mailDate` already exported | Yes | On `a` | **EXCLUDE** |
+
+### Line-level candidates
+
+| Source table | Source column | Proposed Excel label | Grain | Why useful | Duplicates per line | CompanyID safely constrained | Recommendation |
+|---|---|---|---|---|---|---|---|
+| `tbl_Invoice_details` | `Quotation_no` | Line Source Ref | Line | Source document on the line (`Add_invoice` `@RefNo`); may differ from header `Quotation_No` | No | Yes after export join `d.CompanyID` | **OPTIONAL** (only if it differs from header Source Reference in real data) |
+| `tbl_Invoice_details` | `discountRate` | Line Discount % | Line | Create/print already store/read it; explains line taxable | No | Yes — `d.CompanyID` | **INCLUDE** |
+| `tbl_Invoice_details` | `specification` | Specification | Line | Print concatenates into product name | No | Yes — `d.CompanyID` | **OPTIONAL** |
+| `tbl_Invoice_details` | `ItemNo` | Item No | Line | Pending-qty matching key at create | No | Yes — `d.CompanyID` | **OPTIONAL** |
+
+### Explicit excludes (not invoice-export flow, or duplicate master data)
+
+| Source table | Source column | Proposed Excel label | Grain | Why useful | Duplicates per line | CompanyID safely constrained | Recommendation |
+|---|---|---|---|---|---|---|---|
+| `tbl_invoice_payment` / `tbl_Quotation` | payment / `PaymentStatus` | — | Header | Payment lives on a different module | Yes | Not in current export flow | **EXCLUDE** |
+| `tbl_Quotation` | `DeliveryTenure` | — | Header | Delivery terms, not dispatch mode; no dispatch column in these flows | Yes | Would need quotation join | **EXCLUDE** |
+| `tbl_Client` | address / GSTIN / PAN / phone / email | — | Header | Customer master; `Client Name` already exported | Yes | Export client join is scoped; still master duplication | **EXCLUDE** unless an explicit reporting requirement |
+
+### Candidate list summary
+
+**INCLUDE (next implementation, no new tables):**
+
+- Header: `tbl_Invoice.Quotation_No` → Source Reference
+- Header: `tbl_Invoice.Service_Tax1` → Invoice GST Amount
+- Line: `tbl_Invoice_details.discountRate` → Line Discount %
+
+**OPTIONAL (only if review confirms the reporting need):**
+
+- Header: `ExtInvoiceDate`, `otherAmount1_name`, `discount`, `Gross`, `SalesPersonCode`
+- Header: `PO_Number`, `DO_Number` — only after a tenant-safe `tbl_Quotation` join (`q.CompanyID = @CompanyID`)
+- Line: `Quotation_no`, `specification`, `ItemNo`
+
+**EXCLUDE:**
+
+- `CompanyID` (any table) as a workbook column
+- `status1`, `status2`, `mailStatus`
+- `BillingAddress` unless explicitly requested
+- Payment / dispatch fields outside the current invoice export flow
+- Duplicated customer master fields (address, GSTIN, PAN, contact)
+
+---
+
+## 7. Stop point
+
+Do not change the exported column list until finance/operations accept the INCLUDE set. Tenant-safe export join predicates may ship independently of column enrichment.
+

@@ -157,8 +157,8 @@ namespace Bill_Software.corporate.business.app
                     a.otherAmount1 AS [Other Charges],
                     a.TimeStamp AS [Created Timestamp]
                     FROM tbl_Invoice AS a 
-                    LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID 
-                    LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No 
+                    LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID AND b.CompanyID = @CompanyID 
+                    LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No AND d.CompanyID = @CompanyID 
                     WHERE a.CompanyID = @CompanyID ";
 
                 SqlCommand cmd = new SqlCommand();
