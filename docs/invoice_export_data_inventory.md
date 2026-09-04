@@ -246,21 +246,23 @@ Facts from current code. Not a column-selection decision.
 
 Workbook grain stays **one row per invoice line**. Header-level fields already exported (`Invoice Grand Total`, `Freight`, `Other Charges`, GST amount, dates, tax type, created-by, source/PO/DO/service) repeat on every line.
 
-The **INCLUDE** set below is implemented in Search/View export SQL. `OPTIONAL` / `EXCLUDE` remain deferred.
+The **INCLUDE** set below is **IMPLEMENTED** in Search/View export SQL. `OPTIONAL` / `EXCLUDE` remain deferred.
+
+Verified service-name column: `tbl_QutPrimaryService.PrimaryService` (create/edit INSERT/SELECT). Grid `PServiceName` belongs to `tbl_QuoPriSerTogather` and is not used in export aggregation.
 
 ### Header-level candidates
 
 | Source table | Source column | Proposed Excel label | Grain | Why useful | Duplicates per line | CompanyID safely constrained | Recommendation |
 |---|---|---|---|---|---|---|---|
-| `tbl_Invoice` | `Quotation_No` | Source Reference | Header | Ties the invoice to quotation / PO / `VERBAL`; already on the UI | Yes | Yes — column is on header `a` already filtered by `a.CompanyID` | **INCLUDE** |
-| `tbl_Quotation` | `PO_Number` | PO Number | Header | Shown as ARC on the grid; operations matching | Yes | Yes — export join `q.CompanyID = @CompanyID` | **INCLUDE** |
-| `tbl_Quotation` | `DO_Number` | DO Number | Header | Shown as PO/DO on the grid | Yes | Yes — export join `q.CompanyID = @CompanyID` | **INCLUDE** |
-| `tbl_QutPrimaryService` | `PrimaryService` (aggregated) | Primary Service | Header | One comma-separated cell per quotation; `STUFF`/`FOR XML PATH` grouped by `qut_no` | Yes | Yes — aggregation `WHERE CompanyID = @CompanyID` | **INCLUDE** |
+| `tbl_Invoice` | `Quotation_No` | Source Reference | Header | Ties the invoice to quotation / PO / `VERBAL`; already on the UI | Yes | Yes — column is on header `a` already filtered by `a.CompanyID` | **IMPLEMENTED** |
+| `tbl_Quotation` | `PO_Number` | PO Number | Header | Shown as ARC on the grid; operations matching | Yes | Yes — export join `q.CompanyID = @CompanyID` | **IMPLEMENTED** |
+| `tbl_Quotation` | `DO_Number` | DO Number | Header | Shown as PO/DO on the grid | Yes | Yes — export join `q.CompanyID = @CompanyID` | **IMPLEMENTED** |
+| `tbl_QutPrimaryService` | `PrimaryService` (aggregated) | Primary Service | Header | One comma-separated cell per quotation; `STUFF`/`FOR XML PATH` grouped by `qut_no` | Yes | Yes — aggregation `WHERE CompanyID = @CompanyID` | **IMPLEMENTED** |
 | `tbl_Invoice` | `ExtInvoiceDate` | ERP Date | Header | Pairs with existing `ERP Ref` | Yes | Yes — on `a` | **OPTIONAL** |
 | `tbl_Invoice` | `otherAmount1_name` | Other Charges Name | Header | Labels the existing Other Charges amount | Yes | Yes — on `a` | **OPTIONAL** |
 | `tbl_Invoice` | `discount` | Invoice Discount | Header | UI already shows it when &gt; 0; explains net vs gross | Yes | Yes — on `a` | **OPTIONAL** |
 | `tbl_Invoice` | `Gross` | Invoice Gross | Header | Header commercial total; Grand Total already exported | Yes | Yes — on `a` | **OPTIONAL** |
-| `tbl_Invoice` | `Service_Tax1` | Invoice GST Amount | Header | Grid GST amount; no GST component split exists in these queries | Yes | Yes — on `a` | **INCLUDE** |
+| `tbl_Invoice` | `Service_Tax1` | Invoice GST Amount | Header | Grid GST amount; no GST component split exists in these queries | Yes | Yes — on `a` | **IMPLEMENTED** |
 | `tbl_Invoice` | `SalesPersonCode` | Sales Person | Header | Written at create; ownership / commission | Yes | Yes — on `a` | **OPTIONAL** |
 | `tbl_Invoice` | `BillingAddress` | Billing Address | Header | Long text; print/create use it | Yes (wide) | Yes — on `a` | **EXCLUDE** unless finance/operations explicitly need it |
 | `tbl_Invoice` | `CompanyID` | — | Header | Tenant key | — | Isolation predicate only | **EXCLUDE** |
@@ -273,7 +275,7 @@ The **INCLUDE** set below is implemented in Search/View export SQL. `OPTIONAL` /
 | Source table | Source column | Proposed Excel label | Grain | Why useful | Duplicates per line | CompanyID safely constrained | Recommendation |
 |---|---|---|---|---|---|---|---|
 | `tbl_Invoice_details` | `Quotation_no` | Line Source Ref | Line | Source document on the line (`Add_invoice` `@RefNo`); may differ from header `Quotation_No` | No | Yes after export join `d.CompanyID` | **OPTIONAL** (only if it differs from header Source Reference in real data) |
-| `tbl_Invoice_details` | `discountRate` | Line Discount % | Line | Create/print already store/read it; explains line taxable | No | Yes — `d.CompanyID` | **INCLUDE** |
+| `tbl_Invoice_details` | `discountRate` | Line Discount % | Line | Create/print already store/read it; explains line taxable | No | Yes — `d.CompanyID` | **IMPLEMENTED** |
 | `tbl_Invoice_details` | `specification` | Specification | Line | Print concatenates into product name | No | Yes — `d.CompanyID` | **OPTIONAL** |
 | `tbl_Invoice_details` | `ItemNo` | Item No | Line | Pending-qty matching key at create | No | Yes — `d.CompanyID` | **OPTIONAL** |
 
@@ -287,7 +289,7 @@ The **INCLUDE** set below is implemented in Search/View export SQL. `OPTIONAL` /
 
 ### Candidate list summary
 
-**INCLUDE (implemented):**
+**IMPLEMENTED:**
 
 - Header: `tbl_Invoice.Quotation_No` → Source Reference
 - Header: `tbl_Quotation.PO_Number` → PO Number
@@ -313,5 +315,5 @@ The **INCLUDE** set below is implemented in Search/View export SQL. `OPTIONAL` /
 
 ## 7. Stop point
 
-INCLUDE columns are in the Search/View export SELECT. Remaining OPTIONAL fields stay deferred. Do not add `CompanyID` to the workbook.
+IMPLEMENTED columns are in the Search/View export SELECT. Remaining OPTIONAL fields stay deferred. Do not add `CompanyID` to the workbook. Grid BindData is unchanged.
 
