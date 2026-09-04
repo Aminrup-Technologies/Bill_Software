@@ -47,9 +47,11 @@ namespace Bill_Software.corporate.business.app
             ConvertColumn(dt, "Created Timestamp", typeof(DateTime), ParseDate);
             ConvertColumn(dt, "Qty", typeof(double), ParseNum);
             ConvertColumn(dt, "Rate", typeof(double), ParseNum);
+            ConvertColumn(dt, "Line Discount %", typeof(double), ParseNum);
             ConvertColumn(dt, "Taxable Value", typeof(double), ParseNum);
             ConvertColumn(dt, "GST %", typeof(double), ParseNum);
             ConvertColumn(dt, "Item Net Value", typeof(double), ParseNum);
+            ConvertColumn(dt, "Invoice GST Amount", typeof(double), ParseNum);
             ConvertColumn(dt, "Invoice Grand Total", typeof(double), ParseNum);
             ConvertColumn(dt, "Freight", typeof(double), ParseNum);
             ConvertColumn(dt, "Other Charges", typeof(double), ParseNum);
@@ -61,22 +63,36 @@ namespace Bill_Software.corporate.business.app
             {
                 var ws = wb.Worksheets.Add(dt, sheetName);
 
-                var headerRow = ws.Row(1);
-                headerRow.Style.Font.Bold = true;
-                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#19658A");
-                headerRow.Style.Font.FontColor = XLColor.White;
-                headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                int lastCol = ws.LastColumnUsed().ColumnNumber();
+                int lastRow = ws.LastRowUsed().RowNumber();
+                var usedRange = ws.Range(1, 1, lastRow, lastCol);
+
+                var headerRange = ws.Range(1, 1, 1, lastCol);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                headerRange.Style.Alignment.WrapText = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#D9D9D9");
+                headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                 ws.SheetView.FreezeRows(1);
+                if (ws.Tables.Any())
+                {
+                    foreach (var table in ws.Tables)
+                        table.ShowAutoFilter = true;
+                }
+                else
+                {
+                    usedRange.SetAutoFilter();
+                }
 
-                FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date", "Created Timestamp" }, "dd-MMM-yyyy");
-                FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice Grand Total", "Freight", "Other Charges" }, "#,##0.00");
+                FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date" }, "dd-MMM-yyyy");
+                FormatNamedColumns(ws, new[] { "Created Timestamp" }, "dd-MMM-yyyy hh:mm tt");
+                FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice GST Amount", "Invoice Grand Total", "Freight", "Other Charges" }, "#,##0.00");
                 FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.###");
-                FormatNamedColumns(ws, new[] { "GST %" }, "0.00");
+                FormatNamedColumns(ws, new[] { "GST %", "Line Discount %" }, "0.00");
 
                 ws.Columns().AdjustToContents();
-                ws.Column(7).Width = 35;
-                ws.Style.Alignment.WrapText = true;
 
                 response.Clear();
                 response.Buffer = true;
