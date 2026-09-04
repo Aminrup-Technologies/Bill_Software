@@ -19,7 +19,7 @@
         </nav>
 
         <div class="page-shell">
-        <div class="a4-container a4-preview document-shadow">
+        <div class="a4-container a4-preview a4-paper document-shadow">
             <table class="master-table">
 
                 <thead id="header">
