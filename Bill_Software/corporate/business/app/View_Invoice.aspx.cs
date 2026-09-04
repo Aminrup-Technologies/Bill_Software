@@ -130,13 +130,13 @@ namespace Bill_Software.corporate.business.app
                     d.Service_tax_rate AS [GST %],
                     d.Total_sail_rate1 AS [Item Net Value],
                     a.Net_Amount AS [Invoice Grand Total],
-                    a.AddedById AS [Created By],
                     a.Quotation_Date AS [Quotation Date],
                     a.mailDate AS [Mail Date],
                     CASE WHEN a.cgstOrsgst = 'YES' THEN 'CGST/SGST' WHEN a.igst = 'YES' THEN 'IGST' ELSE 'TAX' END AS [Tax Type],
                     a.Delivery_Amount AS [Freight],
                     a.otherAmount1 AS [Other Charges],
-                    a.TimeStamp AS [Created Timestamp]
+                    a.TimeStamp AS [Created Timestamp],
+                    a.AddedById AS [Created By]
                     FROM tbl_Invoice AS a 
                     LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID 
                     LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No 

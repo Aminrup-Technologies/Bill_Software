@@ -61,22 +61,38 @@ namespace Bill_Software.corporate.business.app
             {
                 var ws = wb.Worksheets.Add(dt, sheetName);
 
-                var headerRow = ws.Row(1);
-                headerRow.Style.Font.Bold = true;
-                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#19658A");
-                headerRow.Style.Font.FontColor = XLColor.White;
-                headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                int lastCol = ws.LastColumnUsed().ColumnNumber();
+                int lastRow = ws.LastRowUsed().RowNumber();
+                var usedRange = ws.Range(1, 1, lastRow, lastCol);
+
+                var headerRange = ws.Range(1, 1, 1, lastCol);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                headerRange.Style.Alignment.WrapText = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#D9D9D9");
+                headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                 ws.SheetView.FreezeRows(1);
+                if (ws.Tables.Any())
+                {
+                    foreach (var table in ws.Tables)
+                        table.ShowAutoFilter = true;
+                }
+                else
+                {
+                    usedRange.SetAutoFilter();
+                }
 
-                FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date", "Created Timestamp" }, "dd-MMM-yyyy");
+                FormatNamedColumns(ws, new[] { "Invoice Date", "Quotation Date", "Mail Date" }, "dd-MMM-yyyy");
+                FormatNamedColumns(ws, new[] { "Created Timestamp" }, "dd-MMM-yyyy hh:mm tt");
                 FormatNamedColumns(ws, new[] { "Rate", "Taxable Value", "Item Net Value", "Invoice Grand Total", "Freight", "Other Charges" }, "#,##0.00");
                 FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.###");
                 FormatNamedColumns(ws, new[] { "GST %" }, "0.00");
 
+                ApplyStatusConditionalFormatting(ws, lastRow);
+
                 ws.Columns().AdjustToContents();
-                ws.Column(7).Width = 35;
-                ws.Style.Alignment.WrapText = true;
 
                 response.Clear();
                 response.Buffer = true;
@@ -92,6 +108,20 @@ namespace Bill_Software.corporate.business.app
                     response.End();
                 }
             }
+        }
+
+        private static void ApplyStatusConditionalFormatting(IXLWorksheet ws, int lastRow)
+        {
+            if (lastRow < 2) return;
+            var statusHeader = ws.Row(1).CellsUsed().FirstOrDefault(c =>
+                string.Equals(Convert.ToString(c.Value), "Status", StringComparison.OrdinalIgnoreCase));
+            if (statusHeader == null) return;
+
+            int col = statusHeader.Address.ColumnNumber;
+            var statusRange = ws.Range(2, col, lastRow, col);
+            statusRange.AddConditionalFormat().WhenEquals("Cancelled").Fill.BackgroundColor = XLColor.FromHtml("#F8D7DA");
+            statusRange.AddConditionalFormat().WhenEquals("Pending").Fill.BackgroundColor = XLColor.FromHtml("#FFF3CD");
+            statusRange.AddConditionalFormat().WhenEquals("Credit").Fill.BackgroundColor = XLColor.FromHtml("#D1ECF1");
         }
 
         private static void FormatNamedColumns(IXLWorksheet ws, string[] names, string format)
