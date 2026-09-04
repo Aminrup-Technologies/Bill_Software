@@ -7,61 +7,18 @@
     <title>Purchase Order Page</title>
     <link rel="shortcut icon" href="../../Image/kvqafabioc.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="DocumentPrint.css" />
 
     <style type="text/css">
-        /* --- Screen/Browser View Styles --- */
-        html, body {
-            overflow-x: clip;
+        /* Viewer-only adaptive geometry. Document density comes from DocumentPrint.css tokens. */
+        .tb-btn-pdf { background: #e31e24; }
+
+        .client-toolbar[hidden],
+        .js-hidden {
+            display: none !important;
         }
 
-        body {
-            font-family: 'Century Gothic', sans-serif;
-            font-size: 13px;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            background-color: #e8eaed; /* Soft gray workspace for A4 preview */
-        }
-
-        .preview-toolbar {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            text-align: center;
-            padding: 12px 16px;
-            margin-bottom: 0;
-            background-color: #fff;
-            border-bottom: 1px solid #d0d5dd;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-        }
-
-        .page-shell {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            width: 100%;
-            padding: 24px 16px 40px;
-            overflow-x: hidden;
-            box-sizing: border-box;
-        }
-
-        .a4-container {
-            max-width: 844px; /* Print / PDF baseline */
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px 40px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-            box-sizing: border-box;
-        }
-
-        .a4-preview {
-            width: 210mm;
-            min-height: 297mm;
-            max-width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Adaptive A4 viewer — screen only. Print and PDF capture use 210mm A4. */
+        /* Adaptive A4 viewer — screen only. Print renderer stays 210mm. */
         @media screen {
             .page-shell {
                 display: flex;
@@ -74,68 +31,19 @@
             .a4-container.a4-preview {
                 width: min(94vw, 1120px);
                 max-width: 1120px;
+                min-width: 0;
                 box-sizing: border-box;
-                padding: 8px 22px 20px;
+                padding: var(--po-header-top) var(--po-paper-padding-x) var(--po-paper-padding-bottom);
             }
 
             .a4-preview {
                 width: 100%;
+                max-width: 1120px;
+                min-width: 0;
                 aspect-ratio: 210 / 297;
                 min-height: auto;
                 height: auto;
                 font-size: 14px;
-            }
-
-            .a4-preview thead th {
-                padding-top: 0;
-                padding-bottom: 4px !important;
-            }
-
-            .a4-preview thead table {
-                margin-top: 4px !important;
-            }
-
-            .a4-preview #bodycontain > tr > td {
-                padding-top: 10px !important;
-            }
-
-            .a4-preview thead img,
-            .a4-preview tfoot img {
-                width: 100%;
-                height: auto;
-                display: block;
-            }
-
-            .a4-preview h2 {
-                font-size: 17px !important;
-            }
-
-            .a4-preview h3 {
-                font-size: 16px;
-            }
-
-            .a4-preview .term-title {
-                font-size: 13px;
-            }
-
-            .a4-preview #bodycontain tfoot td {
-                font-size: 15px !important;
-            }
-
-            .a4-preview .master-table,
-            .a4-preview .content-table,
-            .a4-preview .PaymentPhase,
-            .a4-preview table[style*="border:2px solid"] {
-                width: 100%;
-                max-width: 100%;
-                table-layout: fixed;
-            }
-
-            .a4-preview table.FORKVQAEAST,
-            .a4-preview table.info-split,
-            .a4-preview table.info-split table {
-                max-width: 100%;
-                table-layout: auto;
             }
 
             .a4-preview td,
@@ -178,53 +86,121 @@
             }
         }
 
-        .document-shadow {
-            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-        }
-
-        .client-toolbar {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .client-toolbar[hidden],
-        .js-hidden {
-            display: none !important;
-        }
-
-        .tb-btn {
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            color: #fff;
-            font-family: inherit;
-            font-size: 13px;
-            border-radius: 4px;
-        }
-
-        .tb-btn-primary { background: #007bff; }
-        .tb-btn-secondary { background: #555; }
-        .tb-btn-pdf { background: #e31e24; }
-
-        /* Base Table Styling */
-        .master-table { width: 100%; border-collapse: collapse; }
-        .content-table { border-collapse: collapse; width: 100%; }
-        th, td { padding: 4px 6px; vertical-align: top; }
-        
-        .bold { font-weight: bold; }
-        .gap { line-height: 5px; height: 5px; }
-        
-        .term-title { font-weight: bold; width: 30%; color: #444; }
-        .term-desc { font-weight: normal; width: 70%; text-align: justify; }
-
-        /* Headers & Footers Visibility Logic (Triggered by JS on buttons) */
-        .header, .footer, .hide { visibility: hidden; }
-
         /* --- THE PRINT MAGIC FIX --- */
         @media print {
+            html, body, form {
+                display: block !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+
+            body { 
+                background-color: transparent; 
+                padding: 0; 
+            }
+            .a4-container { 
+                box-shadow: none; 
+                padding: 0; 
+                max-width: 210mm;
+                width: 210mm;
+                aspect-ratio: auto;
+            }
+            
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Hide both toolbars when printing */
+            #print-controls,
+            .preview-toolbar,
+            .client-toolbar { display: none !important; }
+
+            .page-shell {
+                display: block !important;
+                flex-direction: unset;
+                justify-content: unset;
+                align-items: unset;
+                width: auto;
+                padding: 0 !important;
+                background: transparent;
+                overflow: visible;
+            }
+
+            .a4-container.a4-preview,
+            .a4-preview {
+                display: block;
+                width: 210mm !important;
+                max-width: 210mm !important;
+                min-height: 0 !important;
+                height: auto !important;
+                aspect-ratio: auto !important;
+                margin: 0;
+                font-size: 13px;
+            }
+
+            .master-table,
+            .content-table,
+            .PaymentPhase,
+            table[style*="border:2px solid"],
+            table:not(.FORKVQAEAST) {
+                table-layout: auto;
+            }
+
+            td, th {
+                overflow-wrap: normal;
+                word-break: normal;
+            }
+
+            table.info-split,
+            table.info-split > tbody {
+                display: table;
+                width: 100%;
+            }
+
+            table.info-split > tbody > tr {
+                display: table-row;
+            }
+
+            table.info-split > tbody > tr > td {
+                display: table-cell;
+            }
+
+            .document-shadow {
+                box-shadow: none !important;
+            }
+
+            /* Native HTML repeating headers and footers without overlapping */
+            .master-table { page-break-inside: auto; }
+            .master-table > tbody > tr,
+            .master-table > tbody > tr > td {
+                page-break-inside: auto;
+                page-break-after: auto;
+            }
+            .a4-preview table:not(.master-table) tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            
+            /* Ensure images scale correctly within A4 boundaries */
+            thead img, tfoot img { width: 100%; max-width: 844px; display: block; }
+
+            .pagebrake { page-break-inside: avoid; }
+            .pagebrake1 { page-break-before: always; }
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
+        }
+    </style>
             html, body, form {
                 display: block !important;
                 width: auto !important;
