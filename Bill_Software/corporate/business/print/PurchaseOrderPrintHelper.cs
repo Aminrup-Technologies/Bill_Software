@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.Text;
 using System.Threading;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
@@ -111,6 +110,12 @@ namespace Bill_Software.corporate.business.print
         public string subamount = "";
         public double TQ = 0;
         private string viewtype = string.Empty;
+        private string discountView;
+        private string tcsAmount;
+        private string freightAmount;
+        private string otherChargeName;
+        private string otherChargeAmount;
+        private string pserTerm;
 
         private void buindalldata(string id)
         {
@@ -132,8 +137,6 @@ namespace Bill_Software.corporate.business.print
                     lbldate.Text = qdate.ToString("dd-MMM-yyyy");
                 else
                     lbldate.Text = "No Data";
-
-                page.Session["Quotation_date"] = lbldate.Text;
 
                 string clientid = dtmain.Rows[0]["Client_Id"].ToString();
                 lblClientCode.Text = Label2.Text = clientid;
@@ -187,16 +190,13 @@ namespace Bill_Software.corporate.business.print
                 subamount = sub_total;
                 netamount = dtmain.Rows[0]["Net_amount"].ToString();
 
-                page.Session["cgstOrsgst"] = dtmain.Rows[0]["cgstOrsgst"].ToString();
-                page.Session["igst"] = dtmain.Rows[0]["igst"].ToString();
                 viewtype = dtmain.Rows[0]["DetailedView"].ToString();
 
-                // Store extra charges and discount view in session for the Buindamount method
-                page.Session["DiscountView"] = dtmain.Rows[0]["DiscountView"].ToString();
-                page.Session["TCS_Amount"] = dtmain.Rows[0]["TCS_Amount"].ToString();
-                page.Session["Freight_Amount"] = dtmain.Rows[0]["Freight_Amount"].ToString();
-                page.Session["OtherCharge_Name"] = dtmain.Rows[0]["OtherCharge_Name"].ToString();
-                page.Session["OtherCharge_Amount"] = dtmain.Rows[0]["OtherCharge_Amount"].ToString();
+                discountView = dtmain.Rows[0]["DiscountView"].ToString();
+                tcsAmount = dtmain.Rows[0]["TCS_Amount"].ToString();
+                freightAmount = dtmain.Rows[0]["Freight_Amount"].ToString();
+                otherChargeName = dtmain.Rows[0]["OtherCharge_Name"].ToString();
+                otherChargeAmount = dtmain.Rows[0]["OtherCharge_Amount"].ToString();
 
                 // Handle Validity based on Record Type
                 string recordType = dtmain.Rows[0]["RecordType"].ToString();
@@ -404,7 +404,7 @@ namespace Bill_Software.corporate.business.print
                         strServTerm.Append(" </table>");
                     }
                 }
-                if (page.Session["pserTerm"] != null)
+                if (pserTerm != null)
                 {
                     lblPrimaryServicePoint.Text = strServTerm.ToString();
                 }
@@ -446,8 +446,7 @@ namespace Bill_Software.corporate.business.print
             {
                 for (int i = 0; i < dtpSer.Rows.Count; i++)
                 {
-                    string pserTerm = dtpSer.Rows[i]["PSerTer"].ToString();
-                    page.Session["pserTerm"] = pserTerm;
+                    pserTerm = dtpSer.Rows[i]["PSerTer"].ToString();
                     strServTerm.Append("<tr><td class='' style='text-align: justify; font-weight: 100;  vertical-align: top'><i class='fa fa-arrow-circle-right' style='color: #c8152a'></i></td>");
                     strServTerm.Append("<td class='' style='text-align: justify;  font-weight: 100'>");
                     strServTerm.Append("" + pserTerm + "");
@@ -475,18 +474,16 @@ namespace Bill_Software.corporate.business.print
             if (dtp.Rows.Count > 0)
             {
                 // Verify visibility settings and extra charges
-                bool showDiscount = page.Session["DiscountView"] != null && page.Session["DiscountView"].ToString() == "Yes";
+                bool showDiscount = discountView != null && discountView == "Yes";
 
                 double tcsAmt = 0;
-                double.TryParse(page.Session["TCS_Amount"]?.ToString(), out tcsAmt);
+                double.TryParse(tcsAmount, out tcsAmt);
 
                 double freightAmt = 0;
-                double.TryParse(page.Session["Freight_Amount"]?.ToString(), out freightAmt);
+                double.TryParse(freightAmount, out freightAmt);
 
                 double otherAmt = 0;
-                double.TryParse(page.Session["OtherCharge_Amount"]?.ToString(), out otherAmt);
-
-                string otherChargeName = page.Session["OtherCharge_Name"]?.ToString();
+                double.TryParse(otherChargeAmount, out otherAmt);
 
                 double new_SUBTOTAL = 0;
                 double new_TOTALGST = 0;
@@ -724,9 +721,10 @@ namespace Bill_Software.corporate.business.print
 
         private void BindRepresentative(string clientid)
         {
-            string query = "select Representative_name,Designation,Phone_no,Email,RepTitle,RepLastName from tbl_representative where Copany_Id=@Copany_Id";
+            string query = "select Representative_name,Designation,Phone_no,Email,RepTitle,RepLastName from tbl_representative where Copany_Id=@Copany_Id AND CompanyID=@CompanyID";
             SqlParameter[] pram = {
-            new SqlParameter("@Copany_Id",clientid)
+            new SqlParameter("@Copany_Id",clientid),
+            new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
             };
             dtRepre = DbCL.SPreturn_dt(query, pram);
             if (dtRepre.Rows.Count > 0)
