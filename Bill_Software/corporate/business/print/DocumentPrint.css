@@ -36,7 +36,9 @@ body {
 }
 
 .a4-container {
+    width: 210mm;
     max-width: 210mm;
+    min-height: 297mm;
     margin: 0 auto;
     background-color: #fff;
     padding: 20px 40px;
@@ -44,11 +46,15 @@ body {
     box-sizing: border-box;
 }
 
-.a4-preview {
+.a4-preview,
+.a4-paper {
     width: 210mm;
+    min-width: 210mm;
     min-height: 297mm;
     max-width: 210mm;
+    height: auto;
     box-sizing: border-box;
+    background-color: #fff;
 }
 
 @media screen {
@@ -56,22 +62,11 @@ body {
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        padding: 20px 4vw 40px;
+        overflow-x: auto;
     }
 
-    .a4-container,
-    .a4-container.a4-preview {
-        width: min(94vw, 1120px);
-        max-width: 1120px;
-        box-sizing: border-box;
-    }
-
-    .a4-preview {
-        width: 100%;
-        max-width: 1120px;
-        aspect-ratio: 210 / 297;
-        min-height: auto;
-        height: auto;
+    .a4-paper {
+        flex-shrink: 0;
     }
 }
 
