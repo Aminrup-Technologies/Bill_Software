@@ -2,9 +2,9 @@
 
 **When:** 2026-09-04  
 **Why:** Column selection for the Search Invoice / View Invoice Excel export must wait until finance and operations can map fields from actual application usage, not from schema existence or speculative enrichment.  
-**What:** Read-only inventory of tables and columns involved in invoice generation and in the current Search Invoice / View Invoice display and export SQL, plus a proposed export mapping for finance/operations review. Export SELECT columns are not changed in this iteration.
+**What:** Inventory of invoice Search/View data sources and the implemented Finance/Operations export mapping. Export SELECT columns follow the INCLUDE set; OPTIONAL fields remain deferred.
 
-This document does **not** implement additional export columns.
+This document records the implemented INCLUDE export columns. OPTIONAL fields remain deferred.
 
 **Sources (code only, no live database):**
 
