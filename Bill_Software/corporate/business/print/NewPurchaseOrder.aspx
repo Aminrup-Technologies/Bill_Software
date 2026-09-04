@@ -64,24 +64,25 @@
         /* Adaptive A4 viewer — screen only. Print and PDF capture use 210mm A4. */
         @media screen {
             .page-shell {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
                 padding: 20px 4vw 40px;
             }
 
-            .a4-container.a4-preview,
-            .a4-preview {
+            .a4-container,
+            .a4-container.a4-preview {
                 width: min(94vw, 1120px);
-                max-width: 100%;
-                aspect-ratio: 210 / 297;
-                min-height: auto;
-                height: auto;
-            }
-
-            .a4-container {
-                max-width: 100%;
+                max-width: 1120px;
+                box-sizing: border-box;
                 padding: 8px 22px 20px;
             }
 
             .a4-preview {
+                width: 100%;
+                aspect-ratio: 210 / 297;
+                min-height: auto;
+                height: auto;
                 font-size: 14px;
             }
 
@@ -638,7 +639,7 @@
             var url = 'NewPurchaseOrder_Print.aspx?ID=' + encodeURIComponent(getPoId())
                 + '&letterhead=' + letterhead
                 + '&autoprint=1';
-            window.open(url, '_blank');
+            window.location.href = url;
         }
 
         function printWithLetterhead() {

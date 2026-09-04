@@ -51,6 +51,30 @@ body {
     box-sizing: border-box;
 }
 
+@media screen {
+    .page-shell {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 20px 4vw 40px;
+    }
+
+    .a4-container,
+    .a4-container.a4-preview {
+        width: min(94vw, 1120px);
+        max-width: 1120px;
+        box-sizing: border-box;
+    }
+
+    .a4-preview {
+        width: 100%;
+        max-width: 1120px;
+        aspect-ratio: 210 / 297;
+        min-height: auto;
+        height: auto;
+    }
+}
+
 .document-shadow {
     box-shadow: 0 4px 24px rgba(0,0,0,0.12);
 }
