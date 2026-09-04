@@ -1,4 +1,14 @@
-/* Static A4 print renderer — 210mm portrait. Do not use on the adaptive viewer. */
+/* Static A4 print renderer — 210mm portrait. Viewer may consume tokens only. */
+
+:root {
+    --po-paper-width: 210mm;
+    --po-paper-height: 297mm;
+    --po-header-top: 8px;
+    --po-header-gap: 4px;
+    --po-body-gap: 10px;
+    --po-paper-padding-x: 22px;
+    --po-paper-padding-bottom: 20px;
+}
 
 html, body {
     overflow-x: clip;
@@ -36,22 +46,17 @@ body {
 }
 
 .a4-container {
-    width: 210mm;
-    max-width: 210mm;
-    min-height: 297mm;
     margin: 0 auto;
     background-color: #fff;
-    padding: 20px 40px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
     box-sizing: border-box;
 }
 
-.a4-preview,
-.a4-paper {
-    width: 210mm;
-    min-width: 210mm;
-    min-height: 297mm;
-    max-width: 210mm;
+.a4-paper,
+.a4-container.a4-paper {
+    width: var(--po-paper-width);
+    min-width: var(--po-paper-width);
+    min-height: var(--po-paper-height);
+    max-width: var(--po-paper-width);
     height: auto;
     box-sizing: border-box;
     background-color: #fff;
@@ -67,6 +72,29 @@ body {
 
     .a4-paper {
         flex-shrink: 0;
+        padding: var(--po-header-top) var(--po-paper-padding-x) var(--po-paper-padding-bottom);
+        box-sizing: border-box;
+        background-color: #fff;
+    }
+
+    .a4-paper thead th {
+        padding-top: 0;
+        padding-bottom: var(--po-header-gap) !important;
+    }
+
+    .a4-paper thead table {
+        margin-top: var(--po-header-gap) !important;
+    }
+
+    .a4-paper #bodycontain > tr > td {
+        padding-top: var(--po-body-gap) !important;
+    }
+
+    .a4-paper thead img,
+    .a4-paper tfoot img {
+        width: 100%;
+        height: auto;
+        display: block;
     }
 }
 

@@ -7,6 +7,7 @@
     <title>Purchase Order Page</title>
     <link rel="shortcut icon" href="../../Image/kvqafabioc.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="DocumentPrint.css" />
 
     <style type="text/css">
         /* --- Screen/Browser View Styles --- */
@@ -75,7 +76,7 @@
                 width: min(94vw, 1120px);
                 max-width: 1120px;
                 box-sizing: border-box;
-                padding: 8px 22px 20px;
+                padding: var(--po-header-top) var(--po-paper-padding-x) var(--po-paper-padding-bottom);
             }
 
             .a4-preview {
@@ -88,15 +89,15 @@
 
             .a4-preview thead th {
                 padding-top: 0;
-                padding-bottom: 4px !important;
+                padding-bottom: var(--po-header-gap) !important;
             }
 
             .a4-preview thead table {
-                margin-top: 4px !important;
+                margin-top: var(--po-header-gap) !important;
             }
 
             .a4-preview #bodycontain > tr > td {
-                padding-top: 10px !important;
+                padding-top: var(--po-body-gap) !important;
             }
 
             .a4-preview thead img,
