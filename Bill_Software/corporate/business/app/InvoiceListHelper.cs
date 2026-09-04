@@ -90,8 +90,6 @@ namespace Bill_Software.corporate.business.app
                 FormatNamedColumns(ws, new[] { "Qty" }, "#,##0.###");
                 FormatNamedColumns(ws, new[] { "GST %" }, "0.00");
 
-                ApplyStatusConditionalFormatting(ws, lastRow);
-
                 ws.Columns().AdjustToContents();
 
                 response.Clear();
@@ -108,20 +106,6 @@ namespace Bill_Software.corporate.business.app
                     response.End();
                 }
             }
-        }
-
-        private static void ApplyStatusConditionalFormatting(IXLWorksheet ws, int lastRow)
-        {
-            if (lastRow < 2) return;
-            var statusHeader = ws.Row(1).CellsUsed().FirstOrDefault(c =>
-                string.Equals(Convert.ToString(c.Value), "Status", StringComparison.OrdinalIgnoreCase));
-            if (statusHeader == null) return;
-
-            int col = statusHeader.Address.ColumnNumber;
-            var statusRange = ws.Range(2, col, lastRow, col);
-            statusRange.AddConditionalFormat().WhenEquals("Cancelled").Fill.BackgroundColor = XLColor.FromHtml("#F8D7DA");
-            statusRange.AddConditionalFormat().WhenEquals("Pending").Fill.BackgroundColor = XLColor.FromHtml("#FFF3CD");
-            statusRange.AddConditionalFormat().WhenEquals("Credit").Fill.BackgroundColor = XLColor.FromHtml("#D1ECF1");
         }
 
         private static void FormatNamedColumns(IXLWorksheet ws, string[] names, string format)
