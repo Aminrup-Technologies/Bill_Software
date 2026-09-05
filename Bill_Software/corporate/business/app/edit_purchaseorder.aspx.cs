@@ -50,10 +50,11 @@ namespace Bill_Software.corporate.business.app
             {
                 conn.Open();
 
-                // 1. GLOBAL RESOURCE: Sales Persons
-                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 ORDER BY Name";
+                // 1. ISOLATED RESOURCE: Sales Persons
+                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompanyID ORDER BY Name";
                 using (SqlCommand cmd = new SqlCommand(salesQuery, conn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
                         DataTable dtSales = new DataTable();
@@ -1081,7 +1082,15 @@ namespace Bill_Software.corporate.business.app
                     decimal otherAmount = ParseDecimal(txt_othr_amnt.Text);
                     decimal finalNet = Math.Round(new_Gross_amount + tcsAmount + deliveryAmount + otherAmount, 2);
 
-                    string updateHeader = @"UPDATE tbl_Quotation SET Gross = @Gross, Service_tax = @STax, Net_amount = @Net, service_tax1 = @STax1, sub_total = @SubT, ModifiedById = @ModBy, ModifiedOn = GETDATE(), SalesPersonId = @SalesPersonId 
+                    string itemview = DDL_ItemViewType.SelectedItem.Text?.Trim();
+                    if (string.IsNullOrEmpty(itemview) || itemview == "--SELECT--")
+                    {
+                        Quotation existing = GetQuotationByNo(qno);
+                        if (existing != null && !string.IsNullOrEmpty(existing.DetailedView))
+                            itemview = existing.DetailedView;
+                    }
+
+                    string updateHeader = @"UPDATE tbl_Quotation SET Gross = @Gross, Service_tax = @STax, Net_amount = @Net, service_tax1 = @STax1, sub_total = @SubT, ModifiedById = @ModBy, ModifiedOn = GETDATE(), SalesPersonId = @SalesPersonId, DetailedView = @DView 
                                             WHERE Quotation_no = @QNo AND CompanyID = @CompanyID";
 
                     using (SqlCommand hCmd = new SqlCommand(updateHeader, conn, trans))
@@ -1094,6 +1103,7 @@ namespace Bill_Software.corporate.business.app
                         hCmd.Parameters.AddWithValue("@ModBy", userId);
                         hCmd.Parameters.AddWithValue("@QNo", qno);
                         hCmd.Parameters.AddWithValue("@SalesPersonId", cmbSalesPerson.SelectedValue == "0" ? DBNull.Value : (object)cmbSalesPerson.SelectedValue);
+                        hCmd.Parameters.AddWithValue("@DView", (object)itemview ?? DBNull.Value);
                         hCmd.Parameters.AddWithValue("@CompanyID", companyId);
                         hCmd.ExecuteNonQuery();
                     }
