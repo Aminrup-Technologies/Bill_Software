@@ -195,7 +195,7 @@ namespace Bill_Software.corporate.business.app
                         q.Remarks AS [Doc Remarks]
                     FROM tbl_Quotation q
                     LEFT JOIN tbl_Client c ON q.Client_Id = c.Client_Id
-                    LEFT JOIN tbl_Quotaion_details qd ON q.Quotation_no = qd.Quotation_no AND qd.IsDeleted = 0
+                    LEFT JOIN tbl_Quotaion_details qd ON q.Quotation_no = qd.Quotation_no AND qd.CompanyID = @CompanyID AND ISNULL(qd.IsLatest, 1) = 1 AND ISNULL(qd.IsDeleted, 0) = 0
                     WHERE q.RecordType != 'Quotation' 
                       AND q.CompanyID = @CompanyID ");
 
