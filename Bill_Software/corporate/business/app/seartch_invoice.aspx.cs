@@ -143,7 +143,7 @@ namespace Bill_Software.corporate.business.app
                     a.Quotation_No AS [Source Reference], 
                     q.PO_Number AS [PO Number], 
                     q.DO_Number AS [DO Number], 
-                    ps.PrimaryService AS [Primary Service], 
+                    a.PServiceName AS [Primary Service], 
                     d.ItemNo AS [Item No], 
                     qd.MaterialNo AS [Material No], 
                     qd.PackSize AS [Pack Size], 
@@ -172,20 +172,6 @@ namespace Bill_Software.corporate.business.app
                     LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID AND b.CompanyID = @CompanyID 
                     LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No AND d.CompanyID = @CompanyID 
                     LEFT JOIN tbl_Quotation AS q ON q.Quotation_No = a.Quotation_No AND q.CompanyID = @CompanyID 
-                    LEFT JOIN (
-                        SELECT
-                            p1.qut_no,
-                            STUFF((
-                                SELECT ', ' + p2.PrimaryService
-                                FROM tbl_QutPrimaryService p2
-                                WHERE p2.qut_no = p1.qut_no
-                                  AND p2.CompanyID = @CompanyID
-                                FOR XML PATH(''), TYPE
-                            ).value('.', 'nvarchar(max)'), 1, 2, '') AS PrimaryService
-                        FROM tbl_QutPrimaryService p1
-                        WHERE p1.CompanyID = @CompanyID
-                        GROUP BY p1.qut_no
-                    ) ps ON ps.qut_no = a.Quotation_No
                     LEFT JOIN (
                         SELECT
                             ranked.Quotation_no,
