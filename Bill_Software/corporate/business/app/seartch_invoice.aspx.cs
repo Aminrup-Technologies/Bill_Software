@@ -263,7 +263,9 @@ namespace Bill_Software.corporate.business.app
                 Response,
                 dtExport,
                 "Invoice_Lines",
-                CompanyContext.CurrentCompanyCode + "_Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"));
+                CompanyContext.CurrentCompanyCode + "_Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"),
+                "Search Invoice",
+                InvoiceListHelper.FormatExportDateFilter(txtFromDate.Text, txtToDate.Text));
         }
 
         private void AppendInvoiceFilters(ref string query, SqlCommand cmd)

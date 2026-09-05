@@ -255,7 +255,9 @@ namespace Bill_Software.corporate.business.app
                 Response,
                 dtExport,
                 "Invoice_Lines",
-                "Tax_Invoices_Export_" + DateTime.Now.ToString("yyyyMMdd"));
+                "Tax_Invoices_Export_" + DateTime.Now.ToString("yyyyMMdd"),
+                "View Invoice",
+                InvoiceListHelper.FormatExportDateFilter(txtFromDate.Text, txtToDate.Text));
         }
 
         private void AppendInvoiceFilters(ref string query, SqlCommand cmd)
