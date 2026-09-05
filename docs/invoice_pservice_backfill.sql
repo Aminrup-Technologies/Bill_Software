@@ -4,7 +4,8 @@
 --       column, so historical Auto Quotation / Auto PO rows need one fill.
 -- What: UPDATE only NULL tbl_Invoice.PServiceName from CompanyID-scoped
 --       tbl_QutPrimaryService (same STUFF aggregate the old export used).
---       Skip keys that do not uniquely map inside the invoice company.
+--       Require a same-company tbl_Quotation header so Proforma/Challan keys
+--       are not filled from a colliding qut_no.
 -- =============================================================================
 -- DO NOT persist until the BEFORE result is reviewed.
 -- Default: ROLLBACK. Uncomment COMMIT after AFTER verification.
@@ -28,10 +29,19 @@ SELECT
     i.PServiceName AS InvoicePServiceName,
     src.PrimaryService AS LookupPrimaryService,
     CASE
+        WHEN qh.Quotation_No IS NULL THEN 'SKIP_NO_QUOTATION_HEADER'
         WHEN src.qut_no IS NULL THEN 'SKIP_NO_COMPANY_MATCH'
         ELSE 'WILL_UPDATE'
     END AS PlannedAction
 FROM tbl_Invoice AS i
+LEFT JOIN (
+    SELECT Quotation_No, CompanyID
+    FROM tbl_Quotation
+    WHERE CompanyID IS NOT NULL
+    GROUP BY Quotation_No, CompanyID
+) AS qh
+    ON qh.Quotation_No = i.Quotation_No
+   AND qh.CompanyID = i.CompanyID
 LEFT JOIN (
     SELECT
         p1.qut_no,
@@ -56,6 +66,7 @@ SELECT
     @NullRowsBefore = SUM(CASE WHEN i.PServiceName IS NULL THEN 1 ELSE 0 END),
     @EligibleRows = SUM(CASE
         WHEN i.PServiceName IS NULL
+         AND qh.Quotation_No IS NOT NULL
          AND src.qut_no IS NOT NULL
          AND NULLIF(LTRIM(RTRIM(src.PrimaryService)), '') IS NOT NULL
         THEN 1 ELSE 0
@@ -63,12 +74,21 @@ SELECT
     @UnmatchedRows = SUM(CASE
         WHEN i.PServiceName IS NULL
          AND (
-                src.qut_no IS NULL
+                qh.Quotation_No IS NULL
+             OR src.qut_no IS NULL
              OR NULLIF(LTRIM(RTRIM(src.PrimaryService)), '') IS NULL
          )
         THEN 1 ELSE 0
     END)
 FROM tbl_Invoice AS i
+LEFT JOIN (
+    SELECT Quotation_No, CompanyID
+    FROM tbl_Quotation
+    WHERE CompanyID IS NOT NULL
+    GROUP BY Quotation_No, CompanyID
+) AS qh
+    ON qh.Quotation_No = i.Quotation_No
+   AND qh.CompanyID = i.CompanyID
 LEFT JOIN (
     SELECT
         p1.qut_no,
@@ -101,6 +121,14 @@ UPDATE i
 SET i.PServiceName = src.PrimaryService
 FROM tbl_Invoice AS i
 INNER JOIN (
+    SELECT Quotation_No, CompanyID
+    FROM tbl_Quotation
+    WHERE CompanyID IS NOT NULL
+    GROUP BY Quotation_No, CompanyID
+) AS qh
+    ON qh.Quotation_No = i.Quotation_No
+   AND qh.CompanyID = i.CompanyID
+INNER JOIN (
     SELECT
         p1.qut_no,
         p1.CompanyID,
@@ -132,11 +160,20 @@ SELECT
     i.CompanyID,
     i.PServiceName,
     CASE
+        WHEN qh.Quotation_No IS NULL THEN 'No quotation header'
         WHEN src.qut_no IS NULL THEN 'No quotation service match'
         WHEN NULLIF(LTRIM(RTRIM(src.PrimaryService)), '') IS NULL THEN 'Empty quotation service'
         ELSE 'Unexpected remaining NULL'
     END AS RemainingReason
 FROM tbl_Invoice AS i
+LEFT JOIN (
+    SELECT Quotation_No, CompanyID
+    FROM tbl_Quotation
+    WHERE CompanyID IS NOT NULL
+    GROUP BY Quotation_No, CompanyID
+) AS qh
+    ON qh.Quotation_No = i.Quotation_No
+   AND qh.CompanyID = i.CompanyID
 LEFT JOIN (
     SELECT
         p1.qut_no,

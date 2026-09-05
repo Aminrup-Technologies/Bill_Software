@@ -1089,7 +1089,7 @@ namespace Bill_Software.corporate.business.app
 
                         string intra = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
                         string inter = RadioButtonGst.SelectedIndex == 1 ? "YES" : "";
-                        object pServiceName = ResolvePrimaryServiceSnapshot(refNo, CompanyContext.CurrentCompanyID, conn, tran);
+                        object pServiceName = ResolvePrimaryServiceSnapshot(docType, refNo, CompanyContext.CurrentCompanyID, conn, tran);
 
                         string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1_name, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, ExtInvoiceNo, ExtInvoiceDate, BillingAddress, PServiceName) VALUES (@Inv, @Date, @PO, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @OthName, @Oth, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @ExtNo, @ExtDate, @BillingAddress, @PServiceName)";
                         SqlCommand cmdH = new SqlCommand(sqlH, conn, tran);
@@ -1231,9 +1231,13 @@ namespace Bill_Software.corporate.business.app
             catch (Exception ex) { ShowMsg("Error: " + ex.Message, false); }
         }
 
-        private static object ResolvePrimaryServiceSnapshot(string qutNo, int companyId, SqlConnection conn, SqlTransaction trans)
+        private static object ResolvePrimaryServiceSnapshot(string docType, string qutNo, int companyId, SqlConnection conn, SqlTransaction trans)
         {
             if (string.IsNullOrWhiteSpace(qutNo) || string.Equals(qutNo.Trim(), "N/A", StringComparison.OrdinalIgnoreCase))
+                return DBNull.Value;
+
+            if (!string.Equals(docType, "Quotation", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(docType, "Purchase Order", StringComparison.OrdinalIgnoreCase))
                 return DBNull.Value;
 
             const string sql = @"
