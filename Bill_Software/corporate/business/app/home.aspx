@@ -2,12 +2,14 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style type="text/css">
-        /* Base Layout */
-        .dashboard-wrapper { display: flex; flex-wrap: wrap; gap: 25px; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .id-card-section { flex: 1; min-width: 320px; max-width: 400px; }
-        .widgets-section { flex: 2.5; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; align-content: start; }
+        .dashboard-wrapper { padding: 20px; max-width: 1400px; margin: 0 auto; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .box-panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #eaeaea; display: flex; flex-direction: column; }
+        .box-title { color: #19658A; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; font-size: 16px; font-weight: bold; text-transform: uppercase; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
+        .stat-value { font-weight: bold; color: #19658A; }
+        .full-width-panel { grid-column: 1 / -1; }
 
-        /* Modern ID / Business Card */
         .biz-card { background: linear-gradient(145deg, #ffffff 0%, #f0f4f8 100%); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; position: relative; border: 1px solid #e1e8ed; }
         .biz-card-header { background: linear-gradient(135deg, #153e75 0%, #19658A 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .biz-card-header h3 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 1px; }
@@ -16,51 +18,22 @@
         .biz-name { font-size: 22px; font-weight: 800; color: #333; margin: 0 0 5px 0; }
         .biz-role { font-size: 13px; font-weight: 600; color: #19658A; text-transform: uppercase; letter-spacing: 1px; background: #eaf2ff; padding: 5px 12px; border-radius: 20px; margin-bottom: 15px; }
         .biz-dept { font-size: 12px; color: #666; margin-bottom: 15px; font-weight: 500; }
-        
         .biz-contact-grid { width: 100%; display: grid; grid-template-columns: 1fr; gap: 10px; text-align: left; margin-bottom: 20px; font-size: 13px; color: #555; }
         .biz-contact-item { display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px 12px; border-radius: 8px; border: 1px solid #eee; }
         .biz-contact-item i { color: #19658A; font-size: 16px; width: 20px; text-align: center; }
         .verified-badge { color: #28a745; font-size: 14px; margin-left: auto; }
-
         .biz-products { width: 100%; text-align: left; margin-bottom: 15px; }
         .biz-products h4 { font-size: 12px; color: #888; text-transform: uppercase; margin: 0 0 8px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
         .biz-tags { display: flex; flex-wrap: wrap; gap: 6px; }
         .biz-tag { background: #333; color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 4px; }
         .biz-footer { background: #eaf2ff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #555; border-top: 1px solid #dce6f2; }
         .biz-qr { width: 60px; height: 60px; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; }
-        
-        /* Dashboard Widgets */
-        .widget-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #eee; transition: transform 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
-        .widget-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
-        .widget-wide { grid-column: 1 / -1; } /* Spans all available columns horizontally */
-        
-        .widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #666; font-size: 14px; font-weight: 600; text-transform: uppercase; }
-        .widget-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 20px; color: white; }
-        
-        .bg-blue { background: linear-gradient(135deg, #1e90ff, #0056b3); }
-        .bg-green { background: linear-gradient(135deg, #28a745, #1e7e34); }
-        .bg-orange { background: linear-gradient(135deg, #fd7e14, #d35400); }
-        .bg-purple { background: linear-gradient(135deg, #6f42c1, #563d7c); }
-        .bg-gold { background: linear-gradient(135deg, #f1c40f, #d4ac0d); }
-        .bg-dark { background: linear-gradient(135deg, #343a40, #1d2124); }
-        
-        .widget-value { font-size: 28px; font-weight: 800; color: #333; margin-bottom: 5px; }
-        .widget-subtext { font-size: 13px; color: #777; margin-bottom: 15px; min-height: 20px; }
-        
-        .stat-row { display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; font-size: 13px; font-weight: 600; color: #444; }
-        .stat-value { color: #19658A; }
 
-        .widget-action { display: inline-block; padding: 8px 15px; background: #f4f7f6; color: #19658A; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; text-align: center; border: 1px solid #dce6f2; transition: background 0.2s; width: 100%; box-sizing: border-box; }
+        .widget-action { display: inline-block; padding: 8px 15px; background: #f4f7f6; color: #19658A; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; text-align: center; border: 1px solid #dce6f2; width: 100%; box-sizing: border-box; margin-top: auto; }
         .widget-action:hover { background: #eaf2ff; }
 
-        /* Scrollable Notifications */
-        .noti-container { max-height: 260px; overflow-y: auto; padding-right: 10px; margin-bottom: 5px; }
-        .noti-container::-webkit-scrollbar { width: 6px; }
-        .noti-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .noti-container::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        .noti-container::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        
-        .noti-item { padding: 12px 15px; background: #f8fafc; border-left: 4px solid #1e90ff; border-radius: 4px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .noti-container { width: 100%; max-height: 260px; overflow-y: auto; }
+        .noti-item { width: 100%; box-sizing: border-box; padding: 12px 15px; background: #f8fafc; border-left: 4px solid #1e90ff; border-radius: 4px; margin-bottom: 12px; }
         .noti-item.severity-high, .noti-item.severity-critical { border-left-color: #dc3545; background: #fff5f5; }
         .noti-item.severity-medium, .noti-item.severity-warning { border-left-color: #ffc107; background: #fffdf5; }
         .noti-title { font-weight: 700; font-size: 14px; color: #333; margin-bottom: 4px; display: block; }
@@ -79,145 +52,125 @@
 
     <asp:Panel ID="PanelMain" runat="server">
         <div class="dashboard-wrapper">
-            
-            <div class="id-card-section">
-                
+            <div class="dashboard-grid">
 
-                <div id="idCardContainer" class="biz-card">
-                    <div class="biz-card-header">
-                        <h3>FLAME-EX DIGITAL ID</h3>
-                        <span style="font-size: 11px; opacity: 0.8;">★ Verified</span>
+                <div class="id-card-section">
+                    <div id="idCardContainer" class="biz-card">
+                        <div class="biz-card-header">
+                            <h3>FLAME-EX DIGITAL ID</h3>
+                            <span style="font-size: 11px; opacity: 0.8;">★ Verified</span>
+                        </div>
+
+                        <div class="biz-card-body">
+                            <asp:Image ID="imgIdProfile" runat="server" CssClass="biz-profile-pic" ImageUrl="~/corporate/business/WebImages/default-avatar.png" />
+                            <asp:Label ID="lblName" runat="server" CssClass="biz-name" Text="Employee Name"></asp:Label>
+                            <asp:Label ID="lblDesignation" runat="server" CssClass="biz-role" Text="Designation"></asp:Label>
+                            <asp:Label ID="lblDepartment" runat="server" CssClass="biz-dept" Text="Department"></asp:Label>
+
+                            <div class="biz-contact-grid">
+                                <div class="biz-contact-item">
+                                    <i>📞</i> <asp:Label ID="lblContactNo" runat="server"></asp:Label>
+                                    <span class="verified-badge" title="Verified via OTP">✔️</span>
+                                </div>
+                                <div class="biz-contact-item">
+                                    <i>✉️</i> <asp:Label ID="lblEmailID" runat="server"></asp:Label>
+                                    <asp:Literal ID="litEmailVerified" runat="server"></asp:Literal>
+                                </div>
+                                <div class="biz-contact-item"><i>🌐</i> www.aagroupindia.com</div>
+                            </div>
+
+                            <div class="biz-products">
+                                <h4>Key Solutions</h4>
+                                <div class="biz-tags">
+                                    <span class="biz-tag">Bearings & Lubricants</span>
+                                    <span class="biz-tag">Industrial Machines</span>
+                                    <span class="biz-tag">Industrial Consulting</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="biz-footer">
+                            <div>
+                                <div id="liveTimestamp" style="font-weight:bold; margin-bottom:3px;">Locating...</div>
+                                <div id="liveGPS">GPS: Acquiring...</div>
+                            </div>
+                            <div id="qrcode" class="biz-qr"></div>
+                        </div>
                     </div>
-                    
-                    <div class="biz-card-body">
-                        <asp:Image ID="imgIdProfile" runat="server" CssClass="biz-profile-pic" ImageUrl="~/corporate/business/WebImages/default-avatar.png" />
-                        <asp:Label ID="lblName" runat="server" CssClass="biz-name" Text="Employee Name"></asp:Label>
-                        <asp:Label ID="lblDesignation" runat="server" CssClass="biz-role" Text="Designation"></asp:Label>
-                        <asp:Label ID="lblDepartment" runat="server" CssClass="biz-dept" Text="Department"></asp:Label>
-                        
-                        <div class="biz-contact-grid">
-                            <div class="biz-contact-item">
-                                <i>📞</i> <asp:Label ID="lblContactNo" runat="server"></asp:Label>
-                                <span class="verified-badge" title="Verified via OTP">✔️</span> 
-                            </div>
-                            <div class="biz-contact-item">
-                                <i>✉️</i> <asp:Label ID="lblEmailID" runat="server"></asp:Label>
-                                <asp:Literal ID="litEmailVerified" runat="server"></asp:Literal> 
-                            </div>
-                            <div class="biz-contact-item"><i>🌐</i> www.aagroupindia.com</div>
-                        </div>
-
-                        <div class="biz-products">
-                            <h4>Key Solutions</h4>
-                            <div class="biz-tags">
-                                <span class="biz-tag">Bearings & Lubricants</span>
-                                <span class="biz-tag">Industrial Machines</span>
-                                <span class="biz-tag">Industrial Consulting</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="biz-footer">
-                        <div>
-                            <div id="liveTimestamp" style="font-weight:bold; margin-bottom:3px;">Locating...</div>
-                            <div id="liveGPS">GPS: Acquiring...</div>
-                        </div>
-                        <div id="qrcode" class="biz-qr"></div>
+                    <div style="display: flex; justify-content: flex-end; margin: 10px 0 0 0;">
+                        <button type="button" id="btnShareID" onclick="shareOrDownloadIDCard()" class="widget-action" style="background:#28a745; color:white; border:none; width: auto; margin-top: 0;">
+                            📤 Share / Download ID
+                        </button>
                     </div>
                 </div>
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-                    <button type="button" id="btnShareID" onclick="shareOrDownloadIDCard()" class="widget-action" style="background:#28a745; color:white; border:none; width: auto;">
-                        📤 Share / Download ID
-                    </button>
-                </div>
-            </div>
 
-            <div class="widgets-section">
-                
-                <asp:Panel ID="pnlWidgetLastLogin" runat="server" CssClass="widget-card">
-                    <div>
-                        <div class="widget-header">
-                            <span>Security & Access</span>
-                            <div class="widget-icon bg-purple">🔒</div>
-                        </div>
-                        <div class="widget-value" style="font-size: 20px;">Last Login</div>
-                        <asp:Label ID="lblLastLogin" runat="server" CssClass="widget-subtext" Text="Checking..."></asp:Label>
+                <asp:Panel ID="pnlWidgetLastLogin" runat="server" CssClass="box-panel">
+                    <div class="box-title">Security & Access</div>
+                    <div class="stat-row">
+                        <span>Last Login</span>
+                        <asp:Label ID="lblLastLogin" runat="server" CssClass="stat-value" Text="Checking..."></asp:Label>
                     </div>
                     <a href="/corporate/business/app/settings.aspx" class="widget-action">Manage Account Security</a>
                 </asp:Panel>
 
-                <asp:Panel ID="pnlWidgetAttendanceToday" runat="server" CssClass="widget-card">
-                    <div>
-                        <div class="widget-header">
-                            <span>Today's Status</span>
-                            <div class="widget-icon bg-blue">⏱️</div>
-                        </div>
-                        <asp:Label ID="lblAttStatus" runat="server" CssClass="widget-value" Text="Not Punched In"></asp:Label>
-                        <asp:Label ID="lblAttTime" runat="server" CssClass="widget-subtext" Style="display:block;" Text="Awaiting your first punch today."></asp:Label>
+                <asp:Panel ID="pnlWidgetAttendanceToday" runat="server" CssClass="box-panel">
+                    <div class="box-title">Today's Status</div>
+                    <div class="stat-row">
+                        <span>Punch Status</span>
+                        <asp:Label ID="lblAttStatus" runat="server" CssClass="stat-value" Text="Not Punched In"></asp:Label>
+                    </div>
+                    <div class="stat-row">
+                        <span>Details</span>
+                        <asp:Label ID="lblAttTime" runat="server" CssClass="stat-value" Text="Awaiting your first punch today."></asp:Label>
                     </div>
                     <a href="/corporate/business/app/attendance.aspx" class="widget-action">Go to Attendance Portal</a>
                 </asp:Panel>
 
-                <asp:Panel ID="pnlWidgetMonthlyAtt" runat="server" CssClass="widget-card">
-                    <div>
-                        <div class="widget-header">
-                            <span>Monthly Attendance</span>
-                            <div class="widget-icon bg-green">📅</div>
-                        </div>
-                        <asp:Label ID="lblDaysPresent" runat="server" CssClass="widget-value" Text="0 Days"></asp:Label>
-                        <div class="widget-subtext">Present this month</div>
+                <asp:Panel ID="pnlWidgetMonthlyAtt" runat="server" CssClass="box-panel">
+                    <div class="box-title">Monthly Attendance</div>
+                    <div class="stat-row">
+                        <span>Present this month</span>
+                        <asp:Label ID="lblDaysPresent" runat="server" CssClass="stat-value" Text="0 Days"></asp:Label>
                     </div>
                     <a href="/corporate/business/app/MyLeaves.aspx" class="widget-action">View Leave Balances</a>
                 </asp:Panel>
 
-                <asp:Panel ID="pnlWidgetSalesVisitsToday" runat="server" CssClass="widget-card">
-                    <div>
-                        <div class="widget-header">
-                            <span>Today's Field Ops</span>
-                            <div class="widget-icon bg-orange">📍</div>
-                        </div>
-                        <asp:Label ID="lblVisitsToday" runat="server" CssClass="widget-value" Text="0"></asp:Label>
-                        <div class="widget-subtext">Visits logged today</div>
-                        
-                        <div class="stat-row">
-                            <span>Quotes Generated:</span>
-                            <asp:Label ID="lblQuotesToday" runat="server" CssClass="stat-value" Text="0"></asp:Label>
-                        </div>
-                        <div class="stat-row">
-                            <span>Revenue Realized:</span>
-                            <asp:Label ID="lblRevenueToday" runat="server" CssClass="stat-value" Text="₹0.00"></asp:Label>
-                        </div>
+                <asp:Panel ID="pnlWidgetSalesVisitsToday" runat="server" CssClass="box-panel">
+                    <div class="box-title">Today's Field Ops</div>
+                    <div class="stat-row">
+                        <span>Visits logged today</span>
+                        <asp:Label ID="lblVisitsToday" runat="server" CssClass="stat-value" Text="0"></asp:Label>
                     </div>
-                    <asp:HyperLink ID="lnkSalesVisit" runat="server" CssClass="widget-action" NavigateUrl="/corporate/business/app/visit_planner.aspx" Style="margin-top:15px;" Text="Plan a New Visit"></asp:HyperLink>
+                    <div class="stat-row">
+                        <span>Quotes Generated</span>
+                        <asp:Label ID="lblQuotesToday" runat="server" CssClass="stat-value" Text="0"></asp:Label>
+                    </div>
+                    <div class="stat-row">
+                        <span>Revenue Realized</span>
+                        <asp:Label ID="lblRevenueToday" runat="server" CssClass="stat-value" Text="₹0.00"></asp:Label>
+                    </div>
+                    <asp:HyperLink ID="lnkSalesVisit" runat="server" CssClass="widget-action" NavigateUrl="/corporate/business/app/visit_planner.aspx" Text="Plan a New Visit"></asp:HyperLink>
                 </asp:Panel>
 
-                <asp:Panel ID="pnlWidgetSalesVisitsMonth" runat="server" CssClass="widget-card">
-                    <div>
-                        <div class="widget-header">
-                            <span>Monthly Field Ops</span>
-                            <div class="widget-icon bg-gold">📈</div>
-                        </div>
-                        <asp:Label ID="lblVisitsMonth" runat="server" CssClass="widget-value" Text="0"></asp:Label>
-                        <div class="widget-subtext">Total visits this month</div>
-                        
-                        <div class="stat-row">
-                            <span>Quotes Generated:</span>
-                            <asp:Label ID="lblQuotesMonth" runat="server" CssClass="stat-value" Text="0"></asp:Label>
-                        </div>
-                        <div class="stat-row">
-                            <span>Revenue Realized:</span>
-                            <asp:Label ID="lblRevenueMonth" runat="server" CssClass="stat-value" Text="₹0.00"></asp:Label>
-                        </div>
+                <asp:Panel ID="pnlWidgetSalesVisitsMonth" runat="server" CssClass="box-panel">
+                    <div class="box-title">Monthly Field Ops</div>
+                    <div class="stat-row">
+                        <span>Total visits this month</span>
+                        <asp:Label ID="lblVisitsMonth" runat="server" CssClass="stat-value" Text="0"></asp:Label>
                     </div>
-                    <a href="/corporate/business/app/visit_planner.aspx" class="widget-action" style="margin-top:15px;">View Visit Reports</a>
+                    <div class="stat-row">
+                        <span>Quotes Generated</span>
+                        <asp:Label ID="lblQuotesMonth" runat="server" CssClass="stat-value" Text="0"></asp:Label>
+                    </div>
+                    <div class="stat-row">
+                        <span>Revenue Realized</span>
+                        <asp:Label ID="lblRevenueMonth" runat="server" CssClass="stat-value" Text="₹0.00"></asp:Label>
+                    </div>
+                    <a href="/corporate/business/app/visit_planner.aspx" class="widget-action">View Visit Reports</a>
                 </asp:Panel>
 
-                <asp:Panel ID="pnlWidgetNotifications" runat="server" CssClass="widget-card widget-wide">
-                    <div class="widget-header" style="margin-bottom: 10px;">
-                        <span>System Notifications & Alerts</span>
-                        <div class="widget-icon bg-dark">📢</div>
-                    </div>
-                    
+                <asp:Panel ID="pnlWidgetNotifications" runat="server" CssClass="box-panel full-width-panel">
+                    <div class="box-title">System Notifications & Alerts</div>
                     <div class="noti-container">
                         <asp:Repeater ID="rptNotifications" runat="server">
                             <ItemTemplate>
@@ -228,7 +181,6 @@
                                 </div>
                             </ItemTemplate>
                         </asp:Repeater>
-                        
                         <asp:Label ID="lblNoNotifications" runat="server" CssClass="noti-empty" Visible="false" Text="There are no active notifications at this time."></asp:Label>
                     </div>
                 </asp:Panel>
