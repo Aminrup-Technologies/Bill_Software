@@ -141,6 +141,23 @@ namespace Bill_Software.corporate.business.app
                     a.ExtInvoiceNo AS [ERP Ref], 
                     b.Client_Name AS [Client Name], 
                     a.Quotation_No AS [Source Reference], 
+                    CASE
+                        WHEN q.RecordType = 'Purchase Order' THEN 'Purchase Order'
+                        WHEN q.RecordType = 'Quotation' THEN 'Quotation'
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM tbl_Proforma AS pf
+                            WHERE pf.Invoice_No = a.Quotation_No
+                              AND pf.CompanyID = @CompanyID
+                        ) THEN 'Proforma'
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM tbl_Chalan AS ch
+                            WHERE ch.Chalan_No = a.Quotation_No
+                              AND ch.CompanyID = @CompanyID
+                        ) THEN 'Delivery Challan'
+                        ELSE 'Manual'
+                    END AS [Invoice Source], 
                     q.PO_Number AS [PO Number], 
                     q.DO_Number AS [DO Number], 
                     a.PServiceName AS [Primary Service], 
@@ -246,7 +263,9 @@ namespace Bill_Software.corporate.business.app
                 Response,
                 dtExport,
                 "Invoice_Lines",
-                CompanyContext.CurrentCompanyCode + "_Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"));
+                CompanyContext.CurrentCompanyCode + "_Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"),
+                "Search Invoice",
+                InvoiceListHelper.FormatExportDateFilter(txtFromDate.Text, txtToDate.Text));
         }
 
         private void AppendInvoiceFilters(ref string query, SqlCommand cmd)
