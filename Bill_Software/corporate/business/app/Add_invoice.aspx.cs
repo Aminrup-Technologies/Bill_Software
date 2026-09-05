@@ -1089,8 +1089,9 @@ namespace Bill_Software.corporate.business.app
 
                         string intra = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
                         string inter = RadioButtonGst.SelectedIndex == 1 ? "YES" : "";
+                        object pServiceName = ResolvePrimaryServiceSnapshot(refNo, CompanyContext.CurrentCompanyID, conn, tran);
 
-                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1_name, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, ExtInvoiceNo, ExtInvoiceDate, BillingAddress) VALUES (@Inv, @Date, @PO, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @OthName, @Oth, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @ExtNo, @ExtDate, @BillingAddress)";
+                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1_name, otherAmount1, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, ExtInvoiceNo, ExtInvoiceDate, BillingAddress, PServiceName) VALUES (@Inv, @Date, @PO, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @OthName, @Oth, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @ExtNo, @ExtDate, @BillingAddress, @PServiceName)";
                         SqlCommand cmdH = new SqlCommand(sqlH, conn, tran);
                         cmdH.Parameters.AddWithValue("@Inv", invNo);
                         cmdH.Parameters.AddWithValue("@Date", txtinvoiceDate.Text);
@@ -1113,6 +1114,7 @@ namespace Bill_Software.corporate.business.app
                         cmdH.Parameters.AddWithValue("@ExtNo", string.IsNullOrWhiteSpace(txtExtInvoiceNo.Text) ? (object)DBNull.Value : txtExtInvoiceNo.Text.Trim());
                         cmdH.Parameters.AddWithValue("@ExtDate", string.IsNullOrWhiteSpace(txtExtInvoiceDate.Text) ? (object)DBNull.Value : txtExtInvoiceDate.Text.Trim());
                         cmdH.Parameters.AddWithValue("@BillingAddress", List_BillingAddress.SelectedItem != null ? List_BillingAddress.SelectedItem.Text : "N/A");
+                        cmdH.Parameters.AddWithValue("@PServiceName", pServiceName);
                         cmdH.ExecuteNonQuery();
 
                         // 1. Grab the memory table to safely read underlying data (ignoring HTML formatting)
@@ -1227,6 +1229,33 @@ namespace Bill_Software.corporate.business.app
                 }
             }
             catch (Exception ex) { ShowMsg("Error: " + ex.Message, false); }
+        }
+
+        private static object ResolvePrimaryServiceSnapshot(string qutNo, int companyId, SqlConnection conn, SqlTransaction trans)
+        {
+            if (string.IsNullOrWhiteSpace(qutNo) || string.Equals(qutNo.Trim(), "N/A", StringComparison.OrdinalIgnoreCase))
+                return DBNull.Value;
+
+            const string sql = @"
+                SELECT STUFF((
+                    SELECT ', ' + p2.PrimaryService
+                    FROM tbl_QutPrimaryService p2
+                    WHERE p2.qut_no = @qut_no
+                      AND p2.CompanyID = @CompanyID
+                    FOR XML PATH(''), TYPE
+                ).value('.', 'nvarchar(max)'), 1, 2, '')";
+
+            using (SqlCommand cmd = new SqlCommand(sql, conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@qut_no", qutNo.Trim());
+                cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                object val = cmd.ExecuteScalar();
+                if (val == null || val == DBNull.Value)
+                    return DBNull.Value;
+
+                string text = Convert.ToString(val).Trim();
+                return string.IsNullOrEmpty(text) ? (object)DBNull.Value : text;
+            }
         }
 
         private void InsertSystemNotification(string title, string message, string module, string type, string userId, int companyId, SqlConnection conn, SqlTransaction tran)

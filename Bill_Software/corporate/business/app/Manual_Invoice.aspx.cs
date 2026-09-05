@@ -400,7 +400,7 @@ namespace Bill_Software.corporate.business.app
                         string invNo = GenerateInvoiceNo(slNo);
 
                         // A. Insert Header
-                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, ExtInvoiceNo, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1, otherAmount1_name, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode) VALUES (@Inv, @Date, @PO, @ERP, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @Oth, @OthName, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson)";
+                        string sqlH = "INSERT INTO tbl_Invoice (Invoice_No, Invoice_Date, Quotation_No, ExtInvoiceNo, Client_ID, Gross, discount, sub_total, Service_Tax1, Net_Amount, Sl_no, Delivery_Amount, otherAmount1, otherAmount1_name, status1, status2, cgstOrsgst, igst, AddedById, CompanyID, SalesPersonCode, PServiceName) VALUES (@Inv, @Date, @PO, @ERP, @CID, @Gr, @Di, @Sub, @Tax, @Net, @Sl, @Frt, @Oth, @OthName, 'No', 'Active', @Intra, @Inter, @User, @CompanyID, @SalesPerson, @PServiceName)";
                         SqlCommand cmdH = new SqlCommand(sqlH, conn, tran);
                         cmdH.Parameters.AddWithValue("@Inv", invNo);
                         cmdH.Parameters.AddWithValue("@Date", txtInvoiceDate.Text);
@@ -428,6 +428,7 @@ namespace Bill_Software.corporate.business.app
                         cmdH.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         string selectedSalesPerson = cmbSalesPerson.SelectedIndex > 0 ? cmbSalesPerson.SelectedValue : "";
                         cmdH.Parameters.AddWithValue("@SalesPerson", selectedSalesPerson);
+                        cmdH.Parameters.AddWithValue("@PServiceName", DBNull.Value);
 
                         cmdH.ExecuteNonQuery();
 
