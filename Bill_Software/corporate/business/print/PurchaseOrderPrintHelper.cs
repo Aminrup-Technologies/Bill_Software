@@ -301,7 +301,7 @@ namespace Bill_Software.corporate.business.print
                         INNER JOIN tbl_Chalan c ON cd.Challan_no = c.Chalan_No
                         INNER JOIN tbl_Quotaion_details qd 
                             ON cd.Product_id = qd.Product_Code AND c.Quotation_No = qd.Quotation_no and cd.ItemNo = qd.ItemNo
-                        WHERE cd.Challan_no = @Challan_no AND qd.IsDeleted!=1 AND qd.IsLatest=1 AND c.CompanyID = @CompanyID AND qd.CompanyID = @CompanyID
+                        WHERE cd.Challan_no = @Challan_no AND ISNULL(qd.IsDeleted, 0) = 0 AND ISNULL(qd.IsLatest, 1) = 1 AND c.CompanyID = @CompanyID AND qd.CompanyID = @CompanyID
                         order by CAST(qd.Sl_no as int);";
 
                     SqlParameter[] detailParam = {
@@ -465,7 +465,7 @@ namespace Bill_Software.corporate.business.print
         private void Buindamount(string qutno)
         {
             // Modified to include 'Unit' column in the select statement
-            string cmdstring = "SELECT Sl_no, Product_id AS HSN, Product_name, specification, Misc, Quantity, Unit, sail_rate, Service_tax_rate, Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no AND IsLatest = 1 AND IsDeleted = 0 AND CompanyID = @CompanyID ORDER BY ItemNo";
+            string cmdstring = "SELECT Sl_no, Product_id AS HSN, Product_name, specification, Misc, Quantity, Unit, sail_rate, Service_tax_rate, Total_sail_rate2, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, Department, DeliveryDate FROM tbl_Quotaion_details WHERE Quotation_no = @Quotation_no AND ISNULL(IsLatest, 1) = 1 AND ISNULL(IsDeleted, 0) = 0 AND CompanyID = @CompanyID ORDER BY CAST(Sl_no as int)";
             SqlParameter[] pram = {
                                           new SqlParameter("@Quotation_no",qutno),
                                           new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)

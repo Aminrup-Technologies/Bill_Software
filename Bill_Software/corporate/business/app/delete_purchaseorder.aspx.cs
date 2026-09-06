@@ -22,7 +22,20 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbvendor, "select Client_Name from tbl_Client order by Client_Name");
+                cmbvendor.Items.Clear();
+                cmbvendor.Items.Add("--Select--");
+                DbCL.Sqlconnection();
+                DbCL.ConnectDb();
+                using (SqlCommand cmd = new SqlCommand("SELECT Client_Name FROM tbl_Client WHERE CompanyID=@CompanyID ORDER BY Client_Name", DbCL.Conn))
+                {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                            cmbvendor.Items.Add(rdr[0].ToString());
+                    }
+                }
+                DbCL.Conn.Close();
                 txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
                 txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
             }
@@ -31,72 +44,80 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSertch_Click(object sender, EventArgs e)
         {
-            string cmdstring = "";
+            string cmdstring = @"select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.RecordType='Purchase Order' AND tbl_Quotation.CompanyID=@CompanyID";
+
+            List<SqlParameter> sqlParams = new List<SqlParameter>
+            {
+                new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
+            };
+
             if (RadioButtonList1.SelectedIndex == 0)
             {
                 BuindCompanyId();
-                //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and tbl_Quotation.Status2='No' order by cast(tbl_Quotation.Quotation_date as datetime) desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and tbl_Quotation.RecordType='Purchase Order' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
+                cmdstring += " AND tbl_Quotation.Client_Id=@ClientId";
+                sqlParams.Add(new SqlParameter("@ClientId", lblclientId.Text));
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
-                //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.Status2='No' order by cast(tbl_Quotation.Quotation_date as datetime) desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.RecordType='Purchase Order' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
+                cmdstring += " AND cast(tbl_Quotation.Quotation_date as datetime) between @FromDate and @ToDate";
+                sqlParams.Add(new SqlParameter("@FromDate", txttodate.Text));
+                sqlParams.Add(new SqlParameter("@ToDate", txtfromDate.Text));
             }
             else
             {
                 BuindCompanyId();
-                //cmdstring = "select tbl_Quotation.ID,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Client.Client_Name from tbl_Quotation inner join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.Status2='No' order by cast(tbl_Quotation.Quotation_date as datetime) desc";
-                cmdstring = "select tbl_QuoPriSerTogather.PServiceName,tbl_Quotation.ID,tbl_Quotation.service_tax1,tbl_Quotation.sub_total,tbl_Quotation.Quotation_no,tbl_Quotation.Quotation_date,tbl_Quotation.Gross,tbl_Quotation.Service_tax,tbl_Quotation.Net_amount,tbl_Quotation.mailStatusDate,tbl_Client.Client_Name from tbl_Quotation LEFT OUTER join tbl_Client on tbl_Quotation.Client_Id=tbl_Client.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather on tbl_QuoPriSerTogather.qutno = tbl_Quotation.Quotation_no where tbl_Quotation.Client_Id='" + lblclientId.Text + "' and cast(tbl_Quotation.Quotation_date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' and tbl_Quotation.RecordType='Purchase Order' order by tbl_Quotation.ID desc";
-                Buinddatagrid(cmdstring);
+                cmdstring += " AND tbl_Quotation.Client_Id=@ClientId AND cast(tbl_Quotation.Quotation_date as datetime) between @FromDate and @ToDate";
+                sqlParams.Add(new SqlParameter("@ClientId", lblclientId.Text));
+                sqlParams.Add(new SqlParameter("@FromDate", txttodate.Text));
+                sqlParams.Add(new SqlParameter("@ToDate", txtfromDate.Text));
             }
+
+            cmdstring += " order by tbl_Quotation.ID desc";
+            Buinddatagrid(cmdstring, sqlParams.ToArray());
             btnSertch.Visible = false;
 
         }
 
-        private void Buinddatagrid(string cmdstring)
+        private void Buinddatagrid(string cmdstring, SqlParameter[] parameters)
         {
+            DataTable dt = new DataTable();
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            using (SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn))
             {
-                Buinddatagrid1(cmdstring);
+                if (parameters != null)
+                    cmd.Parameters.AddRange(parameters);
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    da.Fill(dt);
+            }
+            DbCL.Conn.Close();
+            if (dt.Rows.Count > 0)
+            {
+                DataList1.DataSource = dt;
+                DataList1.DataBind();
             }
             else
             {
                 PanelError.Visible = true;
                 lblErrorMsg.Text = "No Data Found...";
-
             }
-            DbCL.Conn.Close();
-        }
-
-        private void Buinddatagrid1(string cmdstring)
-        {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-
-            SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
-            DataList1.DataSource = cmd1.ExecuteReader();
-            DataList1.DataBind();
-            DbCL.Conn.Close();
-
         }
 
         private void BuindCompanyId()
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = "select Client_Id from tbl_Client where Client_Name='" + cmbvendor.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            SqlDataReader re = cmd.ExecuteReader();
-            if (re.Read())
+            using (SqlCommand cmd = new SqlCommand("SELECT Client_Id FROM tbl_Client WHERE Client_Name=@ClientName AND CompanyID=@CompanyID", DbCL.Conn))
             {
-                lblclientId.Text = re["Client_Id"].ToString();
+                cmd.Parameters.AddWithValue("@ClientName", cmbvendor.Text);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                using (SqlDataReader re = cmd.ExecuteReader())
+                {
+                    if (re.Read())
+                    {
+                        lblclientId.Text = re["Client_Id"].ToString();
+                    }
+                }
             }
             DbCL.Conn.Close();
         }
@@ -116,6 +137,8 @@ namespace Bill_Software.corporate.business.app
             if (e.CommandName == "View")
             {
                 string qdate = buindalldata(ID);
+                if (string.IsNullOrEmpty(qdate))
+                    return;
 
                 DateTime fromdate = DateTime.Parse(Convert.ToDateTime(qdate).ToShortDateString());
                 DateTime todate = DateTime.Parse(Convert.ToDateTime("12-Jun-2018").ToShortDateString());
@@ -134,9 +157,10 @@ namespace Bill_Software.corporate.business.app
             if (e.CommandName == "Delete")
             {
 
-                string query = "select Status1,Status2,PaymentStatus from tbl_Quotation where Quotation_no=@Quotation_no";
+                string query = "select Status1,Status2,PaymentStatus from tbl_Quotation where Quotation_no=@Quotation_no AND CompanyID=@CompanyID";
                 SqlParameter[] pram = {
-                new SqlParameter("@Quotation_no",Quotation_no)
+                new SqlParameter("@Quotation_no",Quotation_no),
+                new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
                                        };
 
                 dtProInvPay = DbCL.SPreturn_dt(query, pram);
@@ -167,15 +191,23 @@ namespace Bill_Software.corporate.business.app
                     }
                     else
                     {
-                        DbCL.executeRdr("delete from tbl_Quotation where Quotation_no='" + Quotation_no + "'");
-                        DbCL.executeRdr("delete from tbl_Quotaion_details where Quotation_no='" + Quotation_no + "'");
-                        DbCL.executeRdr("delete from tbl_quotation_vat where Quotation_no='" + Quotation_no + "'");
+                        int companyId = CompanyContext.CurrentCompanyID;
+                        DbCL.ExecuteNonQuery("delete from tbl_Quotation where Quotation_no=@QuotationNo AND CompanyID=@CompanyID",
+                            new[] { new SqlParameter("@QuotationNo", Quotation_no), new SqlParameter("@CompanyID", companyId) });
+                        DbCL.ExecuteNonQuery("delete from tbl_Quotaion_details where Quotation_no=@QuotationNo AND CompanyID=@CompanyID",
+                            new[] { new SqlParameter("@QuotationNo", Quotation_no), new SqlParameter("@CompanyID", companyId) });
+                        DbCL.ExecuteNonQuery("delete from tbl_quotation_vat where Quotation_no=@QuotationNo",
+                            new[] { new SqlParameter("@QuotationNo", Quotation_no) });
 
-                        DbCL.executeRdr("delete from tbl_QutPrimaryService where qut_no='" + Quotation_no + "'");
-                        DbCL.executeRdr("delete from tbl_QutPaymentPhase where qut_no='" + Quotation_no + "'");
+                        DbCL.ExecuteNonQuery("delete from tbl_QutPrimaryService where qut_no=@QuotationNo AND CompanyID=@CompanyID",
+                            new[] { new SqlParameter("@QuotationNo", Quotation_no), new SqlParameter("@CompanyID", companyId) });
+                        DbCL.ExecuteNonQuery("delete from tbl_QutPaymentPhase where qut_no=@QuotationNo AND CompanyID=@CompanyID",
+                            new[] { new SqlParameter("@QuotationNo", Quotation_no), new SqlParameter("@CompanyID", companyId) });
 
-                        DbCL.executeRdr("delete from tbl_QuoPserTerm where qutno='" + Quotation_no + "'");
-                        DbCL.executeRdr("delete from tbl_QutSiteAddress where qut_no='" + Quotation_no + "'");
+                        DbCL.ExecuteNonQuery("delete from tbl_QuoPserTerm where qutno=@QuotationNo AND CompanyID=@CompanyID",
+                            new[] { new SqlParameter("@QuotationNo", Quotation_no), new SqlParameter("@CompanyID", companyId) });
+                        DbCL.ExecuteNonQuery("delete from tbl_QutSiteAddress where qut_no=@QuotationNo",
+                            new[] { new SqlParameter("@QuotationNo", Quotation_no) });
 
                         PanelOK.Visible = true;
                         lblOk.Text = "Data Deleted Successfully...";
@@ -190,9 +222,10 @@ namespace Bill_Software.corporate.business.app
         private string buindalldata(string ID)
         {
             string qdate = "";
-            string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst from tbl_Quotation where ID=@ID";
+            string query = "select Quotation_no,Quotation_date,Client_Id,sub_total,Service_tax,Net_amount,cgstOrsgst,igst from tbl_Quotation where ID=@ID AND CompanyID=@CompanyID";
             SqlParameter[] pram = {
-            new SqlParameter("@id",ID)
+            new SqlParameter("@ID",ID),
+            new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
             };
             dtmain = DbCL.SPreturn_dt(query, pram);
             if (dtmain.Rows.Count > 0)
