@@ -190,8 +190,8 @@ Recommended merge order remaining: **#50 → #52 → #53 → #54 → #55**. #53 
 | `tbl_quotation_vat` / `tbl_QutSiteAddress` have no CompanyID | PR #48: parameterized by quotation number only |
 | Search/View Invoice grid joins on client / `tbl_QuoPriSerTogather` / quotation | Documented in `docs/invoice_export_data_inventory.md`; header still `a.CompanyID` |
 | Historical NULL `IsLatest` on Create-era PO lines | PR #52: no data backfill; ISNULL reader shim + forward writer |
-| PR #56 SQL helper standardization | Modernization only; not opened as a merge |
-| PR #57 DbCL inventory | Modernization only; not opened as a merge |
+| SQL helper standardization | Modernization only; not opened as a PR |
+| DbCL inventory | Modernization only; not opened as a PR |
 
 ---
 
@@ -282,8 +282,8 @@ If #50 and #53 are both merged, roll back #53 first (export JOIN only), then #50
 
 | Item | Notes |
 |---|---|
-| PR #56 SQL helper standardization | Local `AddCompanyId` / `OpenDb` / filter helpers only. No SQL behavior change. Not opened as a merge. |
-| PR #57 DbCL inventory | Catalog `executeRdr` vs `executeRdrNew` vs `SPreturn_dt`. Not started as a PR. |
+| SQL helper standardization | Local `AddCompanyId` / `OpenDb` / filter helpers only. No SQL behavior change. Not opened as a PR. |
+| DbCL inventory | Catalog `executeRdr` vs `executeRdrNew` vs `SPreturn_dt`. Not started as a PR. |
 | Performance review | Out of this series. |
 | Shared helper cleanup | Do not introduce a cross-page SQL wrapper unless a later modernization PR requires it. |
 | Search PO export current-row | Follow-up to #49/#53 if finance wants Search Excel to match View export. |
