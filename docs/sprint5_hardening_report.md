@@ -4,7 +4,7 @@
 |---|---|
 | Repository | `Aminrup-Technologies/Bill_Software` |
 | Base branch | `July_to_Sept26_DevNSupport` |
-| Base HEAD at report time | `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64` (merge of PR #54; previous #52 `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`; previous #50 `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`; previous #49 `04c43dbf804c840a8abc38984a9fc67703301117`; previous #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`; previous #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`) |
+| Base HEAD at report time | `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a` (merge of PR #55; previous #54 `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`; previous #52 `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`; previous #50 `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`; previous #49 `04c43dbf804c840a8abc38984a9fc67703301117`; previous #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`; previous #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`) |
 | Reporting date | 2026-09-06 |
 | Scope | Purchase Order and Invoice tenant isolation, SQL parameterization, current-row print/export parity, ViewType persistence (PRs #48–#55) |
 | Reviewer | AMINRUP TECHNOLOGIES |
@@ -25,9 +25,9 @@ This report is documentation only. It does not change application SQL or schema.
 | #52 | Print Current-Row Consistency | `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c` | MERGED 2026-09-06. Feature HEAD `51c23ac43320ae19c7e9bd68623b8863f0222254`. https://github.com/Aminrup-Technologies/Bill_Software/pull/52 |
 | #53 | View Export Current-Row Consistency | — (not on base) | OPEN. Feature HEAD `9da3f2308f1a2a470c830852113747f388c5a070`. https://github.com/Aminrup-Technologies/Bill_Software/pull/53 |
 | #54 | InvoiceMail Isolation | `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64` | MERGED 2026-09-06. Feature HEAD `03fb796f0cd55be7ebfac390ea1663ea6da01837`. https://github.com/Aminrup-Technologies/Bill_Software/pull/54 |
-| #55 | Delete Invoice Isolation | — (not on base) | OPEN. Feature HEAD `7baf986dc3d36eeab8913ea1ac15804c0c719bbd`. https://github.com/Aminrup-Technologies/Bill_Software/pull/55 |
+| #55 | Delete Invoice Isolation | `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a` | MERGED 2026-09-06. Feature HEAD after base refresh `b6f93bcd379905425c88bd9179c0165b9998bec5` (original `7baf986dc3d36eeab8913ea1ac15804c0c719bbd`). https://github.com/Aminrup-Technologies/Bill_Software/pull/55 |
 
-Recommended merge order remaining: **#53 → #55**. #53 applies the #52 current-row rule to View export. #54 is on base (`6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`).
+Recommended merge order remaining: **#53**. #53 applies the #52 current-row rule to View export. #55 is on base (`1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`).
 
 ---
 
@@ -143,9 +143,9 @@ Recommended merge order remaining: **#53 → #55**. #53 applies the #52 current-
 
 **Business impact.** Client / date / client+date search preserved (`txttodate` still from, `txtfromDate` still to). Same-company delete still sets quotation `Status2='No'` and detail `InvStatus='No'`, then deletes invoice, details, and `tbl_InvSiteAddress`. Cross-company `Invoice_No` is a no-op (`No Data Found...`). Search/View Invoice and export files unchanged.
 
-**Risk level.** Critical (before).
+**Risk level.** Critical (before). **Merged.**
 
-**Rollback impact.** Revert the single `.cs` file. No schema.
+**Rollback impact.** Revert merge `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`. No schema.
 
 ---
 
@@ -179,7 +179,7 @@ Recommended merge order remaining: **#53 → #55**. #53 applies the #52 current-
 | Invoice View | Already parameterized and `a.CompanyID`-scoped on base (prior sprint). Not modified in #48–#55 |
 | Invoice Export | 33 columns, Invoice Source, `a.PServiceName` snapshot, Export_Info, Invoice_Source_Summary already on base (PRs #45/#47). Not modified in #48–#55 |
 | Invoice Mail | **Merged** PR #54 (`6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`). Tenant lookups + `mailStatus` UPDATE CompanyID-scoped. HTML/subject unchanged |
-| Invoice Delete | Complete in PR #55 (awaiting merge) |
+| Invoice Delete | **Merged** PR #55 (`1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`). Parameterized search/delete; ownership SELECT before Status2/InvStatus; CompanyID on invoice, details, and site deletes |
 
 ### Remaining technical debt (not security defects in this series)
 
@@ -204,8 +204,8 @@ PRs #48–#55 contain **no database schema changes**. Application deploy is merg
    - Review before execute (file header: do not run until reviewed).
 
 2. **Deploy application.**
-   - Merge remaining OPEN PRs #53 and #55 onto `July_to_Sept26_DevNSupport` in the order in §1.
-   - #51 is on base (`271c8cdd29db1e253970f92243aeba61fa9a5b72`). #48 is on base (`3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`). #49 is on base (`04c43dbf804c840a8abc38984a9fc67703301117`). #50 is on base (`2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`). #52 is on base (`c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`). #54 is on base (`6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`).
+   - Merge remaining OPEN PR #53 onto `July_to_Sept26_DevNSupport`.
+   - #51 is on base (`271c8cdd29db1e253970f92243aeba61fa9a5b72`). #48 is on base (`3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`). #49 is on base (`04c43dbf804c840a8abc38984a9fc67703301117`). #50 is on base (`2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`). #52 is on base (`c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`). #54 is on base (`6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`). #55 is on base (`1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`).
 
 3. **Optional backfills (review-first; default `ROLLBACK TRAN`).**
    - `docs/qutprimaryservice_companyid_backfill.sql` — after PR #44 writer. Fills NULL `tbl_QutPrimaryService.CompanyID` from unique `tbl_Quotation.CompanyID`.
@@ -238,7 +238,7 @@ Do not `COMMIT` either script until AFTER verification is accepted. Both files d
 | #52 | Revert merge `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c` | None | New PO lines already written with `Version/IsDeleted/IsLatest` stay; no backfill to undo |
 | #53 | Revert export JOIN in `View_PurchaseOrder.aspx.cs` | None | None |
 | #54 | Revert merge `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64` | None | None |
-| #55 | Revert `Delete_invoice.aspx.cs` | None | Deleted invoices are not restored by code revert |
+| #55 | Revert merge `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a` | None | Deleted invoices are not restored by code revert |
 | PServiceName column | Not part of #48–#55 | Dropping `tbl_Invoice.PServiceName` is a separate schema decision (`db/pservice_snapshot.sql`) | If `docs/invoice_pservice_backfill.sql` was COMMITTED, reverting the column drops snapshot data |
 | QutPrimaryService CompanyID backfill | Not part of #48–#55 | If COMMITTED, NULL CompanyID rows were updated in place | Re-run is not defined; do not invent a reverse UPDATE |
 
@@ -276,7 +276,7 @@ If #50 and #53 are both merged, roll back #53 first (export JOIN only), then #50
 
 ### Security
 
-**Completed** for the confirmed defects in PRs #48–#55 (six merged: #51, #48, #49, #50, #52, #54; two awaiting merge onto `July_to_Sept26_DevNSupport`: #53, #55).
+**Completed** for the confirmed defects in PRs #48–#55 (seven merged: #51, #48, #49, #50, #52, #54, #55; one awaiting merge onto `July_to_Sept26_DevNSupport`: #53).
 
 ### Modernization (technical debt, not security defects)
 
@@ -294,6 +294,6 @@ If #50 and #53 are both merged, roll back #53 first (export JOIN only), then #50
 ## 9. Evidence sources
 
 - GitHub PR API: #48–#55 titles, files, merge state, merge commit, feature HEADs (2026-09-06).
-- `git log origin/July_to_Sept26_DevNSupport` — merge SHAs on base: #51 `271c8cdd…`, #48 `3b4c42b9…`, #49 `04c43dbf…`, #50 `2cce1e33…`, #52 `c23ee07e…`, #54 `6a2e5a77…`.
+- `git log origin/July_to_Sept26_DevNSupport` — merge SHAs on base: #51 `271c8cdd…`, #48 `3b4c42b9…`, #49 `04c43dbf…`, #50 `2cce1e33…`, #52 `c23ee07e…`, #54 `6a2e5a77…`, #55 `1f734a67…`.
 - Existing scripts: `db/pservice_snapshot.sql`, `docs/qutprimaryservice_companyid_backfill.sql`, `docs/invoice_pservice_backfill.sql`.
 - Existing inventory: `docs/invoice_export_data_inventory.md`.
