@@ -30,7 +30,17 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                DbCL.FillCombo(cmbvendor, "select Client_Name from tbl_Client where CompanyID = " + CompanyContext.CurrentCompanyID + " order by Client_Name");
+                DbCL.OpenDb();
+                cmbvendor.Items.Clear();
+                SqlCommand cmdCombo = new SqlCommand("select Client_Name from tbl_Client where CompanyID = @CompanyID order by Client_Name", DbCL.Conn);
+                cmdCombo.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                SqlDataReader rdrCombo = cmdCombo.ExecuteReader();
+                cmbvendor.Items.Add("--Select--");
+                while (rdrCombo.Read())
+                {
+                    cmbvendor.Items.Add(rdrCombo[0].ToString());
+                }
+                DbCL.Conn.Close();
                 txtfromDate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
                 txttodate.Text = DateTime.Now.ToString("dd-MMM-yyyy");
             }
@@ -39,22 +49,41 @@ namespace Bill_Software.corporate.business.app
         protected void btnSertch_Click(object sender, EventArgs e)
         {
             string cmdstring = "";
+            Dictionary<string, object> searchParams;
             if (RadioButtonList1.SelectedIndex == 0)
             {
                 BuindCompanyId();
-                cmdstring = "select  tbl_Invoice.ID,tbl_Invoice.Invoice_No,tbl_Invoice.Invoice_Date,tbl_Invoice.Quotation_No,tbl_Invoice.Quotation_Date,tbl_Invoice.Net_Amount,tbl_Client.Client_Name,tbl_Invoice.status2 from tbl_Invoice inner join tbl_Client on tbl_Invoice.Client_ID=tbl_Client.Client_Id and tbl_Client.CompanyID=" + CompanyContext.CurrentCompanyID + " where tbl_Invoice.CompanyID=" + CompanyContext.CurrentCompanyID + " and tbl_Invoice.Client_ID='" + lblclientId.Text + "' order by cast(tbl_Invoice.Invoice_Date as datetime) desc";
-                Buinddatagrid(cmdstring);
+                cmdstring = "select  tbl_Invoice.ID,tbl_Invoice.Invoice_No,tbl_Invoice.Invoice_Date,tbl_Invoice.Quotation_No,tbl_Invoice.Quotation_Date,tbl_Invoice.Net_Amount,tbl_Client.Client_Name,tbl_Invoice.status2 from tbl_Invoice inner join tbl_Client on tbl_Invoice.Client_ID=tbl_Client.Client_Id and tbl_Client.CompanyID=@CompanyID where tbl_Invoice.CompanyID=@CompanyID and tbl_Invoice.Client_ID=@Client_ID order by cast(tbl_Invoice.Invoice_Date as datetime) desc";
+                searchParams = new Dictionary<string, object>
+                {
+                    { "@CompanyID", CompanyContext.CurrentCompanyID },
+                    { "@Client_ID", lblclientId.Text }
+                };
+                Buinddatagrid(cmdstring, searchParams);
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
-                cmdstring = "select  tbl_Invoice.ID,tbl_Invoice.Invoice_No,tbl_Invoice.Invoice_Date,tbl_Invoice.Quotation_No,tbl_Invoice.Quotation_Date,tbl_Invoice.Net_Amount,tbl_Client.Client_Name,tbl_Invoice.status2 from tbl_Invoice inner join tbl_Client on tbl_Invoice.Client_ID=tbl_Client.Client_Id and tbl_Client.CompanyID=" + CompanyContext.CurrentCompanyID + " where tbl_Invoice.CompanyID=" + CompanyContext.CurrentCompanyID + " and cast(tbl_Invoice.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by cast(tbl_Invoice.Invoice_Date as datetime) desc";
-                Buinddatagrid(cmdstring);
+                cmdstring = "select  tbl_Invoice.ID,tbl_Invoice.Invoice_No,tbl_Invoice.Invoice_Date,tbl_Invoice.Quotation_No,tbl_Invoice.Quotation_Date,tbl_Invoice.Net_Amount,tbl_Client.Client_Name,tbl_Invoice.status2 from tbl_Invoice inner join tbl_Client on tbl_Invoice.Client_ID=tbl_Client.Client_Id and tbl_Client.CompanyID=@CompanyID where tbl_Invoice.CompanyID=@CompanyID and cast(tbl_Invoice.Invoice_Date as datetime) between @ToDate and @FromDate order by cast(tbl_Invoice.Invoice_Date as datetime) desc";
+                searchParams = new Dictionary<string, object>
+                {
+                    { "@CompanyID", CompanyContext.CurrentCompanyID },
+                    { "@ToDate", txttodate.Text },
+                    { "@FromDate", txtfromDate.Text }
+                };
+                Buinddatagrid(cmdstring, searchParams);
             }
             else
             {
                 BuindCompanyId();
-                cmdstring = "select  tbl_Invoice.ID,tbl_Invoice.Invoice_No,tbl_Invoice.Invoice_Date,tbl_Invoice.Quotation_No,tbl_Invoice.Quotation_Date,tbl_Invoice.Net_Amount,tbl_Client.Client_Name,tbl_Invoice.status2 from tbl_Invoice inner join tbl_Client on tbl_Invoice.Client_ID=tbl_Client.Client_Id and tbl_Client.CompanyID=" + CompanyContext.CurrentCompanyID + " where tbl_Invoice.CompanyID=" + CompanyContext.CurrentCompanyID + " and tbl_Invoice.Client_ID='" + lblclientId.Text + "' and cast(tbl_Invoice.Invoice_Date as datetime) between '" + txttodate.Text + "' and '" + txtfromDate.Text + "' order by cast(tbl_Invoice.Invoice_Date as datetime) desc";
-                Buinddatagrid(cmdstring);
+                cmdstring = "select  tbl_Invoice.ID,tbl_Invoice.Invoice_No,tbl_Invoice.Invoice_Date,tbl_Invoice.Quotation_No,tbl_Invoice.Quotation_Date,tbl_Invoice.Net_Amount,tbl_Client.Client_Name,tbl_Invoice.status2 from tbl_Invoice inner join tbl_Client on tbl_Invoice.Client_ID=tbl_Client.Client_Id and tbl_Client.CompanyID=@CompanyID where tbl_Invoice.CompanyID=@CompanyID and tbl_Invoice.Client_ID=@Client_ID and cast(tbl_Invoice.Invoice_Date as datetime) between @ToDate and @FromDate order by cast(tbl_Invoice.Invoice_Date as datetime) desc";
+                searchParams = new Dictionary<string, object>
+                {
+                    { "@CompanyID", CompanyContext.CurrentCompanyID },
+                    { "@Client_ID", lblclientId.Text },
+                    { "@ToDate", txttodate.Text },
+                    { "@FromDate", txtfromDate.Text }
+                };
+                Buinddatagrid(cmdstring, searchParams);
             }
             btnSertch.Visible = false;
         }
@@ -62,8 +91,10 @@ namespace Bill_Software.corporate.business.app
         private void BuindCompanyId()
         {
             DbCL.OpenDb();
-            string cmdstring = "select Client_Id from tbl_Client where Client_Name='" + cmbvendor.Text + "' AND CompanyID=" + CompanyContext.CurrentCompanyID;
+            string cmdstring = "select Client_Id from tbl_Client where Client_Name=@Client_Name AND CompanyID=@CompanyID";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            cmd.Parameters.AddWithValue("@Client_Name", cmbvendor.Text);
+            cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
             {
@@ -72,14 +103,21 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-        private void Buinddatagrid(string cmdstring)
+        private void Buinddatagrid(string cmdstring, Dictionary<string, object> parameters)
         {
             DbCL.OpenDb();
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
+            if (parameters != null)
+            {
+                foreach (var param in parameters)
+                {
+                    cmd.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                }
+            }
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
             {
-                Buinddatagrid1(cmdstring);
+                Buinddatagrid1(cmdstring, parameters);
             }
             else
             {
@@ -90,11 +128,18 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-        private void Buinddatagrid1(string cmdstring)
+        private void Buinddatagrid1(string cmdstring, Dictionary<string, object> parameters)
         {
             DbCL.OpenDb();
 
             SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
+            if (parameters != null)
+            {
+                foreach (var param in parameters)
+                {
+                    cmd1.Parameters.AddWithValue(param.Key, param.Value ?? DBNull.Value);
+                }
+            }
             DataList1.DataSource = cmd1.ExecuteReader();
             DataList1.DataBind();
             DbCL.Conn.Close();
@@ -291,7 +336,14 @@ namespace Bill_Software.corporate.business.app
                         string date1 = (now.ToString("dd")) + "-" + (now.ToString("MM")) + "-" + (now.ToString("yyyy"));
 
                         //DbCL.executeRdr("Update tbl_Proforma set mailStatus='" + status + "',mail_Date='" + date1 + "' where Invoice_No='" + Session["Invoice_No"].ToString() + "'");
-                        DbCL.executeRdr("Update tbl_Invoice set mailStatus='" + status + "',mailDate='" + date1 + "' where Invoice_No='" + Session["Invoice_No"].ToString() + "' AND CompanyID=" + CompanyContext.CurrentCompanyID);
+                        Dictionary<string, object> mailParams = new Dictionary<string, object>
+                        {
+                            { "@mailStatus", status },
+                            { "@mailDate", date1 },
+                            { "@InvoiceNo", Session["Invoice_No"].ToString() },
+                            { "@CompanyID", CompanyContext.CurrentCompanyID }
+                        };
+                        DbCL.executeRdrNew("Update tbl_Invoice set mailStatus=@mailStatus,mailDate=@mailDate where Invoice_No=@InvoiceNo AND CompanyID=@CompanyID", mailParams);
 
                     }
                 }
