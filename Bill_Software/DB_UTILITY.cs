@@ -31,8 +31,7 @@ namespace Bill_Software
         {
             try
             {
-                Sqlconnection();
-                ConnectDb();
+                OpenDb();
                 SqlCommand cmd = new SqlCommand(SqlString, Conn);
                 cmd.CommandTimeout = 0;
                 cmd.ExecuteNonQuery();
@@ -90,8 +89,7 @@ namespace Bill_Software
         {
             try
             {
-                Sqlconnection();
-                ConnectDb();
+                OpenDb();
                 using (SqlCommand cmd = new SqlCommand(sql, Conn))
                 {
                     if (parameters != null)
@@ -117,8 +115,7 @@ namespace Bill_Software
         {
             try
             {
-                Sqlconnection();
-                ConnectDb();
+                OpenDb();
                 SqlCommand cmd = new SqlCommand(sql, Conn);
                 cmd.CommandTimeout = 0;
 
@@ -147,8 +144,7 @@ namespace Bill_Software
             object result = null;
             try
             {
-                Sqlconnection();
-                ConnectDb();
+                OpenDb();
                 using (SqlCommand cmd = new SqlCommand(query, Conn))
                 {
                     cmd.Parameters.AddRange(parameters);
@@ -209,6 +205,18 @@ namespace Bill_Software
             }
         }
 
+        public void OpenDb()
+        {
+            Sqlconnection();
+            ConnectDb();
+        }
+
+        public void CloseDb()
+        {
+            if (Conn.State == ConnectionState.Open)
+                Conn.Close();
+        }
+
         public void DisconnectDb()
         {
             try
@@ -236,8 +244,7 @@ namespace Bill_Software
         public void FillCombo(DropDownList cmbName, string cmdString)
         {
             cmbName.Items.Clear();
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             SqlCommand cmd = new SqlCommand(cmdString, Conn);
             SqlDataReader Rdr;
             Rdr = cmd.ExecuteReader();
@@ -252,8 +259,7 @@ namespace Bill_Software
         public void FillComboNew(DropDownList cmbName, string cmdString)
         {
             cmbName.Items.Clear();
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
 
             SqlCommand cmd = new SqlCommand(cmdString, Conn);
             SqlDataReader Rdr = cmd.ExecuteReader();
@@ -275,8 +281,7 @@ namespace Bill_Software
         public void FillCombo1(DropDownList cmbName, string cmdString)
         {
             cmbName.Items.Clear();
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             SqlCommand cmd = new SqlCommand(cmdString, Conn);
             SqlDataReader Rdr;
             Rdr = cmd.ExecuteReader();
@@ -290,8 +295,7 @@ namespace Bill_Software
         public void FillCombo10(DropDownList cmbName, string cmdString)
         {
             
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             SqlCommand cmd = new SqlCommand(cmdString, Conn);
             SqlDataReader Rdr;
             Rdr = cmd.ExecuteReader();
@@ -305,8 +309,7 @@ namespace Bill_Software
         public void FillCombo2(DropDownList cmbName, string cmdString)
         {
 
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             SqlCommand cmd = new SqlCommand(cmdString, Conn);
             SqlDataReader Rdr;
             Rdr = cmd.ExecuteReader();
@@ -572,8 +575,7 @@ namespace Bill_Software
 
         public SqlDataReader SPReturnRdr(String SPName, SqlParameter[] SPParameter)
         {
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             cmd = new SqlCommand(SPName, Conn);
             cmd.CommandType = CommandType.Text;
             cmd.CommandTimeout = 0;
@@ -590,8 +592,7 @@ namespace Bill_Software
 
         public int SPExecDB(String SPName, SqlParameter[] SPParameter)
         {
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             cmd = new SqlCommand(SPName, Conn);
             cmd.CommandType = CommandType.Text;
             cmd.CommandTimeout = 0;
@@ -619,8 +620,7 @@ namespace Bill_Software
         {
             int retVal = 0;
             cmd = new SqlCommand();
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             cmd.Connection = Conn;
             cmd.CommandType = CommandType.Text;
             cmd.CommandText = strSql;
@@ -638,8 +638,7 @@ namespace Bill_Software
         }
         public DataSet SPreturn_dataset(string s1, SqlParameter[] SPParameter)
         {
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             cmd = new SqlCommand(s1, Conn);
             cmd.CommandType = CommandType.Text;
             if (SPParameter != null)
@@ -659,8 +658,7 @@ namespace Bill_Software
 
         public DataTable SPreturn_dt(string s1, SqlParameter[] SPParameter)
         {
-            Sqlconnection();
-            ConnectDb();
+            OpenDb();
             cmd = new SqlCommand(s1, Conn);
             cmd.CommandType = CommandType.Text;
             if (SPParameter != null)
@@ -683,8 +681,7 @@ namespace Bill_Software
             try
             {
                 ddlDropdown.Items.Clear();
-                Sqlconnection();
-                ConnectDb();
+                OpenDb();
                 SqlCommand cmd = new SqlCommand(strsql, Conn);
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandTimeout = 0;
