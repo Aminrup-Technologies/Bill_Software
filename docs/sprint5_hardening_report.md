@@ -4,7 +4,7 @@
 |---|---|
 | Repository | `Aminrup-Technologies/Bill_Software` |
 | Base branch | `July_to_Sept26_DevNSupport` |
-| Base HEAD at report time | `04c43dbf804c840a8abc38984a9fc67703301117` (merge of PR #49; previous #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`; previous #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`) |
+| Base HEAD at report time | `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb` (merge of PR #50; previous #49 `04c43dbf804c840a8abc38984a9fc67703301117`; previous #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`; previous #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`) |
 | Reporting date | 2026-09-06 |
 | Scope | Purchase Order and Invoice tenant isolation, SQL parameterization, current-row print/export parity, ViewType persistence (PRs #48–#55) |
 | Reviewer | AMINRUP TECHNOLOGIES |
@@ -20,14 +20,14 @@ This report is documentation only. It does not change application SQL or schema.
 |---|---|---|---|
 | #48 | Delete Purchase Order Isolation | `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86` | MERGED 2026-09-05. Feature HEAD `d62bf97072e5e576b5b7f9e8ab8c3bc0bf3f0c63`. https://github.com/Aminrup-Technologies/Bill_Software/pull/48 |
 | #49 | Search Purchase Order Isolation | `04c43dbf804c840a8abc38984a9fc67703301117` | MERGED 2026-09-06. Feature HEAD `666f29e7723aa92d76d13b93354943e84745321a`. https://github.com/Aminrup-Technologies/Bill_Software/pull/49 |
-| #50 | View Purchase Order Isolation | — (not on base) | OPEN. Feature HEAD `2a1b24e50e75ebf02f152bb54d188a6a4e30f82f`. https://github.com/Aminrup-Technologies/Bill_Software/pull/50 |
+| #50 | View Purchase Order Isolation | `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb` | MERGED 2026-09-06. Feature HEAD `2a1b24e50e75ebf02f152bb54d188a6a4e30f82f`. https://github.com/Aminrup-Technologies/Bill_Software/pull/50 |
 | #51 | Edit Purchase Order ViewType + SalesPerson | `271c8cdd29db1e253970f92243aeba61fa9a5b72` | MERGED 2026-09-05. Feature HEAD `b76c09848d483005c40ee2ec89ef68e97309d658`. https://github.com/Aminrup-Technologies/Bill_Software/pull/51 |
 | #52 | Print Current-Row Consistency | — (not on base) | OPEN. Feature HEAD `51c23ac43320ae19c7e9bd68623b8863f0222254`. https://github.com/Aminrup-Technologies/Bill_Software/pull/52 |
 | #53 | View Export Current-Row Consistency | — (not on base) | OPEN. Feature HEAD `9da3f2308f1a2a470c830852113747f388c5a070`. https://github.com/Aminrup-Technologies/Bill_Software/pull/53 |
 | #54 | InvoiceMail Isolation | — (not on base) | OPEN. Feature HEAD `03fb796f0cd55be7ebfac390ea1663ea6da01837`. https://github.com/Aminrup-Technologies/Bill_Software/pull/54 |
 | #55 | Delete Invoice Isolation | — (not on base) | OPEN. Feature HEAD `7baf986dc3d36eeab8913ea1ac15804c0c719bbd`. https://github.com/Aminrup-Technologies/Bill_Software/pull/55 |
 
-Recommended merge order remaining: **#50 → #52 → #53 → #54 → #55**. #53 depends on the current-row rule introduced in #52. #50 and #53 both touch `View_PurchaseOrder.aspx.cs` and should be merged sequentially.
+Recommended merge order remaining: **#52 → #53 → #54 → #55**. #53 depends on the current-row rule introduced in #52. #50 is already on base; #53 still edits `View_PurchaseOrder.aspx.cs` (export JOIN only).
 
 ---
 
@@ -71,9 +71,9 @@ Recommended merge order remaining: **#50 → #52 → #53 → #54 → #55**. #53 
 
 **Business impact.** Same-company View still opens print. Cross-company ID is a no-op. BindData grid and Export were left unchanged in this PR (export current-row is #53).
 
-**Risk level.** High (before).
+**Risk level.** High (before). **Merged.** BindData and `btnExport_Click` were confirmed unchanged. Print URL remains `NewPurchaseOrder.aspx?ID=...` after `ID+CompanyID` ownership check.
 
-**Rollback impact.** Revert the single `.cs` file. No schema.
+**Rollback impact.** Revert merge `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`. No schema.
 
 ### PR #51 — Edit Purchase Order ViewType + SalesPerson
 
@@ -171,7 +171,7 @@ Recommended merge order remaining: **#50 → #52 → #53 → #54 → #55**. #53 
 |---|---|
 | Purchase Order Delete | **Merged** PR #48 (`3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`) |
 | Purchase Order Search | **Merged** PR #49 (`04c43dbf804c840a8abc38984a9fc67703301117`). Search/combo/lookup parameterized and CompanyID-scoped. Export SQL not in #49 |
-| Purchase Order View | Complete in PR #50 for View click + autocomplete (awaiting merge) |
+| Purchase Order View | **Merged** PR #50 (`2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`). View click + autocomplete CompanyID-scoped. BindData/export unchanged |
 | Purchase Order Edit | **Merged** PR #51 |
 | Purchase Order Print | Complete in PR #52 (awaiting merge) |
 | Purchase Order Export | Complete in PR #53 for View export current-row (awaiting merge). Search PO export not in this series |
@@ -204,8 +204,8 @@ PRs #48–#55 contain **no database schema changes**. Application deploy is merg
    - Review before execute (file header: do not run until reviewed).
 
 2. **Deploy application.**
-   - Merge remaining OPEN PRs #50, #52–#55 onto `July_to_Sept26_DevNSupport` in the order in §1.
-   - #51 is on base (`271c8cdd29db1e253970f92243aeba61fa9a5b72`). #48 is on base (`3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`). #49 is on base (`04c43dbf804c840a8abc38984a9fc67703301117`).
+   - Merge remaining OPEN PRs #52–#55 onto `July_to_Sept26_DevNSupport` in the order in §1.
+   - #51 is on base (`271c8cdd29db1e253970f92243aeba61fa9a5b72`). #48 is on base (`3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`). #49 is on base (`04c43dbf804c840a8abc38984a9fc67703301117`). #50 is on base (`2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`).
 
 3. **Optional backfills (review-first; default `ROLLBACK TRAN`).**
    - `docs/qutprimaryservice_companyid_backfill.sql` — after PR #44 writer. Fills NULL `tbl_QutPrimaryService.CompanyID` from unique `tbl_Quotation.CompanyID`.
@@ -233,7 +233,7 @@ Do not `COMMIT` either script until AFTER verification is accepted. Both files d
 |---|---|---|---|
 | #48 | Revert merge `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86` | None | None |
 | #49 | Revert merge `04c43dbf804c840a8abc38984a9fc67703301117` | None | None |
-| #50 | Revert `View_PurchaseOrder.aspx.cs` (conflicts with #53 if both merged) | None | None |
+| #50 | Revert merge `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb` (conflicts with #53 if both merged) | None | None |
 | #51 | Revert merge `271c8cdd29db1e253970f92243aeba61fa9a5b72` | None | ViewType values written after merge remain in `DetailedView` |
 | #52 | Revert `PurchaseOrderPrintHelper.cs` and `Create_quotation.aspx.cs` | None | New PO lines already written with `Version/IsDeleted/IsLatest` stay; no backfill to undo |
 | #53 | Revert export JOIN in `View_PurchaseOrder.aspx.cs` | None | None |
@@ -276,7 +276,7 @@ If #50 and #53 are both merged, roll back #53 first (export JOIN only), then #50
 
 ### Security
 
-**Completed** for the confirmed defects in PRs #48–#55 (three merged: #51, #48, #49; five awaiting merge onto `July_to_Sept26_DevNSupport`).
+**Completed** for the confirmed defects in PRs #48–#55 (four merged: #51, #48, #49, #50; four awaiting merge onto `July_to_Sept26_DevNSupport`).
 
 ### Modernization (technical debt, not security defects)
 
@@ -294,6 +294,6 @@ If #50 and #53 are both merged, roll back #53 first (export JOIN only), then #50
 ## 9. Evidence sources
 
 - GitHub PR API: #48–#55 titles, files, merge state, merge commit, feature HEADs (2026-09-06).
-- `git log origin/July_to_Sept26_DevNSupport` — merge SHAs on base: #51 `271c8cdd…`, #48 `3b4c42b9…`, #49 `04c43dbf…`.
+- `git log origin/July_to_Sept26_DevNSupport` — merge SHAs on base: #51 `271c8cdd…`, #48 `3b4c42b9…`, #49 `04c43dbf…`, #50 `2cce1e33…`.
 - Existing scripts: `db/pservice_snapshot.sql`, `docs/qutprimaryservice_companyid_backfill.sql`, `docs/invoice_pservice_backfill.sql`.
 - Existing inventory: `docs/invoice_export_data_inventory.md`.
