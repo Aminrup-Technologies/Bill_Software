@@ -33,8 +33,7 @@ namespace Bill_Software.corporate.business.app
 
         private void BindData()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             try
             {
@@ -87,7 +86,7 @@ namespace Bill_Software.corporate.business.app
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
         }
 
@@ -111,8 +110,7 @@ namespace Bill_Software.corporate.business.app
         {
             DataTable dtExport = new DataTable();
 
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             try
             {
@@ -232,7 +230,7 @@ namespace Bill_Software.corporate.business.app
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
 
             if (dtExport.Rows.Count == 0)

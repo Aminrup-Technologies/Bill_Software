@@ -61,8 +61,7 @@ namespace Bill_Software.corporate.business.app
 
         private void BuindCompanyId()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             string cmdstring = "select Client_Id from tbl_Client where Client_Name='" + cmbvendor.Text + "' AND CompanyID=" + CompanyContext.CurrentCompanyID;
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
@@ -75,8 +74,7 @@ namespace Bill_Software.corporate.business.app
 
         private void Buinddatagrid(string cmdstring)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
@@ -94,8 +92,7 @@ namespace Bill_Software.corporate.business.app
 
         private void Buinddatagrid1(string cmdstring)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
             DataList1.DataSource = cmd1.ExecuteReader();
@@ -160,8 +157,7 @@ namespace Bill_Software.corporate.business.app
 
         private void buindPrimaryServicewithQno(string clientId, string quotation_no)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             string cmdstring = "select count(*) from tbl_QutPrimaryService where qut_no=@qut_no AND CompanyID=@CompanyID";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
@@ -212,8 +208,7 @@ namespace Bill_Software.corporate.business.app
         {
             string PrimaryService = "";
 
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             string service = null;
             int flag = 1;
             string cmdstring = "select PrimaryService from tbl_QutPrimaryService where qut_no=@qut_no AND CompanyID=@CompanyID order by id";
@@ -275,8 +270,7 @@ namespace Bill_Software.corporate.business.app
         protected void BtnSendMail_Click(object sender, EventArgs e)
         {
             DataTable dt1;
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             dt1 = (DataTable)ViewState["dt"];
             if (dt1 != null)
             {

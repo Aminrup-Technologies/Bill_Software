@@ -34,8 +34,7 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                DbCL.Sqlconnection();
-                DbCL.ConnectDb();
+                DbCL.OpenDb();
 
                 string query = "SELECT Client_Name FROM tbl_Client WHERE CompanyID = @CompanyID ORDER BY Client_Name";
                 using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
@@ -55,7 +54,7 @@ namespace Bill_Software.corporate.business.app
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
         }
 
@@ -66,8 +65,7 @@ namespace Bill_Software.corporate.business.app
 
         private void BindData()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             try
             {
@@ -122,7 +120,7 @@ namespace Bill_Software.corporate.business.app
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
         }
 
@@ -130,8 +128,7 @@ namespace Bill_Software.corporate.business.app
         {
             DataTable dtExport = new DataTable();
 
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             try
             {
@@ -249,7 +246,7 @@ namespace Bill_Software.corporate.business.app
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
 
             if (dtExport.Rows.Count == 0)
