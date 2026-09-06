@@ -30,8 +30,7 @@ namespace Bill_Software.corporate.business.app
 
         private void LoadClientCombo()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             cmbvendor.Items.Clear();
             cmbvendor.Items.Add("--Select--");
             using (SqlCommand cmd = new SqlCommand("select Client_Name from tbl_Client where CompanyID=@CompanyID order by Client_Name", DbCL.Conn))
@@ -87,8 +86,7 @@ namespace Bill_Software.corporate.business.app
         }
         private void Buinddatagrid(string cmdstring, List<SqlParameter> sqlParams)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             AddParams(cmd, sqlParams);
             SqlDataReader re = cmd.ExecuteReader();
@@ -107,8 +105,7 @@ namespace Bill_Software.corporate.business.app
 
         private void Buinddatagrid1(string cmdstring, List<SqlParameter> sqlParams)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             SqlCommand cmd1 = new SqlCommand(cmdstring, DbCL.Conn);
             AddParams(cmd1, sqlParams);
@@ -129,8 +126,7 @@ namespace Bill_Software.corporate.business.app
 
         private void BuindCompanyId()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             string cmdstring = "select Client_Id from tbl_Client where Client_Name=@ClientName AND CompanyID=@CompanyID";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             cmd.Parameters.AddWithValue("@ClientName", cmbvendor.Text);
@@ -179,8 +175,7 @@ namespace Bill_Software.corporate.business.app
 
         private bool updatestock1(string Invoice_No)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             string cmdstring = "select Quotation_No from tbl_Invoice where Invoice_No=@Invoice_No AND CompanyID=@CompanyID";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             cmd.Parameters.AddWithValue("@Invoice_No", Invoice_No);
@@ -207,8 +202,7 @@ namespace Bill_Software.corporate.business.app
 
         private void UpdateQuotationProductStatus(string invoice_No, string quotation_no)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
             string cmdstring = "select Product_id,Product_name from tbl_Invoice_details where Quotation_no=@Quotation_no and Invoice_No=@Invoice_No AND CompanyID=@CompanyID";
             SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
             cmd.Parameters.AddWithValue("@Quotation_no", quotation_no);
