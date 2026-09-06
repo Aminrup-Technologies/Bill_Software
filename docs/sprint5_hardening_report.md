@@ -4,11 +4,11 @@
 |---|---|
 | Repository | `Aminrup-Technologies/Bill_Software` |
 | Base branch | `July_to_Sept26_DevNSupport` |
-| Base HEAD at report time | `975b275a1210dcf2884d271194782421cc2c3e89` (merge of PR #57; previous #53 `9f1a28f0921f3e9d8e2f4d2ee7f2ee295ed4438d`; previous #55 `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`; previous #54 `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`; previous #52 `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`; previous #50 `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`; previous #49 `04c43dbf804c840a8abc38984a9fc67703301117`; previous #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`; previous #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`) |
+| Base HEAD at report time | `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7` (merge of PR #58; previous #57 `975b275a1210dcf2884d271194782421cc2c3e89`; previous #53 `9f1a28f0921f3e9d8e2f4d2ee7f2ee295ed4438d`; previous #55 `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`; previous #54 `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`; previous #52 `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`; previous #50 `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`; previous #49 `04c43dbf804c840a8abc38984a9fc67703301117`; previous #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`; previous #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`) |
 | Reporting date | 2026-09-06 |
 | Scope | Purchase Order and Invoice tenant isolation, SQL parameterization, current-row print/export parity, ViewType persistence (PRs #48–#55, #57) |
 | Reviewer | AMINRUP TECHNOLOGIES |
-| Status | Security remediation complete. Application PRs #48–#55 and Search PO export current-row PR #57 are MERGED onto `July_to_Sept26_DevNSupport`. Documentation PR #56 is OPEN and is not on application HEAD. |
+| Status | Security remediation complete. Application PRs #48–#55, #57, and #58 are MERGED onto `July_to_Sept26_DevNSupport`. Documentation PR #56 is OPEN and is not on application HEAD. |
 
 This report is documentation only. It does not change application SQL or schema. Merge SHAs are recorded only where GitHub shows a merge commit on `July_to_Sept26_DevNSupport`. Open PRs list feature HEAD SHAs for traceability, not as merge SHAs.
 
@@ -27,8 +27,9 @@ This report is documentation only. It does not change application SQL or schema.
 | #54 | InvoiceMail Isolation | `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64` | MERGED 2026-09-06. Feature HEAD `03fb796f0cd55be7ebfac390ea1663ea6da01837`. https://github.com/Aminrup-Technologies/Bill_Software/pull/54 |
 | #55 | Delete Invoice Isolation | `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a` | MERGED 2026-09-06. Feature HEAD after base refresh `b6f93bcd379905425c88bd9179c0165b9998bec5` (original `7baf986dc3d36eeab8913ea1ac15804c0c719bbd`). https://github.com/Aminrup-Technologies/Bill_Software/pull/55 |
 | #57 | Search Purchase Order Export Current-Row | `975b275a1210dcf2884d271194782421cc2c3e89` | MERGED 2026-09-06. Feature HEAD `a77ae80dce5fb20273c1f98c87322378a7953d56`. https://github.com/Aminrup-Technologies/Bill_Software/pull/57 |
+| #58 | DB_UTILITY OpenDb / CloseDb helpers | `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7` | MERGED 2026-09-06. Feature HEAD `7adc28ab0ee243698cc36863afcbc856567493a5`. https://github.com/Aminrup-Technologies/Bill_Software/pull/58 |
 
-Recommended merge order remaining: **none** for application PRs #48–#55 and #57. Application HEAD is `975b275a1210dcf2884d271194782421cc2c3e89`. Documentation PR #56 remains OPEN and is not on that HEAD.
+Recommended merge order remaining: **none** for application PRs #48–#55, #57, and #58. Application HEAD is `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`. Documentation PR #56 remains OPEN and is not on that HEAD.
 
 ---
 
@@ -162,6 +163,20 @@ Recommended merge order remaining: **none** for application PRs #48–#55 and #5
 
 **Rollback impact.** Revert merge `975b275a1210dcf2884d271194782421cc2c3e89`. No schema.
 
+### PR #58 — DB_UTILITY OpenDb / CloseDb helpers
+
+**Purpose.** Extract internal connection helpers inside `DB_UTILITY` without changing application SQL or call sites.
+
+**Files changed.** `Bill_Software/DB_UTILITY.cs`
+
+**Security issue addressed.** None. Modernization only.
+
+**Business impact.** `OpenDb()` wraps `Sqlconnection(); ConnectDb();`. `CloseDb()` wraps guarded `Conn.Close()`. Fifteen consecutive internal open sequences call `OpenDb()`. External `DbCL` call sites unchanged. Invoice, Purchase Order, Export, and Print untouched.
+
+**Risk level.** Low. **Merged.**
+
+**Rollback impact.** Revert merge `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`. No schema.
+
 ---
 
 ## 3. Security matrix
@@ -205,8 +220,8 @@ Recommended merge order remaining: **none** for application PRs #48–#55 and #5
 | `tbl_quotation_vat` / `tbl_QutSiteAddress` have no CompanyID | PR #48: parameterized by quotation number only |
 | Search/View Invoice grid joins on client / `tbl_QuoPriSerTogather` / quotation | Documented in `docs/invoice_export_data_inventory.md`; header still `a.CompanyID` |
 | Historical NULL `IsLatest` on Create-era PO lines | PR #52: no data backfill; ISNULL reader shim + forward writer |
-| SQL helper standardization | Modernization only; not opened as a PR |
-| DbCL inventory | Modernization only; not opened as a PR |
+| SQL helper standardization | Internal `OpenDb` / `CloseDb` merged in PR #58 (`8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`). External `DbCL` call sites unchanged. No `AddCompanyId` helper. |
+| DbCL inventory | Catalog `executeRdr` vs `executeRdrNew` vs `SPreturn_dt` still differs. Not a security defect. |
 
 ---
 
@@ -219,8 +234,8 @@ PRs #48–#55 contain **no database schema changes**. Application deploy is merg
    - Review before execute (file header: do not run until reviewed).
 
 2. **Deploy application.**
-   - Application PRs #48–#55 and #57 are on `July_to_Sept26_DevNSupport` HEAD `975b275a1210dcf2884d271194782421cc2c3e89`.
-   - #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`. #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`. #49 `04c43dbf804c840a8abc38984a9fc67703301117`. #50 `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`. #52 `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`. #54 `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`. #55 `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`. #53 `9f1a28f0921f3e9d8e2f4d2ee7f2ee295ed4438d`. #57 `975b275a1210dcf2884d271194782421cc2c3e89`.
+   - Application PRs #48–#55, #57, and #58 are on `July_to_Sept26_DevNSupport` HEAD `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`.
+   - #51 `271c8cdd29db1e253970f92243aeba61fa9a5b72`. #48 `3b4c42b9b8c44b293a0564bfb6aa34b40787ce86`. #49 `04c43dbf804c840a8abc38984a9fc67703301117`. #50 `2cce1e33e4dd735b8cc8fd43d9a97827cce38eeb`. #52 `c23ee07e074b86ea86e5cd7208abbfbfc3ea806c`. #54 `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64`. #55 `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a`. #53 `9f1a28f0921f3e9d8e2f4d2ee7f2ee295ed4438d`. #57 `975b275a1210dcf2884d271194782421cc2c3e89`. #58 `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`.
 
 3. **Optional backfills (review-first; default `ROLLBACK TRAN`).**
    - `docs/qutprimaryservice_companyid_backfill.sql` — after PR #44 writer. Fills NULL `tbl_QutPrimaryService.CompanyID` from unique `tbl_Quotation.CompanyID`.
@@ -255,6 +270,7 @@ Do not `COMMIT` either script until AFTER verification is accepted. Both files d
 | #54 | Revert merge `6a2e5a7780789f3cc2cbfbc799bbc3e14bb51f64` | None | None |
 | #55 | Revert merge `1f734a67ceab51dbb5a90d8b965bba00dd15bb7a` | None | Deleted invoices are not restored by code revert |
 | #57 | Revert merge `975b275a1210dcf2884d271194782421cc2c3e89` | None | None |
+| #58 | Revert merge `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7` | None | None |
 | PServiceName column | Not part of #48–#55 | Dropping `tbl_Invoice.PServiceName` is a separate schema decision (`db/pservice_snapshot.sql`) | If `docs/invoice_pservice_backfill.sql` was COMMITTED, reverting the column drops snapshot data |
 | QutPrimaryService CompanyID backfill | Not part of #48–#55 | If COMMITTED, NULL CompanyID rows were updated in place | Re-run is not defined; do not invent a reverse UPDATE |
 
@@ -292,14 +308,14 @@ If #50 and #53 are both merged, roll back #53 first (export JOIN only), then #50
 
 ### Security
 
-**Completed.** Application security PRs #48–#55 and Search PO export current-row PR #57 are merged onto `July_to_Sept26_DevNSupport` HEAD `975b275a1210dcf2884d271194782421cc2c3e89`.
+**Completed.** Application security PRs #48–#55 and #57, plus DB_UTILITY helper PR #58, are merged onto `July_to_Sept26_DevNSupport` HEAD `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`.
 
 ### Modernization (technical debt, not security defects)
 
 | Item | Notes |
 |---|---|
-| SQL helper standardization | Local `AddCompanyId` / `OpenDb` / filter helpers only. No SQL behavior change. Not opened as a PR. |
-| DbCL inventory | Catalog `executeRdr` vs `executeRdrNew` vs `SPreturn_dt`. Not started as a PR. |
+| SQL helper standardization | Internal `OpenDb` / `CloseDb` merged in PR #58 (`8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`). External `DbCL` call sites unchanged. |
+| DbCL inventory | Catalog `executeRdr` vs `executeRdrNew` vs `SPreturn_dt` still differs. |
 | Performance review | Out of this series. |
 | Shared helper cleanup | Do not introduce a cross-page SQL wrapper unless a later modernization PR requires it. |
 | Search PO export current-row | Closed by PR #57 (`975b275a1210dcf2884d271194782421cc2c3e89`). Print / View export / Search export share ISNULL current-row + `CompanyID`. |
@@ -309,7 +325,7 @@ If #50 and #53 are both merged, roll back #53 first (export JOIN only), then #50
 
 ## 9. Evidence sources
 
-- GitHub PR API: #48–#57 titles, files, merge state, merge commit, feature HEADs (2026-09-06). Documentation PR #56 is OPEN.
-- `git log origin/July_to_Sept26_DevNSupport` — merge SHAs on base include #57 `975b275a…`. Application HEAD `975b275a1210dcf2884d271194782421cc2c3e89`.
+- GitHub PR API: #48–#58 titles, files, merge state, merge commit, feature HEADs (2026-09-06). Documentation PR #56 is OPEN.
+- `git log origin/July_to_Sept26_DevNSupport` — merge SHAs on base include #58 `8b55a41f…`. Application HEAD `8b55a41f4045aef502cdc7b54f49f9ad7f1a0bb7`.
 - Existing scripts: `db/pservice_snapshot.sql`, `docs/qutprimaryservice_companyid_backfill.sql`, `docs/invoice_pservice_backfill.sql`.
 - Existing inventory: `docs/invoice_export_data_inventory.md`.
