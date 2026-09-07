@@ -14,6 +14,7 @@
 - [Database Overview](#database-overview)
 - [Module Reference](#module-reference)
 - [Security Baseline](#security-baseline)
+- [Documentation](#documentation)
 - [Security Notice](#security-notice)
 - [Development Guidelines](#development-guidelines)
 - [Contributing](#contributing)
@@ -318,6 +319,12 @@ v2.1 Security Foundation is the authoritative security contract for every future
 | [`docs/22_Security_Baseline.md`](docs/22_Security_Baseline.md) | Canonical engineering contract |
 | [`docs/14_Authentication_Authorization_Architecture.md`](docs/14_Authentication_Authorization_Architecture.md) | Architecture review |
 | [`docs/15_Phase0B_Secrets_Deployment.md`](docs/15_Phase0B_Secrets_Deployment.md) – [`docs/21_Phase3_Infrastructure_Hardening.md`](docs/21_Phase3_Infrastructure_Hardening.md) | Implementation history |
+
+---
+
+## Documentation
+
+- [Milestone Closure](docs/MILESTONE_v2.1_Security_Foundation_Closure.md) — v2.1 Security Foundation program closeout
 
 ---
 
