@@ -169,6 +169,9 @@ namespace Bill_Software.corporate.business.app
                                     throw new InvalidOperationException("Unable to assign the selected role.");
                             }
 
+                            if (!AuthGuard.TryEnsureHomeMembership(cn, tran, newUserDbId, companyId))
+                                throw new InvalidOperationException("Unable to grant company membership.");
+
                             // --- 2. Allocate Leaves (Calendar Year) ---
                             int currentYear = DateTime.Now.Year;
                             using (SqlCommand cmdLeave = new SqlCommand("sp_AllocateEmployeeLeaves", cn, tran))
