@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Security.Cryptography;
 using System.Web;
 using System.Web.UI;
-using System.Net;
-using System.Net.Mail;
-using System.IO;
-using System.Linq;
 using System.Web.Security;
 using Bill_Software.corporate.business.app;
 
@@ -124,22 +119,22 @@ namespace Bill_Software
                                 return;
                             }
 
-                            bool isPasswordValid = false;
-                            if (user.PasswordHash != null && user.PasswordSalt != null)
-                            {
-                                try { isPasswordValid = VerifyPasswordPBKDF2(txtPassword.Text.Trim(), user.PasswordHash, user.PasswordSalt); }
-                                catch { isPasswordValid = false; }
-                            }
+                            PasswordVerifyResult passwordCheck = PasswordHasher.Verify(
+                                txtPassword.Text.Trim(), user.PasswordHash, user.PasswordSalt, user.PasswordPlain);
 
-                            if (!isPasswordValid && !string.IsNullOrEmpty(user.PasswordPlain) && user.PasswordPlain == txtPassword.Text.Trim())
-                            {
-                                isPasswordValid = true;
-                            }
-
-                            if (!isPasswordValid)
+                            if (passwordCheck == PasswordVerifyResult.Invalid)
                             {
                                 HandleFailedLoginAttempt(user);
                                 return;
+                            }
+
+                            if (passwordCheck == PasswordVerifyResult.ValidLegacyUpgrade)
+                            {
+                                if (!PasswordHasher.TryUpgradeLegacyPassword(user.Id, txtPassword.Text.Trim()))
+                                {
+                                    ShowError("Unable to complete sign-in. Please try again.");
+                                    return;
+                                }
                             }
 
                             Session["USERID"] = user.UserId;
@@ -342,15 +337,21 @@ namespace Bill_Software
                         return;
                     }
 
-                    string tempPassword = GenerateOTP() + "Tmp!";
-
-                    string updateQuery = "UPDATE tbl_login SET Password = @TempPassword, PasswordHash = NULL, PasswordSalt = NULL, MustChangePassword = 1, FailedAccessCount = 0, LockoutEnd = NULL WHERE Id = @Id";
-                    using (SqlCommand cmdUpdate = new SqlCommand(updateQuery, cn))
+                    string rawToken;
+                    string tokenError;
+                    if (!PasswordResetService.TryIssueToken(userId, forgotUserId, out rawToken, out tokenError))
                     {
-                        cmdUpdate.Parameters.AddWithValue("@TempPassword", tempPassword);
-                        cmdUpdate.Parameters.AddWithValue("@Id", userId);
-                        cmdUpdate.ExecuteNonQuery();
+                        ShowError(string.IsNullOrEmpty(tokenError)
+                            ? "Password reset is temporarily unavailable. Please contact your administrator."
+                            : tokenError);
+                        return;
                     }
+
+                    string resetPath = VirtualPathUtility.ToAbsolute("~/reset_password.aspx");
+                    string resetUrl = Request.Url.Scheme + "://" + Request.Url.Authority + resetPath
+                        + "?uid=" + HttpUtility.UrlEncode(forgotUserId)
+                        + "&token=" + HttpUtility.UrlEncode(rawToken);
+                    int lifetimeMinutes = PasswordResetService.TokenLifetimeMinutes;
 
                     bool emailSent = false;
                     bool waSent = false;
@@ -360,37 +361,36 @@ namespace Bill_Software
                         string subject = "FLAME-EX ERP - Password Reset Request";
                         string body = $"<h2>Password Reset</h2>" +
                                       $"<p>Hello,</p>" +
-                                      $"<p>A password reset was requested for User ID: <strong>{forgotUserId}</strong></p>" +
-                                      $"<p>Your temporary password is: <strong>{tempPassword}</strong></p>" +
-                                      $"<p>Please log in using this temporary password. You will be prompted to create a new, secure password immediately after logging in.</p>";
+                                      $"<p>A password reset was requested for User ID: <strong>{HttpUtility.HtmlEncode(forgotUserId)}</strong></p>" +
+                                      $"<p>Use this one-time link to choose a new password (expires in {lifetimeMinutes} minutes):</p>" +
+                                      $"<p><a href=\"{HttpUtility.HtmlEncode(resetUrl)}\">{HttpUtility.HtmlEncode(resetUrl)}</a></p>" +
+                                      $"<p>If you cannot open the link, enter this reset token on the reset page: <strong>{HttpUtility.HtmlEncode(rawToken)}</strong></p>" +
+                                      $"<p>This token can be used only once. Your current password has not been changed.</p>";
 
-                        // Assign the real success value
                         emailSent = SendEmail(userEmail, subject, body);
                     }
 
                     if (!string.IsNullOrEmpty(userMobile))
                     {
-                        // Await and assign the real success value
-                        waSent = await SendWhatsAppMessageAsync(userMobile, userName, tempPassword);
+                        string waMessage = $"FLAME-EX password reset for {userName}. Token (one-time, {lifetimeMinutes} min): {rawToken}. Open: {resetUrl}";
+                        waSent = await SendWhatsAppMessageAsync(userMobile, waMessage);
                     }
 
-                    // Evaluate actual success based on real network responses
                     if (emailSent && waSent)
                     {
-                        ShowError($"A temporary password has been sent to your registered email and WhatsApp number ending in {GetMaskedMobile(userMobile)}.");
+                        ShowError($"A password reset link has been sent to your registered email and WhatsApp number ending in {GetMaskedMobile(userMobile)}.");
                     }
                     else if (emailSent)
                     {
-                        ShowError($"A temporary password has been sent to your registered email address.");
+                        ShowError("A password reset link has been sent to your registered email address.");
                     }
                     else if (waSent)
                     {
-                        ShowError($"A temporary password has been sent via WhatsApp to the number ending in {GetMaskedMobile(userMobile)}.");
+                        ShowError($"A password reset link has been sent via WhatsApp to the number ending in {GetMaskedMobile(userMobile)}.");
                     }
                     else
                     {
-                        // BOTH FAILED! Do not redirect. Warn the user.
-                        ShowError("Failed to send the temporary password. Please check your network connection or contact the administrator.");
+                        ShowError("Failed to send the reset link. Please check your network connection or contact the administrator.");
                         return;
                     }
 
@@ -418,14 +418,17 @@ namespace Bill_Software
 
             try
             {
-                string otp = GenerateOTP();
+                string otp = CryptoRandom.GenerateNumericCode(6);
+                int otpMinutes = AppSecrets.GetInt("LoginOtpExpiryMinutes", 10);
                 Session["GeneratedOTP"] = otp;
                 Session["EmailToVerify"] = emailToVerify;
+                Session["OtpExpiresUtc"] = DateTime.UtcNow.AddMinutes(otpMinutes);
+                Session["OtpAttempts"] = 0;
 
                 string subject = "Your FLAME-EX ERP Verification OTP";
                 string body = $"<h2>Email Verification</h2>" +
                               $"<p>Your One-Time Password (OTP) is: <strong>{otp}</strong></p>" +
-                              $"<p>Please enter this code on the login page to verify your email address.</p>";
+                              $"<p>This code expires in {otpMinutes} minutes. Please enter it on the login page to verify your email address.</p>";
 
                 SendEmail(emailToVerify, subject, body);
 
@@ -453,7 +456,24 @@ namespace Bill_Software
                 return;
             }
 
-            if (!string.IsNullOrEmpty(enteredOTP) && enteredOTP == generatedOTP)
+            object expiresObj = Session["OtpExpiresUtc"];
+            int attempts = Session["OtpAttempts"] != null ? Convert.ToInt32(Session["OtpAttempts"]) : 0;
+            if (expiresObj == null || !(expiresObj is DateTime) || DateTime.UtcNow > (DateTime)expiresObj)
+            {
+                Session.Remove("GeneratedOTP");
+                Session.Remove("OtpExpiresUtc");
+                Session.Remove("OtpAttempts");
+                ShowError("OTP expired. Please request a new code.");
+                return;
+            }
+
+            if (attempts >= 5)
+            {
+                ShowError("Maximum OTP attempts exceeded. Please request a new code.");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(enteredOTP) && CryptoRandom.FixedTimeEquals(enteredOTP, generatedOTP))
             {
                 try
                 {
@@ -472,6 +492,8 @@ namespace Bill_Software
 
                     Session.Remove("GeneratedOTP");
                     Session.Remove("EmailToVerify");
+                    Session.Remove("OtpExpiresUtc");
+                    Session.Remove("OtpAttempts");
 
                     Response.Redirect("~/corporate/business/app/home.aspx", false);
                 }
@@ -483,6 +505,7 @@ namespace Bill_Software
             }
             else
             {
+                Session["OtpAttempts"] = attempts + 1;
                 ShowError("Invalid OTP. Please check the code and try again.");
             }
         }
@@ -548,25 +571,6 @@ namespace Bill_Software
             return "****" + mobile.Substring(mobile.Length - 4);
         }
 
-        #region Password Verification Helpers (PBKDF2)
-        private bool VerifyPasswordPBKDF2(string password, byte[] storedHash, byte[] storedSalt, int iterations = 100000)
-        {
-            if (storedHash == null || storedSalt == null) return false;
-            using (var derive = new Rfc2898DeriveBytes(password, storedSalt, iterations))
-            {
-                var computed = derive.GetBytes(storedHash.Length);
-                return AreByteArraysEqual(computed, storedHash);
-            }
-        }
-
-        private bool AreByteArraysEqual(byte[] a, byte[] b)
-        {
-            if (a == null || b == null || a.Length != b.Length) return false;
-            int diff = 0;
-            for (int i = 0; i < a.Length; i++) diff |= a[i] ^ b[i];
-            return diff == 0;
-        }
-
         private bool SendEmail(string toAddress, string subject, string body)
         {
             try
@@ -582,19 +586,10 @@ namespace Bill_Software
             }
         }
 
-        private string GenerateOTP()
-        {
-            Random rand = new Random();
-            return rand.Next(100000, 999999).ToString();
-        }
-
-        private async System.Threading.Tasks.Task<bool> SendWhatsAppMessageAsync(string targetPhoneNumber, string userName, string tempPassword)
+        private async System.Threading.Tasks.Task<bool> SendWhatsAppMessageAsync(string targetPhoneNumber, string message)
         {
             try
             {
-                // Secrets Management: Use CommunicationGateway (reads from Web.config), never hardcode credentials
-                // CommunicationGateway.SendAlertsAsync fires-and-forgets; for a return-value wrapper, we call it inline
-                string message = $"Hello {userName}, your temporary password for FLAME-EX ERP is: {tempPassword}. Please log in and change it immediately.";
                 CommunicationGateway.SendAlertsAsync(null, targetPhoneNumber, "Password Reset", message);
                 return true;
             }
@@ -604,6 +599,5 @@ namespace Bill_Software
                 return false;
             }
         }
-        #endregion
     }
 }
