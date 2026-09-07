@@ -321,7 +321,7 @@ See the `docs/` directory for module-specific documentation:
 - Session validity is re-validated on every Master Page load against `dbo.ActiveSessions`.
 - Login verifies PBKDF2 hashes only. Leftover plaintext `Password` values are accepted once, then upgraded in place (`Password = NULL`). See `docs/15_Phase0B_Secrets_Deployment.md`.
 - Forgot-password issues a one-time expiring token; it does not overwrite `PasswordHash`.
-- **Authorization is menu visibility plus server-side gates.** Phase 0A: `AuthGuard` / `SecurePage` on print pages, WebMethods, and user/role/permission admin. Phase 1A: the same menu `PermissionKey` values are enforced in `SecurePage.OnInit` (and matching WebMethods) for product, customer, supplier, sales-visit, expense, and selected dashboard admin pages. See `docs/16_Phase1A_SecurePage_RBAC.md`. Phase 1B: `AddUser` / `ViewUser` seed `UserRoles` from `tbl_login.RoleId` so new users get the same grants `HasPermission` already reads. See `docs/17_Phase1B_Role_Assignment.md`. Phase 2A: the company dropdown and `Session["CompanyID"]` are bound to `dbo.UserCompanyAccess`; unauthorized switches are rejected. See `docs/18_Phase2A_Tenant_Membership.md`. Full analysis: `docs/14_Authentication_Authorization_Architecture.md`.
+- **Authorization is menu visibility plus server-side gates.** Phase 0A: `AuthGuard` / `SecurePage` on print pages, WebMethods, and user/role/permission admin. Phase 1A: the same menu `PermissionKey` values are enforced in `SecurePage.OnInit` (and matching WebMethods) for product, customer, supplier, sales-visit, expense, and selected dashboard admin pages. See `docs/16_Phase1A_SecurePage_RBAC.md`. Phase 1B: `AddUser` / `ViewUser` seed `UserRoles` from `tbl_login.RoleId` so new users get the same grants `HasPermission` already reads. See `docs/17_Phase1B_Role_Assignment.md`. Phase 2A: the company dropdown and `Session["CompanyID"]` are bound to `dbo.UserCompanyAccess`; unauthorized switches are rejected. See `docs/18_Phase2A_Tenant_Membership.md`. Phase 2B: sales-visit and expense identifiers are authorized as owner or manager-dashboard scope; `ReportingManagerId` is not used as ACL (Decision #8 STOP). See `docs/19_Phase2B_Resource_Authorization.md`. Full analysis: `docs/14_Authentication_Authorization_Architecture.md`.
 
 ### Known Security Defects (see `docs/` for full details)
 
@@ -330,6 +330,8 @@ Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visi
 | ID | Severity | Description |
 |----|----------|-------------|
 | A-18 | **Critical** | Company dropdown membership ACL — **Phase 2A gated** via `UserCompanyAccess`; DBA must apply schema + optional home-tenant reconciliation |
+| A-22 | **High** | Visit/expense approval `WHERE Id=@Id` — **Phase 2B** adds company + `srch_dailyrpts` scope; ReportingManagerId still STOP (Decision #8) |
+| A-28 | **Medium** | Intra-tenant visit IDOR — **Phase 2B** owner scope on planner/vw/expense_entry; manager dashboard remains company-wide |
 | A-19 | **Critical** | Most `print/` pages were unauthenticated IDOR — **Phase 0A gated**; four unmapped prints fail closed |
 | A-01 | **Critical** | `tbl_login` plaintext login/reset/write **remediated in Phase 0B**. Remaining: `index_card.aspx.cs` / `tbl_card_login` (A-02) is a separate schema and was not migrated |
 | D-04 | **Critical** | Broken access control (IDOR) on sales-visit detail/mutation endpoints (ownership still missing; some `CompanyID` filters have landed) |

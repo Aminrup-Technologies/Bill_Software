@@ -26,7 +26,8 @@ namespace Bill_Software.corporate.business.app
                 if (Request.QueryString["visitId"] != null)
                 {
                     int visitId;
-                    if (int.TryParse(Request.QueryString["visitId"], out visitId))
+                    if (int.TryParse(Request.QueryString["visitId"], out visitId)
+                        && AuthGuard.UserOwnsVisit(visitId))
                     {
                         LoadLinkedVisitDetails(visitId);
                         BindExpenses(visitId); // Load previously added expenses
@@ -42,11 +43,12 @@ namespace Bill_Software.corporate.business.app
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    string query = "SELECT CustomerName, VisitDate, DiscussionPoints FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID";
+                    string query = "SELECT CustomerName, VisitDate, DiscussionPoints FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
                         cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@UserId", HttpContext.Current.Session["USERID"].ToString());
                         conn.Open();
                         using (SqlDataReader rdr = cmd.ExecuteReader())
                         {
@@ -107,6 +109,14 @@ namespace Bill_Software.corporate.business.app
             {
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 string userId = HttpContext.Current.Session["USERID"].ToString();
+                int linkedVisitId = 0;
+                bool hasLinkedVisit = AuthGuard.TryParsePositiveInt(hfVisitId.Value, out linkedVisitId);
+                if (hasLinkedVisit && !AuthGuard.UserOwnsVisit(linkedVisitId))
+                {
+                    lblErrorMsg.Text = "An unexpected error occurred while saving the expense. Please try again.";
+                    PanelError.Visible = true;
+                    return;
+                }
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -124,8 +134,8 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@Amount", Convert.ToDecimal(txtAmount.Text.Trim()));
                         cmd.Parameters.AddWithValue("@Description", txtDescription.Text.Trim());
 
-                        if (!string.IsNullOrEmpty(hfVisitId.Value))
-                            cmd.Parameters.AddWithValue("@VisitId", Convert.ToInt32(hfVisitId.Value));
+                        if (hasLinkedVisit)
+                            cmd.Parameters.AddWithValue("@VisitId", linkedVisitId);
                         else
                             cmd.Parameters.AddWithValue("@VisitId", DBNull.Value);
 

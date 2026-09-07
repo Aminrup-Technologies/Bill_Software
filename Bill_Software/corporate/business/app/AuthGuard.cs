@@ -325,6 +325,132 @@ namespace Bill_Software.corporate.business.app
                 throw new HttpException(403, "Unauthorized");
         }
 
+        public static bool TryParsePositiveInt(string raw, out int value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            return int.TryParse(raw, out value) && value > 0;
+        }
+
+        public static string CurrentUserId()
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null || ctx.Session["USERID"] == null)
+                return null;
+            string userId = ctx.Session["USERID"].ToString();
+            return string.IsNullOrWhiteSpace(userId) ? null : userId;
+        }
+
+        public static bool VisitBelongsToCurrentCompany(int visitId)
+        {
+            return VisitExists(visitId, false);
+        }
+
+        public static bool UserOwnsVisit(int visitId)
+        {
+            return VisitExists(visitId, true);
+        }
+
+        /// <summary>
+        /// Owner of the visit, or holder of srch_dailyrpts for a visit in the
+        /// current company. Does not use ReportingManagerId (Decision #8 STOP).
+        /// </summary>
+        public static bool UserCanViewVisit(int visitId)
+        {
+            if (UserOwnsVisit(visitId)) return true;
+            return UserCanManageCompanyVisits() && VisitBelongsToCurrentCompany(visitId);
+        }
+
+        public static bool UserCanEditOwnVisit(int visitId)
+        {
+            return UserOwnsVisit(visitId);
+        }
+
+        public static bool UserCanManageCompanyVisits()
+        {
+            if (!ResourceContextReady()) return false;
+            return HasPermission("srch_dailyrpts");
+        }
+
+        public static bool UserCanApproveVisit(int visitId)
+        {
+            if (!UserCanManageCompanyVisits()) return false;
+            return VisitBelongsToCurrentCompany(visitId);
+        }
+
+        public static bool UserCanApproveExpense(int expenseId, int visitId)
+        {
+            if (expenseId <= 0 || visitId <= 0 || !UserCanManageCompanyVisits())
+                return false;
+
+            const string sql = @"
+                SELECT TOP 1 1
+                FROM dbo.tbl_Expenses e
+                INNER JOIN dbo.tbl_SalesVisitReport v ON v.Id = e.VisitId
+                WHERE e.Id = @ExpenseId
+                  AND e.VisitId = @VisitId
+                  AND v.CompanyID = @CompanyID";
+
+            return ScalarExists(sql, expenseId, visitId);
+        }
+
+        private static bool ResourceContextReady()
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (!TryValidateSession(ctx)) return false;
+            if (!UserCanAccessCurrentCompany()) return false;
+            return CurrentUserId() != null && CompanyContext.CurrentCompanyID > 0;
+        }
+
+        private static bool VisitExists(int visitId, bool requireOwner)
+        {
+            if (visitId <= 0 || !ResourceContextReady()) return false;
+
+            string sql = requireOwner
+                ? @"SELECT TOP 1 1 FROM dbo.tbl_SalesVisitReport
+                    WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId"
+                : @"SELECT TOP 1 1 FROM dbo.tbl_SalesVisitReport
+                    WHERE Id = @Id AND CompanyID = @CompanyID";
+
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@Id", SqlDbType.Int) { Value = visitId });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                    if (requireOwner)
+                        cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = CurrentUserId() });
+                    cn.Open();
+                    return cmd.ExecuteScalar() != null;
+                }
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
+        private static bool ScalarExists(string sql, int expenseId, int visitId)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@ExpenseId", SqlDbType.Int) { Value = expenseId });
+                    cmd.Parameters.Add(new SqlParameter("@VisitId", SqlDbType.Int) { Value = visitId });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                    cn.Open();
+                    return cmd.ExecuteScalar() != null;
+                }
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
         private static bool EnsureAuthorizedCompanyContext(HttpContext ctx)
         {
             int companyId = CompanyContext.CurrentCompanyID;

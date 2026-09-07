@@ -96,7 +96,13 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                int visitId = Convert.ToInt32(hfExecuteVisitId.Value);
+                int visitId;
+                if (!AuthGuard.TryParsePositiveInt(hfExecuteVisitId.Value, out visitId)
+                    || !AuthGuard.UserOwnsVisit(visitId))
+                {
+                    Response.Write("<script>alert('An error occurred while saving the visit. Please try again.');</script>");
+                    return;
+                }
                 string latitude = hfLatitude.Value;
                 string longitude = hfLongitude.Value;
 
@@ -117,7 +123,7 @@ namespace Bill_Software.corporate.business.app
                     FollowUpRequired = @FollowUpRequired,
                     NextFollowUpDate = @NextFollowUpDate,
                     AttachmentName = ISNULL(@AttachmentName, AttachmentName)
-                WHERE Id = @Id;
+                WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId;
 
                 -- AUTO FOLLOW-UP LOGIC WITH PARENT LINKAGE
                 IF @FollowUpRequired = 'Yes' AND @NextFollowUpDate IS NOT NULL
@@ -132,13 +138,14 @@ namespace Bill_Software.corporate.business.app
                         VisitType, 'Automated Follow-up regarding: ' + @DiscussionPoints, 
                         'Planned', 'Pending', 'No', GETDATE(), CreatedByCode, @Id, @CompanyID
                     FROM tbl_SalesVisitReport 
-                    WHERE Id = @Id AND CompanyID = @CompanyID;
+                    WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId;
                 END";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
                         cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
                         cmd.Parameters.AddWithValue("@Latitude", string.IsNullOrEmpty(latitude) ? (object)DBNull.Value : Convert.ToDecimal(latitude));
                         cmd.Parameters.AddWithValue("@Longitude", string.IsNullOrEmpty(longitude) ? (object)DBNull.Value : Convert.ToDecimal(longitude));
 
@@ -204,18 +211,21 @@ namespace Bill_Software.corporate.business.app
         public static string GetVisitDetails(int visitId)
         {
             AuthGuard.EnsureWebMethodPermission("visit_planner");
+            if (!AuthGuard.UserOwnsVisit(visitId))
+                return "{}";
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"SELECT CustomerName, VisitDate, ExecutionDateTime, DiscussionPoints, Status, 
                                 Salesperson, Department, ContactPerson, VisitType, FollowUpRequired, 
                                 NextFollowUpDate, AttachmentName, Latitude, Longitude
-                         FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID";
+                         FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", visitId);
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.AddWithValue("@UserId", HttpContext.Current.Session["USERID"].ToString());
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {

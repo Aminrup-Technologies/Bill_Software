@@ -123,6 +123,10 @@ namespace Bill_Software.corporate.business.app
 
         private void LoadMegaModal(string visitId)
         {
+            int id;
+            if (!AuthGuard.TryParsePositiveInt(visitId, out id) || !AuthGuard.UserOwnsVisit(id))
+                return;
+
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (SqlConnection con = new SqlConnection(connStr))
             {
@@ -133,12 +137,13 @@ namespace Bill_Software.corporate.business.app
                     SELECT v.*, 
                            (SELECT COUNT(*) FROM tbl_SalesVisitResponses r WHERE r.VisitId = v.Id AND r.RespondentRole = 'Manager') AS MgrCommentCount
                     FROM tbl_SalesVisitReport v 
-                    WHERE v.Id = @Id AND v.CompanyID = @CompanyID";
+                    WHERE v.Id = @Id AND v.CompanyID = @CompanyID AND v.CreatedByCode = @UserId";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@Id", visitId);
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
@@ -237,6 +242,10 @@ namespace Bill_Software.corporate.business.app
         protected void btnUpdateVisit_Click(object sender, EventArgs e)
         {
             string visitId = hfMegaVisitId.Value;
+            int id;
+            if (!AuthGuard.TryParsePositiveInt(visitId, out id) || !AuthGuard.UserOwnsVisit(id))
+                return;
+
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
             try
@@ -248,7 +257,7 @@ namespace Bill_Software.corporate.business.app
                     SET VisitDate = @VisitDate, CustomerName = @CustomerName, Department = @Department, ContactPerson = @ContactPerson,
                         VisitType = @VisitType, DiscussionPoints = @DiscussionPoints, FollowUpRequired = @FollowUpRequired, 
                         NextFollowUpDate = @NextFollowUpDate, Status = @Status, AttachmentName = COALESCE(@AttachmentName, AttachmentName)
-                    WHERE Id = @Id AND CompanyID = @CompanyID
+                    WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId
                       AND ApprovalStatus = 'Pending' 
                       AND NOT EXISTS (SELECT 1 FROM tbl_SalesVisitResponses WHERE VisitId = tbl_SalesVisitReport.Id AND RespondentRole = 'Manager')";
 
@@ -256,6 +265,7 @@ namespace Bill_Software.corporate.business.app
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
                         cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
                         cmd.Parameters.AddWithValue("@VisitDate", Convert.ToDateTime(edit_txtVisitDate.Text));
                         cmd.Parameters.AddWithValue("@CustomerName", edit_txtCustomerName.Text.Trim());
                         cmd.Parameters.AddWithValue("@Department", edit_txtDepartment.Text.Trim());
@@ -342,8 +352,9 @@ namespace Bill_Software.corporate.business.app
         {
             string visitId = hfMegaVisitId.Value;
             string comment = txtMegaNewComment.Text.Trim();
+            int id;
 
-            if (!string.IsNullOrEmpty(comment) && !string.IsNullOrEmpty(visitId))
+            if (!string.IsNullOrEmpty(comment) && AuthGuard.TryParsePositiveInt(visitId, out id) && AuthGuard.UserOwnsVisit(id))
             {
                 string userCode = Session["USERID"].ToString();
 
