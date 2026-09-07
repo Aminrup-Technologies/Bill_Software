@@ -9,8 +9,10 @@ using System.Text;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class srch_dailyrpts : System.Web.UI.Page
+    public partial class srch_dailyrpts : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "srch_dailyrpts"; } }
+
         // Assuming you have this utility class in your project based on your original code
         DB_UTILITY DbCL = new DB_UTILITY();
 

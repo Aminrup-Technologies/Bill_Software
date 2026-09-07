@@ -20,8 +20,10 @@ using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class daily_rpt : System.Web.UI.Page
+    public partial class daily_rpt : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "daily_reporting"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
 
         protected void Page_Load(object sender, EventArgs e)

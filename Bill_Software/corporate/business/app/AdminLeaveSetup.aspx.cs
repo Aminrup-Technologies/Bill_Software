@@ -5,8 +5,10 @@ using System.Configuration;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class AdminLeaveSetup : System.Web.UI.Page
+    public partial class AdminLeaveSetup : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "AdminLeaveSetup"; } }
+
         string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)

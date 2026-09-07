@@ -6,8 +6,10 @@ using System.Globalization;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm5 : System.Web.UI.Page
+    public partial class WebForm5 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "New_vendor"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
 
         protected void Page_Load(object sender, EventArgs e)

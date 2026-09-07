@@ -8,8 +8,10 @@ using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class AdminOverride : System.Web.UI.Page
+    public partial class AdminOverride : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "AdminOverride"; } }
+
         string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)

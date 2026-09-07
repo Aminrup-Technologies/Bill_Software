@@ -20,8 +20,10 @@ using System.IO;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class visit_planner : System.Web.UI.Page
+    public partial class visit_planner : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "visit_planner"; } }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -33,7 +35,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetCalendarEvents()
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("visit_planner");
             string userId = HttpContext.Current.Session["USERID"].ToString();
 
             List<CalendarEvent> eventsList = new List<CalendarEvent>();
@@ -201,7 +203,7 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Services.WebMethod(EnableSession = true)]
         public static string GetVisitDetails(int visitId)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("visit_planner");
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (SqlConnection conn = new SqlConnection(connStr))
             {

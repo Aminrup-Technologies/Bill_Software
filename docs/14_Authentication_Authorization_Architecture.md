@@ -5,7 +5,7 @@
 **Branch context:** `July_to_Sept26_DevNSupport`  
 **Scope:** Whole-application AuthN/AuthZ (login, session, RBAC, tenant isolation, endpoint bypasses). Sales-visit-specific IDOR details remain in `docs/sales-visit-workflow-audit/`; this document is the cross-cutting architecture view.
 
-**Follow-on implementation:** Phase 0A authorization gates are in PR #66. Phase 0B credential/secrets hardening is documented in `docs/15_Phase0B_Secrets_Deployment.md` (this file remains the original as-is review).
+**Follow-on implementation:** Phase 0A authorization gates are in PR #66. Phase 0B credential/secrets hardening is in `docs/15_Phase0B_Secrets_Deployment.md`. Phase 1A page-level RBAC rollout is in `docs/16_Phase1A_SecurePage_RBAC.md`. This file remains the original as-is review.
 
 **Method:** Static source inspection. Database access was not available; schema facts are inferred from ADO.NET usage and the SQL scripts under `Bill_Software/corporate/business/sql/`. Findings marked **CONFIRMED** are visible in source. Findings marked **PROBABLE** depend on live DDL or IIS configuration that is not in this repository.
 

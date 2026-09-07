@@ -6,8 +6,10 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm59 : System.Web.UI.Page
+    public partial class WebForm59 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "Representative"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
 
         protected void Page_Load(object sender, EventArgs e)

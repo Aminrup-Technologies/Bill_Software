@@ -102,6 +102,37 @@ namespace Bill_Software.corporate.business.app
             return true;
         }
 
+        /// <summary>
+        /// Session + company, then 403 unless the user has at least one listed key.
+        /// Empty/null key list fails closed. Does not change EnsurePage.
+        /// </summary>
+        public static bool EnsurePageAny(Page page, bool requireCompany, string[] permissionKeys)
+        {
+            HttpContext ctx = page != null ? page.Context : HttpContext.Current;
+            if (!TryValidateSession(ctx))
+            {
+                RedirectLogin(ctx);
+                return false;
+            }
+            if (requireCompany && !HasCompanyContext())
+            {
+                Deny(ctx, 401);
+                return false;
+            }
+            if (permissionKeys == null || permissionKeys.Length == 0)
+            {
+                Deny(ctx, 403);
+                return false;
+            }
+            for (int i = 0; i < permissionKeys.Length; i++)
+            {
+                if (!string.IsNullOrEmpty(permissionKeys[i]) && HasPermission(permissionKeys[i]))
+                    return true;
+            }
+            Deny(ctx, 403);
+            return false;
+        }
+
         public static bool EnsurePrint(Page page, string mapKey, string id)
         {
             if (!EnsurePage(page, true, null)) return false;

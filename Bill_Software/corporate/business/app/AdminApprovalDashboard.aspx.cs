@@ -7,8 +7,10 @@ using System.Web;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class AdminApprovalDashboard : System.Web.UI.Page
+    public partial class AdminApprovalDashboard : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "AdminApprovalDashboard"; } }
+
         string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
