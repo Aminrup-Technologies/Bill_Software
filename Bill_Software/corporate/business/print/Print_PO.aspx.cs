@@ -6,6 +6,7 @@ using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -15,6 +16,8 @@ namespace Bill_Software.corporate.business.print
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthGuard.EnsurePrint(this, "tbl_PO_Header.PO_Id", Request.QueryString["poId"])) return;
+
             if (!IsPostBack && Request.QueryString["poId"] != null)
             {
                 int poId;

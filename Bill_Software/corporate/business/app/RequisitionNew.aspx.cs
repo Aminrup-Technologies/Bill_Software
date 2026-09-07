@@ -1027,8 +1027,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static object GetProductDetail(string productId)
         {
-            if (HttpContext.Current == null || HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
-                return new { ok = false, message = "Session expired." };
+            AuthGuard.EnsureWebMethod();
             if (string.IsNullOrWhiteSpace(productId))
                 return new { ok = false, message = "Product id required." };
 

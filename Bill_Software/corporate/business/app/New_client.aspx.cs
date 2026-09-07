@@ -201,10 +201,10 @@ namespace Bill_Software.corporate.business.app
         // ==========================================
         // 3. AJAX WEB METHOD & HELPERS
         // ==========================================
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static string AddNewCityInline(string cityName, string stateName)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "ERROR: Session expired.";
+            AuthGuard.EnsureWebMethod();
 
             try
             {

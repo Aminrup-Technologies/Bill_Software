@@ -1669,20 +1669,21 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetDocumentNumbers(string prefixText)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> docNumbers = new List<string>();
 
             // Search across Quotation_no, PO_Number, and DO_Number
             // We filter out 'N/A' and empty values to keep the suggestions clean
             string query = @"
                 SELECT TOP 15 DocNo FROM (
-                    SELECT Quotation_no AS DocNo FROM tbl_Quotation WHERE Quotation_no LIKE @Prefix
+                    SELECT Quotation_no AS DocNo FROM tbl_Quotation WHERE Quotation_no LIKE @Prefix AND CompanyID=@CompanyID
                     UNION
-                    SELECT PO_Number AS DocNo FROM tbl_Quotation WHERE PO_Number LIKE @Prefix AND PO_Number <> 'N/A' AND PO_Number <> ''
+                    SELECT PO_Number AS DocNo FROM tbl_Quotation WHERE PO_Number LIKE @Prefix AND CompanyID=@CompanyID AND PO_Number <> 'N/A' AND PO_Number <> ''
                     UNION
-                    SELECT DO_Number AS DocNo FROM tbl_Quotation WHERE DO_Number LIKE @Prefix AND DO_Number <> 'N/A' AND DO_Number <> ''
+                    SELECT DO_Number AS DocNo FROM tbl_Quotation WHERE DO_Number LIKE @Prefix AND CompanyID=@CompanyID AND DO_Number <> 'N/A' AND DO_Number <> ''
                 ) AS TempDocs
                 ORDER BY DocNo";
 
@@ -1693,6 +1694,7 @@ namespace Bill_Software.corporate.business.app
                 {
                     // Adding % wildcard to match the prefix anywhere in the document string
                     cmd.Parameters.AddWithValue("@Prefix", "%" + prefixText + "%");
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
 
                     using (SqlDataReader sdr = cmd.ExecuteReader())
@@ -1707,13 +1709,14 @@ namespace Bill_Software.corporate.business.app
             return docNumbers;
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetClientNames(string prefixText)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> clientNames = new List<string>();
 
             // Fetch the top 15 matching client names
-            string query = "SELECT TOP 15 Client_Name FROM tbl_Client WHERE Client_Name LIKE @Prefix ORDER BY Client_Name";
+            string query = "SELECT TOP 15 Client_Name FROM tbl_Client WHERE Client_Name LIKE @Prefix AND CompanyID=@CompanyID ORDER BY Client_Name";
 
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
@@ -1721,6 +1724,7 @@ namespace Bill_Software.corporate.business.app
                 {
                     // % wildcard allows searching parts of the name
                     cmd.Parameters.AddWithValue("@Prefix", "%" + prefixText + "%");
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
 
                     using (SqlDataReader sdr = cmd.ExecuteReader())

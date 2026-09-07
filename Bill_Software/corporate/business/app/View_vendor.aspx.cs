@@ -29,6 +29,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static List<string> GetVendorNames(string prefix)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> vendors = new List<string>();
             string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 

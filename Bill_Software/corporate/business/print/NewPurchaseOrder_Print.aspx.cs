@@ -1,5 +1,6 @@
 using System;
 using System.Web.UI;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -10,11 +11,8 @@ namespace Bill_Software.corporate.business.print
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null || Session["CompanyID"] == null)
-            {
-                Response.Redirect("~/index.aspx");
-                return;
-            }
+            if (!AuthGuard.EnsurePrint(this, "tbl_Quotation.ID", Request.QueryString["ID"])) return;
+
 
             ShowLetterhead = Request.QueryString["letterhead"] != "0";
             AutoPrint = Request.QueryString["autoprint"] == "1";

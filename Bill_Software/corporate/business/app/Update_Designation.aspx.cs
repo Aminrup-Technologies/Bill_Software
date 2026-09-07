@@ -6,8 +6,10 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm81 : System.Web.UI.Page
+    public partial class WebForm81 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "ViewUser"; } }
+
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         // We use ViewState to hold the numeric User ID across postbacks
@@ -19,12 +21,6 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null)
-            {
-                Response.Redirect("~/index.aspx");
-                return;
-            }
-
             if (!IsPostBack)
             {
                 string userIdString = Request.QueryString["User_Id"]; // e.g., "FLM01" or "admin"

@@ -990,6 +990,8 @@
       <DependentUpon>Search_purchaseorder.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\SecurityHelper.cs" />
+    <Compile Include="corporate\business\app\AuthGuard.cs" />
+    <Compile Include="corporate\business\app\SecurePage.cs" />
     <Compile Include="corporate\business\app\InvoiceListHelper.cs" />
     <Compile Include="corporate\business\app\settings.aspx.cs">
       <DependentUpon>settings.aspx</DependentUpon>

@@ -120,10 +120,11 @@ namespace Bill_Software.corporate.business.app
             System.Diagnostics.Debug.WriteLine(ex.ToString());
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static List<string> GetSearchSuggestions(string prefix)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> suggestions = new List<string>();
 
             // Use your connection string from web.config
@@ -133,16 +134,17 @@ namespace Bill_Software.corporate.business.app
             {
                 // This query fetches distinct matches from IDs, Invoices, and Order numbers
                 string sql = @"SELECT val FROM (
-                        SELECT CAST(Purches_Id AS VARCHAR) as val FROM tbl_Purches WHERE CAST(Purches_Id AS VARCHAR) LIKE @prefix + '%'
+                        SELECT CAST(Purches_Id AS VARCHAR) as val FROM tbl_Purches p INNER JOIN tbl_Vendor v ON p.Client_Id = v.Vendor_Id AND v.CompanyID=@CompanyID WHERE CAST(p.Purches_Id AS VARCHAR) LIKE @prefix + '%'
                         UNION
-                        SELECT Invoice_No FROM tbl_Purches WHERE Invoice_No LIKE @prefix + '%'
+                        SELECT Invoice_No FROM tbl_Purches p INNER JOIN tbl_Vendor v ON p.Client_Id = v.Vendor_Id AND v.CompanyID=@CompanyID WHERE p.Invoice_No LIKE @prefix + '%'
                         UNION
-                        SELECT BuyerOrderNo FROM tbl_Purches WHERE BuyerOrderNo LIKE @prefix + '%'
+                        SELECT BuyerOrderNo FROM tbl_Purches p INNER JOIN tbl_Vendor v ON p.Client_Id = v.Vendor_Id AND v.CompanyID=@CompanyID WHERE p.BuyerOrderNo LIKE @prefix + '%'
                       ) t ORDER BY val";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@prefix", prefix);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {
@@ -156,21 +158,23 @@ namespace Bill_Software.corporate.business.app
             return suggestions;
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static List<string> GetVendorSuggestions(string prefix)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> suggestions = new List<string>();
             string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ToString();
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 // Query specifically for unique vendor names
-                string sql = "SELECT DISTINCT Vendor_Name FROM tbl_Vendor WHERE Vendor_Name LIKE @prefix + '%'";
+                string sql = "SELECT DISTINCT Vendor_Name FROM tbl_Vendor WHERE Vendor_Name LIKE @prefix + '%' AND CompanyID=@CompanyID";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@prefix", prefix);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {

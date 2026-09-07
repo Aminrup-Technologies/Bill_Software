@@ -27,17 +27,19 @@ namespace Bill_Software.corporate.business.app
         }
 
         // --- WEB METHODS FOR AUTO-SUGGEST ---
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetClientNames(string prefixText)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> clientNames = new List<string>();
-            string query = "SELECT TOP 15 Client_Name FROM tbl_Client WHERE Client_Name LIKE @Prefix ORDER BY Client_Name";
+            string query = "SELECT TOP 15 Client_Name FROM tbl_Client WHERE Client_Name LIKE @Prefix AND CompanyID=@CompanyID ORDER BY Client_Name";
 
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Prefix", "%" + prefixText + "%");
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {
@@ -51,19 +53,20 @@ namespace Bill_Software.corporate.business.app
             return clientNames;
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetDocumentNumbers(string prefixText)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> docNumbers = new List<string>();
             string query = @"
                 SELECT TOP 15 DocNo FROM (
-                    SELECT Chalan_No AS DocNo FROM tbl_Chalan WHERE Chalan_No LIKE @Prefix
+                    SELECT Chalan_No AS DocNo FROM tbl_Chalan WHERE Chalan_No LIKE @Prefix AND CompanyID=@CompanyID
                     UNION
-                    SELECT Quotation_no AS DocNo FROM tbl_Quotation WHERE Quotation_no LIKE @Prefix
+                    SELECT Quotation_no AS DocNo FROM tbl_Quotation WHERE Quotation_no LIKE @Prefix AND CompanyID=@CompanyID
                     UNION
-                    SELECT PO_Number AS DocNo FROM tbl_Quotation WHERE PO_Number LIKE @Prefix AND PO_Number <> 'N/A' AND PO_Number <> ''
+                    SELECT PO_Number AS DocNo FROM tbl_Quotation WHERE PO_Number LIKE @Prefix AND CompanyID=@CompanyID AND PO_Number <> 'N/A' AND PO_Number <> ''
                     UNION
-                    SELECT DO_Number AS DocNo FROM tbl_Quotation WHERE DO_Number LIKE @Prefix AND DO_Number <> 'N/A' AND DO_Number <> ''
+                    SELECT DO_Number AS DocNo FROM tbl_Quotation WHERE DO_Number LIKE @Prefix AND CompanyID=@CompanyID AND DO_Number <> 'N/A' AND DO_Number <> ''
                 ) AS TempDocs
                 ORDER BY DocNo";
 
@@ -72,6 +75,7 @@ namespace Bill_Software.corporate.business.app
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Prefix", "%" + prefixText + "%");
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {

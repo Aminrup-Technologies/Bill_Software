@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data.SqlClient;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -13,6 +14,8 @@ namespace Bill_Software.corporate.business.print
         DB_UTILITY DbCL = new DB_UTILITY();
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthGuard.EnsurePrint(this, "unmapped", Request.QueryString["payment_id"])) return;
+
             if (!IsPostBack)
             {
                 string payment_id = (Request.QueryString["payment_id"].ToString());

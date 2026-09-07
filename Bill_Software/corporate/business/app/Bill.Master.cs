@@ -46,35 +46,10 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null)
+            if (!AuthGuard.TryValidateSession(HttpContext.Current))
             {
                 Response.Redirect("~/index.aspx", false);
                 return;
-            }
-
-            if (Session["SessionToken"] == null)
-            {
-                Response.Redirect("~/index.aspx", false);
-                return;
-            }
-
-            // 2. Validate Active Session Token (Concurrent Login Check)
-            using (var cn = new SqlConnection(ConnString))
-            {
-                cn.Open();
-                using (var cmd = new SqlCommand("SELECT IsActive FROM dbo.ActiveSessions WHERE SessionToken = @Token", cn))
-                {
-                    cmd.Parameters.AddWithValue("@Token", Session["SessionToken"].ToString());
-                    object result = cmd.ExecuteScalar();
-
-                    if (result == null || Convert.ToBoolean(result) == false)
-                    {
-                        Session.Clear();
-                        Session.Abandon();
-                        Response.Redirect("~/index.aspx", false);
-                        return;
-                    }
-                }
             }
 
             // 3. Prevent Caching
@@ -334,6 +309,7 @@ namespace Bill_Software.corporate.business.app
 
             Session.Clear();
             Session.Abandon();
+            System.Web.Security.FormsAuthentication.SignOut();
             Response.Redirect("~/index.aspx", false);
         }
 

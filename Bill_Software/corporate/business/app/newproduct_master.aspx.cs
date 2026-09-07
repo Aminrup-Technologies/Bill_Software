@@ -905,10 +905,11 @@ namespace Bill_Software.corporate.business.app
             return list;
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static NameAvailabilityResult CheckDuplicateName(string productName, string category, int excludeId)
         {
+            AuthGuard.EnsureWebMethod();
             var result = new NameAvailabilityResult
             {
                 checkedOk = false,
@@ -962,10 +963,11 @@ namespace Bill_Software.corporate.business.app
             public List<string> similar { get; set; }
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static DuplicateInfoResult GetDuplicateInfo(string productName, string category)
         {
+            AuthGuard.EnsureWebMethod();
             var result = new DuplicateInfoResult { foundExact = false, existingId = 0, productID = null, similar = new List<string>() };
             if (string.IsNullOrWhiteSpace(productName) || string.IsNullOrWhiteSpace(category) || category == "--Select--")
                 return result;

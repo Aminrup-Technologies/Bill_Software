@@ -333,9 +333,8 @@ namespace Bill_Software.corporate.business.app
 
         private static List<string> GetAutocompleteData(string query, string prefix)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> suggestions = new List<string>();
-            if (HttpContext.Current == null || HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
-                return suggestions;
 
             DB_UTILITY db = new DB_UTILITY();
 
