@@ -20,8 +20,10 @@ using System.IO;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class visit_planner : System.Web.UI.Page
+    public partial class visit_planner : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "visit_planner"; } }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -33,8 +35,8 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetCalendarEvents()
         {
-            string userId = HttpContext.Current.Session["USERID"]?.ToString();
-            if (string.IsNullOrEmpty(userId)) return "[]";
+            AuthGuard.EnsureWebMethodPermission("visit_planner");
+            string userId = HttpContext.Current.Session["USERID"].ToString();
 
             List<CalendarEvent> eventsList = new List<CalendarEvent>();
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
@@ -43,11 +45,12 @@ namespace Bill_Software.corporate.business.app
             {
                 string query = @"SELECT Id, VisitDate, VisitEndDate, CustomerName, VisitPhase 
                                  FROM tbl_SalesVisitReport 
-                                 WHERE CreatedByCode = @UserId";
+                                 WHERE CreatedByCode = @UserId AND CompanyID = @CompanyID";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
@@ -93,7 +96,13 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                int visitId = Convert.ToInt32(hfExecuteVisitId.Value);
+                int visitId;
+                if (!AuthGuard.TryParsePositiveInt(hfExecuteVisitId.Value, out visitId)
+                    || !AuthGuard.UserOwnsVisit(visitId))
+                {
+                    Response.Write("<script>alert('An error occurred while saving the visit. Please try again.');</script>");
+                    return;
+                }
                 string latitude = hfLatitude.Value;
                 string longitude = hfLongitude.Value;
 
@@ -114,7 +123,7 @@ namespace Bill_Software.corporate.business.app
                     FollowUpRequired = @FollowUpRequired,
                     NextFollowUpDate = @NextFollowUpDate,
                     AttachmentName = ISNULL(@AttachmentName, AttachmentName)
-                WHERE Id = @Id;
+                WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId;
 
                 -- AUTO FOLLOW-UP LOGIC WITH PARENT LINKAGE
                 IF @FollowUpRequired = 'Yes' AND @NextFollowUpDate IS NOT NULL
@@ -122,19 +131,21 @@ namespace Bill_Software.corporate.business.app
                     INSERT INTO tbl_SalesVisitReport (
                         VisitDate, VisitEndDate, Salesperson, CustomerName, Department, ContactPerson, 
                         VisitType, DiscussionPoints, VisitPhase, Status, FollowUpRequired, 
-                        CreatedDate, CreatedByCode, ParentVisitId
+                        CreatedDate, CreatedByCode, ParentVisitId, CompanyID
                     )
                     SELECT 
                         @NextFollowUpDate, DATEADD(hour, 1, @NextFollowUpDate), Salesperson, CustomerName, Department, ContactPerson, 
                         VisitType, 'Automated Follow-up regarding: ' + @DiscussionPoints, 
-                        'Planned', 'Pending', 'No', GETDATE(), CreatedByCode, @Id
+                        'Planned', 'Pending', 'No', GETDATE(), CreatedByCode, @Id, @CompanyID
                     FROM tbl_SalesVisitReport 
-                    WHERE Id = @Id;
+                    WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId;
                 END";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@UserId", Session["USERID"].ToString());
                         cmd.Parameters.AddWithValue("@Latitude", string.IsNullOrEmpty(latitude) ? (object)DBNull.Value : Convert.ToDecimal(latitude));
                         cmd.Parameters.AddWithValue("@Longitude", string.IsNullOrEmpty(longitude) ? (object)DBNull.Value : Convert.ToDecimal(longitude));
 
@@ -163,30 +174,58 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
+                // Proactive notification logging
+                try
+                {
+                    using (SqlConnection logConn = new SqlConnection(connStr))
+                    {
+                        string notifQuery = @"INSERT INTO tbl_SystemNotification 
+                            (CompanyID, Title, Message, Module, Type, UserId, CreatedOn) 
+                            VALUES (@CompanyID, @Title, @Message, @Module, @Type, @UserId, GETDATE())";
+                        using (SqlCommand notifCmd = new SqlCommand(notifQuery, logConn))
+                        {
+                            notifCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                            notifCmd.Parameters.AddWithValue("@Title", "Visit Executed");
+                            notifCmd.Parameters.AddWithValue("@Message", $"Visit #{visitId} was executed by {Session["USERID"]}. Follow-up: {ddlExecFollowUp.SelectedValue}.");
+                            notifCmd.Parameters.AddWithValue("@Module", "Sales Visit");
+                            notifCmd.Parameters.AddWithValue("@Type", "Success");
+                            notifCmd.Parameters.AddWithValue("@UserId", Session["USERID"]);
+                            logConn.Open();
+                            notifCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch { /* Soft catch: don't crash main transaction if logging fails */ }
+
                 txtExecDiscussion.Text = "";
                 txtExecNextDate.Text = "";
                 Response.Redirect(Request.RawUrl);
             }
             catch (Exception ex)
             {
-                Response.Write("<script>alert('Error: " + ex.Message + "');</script>");
+                Response.Write("<script>alert('An error occurred while saving the visit. Please try again.');</script>");
             }
         }
 
         [System.Web.Services.WebMethod(EnableSession = true)]
         public static string GetVisitDetails(int visitId)
         {
+            AuthGuard.EnsureWebMethodPermission("visit_planner");
+            if (!AuthGuard.UserOwnsVisit(visitId))
+                return "{}";
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"SELECT CustomerName, VisitDate, ExecutionDateTime, DiscussionPoints, Status, 
                                 Salesperson, Department, ContactPerson, VisitType, FollowUpRequired, 
                                 NextFollowUpDate, AttachmentName, Latitude, Longitude
-                         FROM tbl_SalesVisitReport WHERE Id = @Id";
+                         FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", visitId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.AddWithValue("@UserId", HttpContext.Current.Session["USERID"].ToString());
                     conn.Open();
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {

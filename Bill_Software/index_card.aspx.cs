@@ -1,11 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿/*
+-----------------------------------------------------------------------------------------
+-- File Name: index_card.aspx.cs
+-- When:      2026-09-07
+-- Why:       Isolated kiosk login against tbl_card_login. Not tbl_login / ActiveSessions.
+-- What:      Parameterized User_Id lookup. Plaintext password compare unchanged.
+--            Do not merge into ERP AuthGuard / PBKDF2. See docs/21_Phase3_Infrastructure_Hardening.md.
+-----------------------------------------------------------------------------------------
+*/
+using System;
+using System.Data;
+using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Data.SqlClient;
-using System.Data;
 
 namespace Bill_Software
 {
@@ -44,34 +51,42 @@ namespace Bill_Software
             //}
             //if (cmbLoginAs.SelectedIndex == 0)
             //{
-            string cmdString = "select User_Id,Password from tbl_card_login where User_Id='" + txtUserName.Text.Trim() + "'";
+            string userId = txtUserName.Text.Trim();
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            SqlCommand cmd = new SqlCommand(cmdString, DbCL.Conn);
-            SqlDataReader Rdr;
-            Rdr = cmd.ExecuteReader();
-            if (!Rdr.Read())
+            try
             {
+                using (SqlCommand cmd = new SqlCommand(
+                    "SELECT User_Id, Password FROM tbl_card_login WHERE User_Id = @UserId", DbCL.Conn))
                 {
-                    //PanelError.Visible = true;
-                    lblErrorMsg.Text = "Invalid Username...";
-                    txtUserName.Focus();
+                    cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = userId });
+                    using (SqlDataReader Rdr = cmd.ExecuteReader())
+                    {
+                        if (!Rdr.Read())
+                        {
+                            lblErrorMsg.Text = "Invalid Username...";
+                            txtUserName.Focus();
+                        }
+                        else
+                        {
+                            if (Rdr["Password"].ToString() == txtPassword.Text.Trim())
+                            {
+                                Session["USERID"] = txtUserName.Text;
+                                Response.Redirect("~/admin/home.aspx");
+                            }
+                            else
+                            {
+                                lblErrorMsg.Text = "Wrong Password.. ";
+                                txtPassword.Focus();
+                            }
+                        }
+                    }
                 }
             }
-            else
+            finally
             {
-                if (Rdr["Password"].ToString() == txtPassword.Text.Trim())
-                {
-                    Session["USERID"] = txtUserName.Text;
-                    //Session["USERTYPE"] = cmbLoginAs.SelectedValue.ToString();
-                    Response.Redirect("~/admin/home.aspx");
-                }
-                else
-                {
-                    //PanelError.Visible = true;
-                    lblErrorMsg.Text = "Wrong Password.. ";
-                    txtPassword.Focus();
-                }
+                if (DbCL.Conn != null && DbCL.Conn.State != ConnectionState.Closed)
+                    DbCL.Conn.Close();
             }
             //}
 

@@ -2,8 +2,6 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
-using System.Net.Mail;
-using System.Net;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -11,8 +9,10 @@ using System.Text;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class srch_dailyrpts : System.Web.UI.Page
+    public partial class srch_dailyrpts : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "srch_dailyrpts"; } }
+
         // Assuming you have this utility class in your project based on your original code
         DB_UTILITY DbCL = new DB_UTILITY();
 
@@ -145,70 +145,81 @@ namespace Bill_Software.corporate.business.app
 
         private void Binder()
         {
-            // 1. Fetch raw strings
-            string fromDateStr = txtfromDate.Text.Trim();
-            string toDateStr = txttodate.Text.Trim();
+            // 1. Parse raw strings into DateTime objects (strips time to midnight)
+            DateTime dtFrom, dtTo;
+            if (!DateTime.TryParse(txtfromDate.Text.Trim(), out dtFrom))
+                dtFrom = DateTime.Today;
+            if (!DateTime.TryParse(txttodate.Text.Trim(), out dtTo))
+                dtTo = DateTime.Today;
 
             // 2. BULLETPROOFING: Ensure FromDate is ALWAYS <= ToDate
-            DateTime dtFrom, dtTo;
-            if (DateTime.TryParse(fromDateStr, out dtFrom) && DateTime.TryParse(toDateStr, out dtTo))
+            if (dtFrom > dtTo)
             {
-                if (dtFrom > dtTo)
-                {
-                    // The user put them in backwards! Let's silently swap them for the SQL query
-                    DateTime temp = dtFrom;
-                    dtFrom = dtTo;
-                    dtTo = temp;
-                }
-
-                // Format them safely for SQL
-                fromDateStr = dtFrom.ToString("dd-MMM-yyyy");
-                toDateStr = dtTo.ToString("dd-MMM-yyyy");
+                DateTime temp = dtFrom;
+                dtFrom = dtTo;
+                dtTo = temp;
             }
 
+            // Normalize to date-only (midnight) to avoid midnight-boundary edge cases
+            dtFrom = dtFrom.Date;
+            dtTo = dtTo.Date;
+
             string cmdstring = "";
-            int companyId = CompanyContext.CurrentCompanyID; // Strict Tenant Security
             string selectedUser = cmbvendor.SelectedValue;
 
+            // Build parameterized query — CAST both sides to DATE to eliminate midnight-boundary bugs
             if (RadioButtonList1.SelectedIndex == 0) // Only Person
             {
-                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = " + companyId + " AND CreatedByCode = '" + selectedUser + "' ORDER BY CAST(VisitDate as date) DESC";
+                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = @CompanyID AND CreatedByCode = @User ORDER BY CAST(VisitDate AS DATE) DESC";
             }
             else if (RadioButtonList1.SelectedIndex == 1) // Only Date
             {
-                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = " + companyId + " AND CAST(VisitDate as date) BETWEEN '" + fromDateStr + "' AND '" + toDateStr + "' ORDER BY CAST(VisitDate as date) DESC";
+                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = @CompanyID AND CAST(VisitDate AS DATE) BETWEEN @FromDate AND @ToDate ORDER BY CAST(VisitDate AS DATE) DESC";
             }
             else // Person & Date
             {
-                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = " + companyId + " AND CreatedByCode = '" + selectedUser + "' AND CAST(VisitDate as date) BETWEEN '" + fromDateStr + "' AND '" + toDateStr + "' ORDER BY CAST(VisitDate as date) DESC";
+                cmdstring = "SELECT * FROM tbl_SalesVisitReport WHERE CompanyID = @CompanyID AND CreatedByCode = @User AND CAST(VisitDate AS DATE) BETWEEN @FromDate AND @ToDate ORDER BY CAST(VisitDate AS DATE) DESC";
             }
 
             try
             {
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+                using (SqlCommand cmd = new SqlCommand(cmdstring, conn))
                 {
-                    SqlDataAdapter da = new SqlDataAdapter(cmdstring, conn);
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
-
-                    if (dt.Rows.Count > 0)
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    if (RadioButtonList1.SelectedIndex != 1) // Person or Both
+                        cmd.Parameters.AddWithValue("@User", selectedUser);
+                    if (RadioButtonList1.SelectedIndex != 0) // Date or Both
                     {
-                        DataList2.DataSource = dt;
-                        DataList2.DataBind();
-                        PanelError.Visible = false;
+                        // Pass DateTime objects, not strings — SQL Server infers the correct SqlDbType
+                        cmd.Parameters.Add("@FromDate", SqlDbType.Date).Value = dtFrom;
+                        cmd.Parameters.Add("@ToDate", SqlDbType.Date).Value = dtTo;
                     }
-                    else
+
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
-                        DataList2.DataSource = null;
-                        DataList2.DataBind();
-                        lblErrorMsg.Text = "No records found for the selected criteria.";
-                        PanelError.Visible = true;
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        if (dt.Rows.Count > 0)
+                        {
+                            DataList2.DataSource = dt;
+                            DataList2.DataBind();
+                            PanelError.Visible = false;
+                        }
+                        else
+                        {
+                            DataList2.DataSource = null;
+                            DataList2.DataBind();
+                            lblErrorMsg.Text = "No records found for the selected criteria.";
+                            PanelError.Visible = true;
+                        }
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                lblErrorMsg.Text = "Error loading data: " + ex.Message;
+                lblErrorMsg.Text = "Error loading data. Please try again.";
                 PanelError.Visible = true;
             }
         }
@@ -217,16 +228,21 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                DbCL.Sqlconnection();
-                DbCL.ConnectDb();
-                string cmdstring = "select User_Id from tbl_login where Name='" + cmbvendor.Text + "'";
-                SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-                SqlDataReader re = cmd.ExecuteReader();
-                if (re.Read())
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
                 {
-                    lblclientId.Text = re["User_Id"].ToString();
+                    string cmdstring = "SELECT User_Id FROM tbl_login WHERE Name = @Name AND CompanyID = @CompanyID";
+                    using (SqlCommand cmd = new SqlCommand(cmdstring, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Name", cmbvendor.Text);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        conn.Open();
+                        object result = cmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            lblclientId.Text = result.ToString();
+                        }
+                    }
                 }
-                DbCL.Conn.Close();
             }
             catch (Exception) { /* Handle Silently */ }
         }
@@ -255,15 +271,20 @@ namespace Bill_Software.corporate.business.app
 
         private void LoadMegaModal(string visitId)
         {
+            int id;
+            if (!AuthGuard.TryParsePositiveInt(visitId, out id) || !AuthGuard.UserCanViewVisit(id))
+                return;
+
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (SqlConnection con = new SqlConnection(connStr))
             {
                 con.Open();
 
-                // 1. Fetch Visit Details (For Tabs 1 & 2 & 4)
-                using (SqlCommand cmd = new SqlCommand("SELECT * FROM tbl_SalesVisitReport WHERE Id = @Id", con))
+                // 1. Fetch Visit Details (For Tabs 1 & 2 & 4) — CompanyID-isolated
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID", con))
                 {
                     cmd.Parameters.AddWithValue("@Id", visitId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     using (SqlDataReader rdr = cmd.ExecuteReader())
                     {
                         if (rdr.Read())
@@ -379,8 +400,9 @@ namespace Bill_Software.corporate.business.app
         {
             string visitId = hfMegaVisitId.Value;
             string comment = txtMegaNewComment.Text.Trim();
+            int id;
 
-            if (!string.IsNullOrEmpty(comment) && !string.IsNullOrEmpty(visitId))
+            if (!string.IsNullOrEmpty(comment) && AuthGuard.TryParsePositiveInt(visitId, out id) && AuthGuard.UserCanViewVisit(id))
             {
                 string userCode = Session["USERID"].ToString();
                 string role = "Manager";
@@ -433,13 +455,14 @@ namespace Bill_Software.corporate.business.app
                         FROM tbl_SalesVisitReport SVR 
                         INNER JOIN tbl_login Creator ON Creator.User_Id = SVR.CreatedByCode 
                         LEFT JOIN tbl_login Manager ON Manager.User_Id = Creator.ReportingManagerId
-                        WHERE SVR.Id = @Id";
+                        WHERE SVR.Id = @Id AND SVR.CompanyID = @CompanyID";
 
                     string emailTo = "";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -482,21 +505,8 @@ namespace Bill_Software.corporate.business.app
                             
                             </body></html>";
 
-                    using (MailMessage mail = new MailMessage())
-                    {
-                        mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer");
-                        mail.To.Add(emailTo);
-                        mail.Subject = $"Sales Visit Report - {roleDisplay}";
-                        mail.Body = body;
-                        mail.IsBodyHtml = true;
-
-                        using (SmtpClient smtp = new SmtpClient("smtp.zoho.in", 587))
-                        {
-                            smtp.Credentials = new NetworkCredential("it.support@aminruptechnologies.co.in", "TPw800QrVMU2");
-                            smtp.EnableSsl = true;
-                            smtp.Send(mail);
-                        }
-                    }
+                    // Secrets Management: Use CommunicationGateway (reads from Web.config), never hardcode credentials
+                    CommunicationGateway.SendCustomEmail(emailTo, $"Sales Visit Report - {roleDisplay}", body);
                 }
             }
             catch (Exception) { /* Fails silently to protect UI */ }
@@ -505,9 +515,10 @@ namespace Bill_Software.corporate.business.app
         private string GetUserRole(string userId, int visitId, SqlConnection con)
         {
             string role = "Manager";
-            using (SqlCommand cmdCheck = new SqlCommand("SELECT CreatedByCode FROM tbl_SalesVisitReport WHERE Id=@Id", con))
+            using (SqlCommand cmdCheck = new SqlCommand("SELECT CreatedByCode FROM tbl_SalesVisitReport WHERE Id=@Id AND CompanyID=@CompanyID", con))
             {
                 cmdCheck.Parameters.AddWithValue("@Id", visitId);
+                cmdCheck.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 object creator = cmdCheck.ExecuteScalar();
                 if (creator != null && creator.ToString() == userId)
                 {
@@ -537,8 +548,10 @@ namespace Bill_Software.corporate.business.app
             string visitId = hfMegaVisitId.Value;
             string remarks = txtMegaRemarks.Text.Trim();
             string user = Session["USERID"].ToString();
+            int id;
 
-            if (string.IsNullOrEmpty(visitId)) return;
+            if (!AuthGuard.TryParsePositiveInt(visitId, out id) || !AuthGuard.UserCanApproveVisit(id))
+                return;
 
             try
             {
@@ -553,22 +566,55 @@ namespace Bill_Software.corporate.business.app
                             ManagerRemarks = @Remarks, 
                             ApprovedDate = GETDATE(), 
                             ApprovedBy = @User 
-                        WHERE Id = @Id";
+                        WHERE Id = @Id AND CompanyID = @CompanyID
+                          AND ISNULL(ApprovalStatus, 'Pending') = 'Pending'";
 
+                    int rows;
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Status", status);
                         cmd.Parameters.AddWithValue("@Remarks", remarks);
                         cmd.Parameters.AddWithValue("@User", user);
-                        cmd.Parameters.AddWithValue("@Id", visitId);
-                        cmd.ExecuteNonQuery();
+                        cmd.Parameters.AddWithValue("@Id", id);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        rows = cmd.ExecuteNonQuery();
                     }
 
-                    // (REMOVED the bulk tbl_Expenses update from here)
-                }
+                    if (rows <= 0)
+                        return;
 
-                // Send Email Notification
-                SendApprovalNotification(visitId, status, remarks, user);
+                    // (REMOVED the bulk tbl_Expenses update from here)
+
+                    // Send Email Notification
+                    SendApprovalNotification(visitId, status, remarks, user);
+
+                    // Proactive notification logging
+                    try
+                    {
+                        string visitCustomer = "";
+                        using (SqlCommand cmdName = new SqlCommand("SELECT CustomerName FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID", conn))
+                        {
+                            cmdName.Parameters.AddWithValue("@Id", visitId);
+                            cmdName.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                            object nameResult = cmdName.ExecuteScalar();
+                            if (nameResult != null) visitCustomer = nameResult.ToString();
+                        }
+                        string notifQuery = @"INSERT INTO tbl_SystemNotification 
+                            (CompanyID, Title, Message, Module, Type, UserId, CreatedOn) 
+                            VALUES (@CompanyID, @Title, @Message, @Module, @Type, @UserId, GETDATE())";
+                        using (SqlCommand notifCmd = new SqlCommand(notifQuery, conn))
+                        {
+                            notifCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                            notifCmd.Parameters.AddWithValue("@Title", $"Visit {status}");
+                            notifCmd.Parameters.AddWithValue("@Message", $"Visit #{visitId} ({visitCustomer}) was {status.ToLower()} by {user}. Remarks: {remarks}");
+                            notifCmd.Parameters.AddWithValue("@Module", "Sales Visit");
+                            notifCmd.Parameters.AddWithValue("@Type", status == "Approved" ? "Success" : "Warning");
+                            notifCmd.Parameters.AddWithValue("@UserId", user);
+                            notifCmd.ExecuteNonQuery();
+                        }
+                    }
+                    catch { /* Soft catch: audit logging failure must not crash approval */ }
+                }
 
                 // Refresh UI and Close Modal
                 Binder();
@@ -578,7 +624,7 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                lblErrorMsg.Text = "Error processing approval: " + ex.Message;
+                lblErrorMsg.Text = "Error processing approval. Please try again.";
                 PanelError.Visible = true;
             }
         }
@@ -590,13 +636,14 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
                 {
                     conn.Open();
-                    string visitQuery = @"SELECT SVR.Salesperson, L.Email FROM tbl_SalesVisitReport SVR INNER JOIN tbl_login L ON L.User_Id = SVR.CreatedByCode WHERE SVR.Id = @Id";
+                    string visitQuery = @"SELECT SVR.Salesperson, L.Email FROM tbl_SalesVisitReport SVR INNER JOIN tbl_login L ON L.User_Id = SVR.CreatedByCode WHERE SVR.Id = @Id AND SVR.CompanyID = @CompanyID";
                     string emailTo = "";
                     string salesperson = "";
 
                     using (SqlCommand cmd = new SqlCommand(visitQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -620,21 +667,8 @@ namespace Bill_Software.corporate.business.app
                             <p style='color:#666; font-size:13px;'><i>Note: Any expenses linked to this visit have also been updated to {status}.</i></p>
                             <br/>Regards,<br/><b>Flame-Ex ERP System</b></body></html>";
 
-                    using (MailMessage mail = new MailMessage())
-                    {
-                        mail.From = new MailAddress("it.support@aminruptechnologies.co.in", "Flame-Ex : Sales Reporting Mailer");
-                        mail.To.Add(emailTo);
-                        mail.Subject = $"Sales Visit & Expenses - {status} (ID: {visitId})";
-                        mail.Body = body;
-                        mail.IsBodyHtml = true;
-
-                        using (SmtpClient smtp = new SmtpClient("smtp.zoho.in", 587))
-                        {
-                            smtp.Credentials = new NetworkCredential("it.support@aminruptechnologies.co.in", "TPw800QrVMU2");
-                            smtp.EnableSsl = true;
-                            smtp.Send(mail);
-                        }
-                    }
+                    // Secrets Management: Use CommunicationGateway (reads from Web.config), never hardcode credentials
+                    CommunicationGateway.SendCustomEmail(emailTo, $"Sales Visit & Expenses - {status} (ID: {visitId})", body);
                 }
             }
             catch (Exception) { /* Fails silently to protect UI */ }
@@ -644,19 +678,32 @@ namespace Bill_Software.corporate.business.app
         {
             if (e.CommandName == "ApproveExp" || e.CommandName == "RejectExp")
             {
-                string expId = e.CommandArgument.ToString();
+                int expenseId;
+                int visitId;
+                if (!AuthGuard.TryParsePositiveInt(e.CommandArgument.ToString(), out expenseId)
+                    || !AuthGuard.TryParsePositiveInt(hfMegaVisitId.Value, out visitId)
+                    || !AuthGuard.UserCanApproveExpense(expenseId, visitId))
+                    return;
+
                 string status = e.CommandName == "ApproveExp" ? "Approved" : "Rejected";
                 string user = Session["USERID"].ToString();
 
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
                 {
                     conn.Open();
-                    string query = "UPDATE tbl_Expenses SET ApprovalStatus = @Status, ApprovedBy = @User, ApprovedDate = GETDATE() WHERE Id = @Id";
+                    string query = @"
+                        UPDATE e
+                        SET ApprovalStatus = @Status, ApprovedBy = @User, ApprovedDate = GETDATE()
+                        FROM dbo.tbl_Expenses e
+                        INNER JOIN dbo.tbl_SalesVisitReport v ON v.Id = e.VisitId
+                        WHERE e.Id = @ExpenseId AND e.VisitId = @VisitId AND v.CompanyID = @CompanyID";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Status", status);
                         cmd.Parameters.AddWithValue("@User", user);
-                        cmd.Parameters.AddWithValue("@Id", expId);
+                        cmd.Parameters.AddWithValue("@ExpenseId", expenseId);
+                        cmd.Parameters.AddWithValue("@VisitId", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -698,11 +745,12 @@ namespace Bill_Software.corporate.business.app
                 SELECT v.*, mgr.Name AS ApprovedByName 
                 FROM tbl_SalesVisitReport v 
                 LEFT JOIN tbl_login mgr ON v.ApprovedBy = mgr.User_Id 
-                WHERE v.Id = @Id";
+                WHERE v.Id = @Id AND v.CompanyID = @CompanyID";
 
             using (SqlCommand cmd = new SqlCommand(visitQuery, con))
             {
                 cmd.Parameters.AddWithValue("@Id", visitId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     if (rdr.Read())

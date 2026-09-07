@@ -146,7 +146,16 @@ namespace Bill_Software.corporate.business.app
         {
             if (e.CommandName == "View")
             {
-                Response.Redirect("/corporate/business/print/NewPurchaseOrder.aspx?ID=" + Convert.ToString(e.CommandArgument), false);
+                string id = Convert.ToString(e.CommandArgument);
+                SqlParameter[] pram = {
+                    new SqlParameter("@ID", id),
+                    new SqlParameter("@CompanyID", CompanyContext.CurrentCompanyID)
+                };
+                DataTable dt = DbCL.SPreturn_dt("SELECT ID FROM tbl_Quotation WHERE ID=@ID AND CompanyID=@CompanyID", pram);
+                if (dt == null || dt.Rows.Count == 0)
+                    return;
+
+                Response.Redirect("/corporate/business/print/NewPurchaseOrder.aspx?ID=" + id, false);
                 Context.ApplicationInstance.CompleteRequest();
             }
         }
@@ -195,7 +204,7 @@ namespace Bill_Software.corporate.business.app
                         q.Remarks AS [Doc Remarks]
                     FROM tbl_Quotation q
                     LEFT JOIN tbl_Client c ON q.Client_Id = c.Client_Id
-                    LEFT JOIN tbl_Quotaion_details qd ON q.Quotation_no = qd.Quotation_no AND qd.IsDeleted = 0
+                    LEFT JOIN tbl_Quotaion_details qd ON q.Quotation_no = qd.Quotation_no AND qd.CompanyID = @CompanyID AND ISNULL(qd.IsLatest, 1) = 1 AND ISNULL(qd.IsDeleted, 0) = 0
                     WHERE q.RecordType != 'Quotation' 
                       AND q.CompanyID = @CompanyID ");
 
@@ -297,34 +306,36 @@ namespace Bill_Software.corporate.business.app
 
         // --- WEB METHODS FOR AJAX AUTOCOMPLETE ---
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetClientNames(string prefix)
         {
-            return GetAutocompleteData("SELECT DISTINCT Client_Name FROM tbl_Client WHERE Client_Name LIKE @prefix", prefix);
+            return GetAutocompleteData("SELECT DISTINCT Client_Name FROM tbl_Client WHERE CompanyID=@CompanyID AND Client_Name LIKE @prefix", prefix);
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetQuotationNos(string prefix)
         {
-            return GetAutocompleteData("SELECT DISTINCT Quotation_no FROM tbl_Quotation WHERE RecordType != 'Quotation' AND CompanyID = " + CompanyContext.CurrentCompanyID + " AND Quotation_no LIKE @prefix", prefix);
+            return GetAutocompleteData("SELECT DISTINCT Quotation_no FROM tbl_Quotation WHERE RecordType != 'Quotation' AND CompanyID=@CompanyID AND Quotation_no LIKE @prefix", prefix);
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetArcPoDoNos(string prefix)
         {
             string query = @"
                 SELECT DISTINCT PO_Number FROM tbl_Quotation 
-                WHERE RecordType != 'Quotation' AND CompanyID = " + CompanyContext.CurrentCompanyID + @" AND PO_Number LIKE @prefix AND PO_Number IS NOT NULL AND PO_Number != ''
+                WHERE RecordType != 'Quotation' AND CompanyID=@CompanyID AND PO_Number LIKE @prefix AND PO_Number IS NOT NULL AND PO_Number != ''
                 UNION
                 SELECT DISTINCT DO_Number FROM tbl_Quotation 
-                WHERE RecordType != 'Quotation' AND CompanyID = " + CompanyContext.CurrentCompanyID + @" AND DO_Number LIKE @prefix AND DO_Number IS NOT NULL AND DO_Number != ''";
+                WHERE RecordType != 'Quotation' AND CompanyID=@CompanyID AND DO_Number LIKE @prefix AND DO_Number IS NOT NULL AND DO_Number != ''";
 
             return GetAutocompleteData(query, prefix);
         }
 
         private static List<string> GetAutocompleteData(string query, string prefix)
         {
+            AuthGuard.EnsureWebMethod();
             List<string> suggestions = new List<string>();
+
             DB_UTILITY db = new DB_UTILITY();
 
             try
@@ -334,6 +345,7 @@ namespace Bill_Software.corporate.business.app
                 using (SqlCommand cmd = new SqlCommand(query, db.Conn))
                 {
                     cmd.Parameters.AddWithValue("@prefix", "%" + prefix + "%");
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {
                         while (sdr.Read())

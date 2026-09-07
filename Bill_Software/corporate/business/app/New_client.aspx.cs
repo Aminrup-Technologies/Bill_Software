@@ -8,8 +8,10 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm15 : System.Web.UI.Page
+    public partial class WebForm15 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "New_client"; } }
+
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
@@ -201,10 +203,10 @@ namespace Bill_Software.corporate.business.app
         // ==========================================
         // 3. AJAX WEB METHOD & HELPERS
         // ==========================================
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static string AddNewCityInline(string cityName, string stateName)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "ERROR: Session expired.";
+            AuthGuard.EnsureWebMethodPermission("New_client");
 
             try
             {

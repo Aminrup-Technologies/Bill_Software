@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -22,6 +23,8 @@ namespace Bill_Software.corporate.business.print
         DataTable dtci = new DataTable();
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthGuard.EnsurePrint(this, "tbl_invoice_payment.Payment_ID", Request.QueryString["Payment_ID"])) return;
+
             string Payment_ID = Request.QueryString["Payment_ID"];
 
             //lblInvoiceNo.Text = Invoice_No.ToString();

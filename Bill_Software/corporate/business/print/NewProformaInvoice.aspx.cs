@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using System.Text;
 using System.Globalization;
 using System.Threading;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -36,6 +37,8 @@ namespace Bill_Software.corporate.business.print
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthGuard.EnsurePrint(this, "tbl_Proforma.ID", Request.QueryString["ID"])) return;
+
             if (!IsPostBack)
             {
                 string ID = Request.QueryString["ID"];

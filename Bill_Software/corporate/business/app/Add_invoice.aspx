@@ -801,7 +801,7 @@
                                         <asp:BoundField DataField="Net_amount" HeaderText="Net Amount" DataFormatString="{0:N2}" ItemStyle-HorizontalAlign="Right" />
                                         <asp:TemplateField HeaderText="Action">
                                             <ItemTemplate>
-                                                <asp:Button ID="btnSelect" runat="server" CommandName="SelectDoc" CommandArgument='<%# Eval("DocNo") %>' Text="Select & Proceed &rarr;" CssClass="btn-nav" />
+                                                <asp:Button ID="btnSelect" runat="server" CommandName="SelectDoc" CommandArgument='<%# Eval("DocNo") %>' Text="Select &amp; Proceed &rarr;" CssClass="btn-nav" />
                                             </ItemTemplate>
                                         </asp:TemplateField>
                                     </Columns>
@@ -970,7 +970,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Item & Delivery Info" ItemStyle-CssClass="stack-cell" ItemStyle-Width="200px">
+                                        <asp:TemplateField HeaderText="Item &amp; Delivery Info" ItemStyle-CssClass="stack-cell" ItemStyle-Width="200px">
                                             <ItemTemplate>
                                                 <div style="font-size: 11px; color: #444; line-height: 1.4;">
                                                     <span style="color:#006699; font-weight:bold;">Item No: <%# Eval("ItemNo") %></span> | Mat: <strong><%# Eval("MaterialNo") %></strong><br />
@@ -998,7 +998,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
 
-                                        <asp:TemplateField HeaderText="Stock & Quantities" ItemStyle-CssClass="stack-cell" ItemStyle-Width="160px">
+                                        <asp:TemplateField HeaderText="Stock &amp; Quantities" ItemStyle-CssClass="stack-cell" ItemStyle-Width="160px">
                                             <ItemTemplate>
                                                 <span class="stack-sub" style="margin-bottom: 4px;">
                                                     Stock: <asp:Label ID="lblStock" runat="server" Text='<%# Bind("AvailableStock") %>' Font-Bold="true" ForeColor="#19658A"></asp:Label> | 
@@ -1029,7 +1029,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>--%>
 
-                                        <asp:TemplateField HeaderText="Pricing & Discounts" ItemStyle-CssClass="stack-cell" ItemStyle-Width="260px">
+                                        <asp:TemplateField HeaderText="Pricing &amp; Discounts" ItemStyle-CssClass="stack-cell" ItemStyle-Width="260px">
                                             <ItemTemplate>
                                                 <div style="display:flex; justify-content:space-between; margin-bottom: 3px; font-size:11px;">
                                                     <span>Rate: <asp:TextBox ID="txtsailrate" runat="server" Text='<%# Bind("sail_rate") %>' CssClass="form-control" Style="display:inline-block; width:70px; text-align:right; padding:2px;" onkeyup="CalculateRow(this, 'RATE')"></asp:TextBox></span>
@@ -1054,7 +1054,7 @@
                                             </ItemTemplate>
                                         </asp:TemplateField>
 
-                                        <asp:TemplateField HeaderText="Tax & Net Amount" ItemStyle-CssClass="stack-cell" ItemStyle-Width="160px">
+                                        <asp:TemplateField HeaderText="Tax &amp; Net Amount" ItemStyle-CssClass="stack-cell" ItemStyle-Width="160px">
                                             <ItemTemplate>
                                                 <span class="stack-sub">Taxable:
                                                     <asp:Label ID="lblTaxable" runat="server" Text="0.00" Font-Bold="true"></asp:Label>

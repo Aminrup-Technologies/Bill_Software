@@ -7,8 +7,10 @@ using System.Web;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class AdminApprovalDashboard : System.Web.UI.Page
+    public partial class AdminApprovalDashboard : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "AdminApprovalDashboard"; } }
+
         string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
@@ -82,7 +84,14 @@ namespace Bill_Software.corporate.business.app
         // --- 2. Handle Regularization Actions ---
         protected void gvRegularizations_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            int requestId = Convert.ToInt32(e.CommandArgument);
+            if (e.CommandName != "ApproveReq" && e.CommandName != "RejectReq")
+                return;
+
+            int requestId;
+            if (!AuthGuard.TryParsePositiveInt(Convert.ToString(e.CommandArgument), out requestId)
+                || !AuthGuard.UserCanApprovePendingRegularization(requestId))
+                return;
+
             string managerId = HttpContext.Current.Session["USERID"].ToString();
             string actionStatus = e.CommandName == "ApproveReq" ? "Approved" : "Rejected";
 
@@ -93,7 +102,14 @@ namespace Bill_Software.corporate.business.app
         // --- 3. Handle Leave Actions ---
         protected void gvLeaves_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            int requestId = Convert.ToInt32(e.CommandArgument);
+            if (e.CommandName != "ApproveLeave" && e.CommandName != "RejectLeave")
+                return;
+
+            int requestId;
+            if (!AuthGuard.TryParsePositiveInt(Convert.ToString(e.CommandArgument), out requestId)
+                || !AuthGuard.UserCanApprovePendingLeave(requestId))
+                return;
+
             string managerId = HttpContext.Current.Session["USERID"].ToString();
             string actionStatus = e.CommandName == "ApproveLeave" ? "Approved" : "Rejected";
 
@@ -117,8 +133,8 @@ namespace Bill_Software.corporate.business.app
                 
                         -- A. Update the Request Status
                         " + (reqType == "Leave"
-                                    ? "UPDATE tbl_LeaveRequests SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID; SELECT @EmpID = UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID;"
-                                    : "UPDATE tbl_AttendanceRegularization SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID; SELECT @EmpID = UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID;") + @"
+                                    ? "UPDATE tbl_LeaveRequests SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID AND RequestStatus = 'Pending'; IF @@ROWCOUNT = 0 BEGIN ROLLBACK TRANSACTION; RETURN; END SELECT @EmpID = UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID AND CompanyID = @CompID;"
+                                    : "UPDATE tbl_AttendanceRegularization SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID AND RequestStatus = 'Pending'; IF @@ROWCOUNT = 0 BEGIN ROLLBACK TRANSACTION; RETURN; END SELECT @EmpID = UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID AND CompanyID = @CompID;") + @"
 
                         -- B. Execute Business Logic if APPROVED
                         IF @Status = 'Approved'
@@ -222,8 +238,12 @@ namespace Bill_Software.corporate.business.app
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        if (reader.Read())
+                        if (!reader.Read())
                         {
+                            ShowMessage("Unable to process this request.", false);
+                            return;
+                        }
+
                             string eEmail = reader["EmpEmail"]?.ToString();
                             string eMobile = reader["EmpMobile"]?.ToString();
                             string empName = reader["EmpName"]?.ToString();
@@ -248,7 +268,6 @@ namespace Bill_Software.corporate.business.app
                             {
                                 CommunicationGateway.SendAlertsAsync(targetEmail, targetMobile, subject, htmlMessage, mgrEmail);
                             }
-                        }
                     }
                 }
 

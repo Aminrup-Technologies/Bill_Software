@@ -9,8 +9,10 @@ using System.Data.SqlClient;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm6 : System.Web.UI.Page
+    public partial class WebForm6 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "product_master"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
         protected void Page_Load(object sender, EventArgs e)
         {

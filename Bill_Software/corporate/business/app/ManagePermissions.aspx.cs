@@ -6,18 +6,14 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class ManagePermissions : System.Web.UI.Page
+    public partial class ManagePermissions : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "ManagePermissions"; } }
+
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null || Session["SessionToken"] == null)
-            {
-                Response.Redirect("~/index.aspx", false);
-                return;
-            }
-
             if (!IsPostBack)
             {
                 BindGrid();

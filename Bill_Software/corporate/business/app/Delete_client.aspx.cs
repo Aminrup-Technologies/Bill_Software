@@ -1,16 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
+using System.Web;
+using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm18 : System.Web.UI.Page
+    public partial class WebForm18 : SecurePage
     {
-        DB_UTILITY DbCL = new DB_UTILITY();
+        protected override string RequiredPermissionKey { get { return "Delete_client"; } }
+
+        private static string ConnString
+        {
+            get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; }
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -23,49 +28,84 @@ namespace Bill_Software.corporate.business.app
                 BindGrid();
             }
         }
+
         private void BindGrid()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Client_Id,Client_Name from tbl_Client order by Client_Name";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            DataList1.DataSource = cmd.ExecuteReader();
-            DataList1.DataBind();
-            DbCL.Conn.Close();
+            using (var cn = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand(
+                "SELECT Client_Id, Client_Name FROM dbo.tbl_Client WHERE CompanyID = @CompanyID ORDER BY Client_Name", cn))
+            {
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                cn.Open();
+                DataList1.DataSource = cmd.ExecuteReader();
+                DataList1.DataBind();
+            }
         }
 
         private void BindGrid1()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
-            string cmdstring = "select Client_Id,Client_Name from tbl_Client where Client_Name='" + cmbvendor.Text + "'";
-            SqlCommand cmd = new SqlCommand(cmdstring, DbCL.Conn);
-            DataList1.DataSource = cmd.ExecuteReader();
-            DataList1.DataBind();
-            DbCL.Conn.Close();
+            using (var cn = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand(
+                "SELECT Client_Id, Client_Name FROM dbo.tbl_Client WHERE CompanyID = @CompanyID AND Client_Name = @ClientName ORDER BY Client_Name", cn))
+            {
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                cmd.Parameters.Add(new SqlParameter("@ClientName", SqlDbType.NVarChar, 200) { Value = cmbvendor.Text });
+                cn.Open();
+                DataList1.DataSource = cmd.ExecuteReader();
+                DataList1.DataBind();
+            }
         }
 
         private void Bindcombo()
         {
+            cmbvendor.Items.Clear();
             cmbvendor.Items.Add("ALL");
-            DbCL.FillCombo10(cmbvendor, "select Client_Name from tbl_Client order by Client_Name");
+            using (var cn = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand(
+                "SELECT Client_Name FROM dbo.tbl_Client WHERE CompanyID = @CompanyID ORDER BY Client_Name", cn))
+            {
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                cn.Open();
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                        cmbvendor.Items.Add(rdr[0].ToString());
+                }
+            }
         }
 
         protected void DataList1_ItemCommand(object source, DataListCommandEventArgs e)
         {
-            string Client_Id = Convert.ToString(e.CommandArgument);
+            if (e.CommandName != "Delete")
+                return;
 
+            string clientId = Convert.ToString(e.CommandArgument);
+            if (!AuthGuard.ClientInCurrentCompany(clientId))
+                return;
 
-            if (e.CommandName == "Delete")
+            using (var cn = new SqlConnection(ConnString))
             {
-                DbCL.executeRdr("delete from tbl_Client where Client_Id='" + Client_Id.ToString() + "'");
-                DbCL.executeRdr("delete from tbl_ClientRegAddress where Client_Id='" + Client_Id.ToString() + "'");
-
-                PanelOK.Visible = true;
-                lblOk.Text = "Data Deleted Successfully...";
-                DataList1.Visible = false;
+                cn.Open();
+                using (var cmd = new SqlCommand(
+                    "DELETE FROM dbo.tbl_Client WHERE Client_Id = @ClientId AND CompanyID = @CompanyID", cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@ClientId", SqlDbType.NVarChar, 100) { Value = clientId });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                    if (cmd.ExecuteNonQuery() <= 0)
+                        return;
+                }
+                using (var cmd = new SqlCommand(
+                    "DELETE FROM dbo.tbl_ClientRegAddress WHERE Client_Id = @ClientId AND CompanyID = @CompanyID", cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@ClientId", SqlDbType.NVarChar, 100) { Value = clientId });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                    cmd.ExecuteNonQuery();
+                }
             }
 
+            PanelOK.Visible = true;
+            lblOk.Text = "Data Deleted Successfully...";
+            DataList1.Visible = false;
         }
 
         protected void cmbvendor_SelectedIndexChanged(object sender, EventArgs e)
@@ -73,8 +113,6 @@ namespace Bill_Software.corporate.business.app
             if (cmbvendor.SelectedIndex == 0)
             {
                 BindGrid();
-
-
             }
             else
             {

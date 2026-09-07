@@ -9,8 +9,10 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm13 : System.Web.UI.Page
+    public partial class WebForm13 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "View_vendor"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
 
         protected void Page_Load(object sender, EventArgs e)
@@ -29,6 +31,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static List<string> GetVendorNames(string prefix)
         {
+            AuthGuard.EnsureWebMethodPermission("View_vendor");
             List<string> vendors = new List<string>();
             string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 

@@ -29,17 +29,17 @@ namespace Bill_Software.corporate.business.app
                 LoadDashboardMetrics();
                 LoadSystemNotifications();
             }
-        }
-
-        private void LoadSystemNotifications()
+        }        private void LoadSystemNotifications()
         {
+            // Dashboard Tenancy: Notifications strictly scoped to current company
             string query = @"
                 SELECT TOP 15 
                     Title, Message, Severity, CreatedOn 
                 FROM tbl_SystemNotification 
                 WHERE IsActive = 1 
+                  AND CompanyID = @CompanyID
                   AND StartDate <= GETDATE() 
-                  AND EndDate >= GETDATE() 
+                  AND EndDate >= GETDATE()
                 ORDER BY CreatedOn DESC";
 
             DbCL.Sqlconnection();
@@ -47,6 +47,7 @@ namespace Bill_Software.corporate.business.app
 
             using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
             {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
                     DataTable dtNoti = new DataTable();
@@ -176,18 +177,19 @@ namespace Bill_Software.corporate.business.app
                 lblDaysPresent.Text = daysPresent + " Days";
             }
 
-            // 4. Sales Visits TODAY
+            // 4. Sales Visits TODAY — Dashboard Tenancy: scoped by CompanyID
             string todaySalesQuery = @"
                 SELECT 
                     COUNT(Id) AS TotalVisits,
                     SUM(CASE WHEN LinkedQuotationNo IS NOT NULL AND LinkedQuotationNo <> '' THEN 1 ELSE 0 END) AS TotalQuotes,
                     SUM(ISNULL(RevenueRealized, 0)) AS TotalRevenue
                 FROM tbl_SalesVisitReport 
-                WHERE CreatedByCode = @UserId AND CAST(VisitDate AS DATE) = CAST(GETDATE() AS DATE)";
+                WHERE CreatedByCode = @UserId AND CompanyID = @CompanyID AND CAST(VisitDate AS DATE) = CAST(GETDATE() AS DATE)";
 
             using (SqlCommand cmd = new SqlCommand(todaySalesQuery, DbCL.Conn))
             {
                 cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     if (dr.Read())
@@ -201,18 +203,19 @@ namespace Bill_Software.corporate.business.app
                 }
             }
 
-            // 5. Sales Visits MONTH
+            // 5. Sales Visits MONTH — Dashboard Tenancy: scoped by CompanyID
             string monthSalesQuery = @"
                 SELECT 
                     COUNT(Id) AS TotalVisits,
                     SUM(CASE WHEN LinkedQuotationNo IS NOT NULL AND LinkedQuotationNo <> '' THEN 1 ELSE 0 END) AS TotalQuotes,
                     SUM(ISNULL(RevenueRealized, 0)) AS TotalRevenue
                 FROM tbl_SalesVisitReport 
-                WHERE CreatedByCode = @UserId AND MONTH(VisitDate) = MONTH(GETDATE()) AND YEAR(VisitDate) = YEAR(GETDATE())";
+                WHERE CreatedByCode = @UserId AND CompanyID = @CompanyID AND MONTH(VisitDate) = MONTH(GETDATE()) AND YEAR(VisitDate) = YEAR(GETDATE())";
 
             using (SqlCommand cmd = new SqlCommand(monthSalesQuery, DbCL.Conn))
             {
                 cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     if (dr.Read())

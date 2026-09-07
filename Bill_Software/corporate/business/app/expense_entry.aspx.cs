@@ -8,8 +8,10 @@ using System.Data;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class expense_entry : System.Web.UI.Page
+    public partial class expense_entry : SecurePage
     {
+        protected override string[] RequiredAnyPermissionKeys { get { return new string[] { "visit_planner", "vw_dailyrpts" }; } }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -24,7 +26,8 @@ namespace Bill_Software.corporate.business.app
                 if (Request.QueryString["visitId"] != null)
                 {
                     int visitId;
-                    if (int.TryParse(Request.QueryString["visitId"], out visitId))
+                    if (int.TryParse(Request.QueryString["visitId"], out visitId)
+                        && AuthGuard.UserOwnsVisit(visitId))
                     {
                         LoadLinkedVisitDetails(visitId);
                         BindExpenses(visitId); // Load previously added expenses
@@ -40,10 +43,12 @@ namespace Bill_Software.corporate.business.app
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    string query = "SELECT CustomerName, VisitDate, DiscussionPoints FROM tbl_SalesVisitReport WHERE Id = @Id";
+                    string query = "SELECT CustomerName, VisitDate, DiscussionPoints FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID AND CreatedByCode = @UserId";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        cmd.Parameters.AddWithValue("@UserId", HttpContext.Current.Session["USERID"].ToString());
                         conn.Open();
                         using (SqlDataReader rdr = cmd.ExecuteReader())
                         {
@@ -59,9 +64,9 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                lblErrorMsg.Text = "Error loading visit details: " + ex.Message;
+                lblErrorMsg.Text = "Error loading visit details. Please try again.";
                 PanelError.Visible = true;
             }
         }
@@ -74,11 +79,12 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string query = @"SELECT ExpenseDate, ExpenseCategory, Description, Amount, ApprovalStatus 
-                                     FROM tbl_Expenses WHERE VisitId = @VisitId ORDER BY Id DESC";
+                                     FROM tbl_Expenses WHERE VisitId = @VisitId AND CompanyID = @CompanyID ORDER BY Id DESC";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@VisitId", visitId);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    cmd.Parameters.AddWithValue("@VisitId", visitId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         da.Fill(dt);
 
@@ -103,24 +109,33 @@ namespace Bill_Software.corporate.business.app
             {
                 string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
                 string userId = HttpContext.Current.Session["USERID"].ToString();
+                int linkedVisitId = 0;
+                bool hasLinkedVisit = AuthGuard.TryParsePositiveInt(hfVisitId.Value, out linkedVisitId);
+                if (hasLinkedVisit && !AuthGuard.UserOwnsVisit(linkedVisitId))
+                {
+                    lblErrorMsg.Text = "An unexpected error occurred while saving the expense. Please try again.";
+                    PanelError.Visible = true;
+                    return;
+                }
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string query = @"INSERT INTO tbl_Expenses 
-                                    (UserCode, ExpenseDate, VisitId, ExpenseCategory, Amount, Description, AttachmentName, CreatedDate) 
+                                    (UserCode, CompanyID, ExpenseDate, VisitId, ExpenseCategory, Amount, Description, AttachmentName, CreatedDate) 
                                      VALUES 
-                                    (@UserCode, @ExpenseDate, @VisitId, @ExpenseCategory, @Amount, @Description, @AttachmentName, GETDATE())";
+                                    (@UserCode, @CompanyID, @ExpenseDate, @VisitId, @ExpenseCategory, @Amount, @Description, @AttachmentName, GETDATE())";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@UserCode", userId);
-                        cmd.Parameters.AddWithValue("@ExpenseDate", txtExpenseDate.Text.Trim());
+                    cmd.Parameters.AddWithValue("@UserCode", userId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.AddWithValue("@ExpenseDate", txtExpenseDate.Text.Trim());
                         cmd.Parameters.AddWithValue("@ExpenseCategory", ddlCategory.SelectedValue);
                         cmd.Parameters.AddWithValue("@Amount", Convert.ToDecimal(txtAmount.Text.Trim()));
                         cmd.Parameters.AddWithValue("@Description", txtDescription.Text.Trim());
 
-                        if (!string.IsNullOrEmpty(hfVisitId.Value))
-                            cmd.Parameters.AddWithValue("@VisitId", Convert.ToInt32(hfVisitId.Value));
+                        if (hasLinkedVisit)
+                            cmd.Parameters.AddWithValue("@VisitId", linkedVisitId);
                         else
                             cmd.Parameters.AddWithValue("@VisitId", DBNull.Value);
 
@@ -155,9 +170,9 @@ namespace Bill_Software.corporate.business.app
                     BindExpenses(Convert.ToInt32(hfVisitId.Value));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                lblErrorMsg.Text = "An error occurred: " + ex.Message;
+                lblErrorMsg.Text = "An unexpected error occurred while saving the expense. Please try again.";
                 PanelError.Visible = true;
             }
         }

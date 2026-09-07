@@ -6,8 +6,10 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm81 : System.Web.UI.Page
+    public partial class WebForm81 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "ViewUser"; } }
+
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         // We use ViewState to hold the numeric User ID across postbacks
@@ -19,12 +21,6 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null)
-            {
-                Response.Redirect("~/index.aspx");
-                return;
-            }
-
             if (!IsPostBack)
             {
                 string userIdString = Request.QueryString["User_Id"]; // e.g., "FLM01" or "admin"
@@ -44,8 +40,9 @@ namespace Bill_Software.corporate.business.app
         private void LoadAvailableRoles()
         {
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM dbo.Roles ORDER BY RoleName", cn))
+            using (var cmd = new SqlCommand("SELECT RoleId, RoleName FROM dbo.Roles WHERE CompanyID = @CompanyID ORDER BY RoleName", cn))
             {
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 var dt = new DataTable();
                 var da = new SqlDataAdapter(cmd);
                 da.Fill(dt);
@@ -66,9 +63,10 @@ namespace Bill_Software.corporate.business.app
                 cn.Open();
 
                 // 1. Get the numeric Id and Name from tbl_login
-                using (var cmdUser = new SqlCommand("SELECT Id, Name FROM dbo.tbl_login WHERE User_Id = @UserId", cn))
+                using (var cmdUser = new SqlCommand("SELECT Id, Name FROM dbo.tbl_login WHERE User_Id = @UserId AND CompanyID = @CompanyID", cn))
                 {
                     cmdUser.Parameters.AddWithValue("@UserId", userIdString);
+                    cmdUser.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     using (var rdr = cmdUser.ExecuteReader())
                     {
                         if (rdr.Read())
@@ -123,29 +121,30 @@ namespace Bill_Software.corporate.business.app
                             cmdDel.ExecuteNonQuery();
                         }
 
-                        // 2. Insert the newly selected roles
-                        using (var cmdIns = new SqlCommand("INSERT INTO dbo.UserRoles (UserId, RoleId) VALUES (@UserId, @RoleId)", cn, transaction))
+                        // 2. Insert the newly selected roles (skip duplicates; company-scoped)
+                        foreach (ListItem item in chkRoles.Items)
                         {
-                            cmdIns.Parameters.Add("@UserId", SqlDbType.Int).Value = NumericUserId;
-                            cmdIns.Parameters.Add("@RoleId", SqlDbType.Int);
+                            if (!item.Selected)
+                                continue;
 
-                            foreach (ListItem item in chkRoles.Items)
-                            {
-                                if (item.Selected)
-                                {
-                                    cmdIns.Parameters["@RoleId"].Value = Convert.ToInt32(item.Value);
-                                    cmdIns.ExecuteNonQuery();
-                                }
-                            }
+                            int roleId;
+                            if (!int.TryParse(item.Value, out roleId) || roleId <= 0)
+                                continue;
+
+                            if (!UserRoleAssignment.TryEnsureMapping(cn, transaction, NumericUserId, roleId, CompanyContext.CurrentCompanyID))
+                                throw new InvalidOperationException("Selected role is not valid for this company.");
                         }
+
+                        UserRoleAssignment.AlignDisplayRoleFromUserRoles(cn, transaction, NumericUserId, CompanyContext.CurrentCompanyID);
 
                         transaction.Commit();
                         ShowOk("Roles successfully updated for " + lblEmpName.Text);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         transaction.Rollback();
-                        ShowError("Error updating roles: " + ex.Message);
+                        // Ponytail Standard #3: Never expose raw exception details to client
+                        ShowError("An unexpected error occurred while updating roles. Please try again.");
                     }
                 }
             }

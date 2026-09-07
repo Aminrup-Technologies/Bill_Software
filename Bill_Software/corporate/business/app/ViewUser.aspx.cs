@@ -13,8 +13,10 @@ using System.Web;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm80 : System.Web.UI.Page
+    public partial class WebForm80 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "ViewUser"; } }
+
         // FIX 1: C# 5.0 Compatible Property
         private string ConnString
         {
@@ -23,12 +25,6 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null || Session["SessionToken"] == null)
-            {
-                Response.Redirect("~/index.aspx", false);
-                return;
-            }
-
             if (!IsPostBack)
             {
                 ViewState["CurrentFilter"] = "Active";
@@ -271,9 +267,15 @@ namespace Bill_Software.corporate.business.app
             bool requireWhatsApp = chkWhatsApp != null ? chkWhatsApp.Checked : false;
 
             object roleIdParam = DBNull.Value;
+            int? newRoleId = null;
             if (ddlGridRole != null && ddlGridRole.SelectedValue != "0")
             {
-                roleIdParam = Convert.ToInt32(ddlGridRole.SelectedValue);
+                int parsedRole;
+                if (int.TryParse(ddlGridRole.SelectedValue, out parsedRole) && parsedRole > 0)
+                {
+                    newRoleId = parsedRole;
+                    roleIdParam = parsedRole;
+                }
             }
 
             string updateSql = @"UPDATE dbo.tbl_login 
@@ -285,35 +287,64 @@ namespace Bill_Software.corporate.business.app
                          WHERE Id = @Id AND CompanyID = @CompanyID"; // COMPANYCONTEXT SHIELD
 
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand(updateSql, cn))
             {
-                cmd.Parameters.AddWithValue("@Name", string.IsNullOrWhiteSpace(newName) ? DBNull.Value : (object)newName);
-                cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(newEmail) ? DBNull.Value : (object)newEmail);
-
-                string cleanPhone = newPhone.Replace(" ", "").Replace("-", "");
-                cmd.Parameters.AddWithValue("@Phone", string.IsNullOrWhiteSpace(cleanPhone) ? DBNull.Value : (object)cleanPhone);
-
-                cmd.Parameters.AddWithValue("@DeptId", (ddlDepartment != null && !string.IsNullOrEmpty(ddlDepartment.SelectedValue)) ? (object)Convert.ToInt32(ddlDepartment.SelectedValue) : DBNull.Value);
-                cmd.Parameters.AddWithValue("@DesigId", (ddlDesignation != null && !string.IsNullOrEmpty(ddlDesignation.SelectedValue)) ? (object)Convert.ToInt32(ddlDesignation.SelectedValue) : DBNull.Value);
-                cmd.Parameters.AddWithValue("@ManagerId", (ddlManager != null && !string.IsNullOrEmpty(ddlManager.SelectedValue)) ? (object)ddlManager.SelectedValue : DBNull.Value);
-
-                cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
-                cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
-                cmd.Parameters.AddWithValue("@RoleId", roleIdParam);
-                cmd.Parameters.AddWithValue("@RequireGeoTagging", requireGeo);
-                cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails);
-                cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
                 cn.Open();
-                int rows = cmd.ExecuteNonQuery();
-
-                if (rows > 0)
+                using (var tran = cn.BeginTransaction())
                 {
-                    InsertSystemNotification("User Profile Updated", $"Profile updated for User: {newName}.", "User Management", "Info", Session["USERID"]?.ToString() ?? "System");
+                    int? previousRoleId = null;
+                    using (var cmdPrev = new SqlCommand(
+                        "SELECT RoleId FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID", cn, tran))
+                    {
+                        cmdPrev.Parameters.AddWithValue("@Id", id);
+                        cmdPrev.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        object prev = cmdPrev.ExecuteScalar();
+                        if (prev != null && prev != DBNull.Value)
+                            previousRoleId = Convert.ToInt32(prev);
+                    }
+
+                    using (var cmd = new SqlCommand(updateSql, cn, tran))
+                    {
+                        cmd.Parameters.AddWithValue("@Name", string.IsNullOrWhiteSpace(newName) ? DBNull.Value : (object)newName);
+                        cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(newEmail) ? DBNull.Value : (object)newEmail);
+
+                        string cleanPhone = newPhone.Replace(" ", "").Replace("-", "");
+                        cmd.Parameters.AddWithValue("@Phone", string.IsNullOrWhiteSpace(cleanPhone) ? DBNull.Value : (object)cleanPhone);
+
+                        cmd.Parameters.AddWithValue("@DeptId", (ddlDepartment != null && !string.IsNullOrEmpty(ddlDepartment.SelectedValue)) ? (object)Convert.ToInt32(ddlDepartment.SelectedValue) : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@DesigId", (ddlDesignation != null && !string.IsNullOrEmpty(ddlDesignation.SelectedValue)) ? (object)Convert.ToInt32(ddlDesignation.SelectedValue) : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ManagerId", (ddlManager != null && !string.IsNullOrEmpty(ddlManager.SelectedValue)) ? (object)ddlManager.SelectedValue : DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
+                        cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
+                        cmd.Parameters.AddWithValue("@RoleId", roleIdParam);
+                        cmd.Parameters.AddWithValue("@RequireGeoTagging", requireGeo);
+                        cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails);
+                        cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp);
+                        cmd.Parameters.AddWithValue("@Id", id);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows <= 0)
+                        {
+                            ShowError("User not found or access denied.");
+                            return;
+                        }
+
+                        if (newRoleId.HasValue)
+                        {
+                            if (!UserRoleAssignment.TrySyncDisplayRoleChange(cn, tran, id, previousRoleId, newRoleId, CompanyContext.CurrentCompanyID))
+                            {
+                                ShowError("The selected role is not valid for this company.");
+                                return;
+                            }
+                        }
+
+                        tran.Commit();
+                    }
                 }
             }
+
+            InsertSystemNotification("User Profile Updated", $"Profile updated for User: {newName}.", "User Management", "Info", Session["USERID"]?.ToString() ?? "System");
 
             ShowOk("User details updated successfully.");
             lvUsers.EditIndex = -1;
@@ -581,7 +612,7 @@ namespace Bill_Software.corporate.business.app
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(@"UPDATE dbo.tbl_login 
-                                              SET PasswordHash = @Hash, PasswordSalt = @Salt, MustChangePassword = 1
+                                              SET PasswordHash = @Hash, PasswordSalt = @Salt, Password = NULL, MustChangePassword = 1
                                               WHERE Id = @Id AND CompanyID = @CompanyID", cn))
             {
                 cmd.Parameters.AddWithValue("@Hash", hash);
@@ -607,9 +638,10 @@ namespace Bill_Software.corporate.business.app
                     SendTempPasswordEmail(email, userId, tempPassword, isFirstTime);
                     ShowOk("Credentials generated and successfully emailed to user.");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    ShowError("Credentials reset, but failed to send email: " + ex.Message);
+                    // Ponytail Standard #3: Never expose raw exception details to client
+                    ShowError("Credentials reset, but the notification email could not be sent. Please verify SMTP configuration.");
                 }
             }
             else
@@ -652,10 +684,13 @@ namespace Bill_Software.corporate.business.app
             if (string.IsNullOrWhiteSpace(toEmail))
                 throw new Exception("Cannot send email: user has no email.");
 
-            string fromApp = ConfigurationManager.AppSettings["SmtpFrom"] ?? "Flame-Ex ERP Mailer | Aminrup Technologies";
-            string smtpUserApp = ConfigurationManager.AppSettings["SmtpUser"] ?? "it.support@aminruptechnologies.co.in";
-            string smtpPassApp = ConfigurationManager.AppSettings["SmtpPass"] ?? "TPw800QrVMU2";
-            string smtpHostApp = ConfigurationManager.AppSettings["SmtpHost"] ?? "smtp.zoho.in";
+            string fromApp = ConfigurationManager.AppSettings["SmtpFrom"];
+            string smtpUserApp = ConfigurationManager.AppSettings["SmtpUser"];
+            string smtpPassApp = ConfigurationManager.AppSettings["SmtpPass"];
+            string smtpHostApp = ConfigurationManager.AppSettings["SmtpHost"];
+
+            if (string.IsNullOrWhiteSpace(smtpUserApp) || string.IsNullOrWhiteSpace(smtpPassApp) || string.IsNullOrWhiteSpace(smtpHostApp))
+                throw new Exception("SMTP is not configured. Please add SmtpUser, SmtpPass, and SmtpHost to AppSettings.");
 
             int smtpPortApp = 587;
             int p;
@@ -738,8 +773,7 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Services.WebMethod(EnableSession = true)]
         public static string GetSessionHistory(int userId)
         {
-            if (HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
-                return "[]";
+            AuthGuard.EnsureWebMethodPermission("ViewUser");
 
             int companyId = CompanyContext.CurrentCompanyID;
             if (companyId <= 0) return "[]";
@@ -852,8 +886,7 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                if (HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
-                    return "Session expired.";
+                AuthGuard.EnsureWebMethodPermission("ViewUser");
 
                 int currentCompanyId = CompanyContext.CurrentCompanyID;
                 if (currentCompanyId <= 0)
@@ -911,12 +944,15 @@ namespace Bill_Software.corporate.business.app
                         }
                     }
                 }
-            }
-            catch (Exception ex)
+            }            catch (Exception)
             {
-                return ex.Message;
+                // Ponytail Standard #3: Never expose raw exception details to client
+                return "An unexpected error occurred while saving geo-fence settings.";
             }
         }
+
+
+
 
         private static void InsertSystemNotification(string title, string message, string moduleCode, string severity, string userId)
         {

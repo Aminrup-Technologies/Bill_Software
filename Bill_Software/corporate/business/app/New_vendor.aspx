@@ -129,6 +129,10 @@
             <strong>Success:</strong>
             <asp:Label ID="lblOk" runat="server"></asp:Label>
         </asp:Panel>
+        <asp:Panel ID="PanelError" runat="server" BackColor="#F8D7DA" BorderColor="#F5C6CB" BorderStyle="Solid" BorderWidth="1px" Visible="False" Style="padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #721c24;">
+            <strong>Error:</strong>
+            <asp:Label ID="lblErrorMsg" runat="server"></asp:Label>
+        </asp:Panel>
 
         <div class="section-title">Primary Details</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">

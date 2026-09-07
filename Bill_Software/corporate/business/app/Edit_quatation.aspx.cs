@@ -2217,11 +2217,12 @@ namespace Bill_Software.corporate.business.app
             {
                 string ProductCatagory = ((Label)gvr.Cells[0].FindControl("ProductCatagory")).Text;
 
-                string query = "INSERT INTO tbl_QutPrimaryService(qut_no, PrimaryService) VALUES (@qut_no, @PrimaryService)";
+                string query = "INSERT INTO tbl_QutPrimaryService(qut_no, PrimaryService, TimeStamp, CompanyID) VALUES (@qut_no, @PrimaryService, GETDATE(), @CompanyID)";
                 using (SqlCommand cmd = new SqlCommand(query, conn, trans))
                 {
                     cmd.Parameters.AddWithValue("@qut_no", qutno);
                     cmd.Parameters.AddWithValue("@PrimaryService", ProductCatagory);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     cmd.ExecuteNonQuery();
                 }
 

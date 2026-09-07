@@ -857,7 +857,8 @@ namespace Bill_Software.corporate.business.app
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowError((submit ? "Submit" : "Save") + " failed: " + ex.Message);
+                    // Ponytail #3: Never expose raw exception details to client
+                    ShowError((submit ? "Submit" : "Save") + " failed. Please try again.");
                 }
             }
         }
@@ -951,7 +952,8 @@ namespace Bill_Software.corporate.business.app
                 catch (Exception ex)
                 {
                     tran.Rollback();
-                    ShowError("Cancel failed: " + ex.Message);
+                    // Ponytail #3: Never expose raw exception details to client
+                    ShowError("Cancel failed. Please try again.");
                 }
             }
         }
@@ -1025,8 +1027,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static object GetProductDetail(string productId)
         {
-            if (HttpContext.Current == null || HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
-                return new { ok = false, message = "Session expired." };
+            AuthGuard.EnsureWebMethod();
             if (string.IsNullOrWhiteSpace(productId))
                 return new { ok = false, message = "Product id required." };
 

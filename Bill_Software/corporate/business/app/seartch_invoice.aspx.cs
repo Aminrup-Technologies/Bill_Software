@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Data;
+using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Data;
-using System.Data.SqlClient;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -36,8 +34,7 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                DbCL.Sqlconnection();
-                DbCL.ConnectDb();
+                DbCL.OpenDb();
 
                 string query = "SELECT Client_Name FROM tbl_Client WHERE CompanyID = @CompanyID ORDER BY Client_Name";
                 using (SqlCommand cmd = new SqlCommand(query, DbCL.Conn))
@@ -57,7 +54,7 @@ namespace Bill_Software.corporate.business.app
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
         }
 
@@ -68,8 +65,7 @@ namespace Bill_Software.corporate.business.app
 
         private void BindData()
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DbCL.OpenDb();
 
             try
             {
@@ -93,33 +89,7 @@ namespace Bill_Software.corporate.business.app
 
                 SqlCommand cmd = new SqlCommand();
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
-                // --- Dynamic Filtering ---
-                if (cmbvendor.SelectedIndex > 0)
-                {
-                    query += " AND b.Client_Name = @ClientName ";
-                    cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
-                {
-                    query += " AND a.Invoice_No LIKE @InvNo ";
-                    cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
-                {
-                    query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
-                    cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
-                    cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
-                }
-                if (!string.IsNullOrWhiteSpace(txtToDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
-                    cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
-                }
+                AppendInvoiceFilters(ref query, cmd);
 
                 query += " ORDER BY TRY_CONVERT(DATE, a.Invoice_Date, 106) DESC, a.ID DESC;";
 
@@ -150,14 +120,15 @@ namespace Bill_Software.corporate.business.app
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
         }
 
         protected void btnExport_Click(object sender, EventArgs e)
         {
-            DbCL.Sqlconnection();
-            DbCL.ConnectDb();
+            DataTable dtExport = new DataTable();
+
+            DbCL.OpenDb();
 
             try
             {
@@ -166,50 +137,99 @@ namespace Bill_Software.corporate.business.app
                     a.Invoice_Date AS [Invoice Date], 
                     a.ExtInvoiceNo AS [ERP Ref], 
                     b.Client_Name AS [Client Name], 
+                    a.Quotation_No AS [Source Reference], 
+                    CASE
+                        WHEN q.RecordType = 'Purchase Order' THEN 'Purchase Order'
+                        WHEN q.RecordType = 'Quotation' THEN 'Quotation'
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM tbl_Proforma AS pf
+                            WHERE pf.Invoice_No = a.Quotation_No
+                              AND pf.CompanyID = @CompanyID
+                        ) THEN 'Proforma'
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM tbl_Chalan AS ch
+                            WHERE ch.Chalan_No = a.Quotation_No
+                              AND ch.CompanyID = @CompanyID
+                        ) THEN 'Delivery Challan'
+                        ELSE 'Manual'
+                    END AS [Invoice Source], 
+                    q.PO_Number AS [PO Number], 
+                    q.DO_Number AS [DO Number], 
+                    a.PServiceName AS [Primary Service], 
+                    d.ItemNo AS [Item No], 
+                    qd.MaterialNo AS [Material No], 
+                    qd.PackSize AS [Pack Size], 
+                    qd.DeliveryDate AS [Delivery Date], 
+                    qd.Department AS [Department], 
+                    qd.ItemRemarks AS [Item Remarks], 
                     d.Product_id AS [Item Code], 
                     d.Product_Code AS [HSN Code], 
                     d.Product_name AS [Item Name], 
                     d.Quantity AS [Qty], 
                     d.sail_rate AS [Rate], 
+                    d.discountRate AS [Line Discount %], 
                     ISNULL(d.Total_sail_rate2, (TRY_CAST(d.Quantity AS FLOAT) * TRY_CAST(d.sail_rate AS FLOAT))) AS [Taxable Value],
                     d.Service_tax_rate AS [GST %],
                     d.Total_sail_rate1 AS [Item Net Value],
+                    a.Service_Tax1 AS [Invoice GST Amount],
                     a.Net_Amount AS [Invoice Grand Total],
+                    a.Delivery_Amount AS [Freight],
+                    a.otherAmount1 AS [Other Charges],
+                    a.Quotation_Date AS [Quotation Date],
+                    a.mailDate AS [Mail Date],
+                    CASE WHEN a.cgstOrsgst = 'YES' THEN 'CGST/SGST' WHEN a.igst = 'YES' THEN 'IGST' ELSE 'TAX' END AS [Tax Type],
+                    a.TimeStamp AS [Created Timestamp],
                     a.AddedById AS [Created By]
                     FROM tbl_Invoice AS a 
-                    LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID 
-                    LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No 
+                    LEFT JOIN tbl_Client AS b ON b.Client_Id = a.Client_ID AND b.CompanyID = @CompanyID 
+                    LEFT JOIN tbl_Invoice_details AS d ON d.Invoice_No = a.Invoice_No AND d.CompanyID = @CompanyID 
+                    LEFT JOIN tbl_Quotation AS q ON q.Quotation_No = a.Quotation_No AND q.CompanyID = @CompanyID 
+                    LEFT JOIN (
+                        SELECT
+                            ranked.Quotation_no,
+                            ranked.Product_Code,
+                            ranked.ItemNo,
+                            ranked.CompanyID,
+                            ranked.MaterialNo,
+                            ranked.PackSize,
+                            ranked.DeliveryDate,
+                            ranked.Department,
+                            ranked.ItemRemarks
+                        FROM (
+                            SELECT
+                                qdx.Quotation_no,
+                                qdx.Product_Code,
+                                ISNULL(qdx.ItemNo, '') AS ItemNo,
+                                qdx.CompanyID,
+                                qdx.MaterialNo,
+                                qdx.PackSize,
+                                qdx.DeliveryDate,
+                                qdx.Department,
+                                qdx.ItemRemarks,
+                                ROW_NUMBER() OVER (
+                                    PARTITION BY qdx.CompanyID, qdx.Quotation_no, qdx.Product_Code, ISNULL(qdx.ItemNo, '')
+                                    ORDER BY
+                                        CASE WHEN qdx.IsLatest = 1 AND qdx.IsDeleted = 0 THEN 0 ELSE 1 END,
+                                        ISNULL(qdx.Version, 0) DESC,
+                                        qdx.Id DESC
+                                ) AS rn
+                            FROM tbl_Quotaion_details AS qdx
+                            WHERE qdx.CompanyID = @CompanyID
+                              AND ISNULL(qdx.IsDeleted, 0) = 0
+                        ) ranked
+                        WHERE ranked.rn = 1
+                    ) AS qd
+                        ON qd.Quotation_no = d.Quotation_no
+                       AND qd.Product_Code = d.Product_id
+                       AND qd.ItemNo = ISNULL(d.ItemNo, '')
+                       AND qd.CompanyID = @CompanyID
                     WHERE a.CompanyID = @CompanyID ";
 
                 SqlCommand cmd = new SqlCommand();
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
-                // --- Apply identical filters for Excel ---
-                if (cmbvendor.SelectedIndex > 0)
-                {
-                    query += " AND b.Client_Name = @ClientName ";
-                    cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
-                {
-                    query += " AND a.Invoice_No LIKE @InvNo ";
-                    cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
-                {
-                    query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
-                    cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
-                }
-                if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
-                    cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
-                }
-                if (!string.IsNullOrWhiteSpace(txtToDate.Text))
-                {
-                    query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
-                    cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
-                }
+                AppendInvoiceFilters(ref query, cmd);
 
                 query += " ORDER BY TRY_CONVERT(DATE, a.Invoice_Date, 106) DESC, a.Invoice_No DESC;";
 
@@ -217,69 +237,66 @@ namespace Bill_Software.corporate.business.app
                 cmd.Connection = DbCL.Conn;
 
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dtExport = new DataTable();
                 da.Fill(dtExport);
-
-                if (dtExport.Rows.Count > 0)
-                {
-                    ExportDataTableToCsv(dtExport, "Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"));
-                }
-                else
-                {
-                    ShowMsg("No records found to export.", false);
-                }
             }
             catch (Exception ex)
             {
                 ShowMsg("Error during export: " + ex.Message, false);
+                return;
             }
             finally
             {
-                if (DbCL.Conn.State == ConnectionState.Open) DbCL.Conn.Close();
+                DbCL.CloseDb();
             }
+
+            if (dtExport.Rows.Count == 0)
+            {
+                ShowMsg("No records found to export.", false);
+                return;
+            }
+
+            InvoiceListHelper.PrepareInvoiceExport(dtExport);
+            InvoiceListHelper.ExportXlsx(
+                Response,
+                dtExport,
+                "Invoice_Lines",
+                CompanyContext.CurrentCompanyCode + "_Advanced_Search_Invoices_" + DateTime.Now.ToString("yyyyMMdd"),
+                "Search Invoice",
+                InvoiceListHelper.FormatExportDateFilter(txtFromDate.Text, txtToDate.Text));
         }
 
-        private void ExportDataTableToCsv(DataTable dt, string filename)
+        private void AppendInvoiceFilters(ref string query, SqlCommand cmd)
         {
-            string attachment = $"attachment; filename={filename}.csv";
-            Response.ClearContent();
-            Response.AddHeader("content-disposition", attachment);
-            Response.ContentType = "text/csv";
-
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-            // Write Columns
-            string[] columnNames = new string[dt.Columns.Count];
-            for (int i = 0; i < dt.Columns.Count; i++)
+            if (cmbvendor.SelectedIndex > 0)
             {
-                columnNames[i] = EscapeCsvField(dt.Columns[i].ColumnName);
+                query += " AND b.Client_Name = @ClientName ";
+                cmd.Parameters.AddWithValue("@ClientName", cmbvendor.SelectedItem.Text);
             }
-            sb.AppendLine(string.Join(",", columnNames));
-
-            // Write Rows
-            foreach (DataRow dr in dt.Rows)
+            if (!string.IsNullOrWhiteSpace(txtSearchInv.Text))
             {
-                string[] fields = new string[dt.Columns.Count];
-                for (int i = 0; i < dt.Columns.Count; i++)
-                {
-                    fields[i] = EscapeCsvField(dr[i].ToString());
-                }
-                sb.AppendLine(string.Join(",", fields));
+                query += " AND a.Invoice_No LIKE @InvNo ";
+                cmd.Parameters.AddWithValue("@InvNo", "%" + txtSearchInv.Text.Trim() + "%");
             }
-
-            Response.Write(sb.ToString());
-            Response.End();
+            if (!string.IsNullOrWhiteSpace(txtSearchExt.Text))
+            {
+                query += " AND a.ExtInvoiceNo LIKE @ExtNo ";
+                cmd.Parameters.AddWithValue("@ExtNo", "%" + txtSearchExt.Text.Trim() + "%");
+            }
+            if (!string.IsNullOrWhiteSpace(txtFromDate.Text))
+            {
+                query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) >= TRY_CONVERT(DATE, @FromDate, 106) ";
+                cmd.Parameters.AddWithValue("@FromDate", txtFromDate.Text.Trim());
+            }
+            if (!string.IsNullOrWhiteSpace(txtToDate.Text))
+            {
+                query += " AND TRY_CONVERT(DATE, a.Invoice_Date, 106) <= TRY_CONVERT(DATE, @ToDate, 106) ";
+                cmd.Parameters.AddWithValue("@ToDate", txtToDate.Text.Trim());
+            }
         }
 
-        private string EscapeCsvField(string field)
-        {
-            if (string.IsNullOrEmpty(field)) return "";
-            if (field.Contains(",") || field.Contains("\"") || field.Contains("\r") || field.Contains("\n"))
-            {
-                return $"\"{field.Replace("\"", "\"\"")}\"";
-            }
-            return field;
-        }
+        protected string FmtDate(object v) { return InvoiceListHelper.FmtDate(v); }
+        protected string FmtMail(object v) { return InvoiceListHelper.FmtMail(v); }
+        protected string FmtStamp(object v) { return InvoiceListHelper.FmtStamp(v); }
 
         protected void btnClear_Click(object sender, EventArgs e)
         {

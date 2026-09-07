@@ -33,12 +33,10 @@ namespace Bill_Software.corporate.business.app
                 if (Request.QueryString["visitId"] != null)
                 {
                     int visitId;
-                    if (int.TryParse(Request.QueryString["visitId"], out visitId))
+                    if (AuthGuard.TryParsePositiveInt(Request.QueryString["visitId"], out visitId)
+                        && AuthGuard.UserCanViewVisit(visitId))
                     {
-                        // 1. Store the VisitId in a HiddenField
                         hfVisitId.Value = visitId.ToString();
-
-                        // 2. Fetch the customer from the visit
                         PreFillClientFromVisit(visitId);
                     }
                 }
@@ -57,6 +55,8 @@ namespace Bill_Software.corporate.business.app
                     string query = "SELECT CustomerName FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
+                        if (!AuthGuard.UserCanViewVisit(visitId))
+                            return;
                         cmd.Parameters.AddWithValue("@Id", visitId);
                         cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         conn.Open();
@@ -83,15 +83,15 @@ namespace Bill_Software.corporate.business.app
             {
                 conn.Open();
 
-                // 1. GLOBAL RESOURCE: Sales Persons (Uncommented and Active!)
-                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 and (User_Id NOT IN ('admin', 'AT01')) ORDER BY Id";
-                using (SqlCommand cmd = new SqlCommand(salesQuery, conn))
+                // 1. TENANT-SCOPED RESOURCE: Sales Persons
+                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompanyID AND (User_Id NOT IN ('admin', 'AT01')) ORDER BY Id";
+                using (var cmdSales = new SqlCommand(salesQuery, conn))
                 {
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    cmdSales.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    using (SqlDataAdapter daSales = new SqlDataAdapter(cmdSales))
                     {
                         DataTable dtSales = new DataTable();
-                        da.Fill(dtSales);
-
+                        daSales.Fill(dtSales);
                         cmbSalesPerson.DataSource = dtSales;
                         cmbSalesPerson.DataTextField = "DisplayName"; // Shows: Anish Dwivedi [FLM03]
                         cmbSalesPerson.DataValueField = "Id";         // Stores: 3 (The PK)
@@ -488,6 +488,14 @@ namespace Bill_Software.corporate.business.app
 
         private void MagicianNew()
         {
+            int linkedVisitId;
+            bool hasVisit = AuthGuard.TryParsePositiveInt(hfVisitId.Value, out linkedVisitId);
+            if (hasVisit && !AuthGuard.UserCanViewVisit(linkedVisitId))
+            {
+                ShowAlert("Unable to save quotation. Please try again.", true);
+                return;
+            }
+
             Bindquotationno();
             string CGSTSGSTSTATUS = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
             string IGSTSTATUS = RadioButtonGst.SelectedIndex != 0 ? "YES" : "";
@@ -534,8 +542,8 @@ namespace Bill_Software.corporate.business.app
                         new_Gross_amount += Total_sail_rate1;
                         using (SqlCommand cmd = new SqlCommand(@"
                         INSERT INTO tbl_Quotaion_details 
-                        (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, CompanyID) 
-                        VALUES (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, @CompanyID)", conn, trans))
+                        (Sl_no, Quotation_no, Product_id, Product_Code, Product_name, Quantity, sail_rate, Service_tax_rate, Total_sail_rate, Total_sail_rate1, Total_sail_rate2, specification, Misc, InvStatus, Type, Unit, ProductOrServiceCat, discount_rate, new_sailrate, ItemRemarks, ItemNo, MaterialNo, PackSize, DeliveryDate, Department, AddedById, Version, IsDeleted, IsLatest, CompanyID) 
+                        VALUES (@Sl_no, @Quotation_no, @Product_id, @Product_Code, @Product_name, @Quantity, @sail_rate, @Service_tax_rate, @Total_sail_rate, @Total_sail_rate1, @Total_sail_rate2, @specification, @Misc, @InvStatus, @Type, @Unit, @ProductOrServiceCat, @discount_rate, @new_sailrate, @ItemRemarks, @ItemNo, @MaterialNo, @PackSize, @DeliveryDate, @Department, @AddedById, 1, 0, 1, @CompanyID)", conn, trans))
                         {
                             cmd.Parameters.AddWithValue("@Sl_no", h);
                             cmd.Parameters.AddWithValue("@Quotation_no", lblqno.Text);
@@ -637,8 +645,8 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@OtherCharge_Name", TextBox1.Text);
                         cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
 
-                        if (!string.IsNullOrEmpty(hfVisitId.Value))
-                            cmd.Parameters.AddWithValue("@VisitId", Convert.ToInt32(hfVisitId.Value));
+                        if (hasVisit)
+                            cmd.Parameters.AddWithValue("@VisitId", linkedVisitId);
                         else
                             cmd.Parameters.AddWithValue("@VisitId", DBNull.Value);
 
@@ -676,11 +684,8 @@ namespace Bill_Software.corporate.business.app
                 {
                     try { trans?.Rollback(); } catch { }
 
-                    StringBuilder errorMsg = new StringBuilder();
-                    errorMsg.AppendLine("An error occurred: " + ex.Message);
-                    if (ex.InnerException != null) errorMsg.AppendLine("<br/>Inner Exception: " + ex.InnerException.ToString());
-
-                    ShowAlert(errorMsg.ToString(), true);
+                    // Ponytail #3: Never expose raw exception details to client
+                    ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
                 }
             }
         }
@@ -748,24 +753,31 @@ namespace Bill_Software.corporate.business.app
         private int idreturn()
         {
             int b = 0;
-            DbCL.Sqlconnection(); DbCL.ConnectDb();
-            string d = txtquotationDate.Text, m = d.Substring(3, 3), y = d.Substring(7, 4), d4, d5, d6;
+            string d = txtquotationDate.Text, m = d.Substring(3, 3), y = d.Substring(7, 4), d5, d6;
             if (m == "Jan" || m == "Feb" || m == "Mar")
             {
-                d4 = (Convert.ToInt32(y) - 1).ToString();
-                d5 = "31-Mar-" + d4; d6 = "31-Mar-" + y;
+                d5 = "31-Mar-" + (Convert.ToInt32(y) - 1).ToString(); d6 = "31-Mar-" + y;
             }
             else
             {
-                d4 = (Convert.ToInt32(y) + 1).ToString();
-                d5 = "31-Mar-" + y; d6 = "31-Mar-" + d4;
+                d5 = "31-Mar-" + y; d6 = "31-Mar-" + (Convert.ToInt32(y) + 1).ToString();
             }
-            using (SqlCommand cmd = new SqlCommand("select Sl_no from tbl_Quotation where ID=(select max(ID) from tbl_Quotation where cast(Quotation_date as datetime) between '" + d5 + "' and '" + d6 + "' AND CompanyID = " + CompanyContext.CurrentCompanyID + ")", DbCL.Conn))
-            using (SqlDataReader re = cmd.ExecuteReader())
+            // Ponytail #3: Parameterized query replaces string concatenation
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (var conn = new SqlConnection(connStr))
+            using (var cmd = new SqlCommand(
+                "SELECT Sl_no FROM tbl_Quotation WHERE ID = (SELECT MAX(ID) FROM tbl_Quotation WHERE CAST(Quotation_date AS datetime) BETWEEN @Date5 AND @Date6 AND CompanyID = @CompanyID)", conn))
             {
-                if (re.Read() && re["Sl_no"] != DBNull.Value) b = Convert.ToInt32(re["Sl_no"]);
+                cmd.Parameters.AddWithValue("@Date5", d5);
+                cmd.Parameters.AddWithValue("@Date6", d6);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                conn.Open();
+                using (var re = cmd.ExecuteReader())
+                {
+                    if (re.Read() && re["Sl_no"] != DBNull.Value) b = Convert.ToInt32(re["Sl_no"]);
+                }
             }
-            DbCL.Conn.Close(); return b;
+            return b;
         }
 
         private string findmonth()

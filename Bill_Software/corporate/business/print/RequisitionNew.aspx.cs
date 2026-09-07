@@ -7,6 +7,7 @@ using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -21,6 +22,8 @@ namespace Bill_Software.corporate.business.print
         DataTable cad = new DataTable();
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthGuard.EnsurePrint(this, "tbl_RequisitionMain.ReqNo", Request.QueryString["ReqNo"])) return;
+
             if (!IsPostBack)
             {
                 string ReqNo = Request.QueryString["ReqNo"];

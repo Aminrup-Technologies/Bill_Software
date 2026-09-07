@@ -12,7 +12,9 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class attendance : System.Web.UI.Page
     {
-        static string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+        // Ponytail Standard #3: No public static fields. Static helper for WebMethods only.
+        private static string GetConnStr() => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+        private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -38,7 +40,7 @@ namespace Bill_Software.corporate.business.app
         private void DisplayAssignedShift()
         {
             string userId = HttpContext.Current.Session["USERID"].ToString();
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(ConnString))
             {
                 string query = @"
                     SELECT TOP 1 ShiftName, StartTime, EndTime FROM tbl_ShiftMaster
@@ -73,7 +75,7 @@ namespace Bill_Software.corporate.business.app
         private void CheckTodayStatus()
         {
             string userId = HttpContext.Current.Session["USERID"].ToString();
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(ConnString))
             {
                 string query = "SELECT PunchInTime, PunchOutTime FROM tbl_Attendance WHERE UserCode = @UserCode AND ActivityDate = CAST(GETDATE() AS DATE) AND CompanyID = @CompanyID";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -110,7 +112,7 @@ namespace Bill_Software.corporate.business.app
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(ConnString))
             {
                 string query = @"
                     SELECT 
@@ -161,12 +163,12 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetMonthlyData(int month, int year)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "[]";
+            AuthGuard.EnsureWebMethod();
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(GetConnStr()))
             {
                 string query = @"
                     WITH DateRange AS (
@@ -340,8 +342,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string ProcessPunch(string punchType, double currentLat, double currentLng, string locationType = "", string overrideReason = "")
         {
-            if (HttpContext.Current.Session["USERID"] == null)
-                return PunchJson("error", "Session expired.");
+            AuthGuard.EnsureWebMethod();
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -370,7 +371,7 @@ namespace Bill_Software.corporate.business.app
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                using (SqlConnection conn = new SqlConnection(GetConnStr()))
                 {
                     conn.Open();
 
@@ -540,10 +541,10 @@ namespace Bill_Software.corporate.business.app
                     return PunchJson("error", "Database transaction failed.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                string safeError = ex.Message.Replace("\"", "'").Replace("\r", " ").Replace("\n", " ");
-                return PunchJson("error", "System Error: " + safeError);
+                // Ponytail Standard #3: Never expose raw exception details to client
+                return PunchJson("error", "An unexpected error occurred while processing your attendance. Please try again.");
             }
         }
 
@@ -554,10 +555,10 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetActiveLeaveTypes()
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "[]";
+            AuthGuard.EnsureWebMethod();
 
             List<object> leaves = new List<object>();
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(GetConnStr()))
             {
                 string query = "SELECT LeaveID, LeaveName FROM tbl_LeaveMaster WHERE IsActive = 1 AND CompanyID = @CompanyID";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -579,9 +580,9 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetAttendanceDetails(int id)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+            AuthGuard.EnsureWebMethod();
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(GetConnStr()))
             {
                 string query = @"SELECT ActivityDate, PunchInTime, PunchOutTime, StartLatitude, StartLongitude, EndLatitude, EndLongitude
                                  FROM tbl_Attendance WHERE Id = @Id AND UserCode = @UserId AND CompanyID = @CompanyID";
@@ -616,12 +617,12 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetShiftTimings(string reqDate)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+            AuthGuard.EnsureWebMethod();
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             DateTime date = Convert.ToDateTime(reqDate);
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(GetConnStr()))
             {
                 string query = @"
                     SELECT TOP 1 ShiftName, StartTime, EndTime FROM tbl_ShiftMaster
@@ -659,11 +660,11 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetMyGeoFence()
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+            AuthGuard.EnsureWebMethod();
 
             int companyId = CompanyContext.CurrentCompanyID;
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = new SqlConnection(GetConnStr()))
             {
                 string query = @"SELECT RequireGeoTagging, GeoFenceLat, GeoFenceLng, GeoFenceRadius,
                                         ISNULL(AllowGeoFenceOverride, 1) AS AllowGeoFenceOverride,
@@ -705,14 +706,14 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string SubmitRegularization(string reqDate, string inTime, string outTime, string reason)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
+            AuthGuard.EnsureWebMethod();
 
             string empId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                using (SqlConnection conn = new SqlConnection(GetConnStr()))
                 {
                     conn.Open();
                     string query = @"
@@ -828,16 +829,17 @@ namespace Bill_Software.corporate.business.app
                     return "Success";
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return "Error: " + ex.Message;
+                // Ponytail Standard #3: Never expose raw exception details to client
+                return "Error: An unexpected error occurred while submitting your regularization request.";
             }
         }
 
         [WebMethod(EnableSession = true)]
         public static string SubmitLeave(string reqDate, int leaveId, string reason)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
+            AuthGuard.EnsureWebMethod();
 
             string empId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -845,7 +847,7 @@ namespace Bill_Software.corporate.business.app
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                using (SqlConnection conn = new SqlConnection(GetConnStr()))
                 {
                     conn.Open();
                     string query = @"
@@ -924,9 +926,10 @@ namespace Bill_Software.corporate.business.app
                     return "Success";
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return "Error: " + ex.Message;
+                // Ponytail Standard #3: Never expose raw exception details to client
+                return "Error: An unexpected error occurred while submitting your leave request.";
             }
         }
 

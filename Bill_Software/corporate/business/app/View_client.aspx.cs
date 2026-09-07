@@ -10,8 +10,10 @@ using System.Web.Services;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm16 : System.Web.UI.Page
+    public partial class WebForm16 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "View_client"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -29,6 +31,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static List<string> GetClientNames(string prefix)
         {
+            AuthGuard.EnsureWebMethodPermission("View_client");
             List<string> clients = new List<string>();
             string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 

@@ -31,8 +31,13 @@ namespace Bill_Software.corporate.business.app
             });
         }
 
-        // --- 3. SMTP Execution (Zoho) ---
-        // UPDATED: Added optional ccEmail parameter
+        // --- 3. PUBLIC: Send a custom HTML email (for callers that build their own body) ---
+        public static void SendCustomEmail(string toEmail, string subject, string htmlBody, string ccEmail = null)
+        {
+            SendEmail(toEmail, subject, htmlBody, ccEmail);
+        }
+
+        // --- 3a. SMTP Execution (Zoho) ---
         private static void SendEmail(string toEmail, string subject, string body, string ccEmail = null)
         {
             try

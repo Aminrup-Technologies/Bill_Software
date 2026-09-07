@@ -12,8 +12,10 @@ using System.Xml.Linq;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class ImportProducts : System.Web.UI.Page
+    public partial class ImportProducts : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "uploader"; } }
+
         private readonly string uploadFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Uploads");
         DB_UTILITY DbCL = new DB_UTILITY();
 

@@ -24,11 +24,11 @@ namespace Bill_Software.corporate.business.app
                 lblvendor_id.Text = Client_Id;
 
                 // Load Dropdowns
-                DbCL.FillCombo(cmbState, "select State_Name from tbl_State order by State_Name");
-                DbCL.FillCombo(cmbcity, "select City_Name from tbl_City order by City_Name");
-                DbCL.FillCombo(ddlRegState, "select State_Name from tbl_State order by State_Name");
-                DbCL.FillCombo(ddlRegCity, "select City_Name from tbl_City order by City_Name");
-                DbCL.FillCombo(cmbIndustry, "select IndustryName from tbl_Industry");
+                DbCL.FillCombo(cmbState, "SELECT State_Name FROM tbl_State WHERE CompanyID = " + CompanyContext.CurrentCompanyID + " ORDER BY State_Name");
+                DbCL.FillCombo(cmbcity, "SELECT City_Name FROM tbl_City WHERE CompanyID = " + CompanyContext.CurrentCompanyID + " ORDER BY City_Name");
+                DbCL.FillCombo(ddlRegState, "SELECT State_Name FROM tbl_State WHERE CompanyID = " + CompanyContext.CurrentCompanyID + " ORDER BY State_Name");
+                DbCL.FillCombo(ddlRegCity, "SELECT City_Name FROM tbl_City WHERE CompanyID = " + CompanyContext.CurrentCompanyID + " ORDER BY City_Name");
+                DbCL.FillCombo(cmbIndustry, "SELECT IndustryName FROM tbl_Industry WHERE CompanyID = " + CompanyContext.CurrentCompanyID);
 
                 Binddate();
             }
