@@ -7,8 +7,10 @@ using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class AdminShiftAssignment : System.Web.UI.Page
+    public partial class AdminShiftAssignment : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "AdminShiftSetup"; } }
+
         private string ConnString
         {
             get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; }

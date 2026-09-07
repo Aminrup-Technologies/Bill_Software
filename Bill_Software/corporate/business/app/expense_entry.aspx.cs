@@ -8,8 +8,10 @@ using System.Data;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class expense_entry : System.Web.UI.Page
+    public partial class expense_entry : SecurePage
     {
+        protected override string[] RequiredAnyPermissionKeys { get { return new string[] { "visit_planner", "vw_dailyrpts" }; } }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)

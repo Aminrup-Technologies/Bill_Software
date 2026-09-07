@@ -9,8 +9,10 @@ using System.Data;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm45 : System.Web.UI.Page
+    public partial class WebForm45 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "Delete_general_expencess"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
         protected void Page_Load(object sender, EventArgs e)
         {

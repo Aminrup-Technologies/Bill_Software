@@ -10,8 +10,10 @@ using System.Text;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class vw_dailyrpts : System.Web.UI.Page
+    public partial class vw_dailyrpts : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "vw_dailyrpts"; } }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)

@@ -8,8 +8,10 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm68 : System.Web.UI.Page
+    public partial class WebForm68 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "newproductparent"; } }
+
         string ConnString { get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; } }
 
         protected void Page_Load(object sender, EventArgs e)

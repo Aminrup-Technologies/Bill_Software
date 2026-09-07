@@ -12,8 +12,10 @@ using System.Configuration;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class search_products : System.Web.UI.Page
+    public partial class search_products : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "Search_Products"; } }
+
         DB_UTILITY DbCL = new DB_UTILITY();
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -77,7 +79,7 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Script.Services.ScriptMethod]
         public static object GetProductDetails(int productId)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("Search_Products");
             string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
             using (SqlConnection con = new SqlConnection(cs))
@@ -120,7 +122,7 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Script.Services.ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static List<object> SearchProducts(string keyword)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("Search_Products");
             List<object> list = new List<object>();
             string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 

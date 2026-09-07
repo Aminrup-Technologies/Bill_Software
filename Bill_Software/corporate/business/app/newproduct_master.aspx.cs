@@ -12,8 +12,10 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm69 : System.Web.UI.Page
+    public partial class WebForm69 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "newproduct_master"; } }
+
         protected HiddenField hfFormState;
         protected DropDownList ddlFilterType;
         protected DropDownList ddlFilterCategory;
@@ -909,7 +911,7 @@ namespace Bill_Software.corporate.business.app
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static NameAvailabilityResult CheckDuplicateName(string productName, string category, int excludeId)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("newproduct_master");
             var result = new NameAvailabilityResult
             {
                 checkedOk = false,
@@ -967,7 +969,7 @@ namespace Bill_Software.corporate.business.app
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static DuplicateInfoResult GetDuplicateInfo(string productName, string category)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("newproduct_master");
             var result = new DuplicateInfoResult { foundExact = false, existingId = 0, productID = null, similar = new List<string>() };
             if (string.IsNullOrWhiteSpace(productName) || string.IsNullOrWhiteSpace(category) || category == "--Select--")
                 return result;

@@ -321,7 +321,7 @@ See the `docs/` directory for module-specific documentation:
 - Session validity is re-validated on every Master Page load against `dbo.ActiveSessions`.
 - Login verifies PBKDF2 hashes only. Leftover plaintext `Password` values are accepted once, then upgraded in place (`Password = NULL`). See `docs/15_Phase0B_Secrets_Deployment.md`.
 - Forgot-password issues a one-time expiring token; it does not overwrite `PasswordHash`.
-- **Authorization is menu visibility plus Phase 0A gates** (`AuthGuard` / `SecurePage` on print pages, WebMethods, and selected admin pages). Full analysis: `docs/14_Authentication_Authorization_Architecture.md`.
+- **Authorization is menu visibility plus server-side gates.** Phase 0A: `AuthGuard` / `SecurePage` on print pages, WebMethods, and user/role/permission admin. Phase 1A: the same menu `PermissionKey` values are enforced in `SecurePage.OnInit` (and matching WebMethods) for product, customer, supplier, sales-visit, expense, and selected dashboard admin pages. See `docs/16_Phase1A_SecurePage_RBAC.md`. Full analysis: `docs/14_Authentication_Authorization_Architecture.md`.
 
 ### Known Security Defects (see `docs/` for full details)
 
