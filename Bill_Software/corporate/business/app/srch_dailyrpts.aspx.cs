@@ -271,6 +271,10 @@ namespace Bill_Software.corporate.business.app
 
         private void LoadMegaModal(string visitId)
         {
+            int id;
+            if (!AuthGuard.TryParsePositiveInt(visitId, out id) || !AuthGuard.UserCanViewVisit(id))
+                return;
+
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (SqlConnection con = new SqlConnection(connStr))
             {
@@ -396,8 +400,9 @@ namespace Bill_Software.corporate.business.app
         {
             string visitId = hfMegaVisitId.Value;
             string comment = txtMegaNewComment.Text.Trim();
+            int id;
 
-            if (!string.IsNullOrEmpty(comment) && !string.IsNullOrEmpty(visitId))
+            if (!string.IsNullOrEmpty(comment) && AuthGuard.TryParsePositiveInt(visitId, out id) && AuthGuard.UserCanViewVisit(id))
             {
                 string userCode = Session["USERID"].ToString();
                 string role = "Manager";
@@ -450,13 +455,14 @@ namespace Bill_Software.corporate.business.app
                         FROM tbl_SalesVisitReport SVR 
                         INNER JOIN tbl_login Creator ON Creator.User_Id = SVR.CreatedByCode 
                         LEFT JOIN tbl_login Manager ON Manager.User_Id = Creator.ReportingManagerId
-                        WHERE SVR.Id = @Id";
+                        WHERE SVR.Id = @Id AND SVR.CompanyID = @CompanyID";
 
                     string emailTo = "";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -509,9 +515,10 @@ namespace Bill_Software.corporate.business.app
         private string GetUserRole(string userId, int visitId, SqlConnection con)
         {
             string role = "Manager";
-            using (SqlCommand cmdCheck = new SqlCommand("SELECT CreatedByCode FROM tbl_SalesVisitReport WHERE Id=@Id", con))
+            using (SqlCommand cmdCheck = new SqlCommand("SELECT CreatedByCode FROM tbl_SalesVisitReport WHERE Id=@Id AND CompanyID=@CompanyID", con))
             {
                 cmdCheck.Parameters.AddWithValue("@Id", visitId);
+                cmdCheck.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 object creator = cmdCheck.ExecuteScalar();
                 if (creator != null && creator.ToString() == userId)
                 {
@@ -541,8 +548,10 @@ namespace Bill_Software.corporate.business.app
             string visitId = hfMegaVisitId.Value;
             string remarks = txtMegaRemarks.Text.Trim();
             string user = Session["USERID"].ToString();
+            int id;
 
-            if (string.IsNullOrEmpty(visitId)) return;
+            if (!AuthGuard.TryParsePositiveInt(visitId, out id) || !AuthGuard.UserCanApproveVisit(id))
+                return;
 
             try
             {
@@ -557,16 +566,22 @@ namespace Bill_Software.corporate.business.app
                             ManagerRemarks = @Remarks, 
                             ApprovedDate = GETDATE(), 
                             ApprovedBy = @User 
-                        WHERE Id = @Id";
+                        WHERE Id = @Id AND CompanyID = @CompanyID
+                          AND ISNULL(ApprovalStatus, 'Pending') = 'Pending'";
 
+                    int rows;
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Status", status);
                         cmd.Parameters.AddWithValue("@Remarks", remarks);
                         cmd.Parameters.AddWithValue("@User", user);
-                        cmd.Parameters.AddWithValue("@Id", visitId);
-                        cmd.ExecuteNonQuery();
+                        cmd.Parameters.AddWithValue("@Id", id);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        rows = cmd.ExecuteNonQuery();
                     }
+
+                    if (rows <= 0)
+                        return;
 
                     // (REMOVED the bulk tbl_Expenses update from here)
 
@@ -621,13 +636,14 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
                 {
                     conn.Open();
-                    string visitQuery = @"SELECT SVR.Salesperson, L.Email FROM tbl_SalesVisitReport SVR INNER JOIN tbl_login L ON L.User_Id = SVR.CreatedByCode WHERE SVR.Id = @Id";
+                    string visitQuery = @"SELECT SVR.Salesperson, L.Email FROM tbl_SalesVisitReport SVR INNER JOIN tbl_login L ON L.User_Id = SVR.CreatedByCode WHERE SVR.Id = @Id AND SVR.CompanyID = @CompanyID";
                     string emailTo = "";
                     string salesperson = "";
 
                     using (SqlCommand cmd = new SqlCommand(visitQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -662,19 +678,32 @@ namespace Bill_Software.corporate.business.app
         {
             if (e.CommandName == "ApproveExp" || e.CommandName == "RejectExp")
             {
-                string expId = e.CommandArgument.ToString();
+                int expenseId;
+                int visitId;
+                if (!AuthGuard.TryParsePositiveInt(e.CommandArgument.ToString(), out expenseId)
+                    || !AuthGuard.TryParsePositiveInt(hfMegaVisitId.Value, out visitId)
+                    || !AuthGuard.UserCanApproveExpense(expenseId, visitId))
+                    return;
+
                 string status = e.CommandName == "ApproveExp" ? "Approved" : "Rejected";
                 string user = Session["USERID"].ToString();
 
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
                 {
                     conn.Open();
-                    string query = "UPDATE tbl_Expenses SET ApprovalStatus = @Status, ApprovedBy = @User, ApprovedDate = GETDATE() WHERE Id = @Id";
+                    string query = @"
+                        UPDATE e
+                        SET ApprovalStatus = @Status, ApprovedBy = @User, ApprovedDate = GETDATE()
+                        FROM dbo.tbl_Expenses e
+                        INNER JOIN dbo.tbl_SalesVisitReport v ON v.Id = e.VisitId
+                        WHERE e.Id = @ExpenseId AND e.VisitId = @VisitId AND v.CompanyID = @CompanyID";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Status", status);
                         cmd.Parameters.AddWithValue("@User", user);
-                        cmd.Parameters.AddWithValue("@Id", expId);
+                        cmd.Parameters.AddWithValue("@ExpenseId", expenseId);
+                        cmd.Parameters.AddWithValue("@VisitId", visitId);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -716,11 +745,12 @@ namespace Bill_Software.corporate.business.app
                 SELECT v.*, mgr.Name AS ApprovedByName 
                 FROM tbl_SalesVisitReport v 
                 LEFT JOIN tbl_login mgr ON v.ApprovedBy = mgr.User_Id 
-                WHERE v.Id = @Id";
+                WHERE v.Id = @Id AND v.CompanyID = @CompanyID";
 
             using (SqlCommand cmd = new SqlCommand(visitQuery, con))
             {
                 cmd.Parameters.AddWithValue("@Id", visitId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
                     if (rdr.Read())
