@@ -121,21 +121,21 @@ namespace Bill_Software.corporate.business.app
                             cmdDel.ExecuteNonQuery();
                         }
 
-                        // 2. Insert the newly selected roles
-                        using (var cmdIns = new SqlCommand("INSERT INTO dbo.UserRoles (UserId, RoleId) VALUES (@UserId, @RoleId)", cn, transaction))
+                        // 2. Insert the newly selected roles (skip duplicates; company-scoped)
+                        foreach (ListItem item in chkRoles.Items)
                         {
-                            cmdIns.Parameters.Add("@UserId", SqlDbType.Int).Value = NumericUserId;
-                            cmdIns.Parameters.Add("@RoleId", SqlDbType.Int);
+                            if (!item.Selected)
+                                continue;
 
-                            foreach (ListItem item in chkRoles.Items)
-                            {
-                                if (item.Selected)
-                                {
-                                    cmdIns.Parameters["@RoleId"].Value = Convert.ToInt32(item.Value);
-                                    cmdIns.ExecuteNonQuery();
-                                }
-                            }
+                            int roleId;
+                            if (!int.TryParse(item.Value, out roleId) || roleId <= 0)
+                                continue;
+
+                            if (!UserRoleAssignment.TryEnsureMapping(cn, transaction, NumericUserId, roleId, CompanyContext.CurrentCompanyID))
+                                throw new InvalidOperationException("Selected role is not valid for this company.");
                         }
+
+                        UserRoleAssignment.AlignDisplayRoleFromUserRoles(cn, transaction, NumericUserId, CompanyContext.CurrentCompanyID);
 
                         transaction.Commit();
                         ShowOk("Roles successfully updated for " + lblEmpName.Text);

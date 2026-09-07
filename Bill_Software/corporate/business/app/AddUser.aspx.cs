@@ -135,7 +135,13 @@ namespace Bill_Software.corporate.business.app
                              VALUES 
                             (@User_Id, @Name, @Phone_no, @Email, @PasswordHash, @PasswordSalt, 
                              1, 0, 1, sysutcdatetime(), 
-                             @RoleId, @DeptId, @DesigId, @ManagerId, @CompanyID)";
+                             @RoleId, @DeptId, @DesigId, @ManagerId, @CompanyID);
+                            SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+                            int newUserDbId;
+                            int companyId = CompanyContext.CurrentCompanyID;
+                            int parsedRoleId;
+                            bool hasRole = int.TryParse(ddlRole.SelectedValue, out parsedRoleId) && parsedRoleId > 0;
 
                             using (var cmd = new SqlCommand(query, cn, tran))
                             {
@@ -145,15 +151,22 @@ namespace Bill_Software.corporate.business.app
                                 cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
                                 cmd.Parameters.Add("@PasswordHash", SqlDbType.VarBinary, 256).Value = passwordHash;
                                 cmd.Parameters.Add("@PasswordSalt", SqlDbType.VarBinary, 128).Value = passwordSalt;
-                                cmd.Parameters.AddWithValue("@RoleId", ddlRole.SelectedValue);
+                                cmd.Parameters.AddWithValue("@RoleId", hasRole ? (object)parsedRoleId : DBNull.Value);
                                 cmd.Parameters.AddWithValue("@DeptId", string.IsNullOrEmpty(ddlDepartment.SelectedValue) ? (object)DBNull.Value : ddlDepartment.SelectedValue);
                                 cmd.Parameters.AddWithValue("@DesigId", string.IsNullOrEmpty(ddlDesignation.SelectedValue) ? (object)DBNull.Value : ddlDesignation.SelectedValue);
                                 cmd.Parameters.AddWithValue("@ManagerId", string.IsNullOrEmpty(ddlManager.SelectedValue) ? (object)DBNull.Value : ddlManager.SelectedValue);
+                                cmd.Parameters.AddWithValue("@CompanyID", companyId);
 
-                                // Strict Tenant Segregation
-                                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                                object identity = cmd.ExecuteScalar();
+                                if (identity == null || identity == DBNull.Value)
+                                    throw new InvalidOperationException("User insert did not return an identity.");
+                                newUserDbId = Convert.ToInt32(identity);
+                            }
 
-                                cmd.ExecuteNonQuery();
+                            if (hasRole)
+                            {
+                                if (!UserRoleAssignment.TryEnsureMapping(cn, tran, newUserDbId, parsedRoleId, companyId))
+                                    throw new InvalidOperationException("Unable to assign the selected role.");
                             }
 
                             // --- 2. Allocate Leaves (Calendar Year) ---
