@@ -12,10 +12,11 @@
 - [Core Architectural Standards (The "Ponytail" Philosophy)](#core-architectural-standards-the-ponytail-philosophy)
 - [Setup and Compilation](#setup-and-compilation)
 - [Database Overview](#database-overview)
+- [Solution documentation (every page)](#solution-documentation-every-page)
 - [Module Reference](#module-reference)
 - [Security Baseline](#security-baseline)
 - [Security Notice](#security-notice)
-- [Development Guidelines](#development-guidelines))
+- [Development Guidelines](#development-guidelines)
 
 ---
 
@@ -279,34 +280,24 @@ Every query against tenant-scoped tables must include a `CompanyId` filter. The 
 
 ---
 
+## Solution documentation (every page)
+
+The solution is documented so **shared architecture is written once** and **every `.aspx` page is listed once**.
+
+| Start here | What it is |
+|------------|------------|
+| [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md) | Hub: catalogs + module narratives |
+| [`docs/page-catalog/RECURSIVE_INSTRUCTIONS.md`](docs/page-catalog/RECURSIVE_INSTRUCTIONS.md) | Self-recursive playbook to review the next page |
+| [`docs/page-catalog/SHARED_CONTEXT.md`](docs/page-catalog/SHARED_CONTEXT.md) | AuthN, tenancy, master, print gate — do not copy |
+| [`docs/page-catalog/PAGE_INVENTORY.md`](docs/page-catalog/PAGE_INVENTORY.md) | Census of all 188 pages |
+
+When documenting or changing a page, follow the recursive playbook: read shared context once, write **only unique facts** into the matching `DOMAIN_*.md` row, and link existing module docs instead of restating them.
+
 ## Module Reference
 
-Detailed module documentation is organized by the navigation sequence found in the Master Page (`~/corporate/business/app/Bill.Master`). Each module document covers:
+Narrative module docs (`docs/01`–`docs/13`, sales-visit audit, security phases) remain the deep write-ups. The page catalog does not duplicate them.
 
-- Associated frontend (`.aspx`) and backend (`.aspx.cs`) files
-- Core database tables involved
-- Multi-tenant constraints and proactive notification triggers
-
-See the `docs/` directory for module-specific documentation:
-
-| Doc | Module |
-|-----|--------|
-| `docs/01_Attendance_Clock.md` | Attendance & Clock-In/Out |
-| `docs/02_Employee_Admin.md` | Employee Administration (User Provisioning) |
-| `docs/03_Role_Permissions.md` | Role & Permission Management |
-| `docs/14_Authentication_Authorization_Architecture.md` | Whole-app AuthN/AuthZ architecture review (bugs + improvement scope) |
-| `docs/04_Department_Designation.md` | Department & Designation Management |
-| `docs/05_Customer_Vendor.md` | Customer & Vendor Directory |
-| `docs/06_Sales_Visit_Planner.md` | Sales Visit Calendar & Planning |
-| `docs/07_Sales_Visit_Reporting.md` | Daily Visit Reports & Manager Approval |
-| `docs/08_Expense_Management.md` | Expense Claims & Approval |
-| `docs/09_Quotation_Generation.md` | Quotation Generation |
-| `docs/10_Purchase_Order.md` | Purchase Order Management |
-| `docs/11_Communications.md` | Email & SMS Integration |
-| `docs/12_Home_Dashboard.md` | Homepage Dashboard & KPIs |
-| `docs/22_Security_Baseline.md` | Canonical AuthN/AuthZ engineering contract (v2.1-security-foundation) |
-
----
+See the map in [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md).
 
 ## Security Baseline
 
@@ -364,7 +355,7 @@ Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visi
 ### Before Making Changes
 
 1. Read the **Core Architectural Standards** above — violations are defects.
-2. Check if the module you are modifying has documentation in `docs/`.
+2. Check [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md) and the page-catalog row for the `.aspx` you are changing. Follow [`docs/page-catalog/RECURSIVE_INSTRUCTIONS.md`](docs/page-catalog/RECURSIVE_INSTRUCTIONS.md); do not copy shared AuthN/tenancy into module docs.
 3. Review the Sales Visit Workflow Audit (`docs/sales-visit-workflow-audit/`) for precedent on how enterprise rules are applied.
 4. For login, session, RBAC, or tenant-isolation changes, read `docs/22_Security_Baseline.md` first (canonical contract). `docs/14_Authentication_Authorization_Architecture.md` is the original review; `docs/15`–`docs/21` are implementation history. Menu visibility is not authorization.
 
