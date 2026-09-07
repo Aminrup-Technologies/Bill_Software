@@ -1300,7 +1300,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetReconciliation(string refNo, string productId)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "<div style='color:red;'>Session Expired. Please reload.</div>";
+            AuthGuard.EnsureWebMethod();
 
             int companyId = CompanyContext.CurrentCompanyID;
 

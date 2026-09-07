@@ -8,18 +8,14 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm79 : System.Web.UI.Page
+    public partial class WebForm79 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "AddUser"; } }
+
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null || Session["SessionToken"] == null)
-            {
-                Response.Redirect("~/index.aspx", false);
-                return;
-            }
-
             if (!IsPostBack)
             {
                 LoadDropdowns();
@@ -278,6 +274,7 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Services.WebMethod(EnableSession = true)]
         public static string CheckDuplicates(string email, string phone)
         {
+            AuthGuard.EnsureWebMethodPermission("AddUser");
             // Clean the phone number for strict matching
             string cleanPhone = phone.Trim().Replace(" ", "").Replace("-", "");
             string cleanEmail = email.Trim();

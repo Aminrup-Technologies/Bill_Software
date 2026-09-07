@@ -19,9 +19,10 @@ namespace Bill_Software.corporate.business.app
         }
 
         // 🔍 Product Search (uses NormalizedProductName inside SP)
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<ProductResult> SearchProducts(string search, string category)
         {
+            AuthGuard.EnsureWebMethod();
             List<ProductResult> list = new List<ProductResult>();
 
             // We removed the "string.IsNullOrWhiteSpace" check so "Show All" works
@@ -63,9 +64,10 @@ namespace Bill_Software.corporate.business.app
         }
 
         // 📦 Store-wise stock (lazy load)
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<StoreStock> GetStock(string productId)
         {
+            AuthGuard.EnsureWebMethod();
             List<StoreStock> list = new List<StoreStock>();
             if (string.IsNullOrWhiteSpace(productId)) return list;
 
@@ -105,9 +107,10 @@ namespace Bill_Software.corporate.business.app
             return list;
         }
 
-        [WebMethod]
+        [WebMethod(EnableSession = true)]
         public static List<string> GetCategories()
         {
+            AuthGuard.EnsureWebMethod();
             List<string> list = new List<string>();
 
             DB_UTILITY db = new DB_UTILITY();

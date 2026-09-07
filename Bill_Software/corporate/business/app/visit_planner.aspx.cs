@@ -33,8 +33,8 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetCalendarEvents()
         {
-            string userId = HttpContext.Current.Session["USERID"]?.ToString();
-            if (string.IsNullOrEmpty(userId)) return "[]";
+            AuthGuard.EnsureWebMethod();
+            string userId = HttpContext.Current.Session["USERID"].ToString();
 
             List<CalendarEvent> eventsList = new List<CalendarEvent>();
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
@@ -201,6 +201,7 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Services.WebMethod(EnableSession = true)]
         public static string GetVisitDetails(int visitId)
         {
+            AuthGuard.EnsureWebMethod();
             string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
             using (SqlConnection conn = new SqlConnection(connStr))
             {

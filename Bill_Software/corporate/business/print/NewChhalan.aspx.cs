@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using System.Text;
 using System.Globalization;
 using System.Threading;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -27,6 +28,8 @@ namespace Bill_Software.corporate.business.print
         CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthGuard.EnsurePrint(this, "tbl_Chalan.Chalan_No", Request.QueryString["Chalan_No"])) return;
+
             string Chalan_No = Request.QueryString["Chalan_No"];
             lblChano.Text = Chalan_No.ToString();
 

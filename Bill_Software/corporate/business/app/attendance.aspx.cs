@@ -163,7 +163,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetMonthlyData(int month, int year)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "[]";
+            AuthGuard.EnsureWebMethod();
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -342,8 +342,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string ProcessPunch(string punchType, double currentLat, double currentLng, string locationType = "", string overrideReason = "")
         {
-            if (HttpContext.Current.Session["USERID"] == null)
-                return PunchJson("error", "Session expired.");
+            AuthGuard.EnsureWebMethod();
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -556,7 +555,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetActiveLeaveTypes()
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "[]";
+            AuthGuard.EnsureWebMethod();
 
             List<object> leaves = new List<object>();
             using (SqlConnection conn = new SqlConnection(GetConnStr()))
@@ -581,7 +580,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetAttendanceDetails(int id)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+            AuthGuard.EnsureWebMethod();
 
             using (SqlConnection conn = new SqlConnection(GetConnStr()))
             {
@@ -618,7 +617,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetShiftTimings(string reqDate)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+            AuthGuard.EnsureWebMethod();
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             DateTime date = Convert.ToDateTime(reqDate);
@@ -661,7 +660,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetMyGeoFence()
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "{}";
+            AuthGuard.EnsureWebMethod();
 
             int companyId = CompanyContext.CurrentCompanyID;
 
@@ -707,7 +706,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string SubmitRegularization(string reqDate, string inTime, string outTime, string reason)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
+            AuthGuard.EnsureWebMethod();
 
             string empId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -840,7 +839,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string SubmitLeave(string reqDate, int leaveId, string reason)
         {
-            if (HttpContext.Current.Session["USERID"] == null) return "Session Expired";
+            AuthGuard.EnsureWebMethod();
 
             string empId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;

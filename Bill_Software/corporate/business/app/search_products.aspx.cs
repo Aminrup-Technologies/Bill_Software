@@ -73,10 +73,11 @@ namespace Bill_Software.corporate.business.app
             DbCL.Conn.Close();
         }
 
-        [System.Web.Services.WebMethod]
+        [System.Web.Services.WebMethod(EnableSession = true)]
         [System.Web.Script.Services.ScriptMethod]
         public static object GetProductDetails(int productId)
         {
+            AuthGuard.EnsureWebMethod();
             string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
             using (SqlConnection con = new SqlConnection(cs))
@@ -86,10 +87,11 @@ namespace Bill_Software.corporate.business.app
                            Unit, Sail_Rate, Tax_Rate,
                            Specification
                     FROM tbl_NewProduct
-                    WHERE Id = @Id";
+                    WHERE Id = @Id AND CompanyID = @CompanyID";
 
                 SqlCommand cmd = new SqlCommand(sql, con);
                 cmd.Parameters.AddWithValue("@Id", productId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
                 con.Open();
                 SqlDataReader dr = cmd.ExecuteReader();
@@ -114,10 +116,11 @@ namespace Bill_Software.corporate.business.app
             return null;
         }
 
-        [System.Web.Services.WebMethod]
+        [System.Web.Services.WebMethod(EnableSession = true)]
         [System.Web.Script.Services.ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static List<object> SearchProducts(string keyword)
         {
+            AuthGuard.EnsureWebMethod();
             List<object> list = new List<object>();
             string cs = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
@@ -129,6 +132,7 @@ namespace Bill_Software.corporate.business.app
             FROM tbl_NewProduct
             WHERE ViewMode = 1
               AND DeleteMode = 0
+              AND CompanyID = @CompanyID
               AND (
                     NormalizedProductName LIKE '%' + @kw + '%'
                  OR Brand LIKE '%' + @kw + '%'
@@ -139,6 +143,7 @@ namespace Bill_Software.corporate.business.app
 
                 SqlCommand cmd = new SqlCommand(sql, con);
                 cmd.Parameters.AddWithValue("@kw", keyword.ToLower());
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
                 con.Open();
                 SqlDataReader dr = cmd.ExecuteReader();

@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Mail;
 using System.IO;
 using System.Linq;
+using System.Web.Security;
 using Bill_Software.corporate.business.app;
 
 namespace Bill_Software
@@ -187,6 +188,7 @@ namespace Bill_Software
                                 }
                             }
                             Session["SessionToken"] = newToken;
+                            FormsAuthentication.SetAuthCookie(user.UserId, false);
 
                             if (user.MustChangePassword)
                             {

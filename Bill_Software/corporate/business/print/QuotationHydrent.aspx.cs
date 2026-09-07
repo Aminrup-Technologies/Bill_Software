@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data;
 using System.Data.SqlClient;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.corporate.business.print
 {
@@ -29,6 +30,8 @@ namespace Bill_Software.corporate.business.print
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!AuthGuard.EnsurePrint(this, "tbl_qsHydrentQuotation.Quotation_no", Request.QueryString["Quotation_no"])) return;
+
             if (!IsPostBack)
             {
                 string Quotation_no = Request.QueryString["Quotation_no"];

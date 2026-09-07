@@ -13,8 +13,10 @@ using System.Web;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class WebForm80 : System.Web.UI.Page
+    public partial class WebForm80 : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "ViewUser"; } }
+
         // FIX 1: C# 5.0 Compatible Property
         private string ConnString
         {
@@ -23,12 +25,6 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null || Session["SessionToken"] == null)
-            {
-                Response.Redirect("~/index.aspx", false);
-                return;
-            }
-
             if (!IsPostBack)
             {
                 ViewState["CurrentFilter"] = "Active";
@@ -742,8 +738,7 @@ namespace Bill_Software.corporate.business.app
         [System.Web.Services.WebMethod(EnableSession = true)]
         public static string GetSessionHistory(int userId)
         {
-            if (HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
-                return "[]";
+            AuthGuard.EnsureWebMethodPermission("ViewUser");
 
             int companyId = CompanyContext.CurrentCompanyID;
             if (companyId <= 0) return "[]";
@@ -856,8 +851,7 @@ namespace Bill_Software.corporate.business.app
         {
             try
             {
-                if (HttpContext.Current.Session == null || HttpContext.Current.Session["USERID"] == null)
-                    return "Session expired.";
+                AuthGuard.EnsureWebMethodPermission("ViewUser");
 
                 int currentCompanyId = CompanyContext.CurrentCompanyID;
                 if (currentCompanyId <= 0)
