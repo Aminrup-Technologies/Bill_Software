@@ -33,12 +33,10 @@ namespace Bill_Software.corporate.business.app
                 if (Request.QueryString["visitId"] != null)
                 {
                     int visitId;
-                    if (int.TryParse(Request.QueryString["visitId"], out visitId))
+                    if (AuthGuard.TryParsePositiveInt(Request.QueryString["visitId"], out visitId)
+                        && AuthGuard.UserCanViewVisit(visitId))
                     {
-                        // 1. Store the VisitId in a HiddenField
                         hfVisitId.Value = visitId.ToString();
-
-                        // 2. Fetch the customer from the visit
                         PreFillClientFromVisit(visitId);
                     }
                 }
@@ -57,6 +55,8 @@ namespace Bill_Software.corporate.business.app
                     string query = "SELECT CustomerName FROM tbl_SalesVisitReport WHERE Id = @Id AND CompanyID = @CompanyID";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
+                        if (!AuthGuard.UserCanViewVisit(visitId))
+                            return;
                         cmd.Parameters.AddWithValue("@Id", visitId);
                         cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         conn.Open();
@@ -488,6 +488,14 @@ namespace Bill_Software.corporate.business.app
 
         private void MagicianNew()
         {
+            int linkedVisitId;
+            bool hasVisit = AuthGuard.TryParsePositiveInt(hfVisitId.Value, out linkedVisitId);
+            if (hasVisit && !AuthGuard.UserCanViewVisit(linkedVisitId))
+            {
+                ShowAlert("Unable to save quotation. Please try again.", true);
+                return;
+            }
+
             Bindquotationno();
             string CGSTSGSTSTATUS = RadioButtonGst.SelectedIndex == 0 ? "YES" : "";
             string IGSTSTATUS = RadioButtonGst.SelectedIndex != 0 ? "YES" : "";
@@ -637,8 +645,8 @@ namespace Bill_Software.corporate.business.app
                         cmd.Parameters.AddWithValue("@OtherCharge_Name", TextBox1.Text);
                         cmd.Parameters.AddWithValue("@OtherCharge_Amount", otherAmount);
 
-                        if (!string.IsNullOrEmpty(hfVisitId.Value))
-                            cmd.Parameters.AddWithValue("@VisitId", Convert.ToInt32(hfVisitId.Value));
+                        if (hasVisit)
+                            cmd.Parameters.AddWithValue("@VisitId", linkedVisitId);
                         else
                             cmd.Parameters.AddWithValue("@VisitId", DBNull.Value);
 
