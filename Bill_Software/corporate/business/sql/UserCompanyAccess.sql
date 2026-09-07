@@ -1,17 +1,16 @@
 /* ============================================================================
    NAME:        user_company_access_schema
    WHEN:        2026-09-07
-   WHY:         Phase 0A Task 2 (A-18) cannot bind the company switcher without
-                an authoritative per-user company membership table. No
-                UserCompanyAccess (or equivalent) table is referenced anywhere
-                in this repository. tbl_login.CompanyID is a single home-tenant
-                column, not a membership list. Do not invent mappings.
-   WHAT:        Required DDL for dbo.UserCompanyAccess. Do not run until
-                product confirms this model and a backfill source. Application
-                code is NOT wired to this table in Phase 0A.
+   WHY:         Phase 2A (A-18) binds the company switcher to per-user membership.
+                tbl_login.CompanyID is a single home-tenant column, not a
+                membership list. Session["CompanyID"] remains the runtime tenant.
+   WHAT:        DDL for dbo.UserCompanyAccess. Application code is wired in
+                Phase 2A and fails closed when this table is missing or empty.
+                Do not execute from the application. Do not grant all users
+                all companies. Optional home-tenant inserts are in
+                user_company_access_reconciliation.sql (DBA review only).
    ============================================================================ */
 
-/*
 IF OBJECT_ID(N'dbo.UserCompanyAccess', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.UserCompanyAccess
@@ -34,11 +33,3 @@ BEGIN
         FOREIGN KEY (CompanyID) REFERENCES dbo.tbl_Company (ID);
 END
 GO
-
--- Backfill must be a product decision. Do not assume every tbl_login.CompanyID
--- row is the complete membership set (users today can select any company).
-*/
-
--- BLOCKED: company switcher (Bill.Master.BindCompanies / ddlCompany_SelectedIndexChanged)
--- remains unrestricted until this table exists, is backfilled, and AuthGuard
--- membership checks are wired in a later phase.

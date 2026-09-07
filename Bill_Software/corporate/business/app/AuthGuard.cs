@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -7,6 +8,12 @@ using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
 {
+    public sealed class AuthorizedCompany
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
     public static class AuthGuard
     {
         private static string ConnString
@@ -38,6 +45,166 @@ namespace Bill_Software.corporate.business.app
         public static bool HasCompanyContext()
         {
             return CompanyContext.CurrentCompanyID > 0;
+        }
+
+        public static bool UserCanAccessCurrentCompany()
+        {
+            return UserCanAccessCompany(CompanyContext.CurrentCompanyID);
+        }
+
+        public static bool UserCanAccessCompany(int companyId)
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (companyId <= 0) return false;
+            if (!TryValidateSession(ctx)) return false;
+
+            int userDbId = ResolveUserDbId(ctx);
+            if (userDbId <= 0) return false;
+
+            const string sql = @"
+                SELECT TOP 1 1
+                FROM dbo.UserCompanyAccess a
+                INNER JOIN dbo.tbl_Company c ON c.ID = a.CompanyID
+                WHERE a.UserId = @UserDbId
+                  AND a.CompanyID = @CompanyID
+                  AND a.IsActive = 1
+                  AND (c.IsActive = 1 OR c.IsActive IS NULL)";
+
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@UserDbId", SqlDbType.Int) { Value = userDbId });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
+                    cn.Open();
+                    return cmd.ExecuteScalar() != null;
+                }
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
+        public static List<AuthorizedCompany> GetAuthorizedCompanies()
+        {
+            var list = new List<AuthorizedCompany>();
+            HttpContext ctx = HttpContext.Current;
+            if (!TryValidateSession(ctx)) return list;
+
+            int userDbId = ResolveUserDbId(ctx);
+            if (userDbId <= 0) return list;
+
+            const string sql = @"
+                SELECT c.ID, c.Name
+                FROM dbo.UserCompanyAccess a
+                INNER JOIN dbo.tbl_Company c ON c.ID = a.CompanyID
+                WHERE a.UserId = @UserDbId
+                  AND a.IsActive = 1
+                  AND (c.IsActive = 1 OR c.IsActive IS NULL)
+                ORDER BY c.ID ASC";
+
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@UserDbId", SqlDbType.Int) { Value = userDbId });
+                    cn.Open();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        while (rdr.Read())
+                        {
+                            if (rdr.IsDBNull(0)) continue;
+                            list.Add(new AuthorizedCompany
+                            {
+                                Id = Convert.ToInt32(rdr[0]),
+                                Name = rdr.IsDBNull(1) ? string.Empty : rdr[1].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException)
+            {
+                list.Clear();
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// One membership: that company. Multiple: tbl_login.CompanyID only if it
+        /// is already an active membership. Zero or ambiguous: 0 (fail closed;
+        /// do not pick the first company).
+        /// </summary>
+        public static int ResolveInitialCompanyId()
+        {
+            List<AuthorizedCompany> companies = GetAuthorizedCompanies();
+            if (companies.Count == 0) return 0;
+            if (companies.Count == 1) return companies[0].Id;
+
+            int homeCompanyId = GetLoginHomeCompanyId();
+            if (homeCompanyId <= 0) return 0;
+
+            for (int i = 0; i < companies.Count; i++)
+            {
+                if (companies[i].Id == homeCompanyId)
+                    return homeCompanyId;
+            }
+
+            return 0;
+        }
+
+        public static void ClearUnauthorizedCompanySession()
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null) return;
+
+            int companyId = CompanyContext.CurrentCompanyID;
+            if (companyId <= 0) return;
+            if (!UserCanAccessCompany(companyId))
+                ctx.Session["CompanyID"] = null;
+        }
+
+        /// <summary>
+        /// Inserts the user's home-tenant membership when missing. Does not
+        /// grant any other company. Used by AddUser when tbl_login.CompanyID
+        /// is already written for the same identity.
+        /// </summary>
+        public static bool TryEnsureHomeMembership(SqlConnection cn, SqlTransaction tran, int userDbId, int companyId)
+        {
+            if (cn == null || userDbId <= 0 || companyId <= 0)
+                return false;
+
+            using (var cmd = new SqlCommand(
+                @"SELECT TOP 1 1 FROM dbo.tbl_Company
+                  WHERE ID = @CompanyID AND (IsActive = 1 OR IsActive IS NULL)", cn, tran))
+            {
+                cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
+                if (cmd.ExecuteScalar() == null)
+                    return false;
+            }
+
+            using (var cmd = new SqlCommand(
+                @"SELECT TOP 1 1 FROM dbo.UserCompanyAccess
+                  WHERE UserId = @UserId AND CompanyID = @CompanyID", cn, tran))
+            {
+                cmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userDbId;
+                cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
+                if (cmd.ExecuteScalar() != null)
+                    return true;
+            }
+
+            using (var cmd = new SqlCommand(
+                @"INSERT INTO dbo.UserCompanyAccess (UserId, CompanyID, IsActive)
+                  VALUES (@UserId, @CompanyID, 1)", cn, tran))
+            {
+                cmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userDbId;
+                cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
+                return cmd.ExecuteNonQuery() == 1;
+            }
         }
 
         public static bool HasPermission(string permissionKey)
@@ -89,11 +256,8 @@ namespace Bill_Software.corporate.business.app
                 RedirectLogin(ctx);
                 return false;
             }
-            if (requireCompany && !HasCompanyContext())
-            {
-                Deny(ctx, 401);
+            if (requireCompany && !EnsureAuthorizedCompanyContext(ctx))
                 return false;
-            }
             if (!string.IsNullOrEmpty(permissionKey) && !HasPermission(permissionKey))
             {
                 Deny(ctx, 403);
@@ -114,11 +278,8 @@ namespace Bill_Software.corporate.business.app
                 RedirectLogin(ctx);
                 return false;
             }
-            if (requireCompany && !HasCompanyContext())
-            {
-                Deny(ctx, 401);
+            if (requireCompany && !EnsureAuthorizedCompanyContext(ctx))
                 return false;
-            }
             if (permissionKeys == null || permissionKeys.Length == 0)
             {
                 Deny(ctx, 403);
@@ -145,8 +306,16 @@ namespace Bill_Software.corporate.business.app
         public static void EnsureWebMethod()
         {
             HttpContext ctx = HttpContext.Current;
-            if (!TryValidateSession(ctx) || !HasCompanyContext())
+            if (!TryValidateSession(ctx))
                 throw new HttpException(401, "Unauthorized");
+            if (!HasCompanyContext())
+                throw new HttpException(401, "Unauthorized");
+            if (!UserCanAccessCurrentCompany())
+            {
+                if (ctx.Session != null)
+                    ctx.Session["CompanyID"] = null;
+                throw new HttpException(403, "Unauthorized");
+            }
         }
 
         public static void EnsureWebMethodPermission(string permissionKey)
@@ -154,6 +323,66 @@ namespace Bill_Software.corporate.business.app
             EnsureWebMethod();
             if (!HasPermission(permissionKey))
                 throw new HttpException(403, "Unauthorized");
+        }
+
+        private static bool EnsureAuthorizedCompanyContext(HttpContext ctx)
+        {
+            int companyId = CompanyContext.CurrentCompanyID;
+            if (companyId <= 0)
+            {
+                Deny(ctx, 401);
+                return false;
+            }
+            if (!UserCanAccessCompany(companyId))
+            {
+                if (ctx != null && ctx.Session != null)
+                    ctx.Session["CompanyID"] = null;
+                Deny(ctx, 403);
+                return false;
+            }
+            return true;
+        }
+
+        private static int ResolveUserDbId(HttpContext ctx)
+        {
+            if (ctx == null || ctx.Session == null || ctx.Session["UserDbId"] == null)
+                return 0;
+
+            int userDbId;
+            if (!int.TryParse(Convert.ToString(ctx.Session["UserDbId"]), out userDbId) || userDbId <= 0)
+                return 0;
+            return userDbId;
+        }
+
+        private static int GetLoginHomeCompanyId()
+        {
+            HttpContext ctx = HttpContext.Current;
+            if (ctx == null || ctx.Session == null || ctx.Session["USERID"] == null)
+                return 0;
+
+            int userDbId = ResolveUserDbId(ctx);
+            if (userDbId <= 0) return 0;
+
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(
+                    "SELECT CompanyID FROM dbo.tbl_login WHERE Id = @UserDbId AND User_Id = @UserId", cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@UserDbId", SqlDbType.Int) { Value = userDbId });
+                    cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = ctx.Session["USERID"].ToString() });
+                    cn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result == null || result == DBNull.Value)
+                        return 0;
+                    int homeId = Convert.ToInt32(result);
+                    return homeId > 0 ? homeId : 0;
+                }
+            }
+            catch (SqlException)
+            {
+                return 0;
+            }
         }
 
         private static void RedirectLogin(HttpContext ctx)

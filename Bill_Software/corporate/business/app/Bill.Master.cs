@@ -96,6 +96,7 @@ namespace Bill_Software.corporate.business.app
             }
             else
             {
+                AuthGuard.ClearUnauthorizedCompanySession();
                 LoadCompanyHeader();
             }
 
@@ -106,35 +107,28 @@ namespace Bill_Software.corporate.business.app
 
         private void EnsureSessionCompanyId()
         {
+            AuthGuard.ClearUnauthorizedCompanySession();
             if (Session["CompanyID"] != null) return;
 
-            using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT CompanyID FROM tbl_login WHERE User_Id = @UserId", cn))
-            {
-                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = Session["USERID"].ToString() });
-                cn.Open();
-                object result = cmd.ExecuteScalar();
-                if (result != null && result != DBNull.Value)
-                    Session["CompanyID"] = Convert.ToInt32(result);
-            }
-
-            if (Session["CompanyID"] == null && ddlCompany.Items.Count > 0)
-                Session["CompanyID"] = ddlCompany.Items[0].Value;
+            int resolved = AuthGuard.ResolveInitialCompanyId();
+            if (resolved > 0)
+                Session["CompanyID"] = resolved;
         }
 
         private void BindCompanies()
         {
-            using (var con = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT ID, Name FROM tbl_Company WHERE IsActive = 1 OR IsActive IS NULL ORDER BY ID ASC", con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                DataTable dt = new DataTable();
-                da.Fill(dt);
-                ddlCompany.DataSource = dt;
-                ddlCompany.DataTextField = "Name";
-                ddlCompany.DataValueField = "ID";
-                ddlCompany.DataBind();
-            }
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ID", typeof(int));
+            dt.Columns.Add("Name", typeof(string));
+
+            List<AuthorizedCompany> companies = AuthGuard.GetAuthorizedCompanies();
+            for (int i = 0; i < companies.Count; i++)
+                dt.Rows.Add(companies[i].Id, companies[i].Name);
+
+            ddlCompany.DataSource = dt;
+            ddlCompany.DataTextField = "Name";
+            ddlCompany.DataValueField = "ID";
+            ddlCompany.DataBind();
         }
 
         private void LoadCompanyHeader()
@@ -168,7 +162,18 @@ namespace Bill_Software.corporate.business.app
 
         protected void ddlCompany_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Session["CompanyID"] = ddlCompany.SelectedValue;
+            int selectedCompanyId;
+            if (!int.TryParse(ddlCompany.SelectedValue, out selectedCompanyId)
+                || selectedCompanyId <= 0
+                || !AuthGuard.UserCanAccessCompany(selectedCompanyId))
+            {
+                if (Session["CompanyID"] != null
+                    && ddlCompany.Items.FindByValue(Session["CompanyID"].ToString()) != null)
+                    ddlCompany.SelectedValue = Session["CompanyID"].ToString();
+                return;
+            }
+
+            Session["CompanyID"] = selectedCompanyId;
             Response.Redirect(Request.RawUrl, false);
             Context.ApplicationInstance.CompleteRequest();
         }
