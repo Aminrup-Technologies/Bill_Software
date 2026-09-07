@@ -13,8 +13,9 @@
 - [Setup and Compilation](#setup-and-compilation)
 - [Database Overview](#database-overview)
 - [Module Reference](#module-reference)
+- [Security Baseline](#security-baseline)
 - [Security Notice](#security-notice)
-- [Development Guidelines](#development-guidelines)
+- [Development Guidelines](#development-guidelines))
 
 ---
 
@@ -303,6 +304,19 @@ See the `docs/` directory for module-specific documentation:
 | `docs/10_Purchase_Order.md` | Purchase Order Management |
 | `docs/11_Communications.md` | Email & SMS Integration |
 | `docs/12_Home_Dashboard.md` | Homepage Dashboard & KPIs |
+| `docs/22_Security_Baseline.md` | Canonical AuthN/AuthZ engineering contract (v2.1-security-foundation) |
+
+---
+
+## Security Baseline
+
+v2.1 Security Foundation is the authoritative security contract for every future feature, bug fix, and Cursor-generated change.
+
+| Document | Role |
+|----------|------|
+| [`docs/22_Security_Baseline.md`](docs/22_Security_Baseline.md) | Canonical engineering contract |
+| [`docs/14_Authentication_Authorization_Architecture.md`](docs/14_Authentication_Authorization_Architecture.md) | Architecture review |
+| [`docs/15_Phase0B_Secrets_Deployment.md`](docs/15_Phase0B_Secrets_Deployment.md) – [`docs/21_Phase3_Infrastructure_Hardening.md`](docs/21_Phase3_Infrastructure_Hardening.md) | Implementation history |
 
 ---
 
@@ -352,7 +366,7 @@ Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visi
 1. Read the **Core Architectural Standards** above — violations are defects.
 2. Check if the module you are modifying has documentation in `docs/`.
 3. Review the Sales Visit Workflow Audit (`docs/sales-visit-workflow-audit/`) for precedent on how enterprise rules are applied.
-4. For login, session, RBAC, or tenant-isolation changes, read `docs/14_Authentication_Authorization_Architecture.md` first — menu visibility is not authorization.
+4. For login, session, RBAC, or tenant-isolation changes, read `docs/22_Security_Baseline.md` first (canonical contract). `docs/14_Authentication_Authorization_Architecture.md` is the original review; `docs/15`–`docs/21` are implementation history. Menu visibility is not authorization.
 
 ### Code Quality Rules
 
