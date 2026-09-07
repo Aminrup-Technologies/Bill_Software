@@ -1,0 +1,9 @@
+# Protected Security Foundation assets (v2.1-security-foundation).
+# Changes to these paths require review from the listed owner.
+# This does not block ordinary feature work on other files.
+
+Bill_Software/corporate/business/app/AuthGuard.cs @aminruptechnologies
+Bill_Software/corporate/business/app/SecurePage.cs @aminruptechnologies
+Bill_Software/corporate/business/app/UserRoleAssignment.cs @aminruptechnologies
+Bill_Software/corporate/business/sql/UserCompanyAccess.sql @aminruptechnologies
+docs/22_Security_Baseline.md @aminruptechnologies

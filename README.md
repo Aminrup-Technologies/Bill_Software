@@ -14,8 +14,10 @@
 - [Database Overview](#database-overview)
 - [Module Reference](#module-reference)
 - [Security Baseline](#security-baseline)
+- [Documentation](#documentation)
 - [Security Notice](#security-notice)
-- [Development Guidelines](#development-guidelines))
+- [Development Guidelines](#development-guidelines)
+- [Contributing](#contributing)
 
 ---
 
@@ -320,6 +322,12 @@ v2.1 Security Foundation is the authoritative security contract for every future
 
 ---
 
+## Documentation
+
+- [Milestone Closure](docs/MILESTONE_v2.1_Security_Foundation_Closure.md) — v2.1 Security Foundation program closeout
+
+---
+
 ## Security Notice
 
 ### Credentials and Secrets
@@ -394,3 +402,11 @@ Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visi
 - [ ] No secrets, credentials, or connection strings in code or configuration
 - [ ] Client-side validation is mirrored server-side (defense-in-depth)
 - [ ] Error messages shown to users are generic (no raw exception details)
+
+---
+
+## Contributing
+
+Use [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch strategy, PR process, and regression rules.
+
+Security contract: [`docs/22_Security_Baseline.md`](docs/22_Security_Baseline.md). New modules inherit `AuthGuard` and `SecurePage`; they do not implement parallel authentication or authorization. Pull requests must complete the repository PR template (Security, Data, Regression, Scope).
