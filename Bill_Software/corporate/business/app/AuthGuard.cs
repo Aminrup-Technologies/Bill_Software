@@ -394,6 +394,43 @@ namespace Bill_Software.corporate.business.app
             return ScalarExists(sql, expenseId, visitId);
         }
 
+        public static bool ClientInCurrentCompany(string clientId)
+        {
+            if (string.IsNullOrWhiteSpace(clientId) || !ResourceContextReady())
+                return false;
+            const string sql = "SELECT TOP 1 1 FROM dbo.tbl_Client WHERE Client_Id = @Id AND CompanyID = @CompanyID";
+            return ScalarExistsTextId(sql, clientId.Trim());
+        }
+
+        public static bool VendorInCurrentCompany(string vendorId)
+        {
+            if (string.IsNullOrWhiteSpace(vendorId) || !ResourceContextReady())
+                return false;
+            const string sql = "SELECT TOP 1 1 FROM dbo.tbl_Vendor WHERE Vendor_Id = @Id AND CompanyID = @CompanyID";
+            return ScalarExistsTextId(sql, vendorId.Trim());
+        }
+
+        public static bool UserCanApprovePendingLeave(int requestId)
+        {
+            return PendingCompanyRequest(
+                requestId,
+                "SELECT TOP 1 1 FROM dbo.tbl_LeaveRequests WHERE RequestID = @Id AND CompanyID = @CompanyID AND RequestStatus = 'Pending'");
+        }
+
+        public static bool UserCanApprovePendingRegularization(int requestId)
+        {
+            return PendingCompanyRequest(
+                requestId,
+                "SELECT TOP 1 1 FROM dbo.tbl_AttendanceRegularization WHERE RequestID = @Id AND CompanyID = @CompanyID AND RequestStatus = 'Pending'");
+        }
+
+        private static bool PendingCompanyRequest(int requestId, string sql)
+        {
+            if (requestId <= 0 || !ResourceContextReady()) return false;
+            if (!HasPermission("AdminApprovalDashboard")) return false;
+            return ScalarExistsIntId(sql, requestId);
+        }
+
         private static bool ResourceContextReady()
         {
             HttpContext ctx = HttpContext.Current;
@@ -440,6 +477,44 @@ namespace Bill_Software.corporate.business.app
                 {
                     cmd.Parameters.Add(new SqlParameter("@ExpenseId", SqlDbType.Int) { Value = expenseId });
                     cmd.Parameters.Add(new SqlParameter("@VisitId", SqlDbType.Int) { Value = visitId });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                    cn.Open();
+                    return cmd.ExecuteScalar() != null;
+                }
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
+        private static bool ScalarExistsTextId(string sql, string id)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@Id", SqlDbType.NVarChar, 100) { Value = id });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                    cn.Open();
+                    return cmd.ExecuteScalar() != null;
+                }
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
+        private static bool ScalarExistsIntId(string sql, int id)
+        {
+            try
+            {
+                using (var cn = new SqlConnection(ConnString))
+                using (var cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@Id", SqlDbType.Int) { Value = id });
                     cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
                     cn.Open();
                     return cmd.ExecuteScalar() != null;
