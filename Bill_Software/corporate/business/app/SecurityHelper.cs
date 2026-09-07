@@ -1,21 +1,16 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Bill_Software.corporate.business.app
 {
     public static class SecurityHelper
     {
-        // 🚨 In a production environment, store this Key in Web.Config
-        // It must be exactly 32 bytes (256 bits)
-        private static readonly byte[] EncryptionKey = Encoding.UTF8.GetBytes("FlmxSecureKey2026!@#$1234567890X");
-
         public static string EncryptToUrlToken(string plainText)
         {
             using (Aes aes = Aes.Create())
             {
-                aes.Key = EncryptionKey;
+                aes.Key = AppSecrets.GetUrlTokenAesKey();
                 aes.GenerateIV(); // Create a new Initialization Vector per encryption
 
                 using (MemoryStream ms = new MemoryStream())
@@ -54,7 +49,7 @@ namespace Bill_Software.corporate.business.app
 
                 using (Aes aes = Aes.Create())
                 {
-                    aes.Key = EncryptionKey;
+                    aes.Key = AppSecrets.GetUrlTokenAesKey();
 
                     // Extract IV from the first 16 bytes
                     byte[] iv = new byte[aes.BlockSize / 8];

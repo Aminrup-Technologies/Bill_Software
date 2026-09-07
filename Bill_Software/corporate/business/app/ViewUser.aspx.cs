@@ -577,7 +577,7 @@ namespace Bill_Software.corporate.business.app
 
             using (var cn = new SqlConnection(ConnString))
             using (var cmd = new SqlCommand(@"UPDATE dbo.tbl_login 
-                                              SET PasswordHash = @Hash, PasswordSalt = @Salt, MustChangePassword = 1
+                                              SET PasswordHash = @Hash, PasswordSalt = @Salt, Password = NULL, MustChangePassword = 1
                                               WHERE Id = @Id AND CompanyID = @CompanyID", cn))
             {
                 cmd.Parameters.AddWithValue("@Hash", hash);

@@ -6,6 +6,7 @@ using System.Text;
 using System.Net.Mail;
 using System.Configuration;
 using System.Linq;
+using Bill_Software.corporate.business.app;
 
 namespace Bill_Software.Update
 {
@@ -16,7 +17,6 @@ namespace Bill_Software.Update
         private readonly int OtpExpiryMinutes = 10;
         private readonly int OtpLength = 6;
         private readonly int MaxOtpAttempts = 5;
-        private readonly int Pbkdf2Iterations = 100000; // tune for your server
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -289,25 +289,13 @@ namespace Bill_Software.Update
                         return;
                     }
 
-                    // Try to validate using stored hash+salt if present
-                    bool ok = false;
-                    if (dr["PasswordHash"] != DBNull.Value && dr["PasswordSalt"] != DBNull.Value)
-                    {
-                        byte[] storedHash = (byte[])dr["PasswordHash"];
-                        byte[] storedSalt = (byte[])dr["PasswordSalt"];
+                    PasswordVerifyResult passwordCheck = PasswordHasher.Verify(
+                        currentPwd,
+                        dr["PasswordHash"] != DBNull.Value ? dr["PasswordHash"] as byte[] : null,
+                        dr["PasswordSalt"] != DBNull.Value ? dr["PasswordSalt"] as byte[] : null,
+                        dr["Password"] != DBNull.Value ? dr["Password"].ToString() : null);
 
-                        ok = VerifyPasswordPBKDF2(currentPwd, storedHash, storedSalt, Pbkdf2Iterations);
-                    }
-
-                    // Fallback to legacy plaintext password column (if present)
-                    if (!ok && dr["Password"] != DBNull.Value)
-                    {
-                        string storedPlain = dr["Password"].ToString();
-                        if (!string.IsNullOrEmpty(storedPlain) && storedPlain == currentPwd)
-                            ok = true;
-                    }
-
-                    if (!ok)
+                    if (passwordCheck == PasswordVerifyResult.Invalid)
                     {
                         DbCL.DisconnectDb();
                         ShowError("Current password is incorrect.");
@@ -316,27 +304,18 @@ namespace Bill_Software.Update
                 }
             }
 
-            // Hash new password with salt and store (prefer PasswordHash+PasswordSalt)
-            byte[] newSalt = new byte[16];
-            using (var rng = new RNGCryptoServiceProvider())
-                rng.GetBytes(newSalt);
-
             byte[] newHash;
-            using (var derive = new Rfc2898DeriveBytes(newPwd, newSalt, Pbkdf2Iterations))
-            {
-                newHash = derive.GetBytes(32); // 256-bit
-            }
+            byte[] newSalt;
+            PasswordHasher.Create(newPwd, out newHash, out newSalt);
 
             string sqlUpdate = @"UPDATE tbl_login
-                                 SET PasswordHash = @Hash, PasswordSalt = @Salt, Password = @PlainFallback,
+                                 SET PasswordHash = @Hash, PasswordSalt = @Salt, Password = NULL,
                                      MustChangePassword = 0, EmailVerified = 1
                                  WHERE User_Id = @UserId";
             using (SqlCommand cmd2 = new SqlCommand(sqlUpdate, DbCL.Conn))
             {
-                cmd2.Parameters.AddWithValue("@Hash", newHash);
-                cmd2.Parameters.AddWithValue("@Salt", newSalt);
-                // optional: update legacy Password column as fallback (you may remove later)
-                cmd2.Parameters.AddWithValue("@PlainFallback", newPwd);
+                cmd2.Parameters.Add("@Hash", SqlDbType.VarBinary, PasswordHasher.HashSize).Value = newHash;
+                cmd2.Parameters.Add("@Salt", SqlDbType.VarBinary, PasswordHasher.SaltSize).Value = newSalt;
                 cmd2.Parameters.AddWithValue("@UserId", userId);
                 cmd2.ExecuteNonQuery();
             }
@@ -362,17 +341,7 @@ namespace Bill_Software.Update
 
         private string GenerateNumericOtp(int length)
         {
-            var digits = new char[length];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                byte[] buffer = new byte[length];
-                rng.GetBytes(buffer);
-                for (int i = 0; i < length; i++)
-                {
-                    digits[i] = (char)('0' + (buffer[i] % 10));
-                }
-            }
-            return new string(digits);
+            return CryptoRandom.GenerateNumericCode(length);
         }
 
         private byte[] HashWithSalt(string text, byte[] salt)
@@ -423,16 +392,6 @@ namespace Bill_Software.Update
             PanelError.Visible = false;
             PanelOk.Visible = true;
             LabelOk.Text = message;
-        }
-
-        // PBKDF2 verify (compatible with older .NET frameworks)
-        private bool VerifyPasswordPBKDF2(string password, byte[] storedHash, byte[] storedSalt, int iterations)
-        {
-            using (var derive = new Rfc2898DeriveBytes(password, storedSalt, iterations))
-            {
-                var computed = derive.GetBytes(storedHash.Length);
-                return AreByteArraysEqual(computed, storedHash);
-            }
         }
 
         #endregion

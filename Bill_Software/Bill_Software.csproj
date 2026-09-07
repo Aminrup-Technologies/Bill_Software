@@ -522,6 +522,7 @@
     <Content Include="Images\tick-icon.png" />
     <Content Include="index_start.aspx" />
     <Content Include="index.aspx" />
+    <Content Include="reset_password.aspx" />
     <Content Include="corporate\WebProperty\css\sf.eot" />
     <Content Include="corporate\WebProperty\css\sf.svg" />
     <Content Include="corporate\WebProperty\css\sf.ttf" />
@@ -990,6 +991,10 @@
       <DependentUpon>Search_purchaseorder.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\SecurityHelper.cs" />
+    <Compile Include="corporate\business\app\AppSecrets.cs" />
+    <Compile Include="corporate\business\app\CryptoRandom.cs" />
+    <Compile Include="corporate\business\app\PasswordHasher.cs" />
+    <Compile Include="corporate\business\app\PasswordResetService.cs" />
     <Compile Include="corporate\business\app\AuthGuard.cs" />
     <Compile Include="corporate\business\app\SecurePage.cs" />
     <Compile Include="corporate\business\app\InvoiceListHelper.cs" />
@@ -1887,6 +1892,13 @@
     </Compile>
     <Compile Include="index.aspx.designer.cs">
       <DependentUpon>index.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="reset_password.aspx.cs">
+      <DependentUpon>reset_password.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="reset_password.aspx.designer.cs">
+      <DependentUpon>reset_password.aspx</DependentUpon>
     </Compile>
     <Compile Include="index_card.aspx.cs">
       <DependentUpon>index_card.aspx</DependentUpon>

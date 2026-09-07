@@ -415,7 +415,7 @@ namespace Bill_Software.corporate.business.app
 
         private string GenerateRandomOTP()
         {
-            return new Random().Next(100000, 999999).ToString();
+            return CryptoRandom.GenerateNumericCode(6);
         }
 
         private void SaveOtpToDatabase(string userId, string plainOtp)

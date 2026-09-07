@@ -309,7 +309,7 @@
                         </div>
     
                         <div style="font-size: 13px; color: #666; margin-bottom: 15px; line-height: 1.4;">
-                            A temporary password will be sent to your registered email address. 
+                            A one-time reset link will be sent to your registered email address and/or WhatsApp. Your current password is not changed until you complete the reset.
                             <br /><br />
                             <span style="color: #d93025; font-weight: bold;">Note:</span> If you no longer have access to your registered email, please contact your System Administrator to update your account details.
                         </div>

@@ -317,23 +317,24 @@ See the `docs/` directory for module-specific documentation:
 
 ### Authentication
 
-- The application uses **custom session-based authentication** (not ASP.NET Forms Authentication). `Web.config` `<authentication mode="Forms">` is unused (no auth cookie is issued).
+- The application uses **custom session-based authentication** (`tbl_login` + `dbo.ActiveSessions`). Phase 0A also issues a companion Forms cookie so `/Uploads` anonymous deny works. There is no ASP.NET Identity and no JWT.
 - Session validity is re-validated on every Master Page load against `dbo.ActiveSessions`.
-- Login credentials are verified via PBKDF2 password hashing with a legacy plaintext fallback path (see `index.aspx.cs`).
-- **Authorization is menu visibility only.** `UserRoles` / `RolePermissions` are never checked before a server-side action. Full analysis: `docs/14_Authentication_Authorization_Architecture.md`.
+- Login verifies PBKDF2 hashes only. Leftover plaintext `Password` values are accepted once, then upgraded in place (`Password = NULL`). See `docs/15_Phase0B_Secrets_Deployment.md`.
+- Forgot-password issues a one-time expiring token; it does not overwrite `PasswordHash`.
+- **Authorization is menu visibility plus Phase 0A gates** (`AuthGuard` / `SecurePage` on print pages, WebMethods, and selected admin pages). Full analysis: `docs/14_Authentication_Authorization_Architecture.md`.
 
 ### Known Security Defects (see `docs/` for full details)
 
-Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visit-workflow-audit/`. Cross-cutting AuthN/AuthZ defects (plaintext passwords, company switcher, unauthenticated print/WebMethods, dual role systems) are indexed as **A-01…A-31** in `docs/14_Authentication_Authorization_Architecture.md`.
+Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visit-workflow-audit/`. Cross-cutting AuthN/AuthZ defects (plaintext passwords, company switcher, unauthenticated print/WebMethods, dual role systems) are indexed as **A-01…A-31** in `docs/14_Authentication_Authorization_Architecture.md`. Phase 0B credential deployment notes: `docs/15_Phase0B_Secrets_Deployment.md`.
 
 | ID | Severity | Description |
 |----|----------|-------------|
-| A-18 | **Critical** | Company dropdown has no membership ACL — any logged-in user can switch into any tenant |
-| A-19 | **Critical** | Most `print/` pages are unauthenticated IDOR (sequential `?ID=`) |
-| A-01 | **Critical** | Plaintext password column still accepted and rewritten on reset / Update-password |
+| A-18 | **Critical** | Company dropdown has no membership ACL — any logged-in user can switch into any tenant (Phase 0A stopped; schema-only) |
+| A-19 | **Critical** | Most `print/` pages were unauthenticated IDOR — **Phase 0A gated**; four unmapped prints fail closed |
+| A-01 | **Critical** | `tbl_login` plaintext login/reset/write **remediated in Phase 0B**. Remaining: `index_card.aspx.cs` / `tbl_card_login` (A-02) is a separate schema and was not migrated |
 | D-04 | **Critical** | Broken access control (IDOR) on sales-visit detail/mutation endpoints (ownership still missing; some `CompanyID` filters have landed) |
-| D-09 | **High** | Unauthenticated static file retrieval — uploaded attachments accessible without login |
-| D-11 | **High** | Hardcoded SMTP credentials committed to source control |
+| D-09 | **High** | Unauthenticated static file retrieval — `/Uploads` anonymous deny landed in Phase 0A; confirm IIS still serves that location through ASP.NET |
+| D-11 | **High** | Hardcoded SMTP credentials committed to source control (sales-visit pages; out of Phase 0B) |
 | D-10 | **Medium** | Silent notification failures — SMTP errors swallowed with no logging or user feedback |
 
 > **Stale README note:** D-05 (SQL injection in `srch_dailyrpts.aspx.cs :: Binder()`) was **parameterized in current source** and should not be treated as still open. Confirm against `docs/14_Authentication_Authorization_Architecture.md` §6.2 before filing it again.
