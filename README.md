@@ -293,6 +293,7 @@ See the `docs/` directory for module-specific documentation:
 | `docs/01_Attendance_Clock.md` | Attendance & Clock-In/Out |
 | `docs/02_Employee_Admin.md` | Employee Administration (User Provisioning) |
 | `docs/03_Role_Permissions.md` | Role & Permission Management |
+| `docs/14_Authentication_Authorization_Architecture.md` | Whole-app AuthN/AuthZ architecture review (bugs + improvement scope) |
 | `docs/04_Department_Designation.md` | Department & Designation Management |
 | `docs/05_Customer_Vendor.md` | Customer & Vendor Directory |
 | `docs/06_Sales_Visit_Planner.md` | Sales Visit Calendar & Planning |
@@ -316,19 +317,26 @@ See the `docs/` directory for module-specific documentation:
 
 ### Authentication
 
-- The application uses **custom session-based authentication** (not ASP.NET Forms Authentication).
+- The application uses **custom session-based authentication** (not ASP.NET Forms Authentication). `Web.config` `<authentication mode="Forms">` is unused (no auth cookie is issued).
 - Session validity is re-validated on every Master Page load against `dbo.ActiveSessions`.
 - Login credentials are verified via PBKDF2 password hashing with a legacy plaintext fallback path (see `index.aspx.cs`).
+- **Authorization is menu visibility only.** `UserRoles` / `RolePermissions` are never checked before a server-side action. Full analysis: `docs/14_Authentication_Authorization_Architecture.md`.
 
 ### Known Security Defects (see `docs/` for full details)
 
+Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visit-workflow-audit/`. Cross-cutting AuthN/AuthZ defects (plaintext passwords, company switcher, unauthenticated print/WebMethods, dual role systems) are indexed as **A-01…A-31** in `docs/14_Authentication_Authorization_Architecture.md`.
+
 | ID | Severity | Description |
 |----|----------|-------------|
-| D-04 | **Critical** | Broken access control (IDOR) — any authenticated user can view/modify/approve any visit by supplying its sequential `Id` |
-| D-05 | **Critical** | SQL Injection in `srch_dailyrpts.aspx.cs :: Binder()` via string concatenation |
+| A-18 | **Critical** | Company dropdown has no membership ACL — any logged-in user can switch into any tenant |
+| A-19 | **Critical** | Most `print/` pages are unauthenticated IDOR (sequential `?ID=`) |
+| A-01 | **Critical** | Plaintext password column still accepted and rewritten on reset / Update-password |
+| D-04 | **Critical** | Broken access control (IDOR) on sales-visit detail/mutation endpoints (ownership still missing; some `CompanyID` filters have landed) |
 | D-09 | **High** | Unauthenticated static file retrieval — uploaded attachments accessible without login |
 | D-11 | **High** | Hardcoded SMTP credentials committed to source control |
 | D-10 | **Medium** | Silent notification failures — SMTP errors swallowed with no logging or user feedback |
+
+> **Stale README note:** D-05 (SQL injection in `srch_dailyrpts.aspx.cs :: Binder()`) was **parameterized in current source** and should not be treated as still open. Confirm against `docs/14_Authentication_Authorization_Architecture.md` §6.2 before filing it again.
 
 ---
 
@@ -339,6 +347,7 @@ See the `docs/` directory for module-specific documentation:
 1. Read the **Core Architectural Standards** above — violations are defects.
 2. Check if the module you are modifying has documentation in `docs/`.
 3. Review the Sales Visit Workflow Audit (`docs/sales-visit-workflow-audit/`) for precedent on how enterprise rules are applied.
+4. For login, session, RBAC, or tenant-isolation changes, read `docs/14_Authentication_Authorization_Architecture.md` first — menu visibility is not authorization.
 
 ### Code Quality Rules
 

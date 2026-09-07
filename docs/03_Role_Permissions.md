@@ -2,6 +2,8 @@
 
 > Master Page Menu Position: **Administration → Update Designation** (admin-role only)
 
+> **Architecture review:** For the whole-application AuthN/AuthZ model, dual role systems, tenant switcher, and a phased improvement plan, see [`docs/14_Authentication_Authorization_Architecture.md`](14_Authentication_Authorization_Architecture.md). This module document remains the how-to for `Update_Designation` and the menu-only permission tables.
+
 ---
 
 ## 1. Overview
