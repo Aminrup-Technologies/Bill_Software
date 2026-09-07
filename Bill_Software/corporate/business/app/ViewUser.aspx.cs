@@ -267,9 +267,15 @@ namespace Bill_Software.corporate.business.app
             bool requireWhatsApp = chkWhatsApp != null ? chkWhatsApp.Checked : false;
 
             object roleIdParam = DBNull.Value;
+            int? newRoleId = null;
             if (ddlGridRole != null && ddlGridRole.SelectedValue != "0")
             {
-                roleIdParam = Convert.ToInt32(ddlGridRole.SelectedValue);
+                int parsedRole;
+                if (int.TryParse(ddlGridRole.SelectedValue, out parsedRole) && parsedRole > 0)
+                {
+                    newRoleId = parsedRole;
+                    roleIdParam = parsedRole;
+                }
             }
 
             string updateSql = @"UPDATE dbo.tbl_login 
@@ -281,35 +287,64 @@ namespace Bill_Software.corporate.business.app
                          WHERE Id = @Id AND CompanyID = @CompanyID"; // COMPANYCONTEXT SHIELD
 
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand(updateSql, cn))
             {
-                cmd.Parameters.AddWithValue("@Name", string.IsNullOrWhiteSpace(newName) ? DBNull.Value : (object)newName);
-                cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(newEmail) ? DBNull.Value : (object)newEmail);
-
-                string cleanPhone = newPhone.Replace(" ", "").Replace("-", "");
-                cmd.Parameters.AddWithValue("@Phone", string.IsNullOrWhiteSpace(cleanPhone) ? DBNull.Value : (object)cleanPhone);
-
-                cmd.Parameters.AddWithValue("@DeptId", (ddlDepartment != null && !string.IsNullOrEmpty(ddlDepartment.SelectedValue)) ? (object)Convert.ToInt32(ddlDepartment.SelectedValue) : DBNull.Value);
-                cmd.Parameters.AddWithValue("@DesigId", (ddlDesignation != null && !string.IsNullOrEmpty(ddlDesignation.SelectedValue)) ? (object)Convert.ToInt32(ddlDesignation.SelectedValue) : DBNull.Value);
-                cmd.Parameters.AddWithValue("@ManagerId", (ddlManager != null && !string.IsNullOrEmpty(ddlManager.SelectedValue)) ? (object)ddlManager.SelectedValue : DBNull.Value);
-
-                cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
-                cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
-                cmd.Parameters.AddWithValue("@RoleId", roleIdParam);
-                cmd.Parameters.AddWithValue("@RequireGeoTagging", requireGeo);
-                cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails);
-                cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-
                 cn.Open();
-                int rows = cmd.ExecuteNonQuery();
-
-                if (rows > 0)
+                using (var tran = cn.BeginTransaction())
                 {
-                    InsertSystemNotification("User Profile Updated", $"Profile updated for User: {newName}.", "User Management", "Info", Session["USERID"]?.ToString() ?? "System");
+                    int? previousRoleId = null;
+                    using (var cmdPrev = new SqlCommand(
+                        "SELECT RoleId FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID", cn, tran))
+                    {
+                        cmdPrev.Parameters.AddWithValue("@Id", id);
+                        cmdPrev.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        object prev = cmdPrev.ExecuteScalar();
+                        if (prev != null && prev != DBNull.Value)
+                            previousRoleId = Convert.ToInt32(prev);
+                    }
+
+                    using (var cmd = new SqlCommand(updateSql, cn, tran))
+                    {
+                        cmd.Parameters.AddWithValue("@Name", string.IsNullOrWhiteSpace(newName) ? DBNull.Value : (object)newName);
+                        cmd.Parameters.AddWithValue("@Email", string.IsNullOrWhiteSpace(newEmail) ? DBNull.Value : (object)newEmail);
+
+                        string cleanPhone = newPhone.Replace(" ", "").Replace("-", "");
+                        cmd.Parameters.AddWithValue("@Phone", string.IsNullOrWhiteSpace(cleanPhone) ? DBNull.Value : (object)cleanPhone);
+
+                        cmd.Parameters.AddWithValue("@DeptId", (ddlDepartment != null && !string.IsNullOrEmpty(ddlDepartment.SelectedValue)) ? (object)Convert.ToInt32(ddlDepartment.SelectedValue) : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@DesigId", (ddlDesignation != null && !string.IsNullOrEmpty(ddlDesignation.SelectedValue)) ? (object)Convert.ToInt32(ddlDesignation.SelectedValue) : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ManagerId", (ddlManager != null && !string.IsNullOrEmpty(ddlManager.SelectedValue)) ? (object)ddlManager.SelectedValue : DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@EmailVerified", emailVerified);
+                        cmd.Parameters.AddWithValue("@MustChangePwd", mustChangePwd);
+                        cmd.Parameters.AddWithValue("@RoleId", roleIdParam);
+                        cmd.Parameters.AddWithValue("@RequireGeoTagging", requireGeo);
+                        cmd.Parameters.AddWithValue("@EnableEmailAlerts", requireEmails);
+                        cmd.Parameters.AddWithValue("@EnableWhatsAppAlerts", requireWhatsApp);
+                        cmd.Parameters.AddWithValue("@Id", id);
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows <= 0)
+                        {
+                            ShowError("User not found or access denied.");
+                            return;
+                        }
+
+                        if (newRoleId.HasValue)
+                        {
+                            if (!UserRoleAssignment.TrySyncDisplayRoleChange(cn, tran, id, previousRoleId, newRoleId, CompanyContext.CurrentCompanyID))
+                            {
+                                ShowError("The selected role is not valid for this company.");
+                                return;
+                            }
+                        }
+
+                        tran.Commit();
+                    }
                 }
             }
+
+            InsertSystemNotification("User Profile Updated", $"Profile updated for User: {newName}.", "User Management", "Info", Session["USERID"]?.ToString() ?? "System");
 
             ShowOk("User details updated successfully.");
             lvUsers.EditIndex = -1;
