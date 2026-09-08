@@ -67,10 +67,12 @@ namespace Bill_Software.corporate.business.print
                            "i.Quotation_Date, i.Client_ID, i.addressfor, i.discount, i.sub_total, i.Service_Tax, i.Net_Amount, " +
                            "i.cgstOrsgst, i.igst, i.Delivery_Amount, i.otherAmount1, i.otherAmount1_name, " +
                            "q.DO_Number, q.PO_Number, q.PO_Date " +
-                           "FROM tbl_Invoice i LEFT JOIN tbl_Quotation q ON i.Quotation_No = q.Quotation_no " +
-                           "WHERE i.ID = '" + ID.ToString() + "'";
+                           "FROM tbl_Invoice i LEFT JOIN tbl_Quotation q ON i.Quotation_No = q.Quotation_no AND q.CompanyID = @CompanyID " +
+                           "WHERE i.ID = @ID AND i.CompanyID = @CompanyID";
 
             SqlCommand cmd = new SqlCommand(query, DbCL.Conn);
+            cmd.Parameters.AddWithValue("@ID", ID);
+            cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
             SqlDataReader re = cmd.ExecuteReader();
             if (re.Read())
             {
