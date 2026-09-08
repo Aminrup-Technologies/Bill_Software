@@ -30,4 +30,4 @@ Visit GPS is captured on `visit_planner` execute, not on `attendance.aspx`. Join
 
 ## Tenant leftover
 
-Admin FieldSales aggregation filters `tbl_SalesVisitReport.CompanyID`. Visit INSERTs historically omitted `CompanyID` (audit **D-01**), so the rollup can under-count even when the CTE is correctly scoped.
+Admin FieldSales aggregation filters `tbl_SalesVisitReport.CompanyID`. **New** visit INSERTs populate that column. Rows created before the D-01 fix (NULL `CompanyID`) still under-count the CTE. Snapshot: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).

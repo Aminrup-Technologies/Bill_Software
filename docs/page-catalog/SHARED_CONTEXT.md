@@ -13,7 +13,7 @@ Do **not** restate these rules inside domain catalogs or per-page notes.
 | AuthN / AuthZ contract | [22_Security_Baseline.md](../22_Security_Baseline.md) | Engineering contract for every future change |
 | AuthN / AuthZ review | [14_Authentication_Authorization_Architecture.md](../14_Authentication_Authorization_Architecture.md) | Defects A-01…A-31, dual role systems |
 | Phase history 0B–3 | [15](../15_Phase0B_Secrets_Deployment.md)–[21](../21_Phase3_Infrastructure_Hardening.md) | Implementation notes — not page catalogs |
-| Sales-visit deep dive | [sales-visit-workflow-audit/](../sales-visit-workflow-audit/) | State machine, tables, defects D-* |
+| Sales-visit deep dive | [sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md](../sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) | Which D-* findings are remediating vs still live |
 | Handlers, helpers, SQL, SP callers | [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Non-page surface — do not copy into domains |
 
 ## Runtime facts used by every ERP page (do not copy)

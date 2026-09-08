@@ -1,5 +1,7 @@
 # 09 — Current Authorization Implementation Audit
 
+> **Snapshot.** `AuthGuard.UserOwnsVisit` / `UserCanViewVisit` / `UserCanApproveVisit` exist now; visit pages use `CommunicationGateway`. Status: [`00_SNAPSHOT_STATUS.md`](00_SNAPSHOT_STATUS.md).
+
 **Read-only inspection.** No file was created, modified, deleted, or renamed as part of this inspection except this single documentation file. No database object was queried or modified (see §0 for the database-access status). No refactoring, fix, or code change of any kind was performed.
 
 ---

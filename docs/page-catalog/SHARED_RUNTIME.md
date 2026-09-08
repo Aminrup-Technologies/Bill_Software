@@ -47,8 +47,14 @@ Ponytail CSS/JS is not a user control here — see [`SHARED_CONTEXT.md`](SHARED_
 | `PurchaseOrderPrintHelper` | HTML bind for **client PO** print (`NewPurchaseOrder_Print.aspx?ID=` = `tbl_Quotation.ID`). Not vendor `tbl_PO_Header`. |
 | `MoneyConvDS` | Amount-in-words on print pages. |
 | `CryptoRandom` | Token/salt bytes for hasher and reset. |
+| `App_Start/AuthConfig` | Empty OpenAuth stub (`RegisterOpenAuth`). Not ERP login. |
+| `App_Start/BundleConfig` | Script/style bundles. Not AuthN. |
 
 Do **not** treat `DB_UTILITY` as the only data path.
+
+### Bill.Master support ticket (not a helper class)
+
+`CreateiTopTicket` POSTs to `iTopUrl` with `iTopUser` / `iTopPass` / `iTopCallerEmail` / `iTopOrgName` (screenshot base64). `SendSupportEmail` is a **direct `SmtpClient`** to a hardcoded IT inbox using AppSettings SMTP — same leftover class as InvoiceMail, not `CommunicationGateway`.
 
 ---
 
@@ -115,6 +121,6 @@ Connection: **`DbConn`** (not `DBCS`). Do not paste secret values.
 | `LoginOtpExpiryMinutes` | Login OTP |
 | `UrlTokenAesKey` | `SecurityHelper` / QuickAction |
 | `Msg91AuthKey` / `Msg91IntegratedNumber` / `Msg91OtpTemplateId` | WhatsApp/SMS via gateway / OTP |
-| `iTopUrl` / `iTopUser` / `iTopPass` / `iTopCallerEmail` / `iTopOrgName` | Support-ticket integration (not SMTP) |
+| `iTopUrl` / `iTopUser` / `iTopPass` / `iTopCallerEmail` / `iTopOrgName` | `Bill.Master.CreateiTopTicket` (not SMTP) |
 
 There is **no** `AppUrl` or `Requisition:AttachmentsPath` key in the current `Web.config`.

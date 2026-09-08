@@ -1,28 +1,30 @@
 # Homepage dashboard
 
-Canonical pages: [`page-catalog/DOMAIN_dashboard.md`](page-catalog/DOMAIN_dashboard.md) (`home.aspx`, `QuickAction.aspx`).  
+Canonical pages: [`page-catalog/DOMAIN_dashboard.md`](page-catalog/DOMAIN_dashboard.md).  
 AuthN/tenancy: [`page-catalog/SHARED_CONTEXT.md`](page-catalog/SHARED_CONTEXT.md).
 
 This file keeps **leftover facts** that are not in the catalog.
 
 ---
 
-## What `home.aspx` actually aggregates
+## Paths
 
-Menu id **`home1`** (label “My Profile”; title “Dashboard”). Not `admin/home.aspx` (that is the **kiosk** home).
+Menu id **`home1`**. Not `admin/home.aspx` (kiosk).
 
-| KPI | Source |
-|-----|--------|
-| Punch status / days present | `tbl_Attendance` (`UserCode`, `AttendanceStatus`) |
-| Visits / quotes / revenue today and this month | `tbl_SalesVisitReport` filtered by **`CreatedByCode` and `CompanyID`** |
-| Toasts | `tbl_SystemNotification` |
+Chart.js is **not** the current KPI implementation.
 
-There is no `tbl_SalesVisitReport`-only dashboard, and Chart.js is not the current KPI implementation to document as required.
+---
 
-Visit counts still depend on **D-01** (NULL `CompanyID` visits drop out of these queries) and **D-03** (`FLM03` mis-attribution). `LinkedQuotationNo` drives the “quotes” KPI — not a join to `tbl_Quotation`.
+## Historical visit rows
+
+`home.aspx` sales KPIs filter `CompanyID = CompanyContext.CurrentCompanyID`. **New** visit INSERTs populate `CompanyID` (`daily_rpt`, planner follow-up). Rows created before that change with NULL `CompanyID` still vanish from these KPIs (and from FieldSales CTE / manager list). That is leftover data, not a missing INSERT column.
+
+**D-03** is still live: `daily_rpt` null-coalesces `CreatedByCode` to `"FLM03"`.
+
+`LinkedQuotationNo` drives the quotes count — not a join to `tbl_Quotation`.
 
 ---
 
 ## `QuickAction.aspx`
 
-Same domain, **not** the dashboard UI. Unauthenticated AES token `t` for leave / attendance-regularization approve/reject. Helpers: [`SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md).
+Same domain, **not** the dashboard UI. AES token `t`. Helpers: [`SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md).

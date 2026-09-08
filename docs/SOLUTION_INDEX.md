@@ -2,7 +2,9 @@
 
 AminrupERP / Flame-ex (`Bill_Software`) documentation is split so **shared architecture is written once** and **every `.aspx` page is listed once**.
 
-**Coverage:** all **188** pages are in the census. Each of the **19** domains has a workflow + page-behavior narrative (not a duplicate of AuthN/tenancy). Handlers, helpers, SQL scripts, and SP call sites are in [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). `docs/01`–`docs/13` are **leftover-fact pointers** into those catalogs (not a second census). Deep specialist write-ups remain in `docs/14`–`docs/22` and `sales-visit-workflow-audit/`.
+**Coverage:** all **188** pages are in the census (Reviewed). Each of the **19** domains has a workflow narrative. Handlers/helpers/SPs: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Leftover `docs/01`–`docs/13` are pointers. Visit audit vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
+
+**Still not in-repo (needs a live database or ops dump, not more markdown):** full DDL/ERD, stored-procedure bodies, screenshot user manuals.
 
 ## Commercial spine (ERP)
 
@@ -24,6 +26,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | If you need… | Open |
 |--------------|------|
 | How to review the next undocumented/stale page | [page-catalog/RECURSIVE_INSTRUCTIONS.md](page-catalog/RECURSIVE_INSTRUCTIONS.md) |
+| Visit audit findings vs current `.cs` | [sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) |
 | Cross-cutting AuthN, tenancy, master page, print gate | [page-catalog/SHARED_CONTEXT.md](page-catalog/SHARED_CONTEXT.md) |
 | Handlers, ASCX, helpers, SQL scripts, SP call index | [page-catalog/SHARED_RUNTIME.md](page-catalog/SHARED_RUNTIME.md) |
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
@@ -64,14 +67,16 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [04_Department_Designation.md](04_Department_Designation.md) | No dept CRUD; `Update_Designation` = UserRoles |
 | [05_Customer_Vendor.md](05_Customer_Vendor.md) | `tbl_Client` / `tbl_Vendor`; visit name is free text |
 | [06_Sales_Visit_Planner.md](06_Sales_Visit_Planner.md) | Calendar GPS + D-06 ParentVisitId |
-| [07_Sales_Visit_Reporting.md](07_Sales_Visit_Reporting.md) | Visit D-01…D-03; D-11 stale |
+| [07_Sales_Visit_Reporting.md](07_Sales_Visit_Reporting.md) | Visit leftovers; D-03 live; D-01 historical rows |
 | [08_Expense_Management.md](08_Expense_Management.md) | Visit `tbl_Expenses` ≠ GL expenses |
 | [09_Quotation_Generation.md](09_Quotation_Generation.md) | Confirmed `tbl_Quotation`; visit prefill D-01 |
 | [10_Purchase_Order.md](10_Purchase_Order.md) | Two PO stacks (vendor vs client) |
 | [11_Communications.md](11_Communications.md) | Gateway vs direct SmtpClient |
 | [12_Home_Dashboard.md](12_Home_Dashboard.md) | `home.aspx` KPIs + QuickAction |
 | [13_Invoice_Search_View_PO_Discovery.md](13_Invoice_Search_View_PO_Discovery.md) | Dated discovery snapshot (catalogs win) |
-| [sales-visit-workflow-audit/](sales-visit-workflow-audit/) | Visit architecture audit |
+| [sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) | Visit audit vs current code |
+| [sales-visit-workflow-audit/](sales-visit-workflow-audit/) | Dated visit architecture snapshot |
+| [08_Cursor_Change_Audit.md](08_Cursor_Change_Audit.md) | Historical agent-change audit (not a module) |
 | [14](14_Authentication_Authorization_Architecture.md)–[21](21_Phase3_Infrastructure_Hardening.md) | AuthZ phases (history) |
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |
 

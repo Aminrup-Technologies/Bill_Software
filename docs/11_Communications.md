@@ -30,7 +30,7 @@ Visit pages **no longer hardcode Zoho credentials** in source (audit **D-11 is s
 | `QuickAction.aspx` | AES token `t` (leave/reg approve). Emails via gateway. |
 | `PasswordResetService` | `dbo.PasswordResetTokens`; `{reset_password.aspx}?token=` + `uid`. |
 | MSG91 | WhatsApp/SMS from `CommunicationGateway.SendAlertsAsync` when a mobile is passed. |
-| iTop AppSettings | Support-ticket REST — **not** SMTP. |
+| iTop / support modal | `Bill.Master.CreateiTopTicket` + `SendSupportEmail` (direct SmtpClient). Keys in [`SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). |
 
 PDF bytes typically come from the matching **print** page, not a third renderer.
 

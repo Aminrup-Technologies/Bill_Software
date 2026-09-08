@@ -29,20 +29,20 @@ The application serves two primary user roles:
 - **Salesperson** — Plans visits on a calendar, executes them with GPS-tagged confirmation, logs past visits, manages expenses, and communicates with managers via an integrated chat thread.
 - **Manager** — Reviews, approves/rejects sales visits and associated expenses across their company's sales team through a search-filtered dashboard.
 
-Additional modules handle attendance (clock-in/clock-out with GPS), employee administration (user provisioning, department/designation management, role-based menu access), customer/vendor records, purchase orders, email/SMS communications, and a homepage dashboard with KPIs.
+Additional modules handle attendance (clock-in/clock-out with GPS), ERP user provisioning (`tbl_login` under `corporate/business/app/`, not `admin/`), customer/vendor records, purchase orders, email/SMS, and a homepage dashboard with KPIs. There is **no** department/designation CRUD UI — those are dropdowns on AddUser.
 
 ### Key Business Domains
 
 | Domain | Description |
 |--------|-------------|
-| **Sales Visit Lifecycle** | Full calendar-based planning → GPS execution → manager review/approval → follow-up generation |
-| **Attendance & Field Tracking** | Clock-in/clock-out with geolocation, daily attendance dashboard for admins |
-| **Expense Management** | Per-visit expense claims with receipts, manager approval workflow |
-| **Quotation Generation** | Customer-quote creation linked to visit records |
-| **Purchase Orders** | Procurement workflow management |
-| **Customer & Vendor Directory** | Customer and vendor record management |
-| **Communication** | SMTP email notifications, SMS integration for visit updates and approvals |
-| **Administration** | User provisioning, department/designation management, role-based menu access control |
+| **Sales Visit Lifecycle** | Calendar planning → GPS execution → manager review/approval → follow-up |
+| **Attendance & Field Tracking** | Punch UI + admin attendance register |
+| **Expense Management** | Visit claims (`tbl_Expenses`) **and** GL payments made (different tables) |
+| **Quotation Generation** | `tbl_Quotation` (also client PO via `RecordType`) |
+| **Purchase Orders** | Two stacks: vendor `tbl_PO_*` vs client PO on `tbl_Quotation` |
+| **Customer & Vendor Directory** | `tbl_Client` / `tbl_Vendor` |
+| **Communication** | `CommunicationGateway` (AppSettings SMTP + MSG91) plus leftover direct `SmtpClient` pages |
+| **Administration** | `AddUser` / `ViewUser` / `ManageRoles` / `ManagePermissions`; `Update_Designation` assigns `UserRoles` |
 
 ---
 
@@ -59,8 +59,7 @@ Additional modules handle attendance (clock-in/clock-out with GPS), employee adm
 | **Authentication** | Custom session-based | `tbl_login` + `ActiveSessions` token table + `Session["USERID"]` |
 | **Frontend Libraries** | jQuery, jQuery UI | Datepicker, dialogs, Select2 dropdowns |
 | **Calendar** | FullCalendar | Visit planner calendar widget |
-| **Charts** | Chart.js | Dashboard KPI visualizations |
-| **Email** | System.Net.Mail | `SmtpClient` / `MailMessage` (Zoho SMTP for Sales Visit notifications; config-driven for auth flows) |
+| **Email** | System.Net.Mail | `CommunicationGateway` (AppSettings SMTP) + leftover direct `SmtpClient` on invoice/proforma/payment mailers |
 | **CSS Frameworks** | jQuery UI Themes | `ui-lightness` and `base` themes |
 | **Package Manager** | NuGet | `packages.config` |
 
@@ -102,12 +101,11 @@ Bill_Software/
 │       ├── js/
 │       └── images/
 │
-├── admin/                             # ◄ ADMINISTRATION MODULE
-│   ├── AdminAttendanceDashboard.aspx[.cs] # Company-wide attendance & field-sales rollup
-│   ├── AddUser.aspx[.cs]              # User provisioning (new employee accounts)
-│   ├── ViewUser.aspx[.cs]             # User management grid (edit roles, view details)
-│   ├── Update_Designation.aspx[.cs]   # Role/permission assignment (UserRoles maintenance)
-│   └── Update/                        # Admin update sub-pages
+├── admin/                             # ID-card kiosk (`tbl_card_login`) — not ERP user admin
+│   ├── home.aspx
+│   ├── add_company.aspx / Upload_data.aspx / update_image.aspx
+│   ├── personal_image.ashx / Company.ashx
+│   └── Update/                        # Kiosk profile popups
 │
 ├── Scripts/                           # JavaScript libraries (jQuery, jQuery UI, MS Ajax)
 │   └── WebForms/MSAjax/              # ASP.NET AJAX framework scripts
@@ -122,6 +120,8 @@ Bill_Software/
     ├── ProformaLogs/
     └── (dynamic visit/expense attachment directories)
 ```
+
+ERP user admin (`AddUser`, `ViewUser`, `Update_Designation`, `ManageRoles`, `ManagePermissions`, `AdminAttendanceDashboard`) lives under `corporate/business/app/`, not `admin/`.
 
 ---
 
@@ -268,7 +268,7 @@ This is a known assembly version conflict warning. Review detailed build log out
 | `tbl_Expenses` | Expense claims (may or may not link to a visit) | `VisitId` → `tbl_SalesVisitReport.Id` (nullable), `UserCode`/`ApprovedBy` → `tbl_login.User_Id` |
 | `tbl_SystemNotification` | Transactional audit notifications | Inserted prior to major CRUD operations |
 | `ActiveSessions` | Active session tracking | `SessionToken`, `UserId`, `IsActive` — re-validated on every Master Page load |
-| `UserRoles` | Many-to-many user↔role mapping | Controls navigation menu visibility via `Bill.Master.cs :: GetMenuControl()` |
+| `UserRoles` | Many-to-many user↔role mapping | Menu visibility **and** `SecurePage` / `AuthGuard.EnsurePage` |
 | `RolePermissions` | Role↔permission mapping | Joined with `UserRoles` to determine menu item visibility |
 | `Roles` | Role definitions | `RoleName`, joined via `tbl_login.RoleId` |
 | `tbl_Departments` | Department directory | Referenced by `tbl_login.DepartmentID` |
@@ -296,7 +296,7 @@ When documenting or changing a page, follow the recursive playbook: read shared 
 
 ## Module Reference
 
-Narrative module docs (`docs/01`–`docs/13`, sales-visit audit, security phases) remain the deep write-ups. The page catalog does not duplicate them.
+Narrative module docs (`docs/01`–`docs/13`) are leftover-fact pointers. The page catalog is the census. The sales-visit folder is a dated snapshot — start at [`docs/sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](docs/sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
 
 See the map in [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md).
 

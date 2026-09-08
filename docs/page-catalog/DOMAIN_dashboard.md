@@ -18,6 +18,18 @@ Landing KPIs. Narrative: docs/12_Home_Dashboard.md.
 
 <!-- NARRATIVE:BEGIN -->
 
+## `home.aspx`
+
+Menu id **`home1`** (label “My Profile”; title “Dashboard”). Not kiosk `admin/home.aspx`. Labels, not Chart.js.
+
+| KPI | Source |
+|-----|--------|
+| Punch status / days present | `tbl_Attendance` (`UserCode`) |
+| Visits / quotes / revenue today and this month | `tbl_SalesVisitReport` where `CreatedByCode` **and** `CompanyID` |
+| Toasts | `tbl_SystemNotification` |
+
+Quote KPI is `LinkedQuotationNo` (non-blank), not a join to `tbl_Quotation`. New visit INSERTs set `CompanyID`; **historical NULL `CompanyID` rows still drop out**. `FLM03` fallback on `daily_rpt` (**D-03**) can still mis-attribute. Leftover: [docs/12](../12_Home_Dashboard.md).
+
 ## `QuickAction.aspx`
 
 No master. QS `t` → `SecurityHelper.DecryptFromUrlToken` → `ReqID`, `Type` (`Leave`|`Reg`), `Action` (`Approve`|`Reject`), `ManagerID`, `CompanyID`. Possession of the link is the credential. Updates leave request or regularization, then leave-balance / attendance punch side-effects, then notifies the employee. Issued from `MyLeaves` / `AdminOverride`.

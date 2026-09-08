@@ -1,5 +1,7 @@
 # 01 — Current Process Flow: Sales Visit Workflow
 
+> **Snapshot.** Process flow is useful; `CompanyID is never populated` on INSERT is **stale**. Current INSERT/auth notes: [`00_SNAPSHOT_STATUS.md`](00_SNAPSHOT_STATUS.md).
+
 **Scope (read-only architecture discovery):**
 - `Bill_Software/corporate/business/app/visit_planner.aspx` (+ `.cs`)
 - `Bill_Software/corporate/business/app/daily_rpt.aspx` (+ `.cs`)

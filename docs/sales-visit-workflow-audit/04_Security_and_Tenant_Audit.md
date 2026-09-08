@@ -1,5 +1,7 @@
 # 04 — Security & Tenant Audit
 
+> **Snapshot.** Ownership/CompanyID predicates and CommunicationGateway mail are **remediating** vs this write-up. Status table: [`00_SNAPSHOT_STATUS.md`](00_SNAPSHOT_STATUS.md).
+
 > This document consolidates: **(E)** tenancy/authorization filter audit, **(G)** file/attachment handling & retrieval security, **(J)** edit-locking rules, and **(K)** email trigger/recipient/SMTP-configuration audit. Per instructions, **no live credentials are reproduced** — any secret found in source is redacted as `[REDACTED]` with only its *location* cited.
 
 ---

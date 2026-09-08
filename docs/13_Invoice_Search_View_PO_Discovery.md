@@ -17,7 +17,9 @@ Canonical current census: [`page-catalog/DOMAIN_invoice.md`](page-catalog/DOMAIN
 
 Designer files were read for control inventory. Related callers (`View_PurchaseOrder.aspx.cs`, `Search_purchaseorder.aspx.cs`, `NewInvoice.aspx.cs`, `NewInvoice_v2.aspx.cs`, `Add_invoice.aspx.cs`, `Bill.Master.cs`, `DB_UTILITY.cs`) were consulted only to verify isolation, export patterns, and schema.
 
-**Key finding up front:** Neither invoice list page uses `GridView`. Both use an HTML table + `asp:Repeater`. There are **no stored procedures** in these three pages. All SQL is inline `CommandType.Text` (including `DB_UTILITY.SPreturn_dt`, which is a misnomer). Excel buttons emit **CSV**, not `.xlsx`. `NewPurchaseOrder.aspx` has **no `CompanyID` filter and no session auth**.
+**Dated “key finding” below.** Excel export is now ClosedXML `.xlsx` via `InvoiceListHelper`. Client-PO print uses `EnsurePrint` on `tbl_Quotation.ID`. Trust the catalogs for those two facts.
+
+**Key finding up front (2026-09-03 snapshot):** Neither invoice list page uses `GridView`. Both use an HTML table + `asp:Repeater`. There are **no stored procedures** in these three pages. All SQL is inline `CommandType.Text` (including `DB_UTILITY.SPreturn_dt`, which is a misnomer). Excel buttons **then** emitted CSV. `NewPurchaseOrder.aspx` **then** had no `CompanyID` filter and no session auth.
 
 ---
 
