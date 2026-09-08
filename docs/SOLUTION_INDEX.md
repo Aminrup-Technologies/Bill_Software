@@ -2,9 +2,9 @@
 
 AminrupERP / Flame-ex (`Bill_Software`) documentation is split so **shared architecture is written once** and **every `.aspx` page is listed once**.
 
-**Coverage:** all **188** pages are in the census (Reviewed). Each of the **19** domains has a workflow narrative. Page↔table/SP verbs: [`page-catalog/DATA_DICTIONARY.md`](page-catalog/DATA_DICTIONARY.md). Handlers/helpers/SPs: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Live UAT objects: [`page-catalog/SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md). Leftover `docs/01`–`docs/13` are pointers. Visit audit vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
+**Coverage:** all **188** pages are in the census (Reviewed). Each of the **19** domains has a workflow narrative. Page↔table/SP verbs: [`page-catalog/DATA_DICTIONARY.md`](page-catalog/DATA_DICTIONARY.md). All UAT columns + SP signatures: [`page-catalog/UAT_CATALOG.md`](page-catalog/UAT_CATALOG.md). Handlers/helpers/SPs: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Live UAT objects: [`page-catalog/SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md). Leftover `docs/01`–`docs/13` are pointers. Visit audit vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
 
-**Still not in-repo:** full column dumps / ERD drawings, stored-procedure **bodies**, screenshot user manuals. Object names, FKs, UAT gaps, and SP *signatures* are in SHARED_SCHEMA.
+**Still not in-repo:** ERD drawings, stored-procedure **bodies**, screenshot user manuals.
 
 ## Commercial spine (ERP)
 
@@ -28,6 +28,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 |--------------|------|
 | How to review the next undocumented/stale page | [page-catalog/RECURSIVE_INSTRUCTIONS.md](page-catalog/RECURSIVE_INSTRUCTIONS.md) |
 | Visit audit findings vs current `.cs` | [sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) |
+| Every UAT table column + SP signature | [page-catalog/UAT_CATALOG.md](page-catalog/UAT_CATALOG.md) |
 | Which page talks to which table / SP (verbs) | [page-catalog/DATA_DICTIONARY.md](page-catalog/DATA_DICTIONARY.md) |
 | Cross-cutting AuthN, tenancy, master page, print gate | [page-catalog/SHARED_CONTEXT.md](page-catalog/SHARED_CONTEXT.md) |
 | Live UAT schema (tables, FKs, missing objects, SP inventory) | [page-catalog/SHARED_SCHEMA.md](page-catalog/SHARED_SCHEMA.md) |

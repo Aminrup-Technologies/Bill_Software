@@ -19,6 +19,7 @@ Do **not** restate these rules inside domain catalogs or per-page notes.
 | Handlers, helpers, SQL, SP callers | [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Non-page surface — do not copy into domains |
 | Live UAT schema | [SHARED_SCHEMA.md](SHARED_SCHEMA.md) | Tables, FKs, missing objects vs code, UAT-only procs |
 | Page ↔ table/SP dictionary | [DATA_DICTIONARY.md](DATA_DICTIONARY.md) | Per-object SELECT/INSERT/UPDATE/DELETE/EXEC |
+| UAT columns + SP signatures | [UAT_CATALOG.md](UAT_CATALOG.md) | All 111 tables; 38 procs (no bodies) |
 
 ## Runtime facts used by every ERP page (do not copy)
 

@@ -9,6 +9,7 @@ Maintain a complete, non-duplicative catalog:
 | Artifact | Role |
 |----------|------|
 | [SHARED_CONTEXT.md](SHARED_CONTEXT.md) | Cross-cutting facts — **read once per session** |
+| [UAT_CATALOG.md](UAT_CATALOG.md) | All 111 tables with columns; 38 proc signatures + C# callers — **generated, no bodies** |
 | [DATA_DICTIONARY.md](DATA_DICTIONARY.md) | Page ↔ table/SP with per-object verbs — **generated, do not hand-edit** |
 | [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Handlers, ASCX, helpers, SQL scripts, SP call sites — **not** page census |
 | [SHARED_SCHEMA.md](SHARED_SCHEMA.md) | Live UAT tables, FKs, missing objects — **not** page census |
@@ -100,4 +101,10 @@ python3 docs/page-catalog/_generate.py
 Everything after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md` is preserved.
 Unique one-liners in `_generate.py` (`UNIQUE_NOTES`) are regenerated into “Page-unique notes”.
 The generator writes `PAGE_INVENTORY.md`, `DOMAIN_*.md` census tables, and `DATA_DICTIONARY.md`. It must not overwrite `SHARED_CONTEXT.md`, `SHARED_RUNTIME.md`, `SHARED_SCHEMA.md`, `RECURSIVE_INSTRUCTIONS.md`, or `SOLUTION_INDEX.md`.
-Do not copy SHARED_CONTEXT into domain files.
+Refresh UAT columns/SP signatures (needs DB env vars, no secrets in git):
+
+```
+python3 docs/page-catalog/_catalog.py
+```
+
+That writes `UAT_CATALOG.md` only. Do not copy SHARED_CONTEXT into domain files.

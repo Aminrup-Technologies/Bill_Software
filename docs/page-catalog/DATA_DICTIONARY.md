@@ -18,7 +18,7 @@ SP bodies are not documented here. Call-site notes: [`SHARED_RUNTIME.md`](SHARED
 |------|---------|
 | Which pages touch `tbl_Quotation`? | [Reverse index](#reverse-index-object--pages) |
 | What does `Create_quotation.aspx` write? | [Forward index](#forward-index-page--objects) |
-| Live columns / FKs | [SHARED_SCHEMA.md](SHARED_SCHEMA.md) |
+| Live columns / SP signatures | [UAT_CATALOG.md](UAT_CATALOG.md) |
 
 ## Reverse index (object → pages)
 

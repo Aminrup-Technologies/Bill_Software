@@ -17,6 +17,7 @@ Read after [`SHARED_CONTEXT.md`](SHARED_CONTEXT.md) and [`SHARED_RUNTIME.md`](SH
 | AuthN / tenancy / Bill.Master / print gate | [`SHARED_CONTEXT.md`](SHARED_CONTEXT.md) |
 | C# SP **call sites**, handlers, in-repo `.sql` patches | [`SHARED_RUNTIME.md`](SHARED_RUNTIME.md) |
 | Which page reads/writes an object | [`DATA_DICTIONARY.md`](DATA_DICTIONARY.md) |
+| Every column / SP signature on UAT | [`UAT_CATALOG.md`](UAT_CATALOG.md) |
 | Whether an in-repo `.sql` has been applied | §4 below (UAT gaps) |
 | Table / FK / unique-key facts for a domain | This file, then the matching `DOMAIN_*.md` |
 
@@ -249,4 +250,4 @@ GL `tlb_General_expences` is **0** rows.
 
 ## 14. Still not this file
 
-Full column lists for all 111 tables, full SP text, and screenshot manuals stay out of git. Refresh this document from UAT (counts, missing objects, FKs) when the copy is rebuilt — do not check in credentials.
+Full column lists and SP signatures: [`UAT_CATALOG.md`](UAT_CATALOG.md). Stored-procedure **bodies**, ERD drawings, and screenshot manuals stay out of git. Refresh SHARED_SCHEMA from UAT when the copy is rebuilt — do not check in credentials.

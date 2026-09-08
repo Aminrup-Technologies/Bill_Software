@@ -7,4 +7,4 @@ When documenting, reviewing, or changing any `.aspx` page:
 3. Update only the matching `docs/page-catalog/DOMAIN_*.md` row plus `PAGE_INVENTORY.md` status.
 4. Link existing `docs/01`–`docs/22` and `docs/sales-visit-workflow-audit/` instead of rewriting them. Module docs 01–13 are leftover pointers, not a second census.
 5. Never create one markdown file per page. One table per domain.
-6. Refresh the census **and** the page↔object dictionary with `python3 docs/page-catalog/_generate.py`. Text after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md` is kept. One-line quirks live in `_generate.py` (`UNIQUE_NOTES`). Do not hand-edit `DATA_DICTIONARY.md`.
+6. Refresh the census **and** the page↔object dictionary with `python3 docs/page-catalog/_generate.py`. Refresh UAT columns/SP signatures with `python3 docs/page-catalog/_catalog.py` (needs UAT env vars; never commit secrets). Text after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md` is kept. One-line quirks live in `_generate.py` (`UNIQUE_NOTES`). Do not hand-edit `DATA_DICTIONARY.md` or `UAT_CATALOG.md`.
