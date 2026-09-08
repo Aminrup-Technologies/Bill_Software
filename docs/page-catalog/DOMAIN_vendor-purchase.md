@@ -30,7 +30,7 @@ Vendor (Principle) master and purchase-from-vendor. Narrative: docs/05, docs/10.
 
 `New_vendor` / `View_vendor` / `Update_vendor` / `Delete_vendor` maintain `tbl_Vendor` (IDs `AA01`+, field `PrincipleVndrCode`).
 
-Purchase: **existing vendor** `Purches_exting_vendor` (new catalog + `Stores`) or **inline vendor** `Purches_new_vendor` (legacy `tbl_Product`). Header `tbl_Purches` (`PR…`); lines `tbl_purches_details`; optional `tbl_Purchess_payment` (`PN…`) + `tbl_purches_due`. **Vendor PK is stored in purchase `Client_Id`.**
+Purchase: **existing vendor** `Purches_exting_vendor` (new catalog + `Stores`) or **inline vendor** `Purches_new_vendor` (legacy `tbl_Product`). Header `tbl_Purches` (`PR…`); lines `tbl_purches_details`; optional `tbl_Purchess_payment` (`PN…`) + `tbl_purches_due`. Purchase **`Client_Id` = `tbl_Vendor.Vendor_Id`** (business code). The integer PK is **not** stored there. `tbl_Purches` has **no `CompanyID`** — isolation is via the vendor join. UAT: [`SHARED_SCHEMA.md`](SHARED_SCHEMA.md).
 
 List/print: `View_purches` (default last 30 days) and `seartch_purtch` → popup `print/purches_bill.aspx?Purches_Id=`. Edit `EditPurchase`. Delete `Delete_purtches` reverses `tbl_stock` / `tbl_NewProduct` then deletes due/details/header — **does not** delete `tbl_Purchess_payment`.
 

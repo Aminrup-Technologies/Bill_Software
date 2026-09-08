@@ -1,6 +1,6 @@
 # Shared runtime (non-page)
 
-Facts that belong to **handlers, user controls, helpers, SQL scripts, and stored-procedure call sites** — not to a `.aspx` census. Read after [`SHARED_CONTEXT.md`](SHARED_CONTEXT.md). Do **not** copy AuthN, tenancy, or Bill.Master here.
+Facts that belong to **handlers, user controls, helpers, SQL scripts, and stored-procedure call sites** — not to a `.aspx` census. Read after [`SHARED_CONTEXT.md`](SHARED_CONTEXT.md). Live objects vs missing UAT tables: [`SHARED_SCHEMA.md`](SHARED_SCHEMA.md). Do **not** copy AuthN, tenancy, or Bill.Master here.
 
 ---
 
@@ -40,7 +40,7 @@ Ponytail CSS/JS is not a user control here — see [`SHARED_CONTEXT.md`](SHARED_
 | `AppSecrets` | `DbConn` connection string; `GetAppSetting` / `GetInt`; `GetUrlTokenAesKey` (empty key keeps legacy QuickAction decrypt). |
 | `DB_UTILITY` | Legacy ADO wrapper (`Sqlconnection` / `ConnectDb` / `SPreturn_dt` is often **not** an SP). Many pages still `new SqlConnection`. |
 | `PasswordHasher` | PBKDF2 `Rfc2898DeriveBytes`, 100k iterations, 16-byte salt, 32-byte hash; SHA-256 hex for reset tokens; legacy plaintext upgrade path. |
-| `PasswordResetService` | Table **`dbo.PasswordResetTokens`** (not `tbl_PasswordResets`). 32-byte hex token, SHA-256 store, default 30 min (`PasswordResetTokenMinutes`). SQL 208 (missing table) fails closed. Completes via `reset_password.aspx`. |
+| `PasswordResetService` | Table **`dbo.PasswordResetTokens`** (not `tbl_PasswordResets`). 32-byte hex token, SHA-256 store, default 30 min (`PasswordResetTokenMinutes`). SQL 208 (missing table) fails closed. Completes via `reset_password.aspx`. **UAT does not have this table** ([SHARED_SCHEMA.md](SHARED_SCHEMA.md) §4). |
 | `SecurityHelper` | AES URL token (`EncryptToUrlToken` / `DecryptFromUrlToken`) for **`QuickAction.aspx?t=`**. Not HMAC. Key from `AppSecrets.GetUrlTokenAesKey`. |
 | `CommunicationGateway` | Config SMTP (`SmtpFrom`/`SmtpUser`/`SmtpPass`/`SmtpHost`/`SmtpPort`/`SmtpEnableSsl`) + MSG91 `Sendhttp`. `SendCustomEmail` / `SendAlertsAsync` (email and/or WhatsApp). Fail-open (swallow). Visit/HR/index use this. |
 | `InvoiceListHelper` | Shared invoice list SQL/format + **ClosedXML `.xlsx`** export (`ExportVersion` v3). Used by `View_Invoice` / `seartch_invoice`. |
@@ -60,7 +60,7 @@ Do **not** treat `DB_UTILITY` as the only data path.
 
 ## 4. SQL scripts in this repo (not live DDL)
 
-The **live database is not versioned**. These files are patches or snapshots. Do **not** paste bodies into domain catalogs.
+The **live database is not versioned**. These files are patches or snapshots. Do **not** paste bodies into domain catalogs. What actually exists on **`flamex_uat`**: [`SHARED_SCHEMA.md`](SHARED_SCHEMA.md). `UserCompanyAccess.sql` and `PasswordResetTokens.sql` are **not applied** on that copy.
 
 | Path | Unique contents |
 |------|-----------------|
@@ -107,6 +107,8 @@ Bodies live in SQL Server. This is a **call-site index** only. `clientHandlerAdm
 | `sp_GetProductCategories` | `Product_stock.aspx.cs` | Category list. |
 
 Visit/report SQL is **inline** on `tbl_SalesVisitReport` / `tbl_Expenses` / `tbl_SalesVisitResponses`.
+
+UAT also has procs **not** called from C# (amendment/cancel family, `sp_ApproveRequisition` vs `sp_Requisition_Approve`, `sp_ReleasePO` vs `sp_ReleasePO_Final`, stock `usp_*`, `InsertOrGetProduct`, …). Inventory: [`SHARED_SCHEMA.md`](SHARED_SCHEMA.md) §10. Do not paste bodies.
 
 ---
 

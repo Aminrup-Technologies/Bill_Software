@@ -30,7 +30,7 @@ Create/view/search/edit/delete + hydrant quotations. Narrative: docs/09.
 
 ## Standard quotation (`tbl_Quotation`)
 
-`Create_quotation` inserts `RecordType` = `Quotation` **or** `Purchase Order` (second menu `Li2`). QS `visitId` prefills / stores `VisitId`. Doc nos `QTN/{CompanyCode}/{FY}/n` or `PO/{CompanyCode}/{FY}/n`. Lines `tbl_Quotaion_details` (`IsLatest=1`); also `tbl_QutPaymentPhase`, `tbl_QutPrimaryService`. Notification module `SALES`. `sp_getapplock` around save. DeliveryDate/Department blanked for quotation lines. Client PO duplicate check on DO+PO+PO_Date.
+`Create_quotation` inserts `RecordType` = `Quotation` **or** `Purchase Order` (second menu `Li2`). UAT has **only those two values** (75 / 84). QS `visitId` prefills / stores `VisitId` (declared FK); **0 of 159** UAT quotations have a visit id. Doc nos `QTN/{CompanyCode}/{FY}/n` or `PO/{CompanyCode}/{FY}/n`. Lines `tbl_Quotaion_details` (`IsLatest=1`); also `tbl_QutPaymentPhase`, `tbl_QutPrimaryService`. Notification module `SALES`. `sp_getapplock` around save. DeliveryDate/Department blanked for quotation lines. Client PO duplicate check on DO+PO+PO_Date. Schema: [SHARED_SCHEMA.md](SHARED_SCHEMA.md).
 
 Downstream flags (set by other domains): `Status1` proforma done; `Status3` cleared on DPCC delete; `PaymentStatus` on receipt.
 

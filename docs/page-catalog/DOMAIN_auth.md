@@ -24,6 +24,6 @@ Public and keep-alive pages. Shared AuthN lives in docs/14 and docs/22.
 ## Page behavior
 
 - **`index.aspx`:** `btnLogin`; lockout flags `MustUpdateUserId` / `MustVerifyContact`; email OTP `btnSendOTP` / `btnVerifyOTP`; forgot-password via `PasswordResetService` (mail/WhatsApp) → `reset_password.aspx`.
-- **`reset_password.aspx`:** QS `uid` + `token`; `PasswordResetService.TryCompleteReset`.
+- **`reset_password.aspx`:** QS `uid` + `token`; `PasswordResetService.TryCompleteReset`. **`PasswordResetTokens` is not on UAT** ([SHARED_SCHEMA.md](SHARED_SCHEMA.md)).
 - **`SessionKeepAlive.aspx`:** ERP timer; concat SQL on `tbl_login` (kiosk twin is `SessionKeepAlive1`).
 - **`index_start.aspx`:** dead launcher. ImageButton1 → missing `index_quotation.aspx`; ImageButton2 → `index_card.aspx`.

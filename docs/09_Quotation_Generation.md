@@ -26,6 +26,6 @@ Print: `NewQuotation.aspx?ID=` (current) vs legacy `Quotation.aspx?ID=` when dat
 
 ## Visit leftover (D-01)
 
-`Create_quotation` loads `CustomerName` with `WHERE Id=@Id AND CompanyID=@CompanyID` after `UserCanViewVisit`. **New** visits set `CompanyID`. Historical NULL-`CompanyID` rows still return no prefill. See [`00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
+`Create_quotation` loads `CustomerName` with `WHERE Id=@Id AND CompanyID=@CompanyID` after `UserCanViewVisit`. **New** visits set `CompanyID`. **UAT has 0 NULL visit CompanyID**; older live backups can still miss prefill. See [`00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) and [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).
 
-Visit reports do **not** insert `tbl_Quotation` rows. A site visit is not a quotation.
+Visit reports do **not** insert `tbl_Quotation` rows. A site visit is not a quotation. UAT: **0 of 159** quotations have `VisitId` set (FK exists).

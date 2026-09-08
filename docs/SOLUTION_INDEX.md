@@ -2,9 +2,9 @@
 
 AminrupERP / Flame-ex (`Bill_Software`) documentation is split so **shared architecture is written once** and **every `.aspx` page is listed once**.
 
-**Coverage:** all **188** pages are in the census (Reviewed). Each of the **19** domains has a workflow narrative. Handlers/helpers/SPs: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Leftover `docs/01`–`docs/13` are pointers. Visit audit vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
+**Coverage:** all **188** pages are in the census (Reviewed). Each of the **19** domains has a workflow narrative. Handlers/helpers/SPs: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Live UAT objects: [`page-catalog/SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md). Leftover `docs/01`–`docs/13` are pointers. Visit audit vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
 
-**Still not in-repo (needs a live database or ops dump, not more markdown):** full DDL/ERD, stored-procedure bodies, screenshot user manuals.
+**Still not in-repo:** full column dumps / ERD drawings, stored-procedure **bodies**, screenshot user manuals. Object names, FKs, UAT gaps, and SP *signatures* are in SHARED_SCHEMA.
 
 ## Commercial spine (ERP)
 
@@ -17,6 +17,7 @@ Vendor PR [tbl_RequisitionMain] → Vendor PO [tbl_PO_Header] → Print_PO
 Vendor purchase [tbl_Purches] → purchase payment [tbl_Purchess_payment]
 Hydrant track (hidden menu): qsHydrentQuotation → HydrentInvoice
 Visit track: visit_planner → daily_rpt → vw/srch_dailyrpts + expense_entry
+  (table `tbl_SalesVisitReport`, not a table named daily_rpt)
 GL expenses: tlb_General_expences / tbl_patty_cash_expenses (not visit expenses)
 Card kiosk: tbl_card_login / tbl_employee (isolated)
 ```
@@ -28,6 +29,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | How to review the next undocumented/stale page | [page-catalog/RECURSIVE_INSTRUCTIONS.md](page-catalog/RECURSIVE_INSTRUCTIONS.md) |
 | Visit audit findings vs current `.cs` | [sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) |
 | Cross-cutting AuthN, tenancy, master page, print gate | [page-catalog/SHARED_CONTEXT.md](page-catalog/SHARED_CONTEXT.md) |
+| Live UAT schema (tables, FKs, missing objects, SP inventory) | [page-catalog/SHARED_SCHEMA.md](page-catalog/SHARED_SCHEMA.md) |
 | Handlers, ASCX, helpers, SQL scripts, SP call index | [page-catalog/SHARED_RUNTIME.md](page-catalog/SHARED_RUNTIME.md) |
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
 | Product + Ponytail + setup | [README.md](../README.md) |

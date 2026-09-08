@@ -28,7 +28,7 @@ Menu id **`home1`** (label “My Profile”; title “Dashboard”). Not kiosk `
 | Visits / quotes / revenue today and this month | `tbl_SalesVisitReport` where `CreatedByCode` **and** `CompanyID` |
 | Toasts | `tbl_SystemNotification` |
 
-Quote KPI is `LinkedQuotationNo` (non-blank), not a join to `tbl_Quotation`. New visit INSERTs set `CompanyID`; **historical NULL `CompanyID` rows still drop out**. `FLM03` fallback on `daily_rpt` (**D-03**) can still mis-attribute. Leftover: [docs/12](../12_Home_Dashboard.md).
+Quote KPI is `LinkedQuotationNo` (non-blank), not a join to `tbl_Quotation`. New visit INSERTs set `CompanyID`. **UAT has no NULL visit CompanyID** (all 78 = 1). `FLM03` fallback on `daily_rpt` (**D-03**, 2 UAT rows) can still mis-attribute. Leftover: [docs/12](../12_Home_Dashboard.md). Schema: [SHARED_SCHEMA.md](SHARED_SCHEMA.md).
 
 ## `QuickAction.aspx`
 

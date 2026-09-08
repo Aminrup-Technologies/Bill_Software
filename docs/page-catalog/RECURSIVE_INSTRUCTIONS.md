@@ -10,6 +10,7 @@ Maintain a complete, non-duplicative catalog:
 |----------|------|
 | [SHARED_CONTEXT.md](SHARED_CONTEXT.md) | Cross-cutting facts — **read once per session** |
 | [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Handlers, ASCX, helpers, SQL scripts, SP call sites — **not** page census |
+| [SHARED_SCHEMA.md](SHARED_SCHEMA.md) | Live UAT tables, FKs, missing objects — **not** page census |
 | [PAGE_INVENTORY.md](PAGE_INVENTORY.md) | Census of all pages + domain + review status |
 | `DOMAIN_*.md` | Unique facts per page, grouped by business domain |
 | Existing `docs/01`–`docs/22` and `sales-visit-workflow-audit/` | Leftover pointers + specialist narrative — **link, never copy** |
@@ -97,5 +98,5 @@ python3 docs/page-catalog/_generate.py
 
 Everything after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md` is preserved.
 Unique one-liners in `_generate.py` (`UNIQUE_NOTES`) are regenerated into “Page-unique notes”.
-The generator writes **only** `PAGE_INVENTORY.md` and `DOMAIN_*.md` census tables. It must not overwrite `SHARED_CONTEXT.md`, `SHARED_RUNTIME.md`, `RECURSIVE_INSTRUCTIONS.md`, or `SOLUTION_INDEX.md`.
+The generator writes **only** `PAGE_INVENTORY.md` and `DOMAIN_*.md` census tables. It must not overwrite `SHARED_CONTEXT.md`, `SHARED_RUNTIME.md`, `SHARED_SCHEMA.md`, `RECURSIVE_INSTRUCTIONS.md`, or `SOLUTION_INDEX.md`.
 Do not copy SHARED_CONTEXT into domain files.

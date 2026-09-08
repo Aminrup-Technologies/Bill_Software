@@ -44,7 +44,7 @@ Purchase requisition → purchase order. Narrative: docs/10.
 
 `RequisitionNew` (draft/submit, `?reqNo=` to resume) → `View_PR` → `View_PR_Details?reqNo=` → `Approve_PR` or details `mode=approve` (`sp_Requisition_Approve`) → `Generate_PO_From_PR` (Approved PRs with no `tbl_PO_Header`) → preview → `View_PO`.
 
-Statuses: Draft / Submitted / Approved / Cancelled / Rejected. Submit requires rate>0, tax applicable, GST>0. `clientName` on modern PR stores **vendor** name.
+Statuses: Draft / Submitted / Approved / Cancelled / Rejected, plus UAT-observed **`PO_Created`** after vendor PO generation. Submit requires rate>0, tax applicable, GST>0. `clientName` on modern PR stores **vendor** name. Live objects: [SHARED_SCHEMA.md](SHARED_SCHEMA.md).
 
 ## Three requisition implementations
 
@@ -52,7 +52,7 @@ Statuses: Draft / Submitted / Approved / Cancelled / Rejected. Submit requires r
 |------|------|--------|-------|
 | Modern | `pr_create` / `pr_view` / `pr_approve` | `tbl_RequisitionMain` / `tbl_RequisitionNew` + SPs | Live path |
 | Manual | `RequisitionManual*` under hidden `PurchaseRequisition` | Same tables, **no Status/SPs** | Collides with modern rows; concat SQL on search |
-| Legacy bank | orphans `RequisitionCreate` / `RequisitionView` | `tbl_requisition` / `tbl_requisitionBankDetails` | Print `print/Requisition.aspx?requeno=` is **fail-closed** |
+| Legacy bank | orphans `RequisitionCreate` / `RequisitionView` | `tbl_requisition` / `tbl_requisitionBankDetails` | Print `print/Requisition.aspx?requeno=` is **fail-closed**. **Those two tables are not on UAT.** |
 
 ## Page behavior (vendor path)
 

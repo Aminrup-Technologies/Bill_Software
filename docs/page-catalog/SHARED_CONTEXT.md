@@ -2,6 +2,7 @@
 
 This file is the **only** place page-catalog documents may point for AuthN, tenancy, Bill.Master, and print-gate behavior.
 Handlers, helpers, SQL scripts, and SP call sites live in [SHARED_RUNTIME.md](SHARED_RUNTIME.md).
+Live UAT objects, FKs, and code-vs-database gaps live in [SHARED_SCHEMA.md](SHARED_SCHEMA.md).
 Do **not** restate these rules inside domain catalogs or per-page notes.
 
 ## Where the canonical text lives
@@ -15,10 +16,11 @@ Do **not** restate these rules inside domain catalogs or per-page notes.
 | Phase history 0B–3 | [15](../15_Phase0B_Secrets_Deployment.md)–[21](../21_Phase3_Infrastructure_Hardening.md) | Implementation notes — not page catalogs |
 | Sales-visit deep dive | [sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md](../sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) | Which D-* findings are remediating vs still live |
 | Handlers, helpers, SQL, SP callers | [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Non-page surface — do not copy into domains |
+| Live UAT schema | [SHARED_SCHEMA.md](SHARED_SCHEMA.md) | Tables, FKs, missing objects vs code, UAT-only procs |
 
 ## Runtime facts used by every ERP page (do not copy)
 
-1. **Master:** `corporate/business/app/Bill.Master` validates `AuthGuard.TryValidateSession`, binds `UserCompanyAccess` companies, renders menu from `Permissions` ∩ `UserRoles` ∩ `RolePermissions`.
+1. **Master:** `corporate/business/app/Bill.Master` validates `AuthGuard.TryValidateSession`, binds `UserCompanyAccess` companies, renders menu from `Permissions` ∩ `UserRoles` ∩ `RolePermissions`. **UAT does not have `UserCompanyAccess`** — membership queries fail closed ([SHARED_SCHEMA.md](SHARED_SCHEMA.md) §4).
 2. **Page gate:** pages that inherit `SecurePage` call `AuthGuard.EnsurePage` / `EnsurePageAny` in `OnInit` using `RequiredPermissionKey` (must match the `id` on the menu `<li>` in Bill.Master).
 3. **Print gate:** `corporate/business/print/*.aspx` have **no master**. They call `AuthGuard.EnsurePrint(this, resourceKey, queryValue)`. Resource `"unmapped"` **fails closed**.
 4. **Tenant:** `CompanyContext.CurrentCompanyID` from `Session["CompanyID"]`. Queries on tenant tables must use `@CompanyID`.

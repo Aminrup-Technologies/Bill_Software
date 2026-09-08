@@ -4,6 +4,8 @@
 **Depends on:** PR #66 / #67 / #68 / #69. `AuthGuard.HasPermission` SQL, `SecurePage` permission keys, `UserRoles` / `tbl_login.RoleId`, login, ActiveSessions, and ERP `CompanyID` filters are not changed.  
 **STOP honored:** `Session["CompanyID"]` remains the runtime tenant. `dbo.UserCompanyAccess` is the membership ACL. No all-company fallback. No invented multi-company default.
 
+**UAT (`flamex_uat`, 8 Sep 2026):** `dbo.UserCompanyAccess` is **not present**. `AuthGuard` catches the missing-object error and returns no membership. Apply `UserCompanyAccess.sql` + reconciliation only when asked. Live objects: [`page-catalog/SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).
+
 ---
 
 ## What changed

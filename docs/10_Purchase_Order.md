@@ -13,13 +13,15 @@ SPs / print helper: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTI
 
 | Item | Fact |
 |------|------|
-| Tables | `tbl_PO_Header`, `tbl_PO_Items`, `tbl_PO_PartySnapshot` (not `tbl_PO_Details` / `tbl_PO_Charges`) |
-| Upstream | `tbl_RequisitionMain` / `tbl_RequisitionNew` via `sp_GeneratePO_FromReqNo` |
+| Tables | `tbl_PO_Header` (PK `PO_Id`, unique `PO_No`), `tbl_PO_Items`, `tbl_PO_PartySnapshot` (not `tbl_PO_Details` / `tbl_PO_Charges`) |
+| Upstream | `tbl_RequisitionMain` (`VendorId` → `tbl_Vendor.Id`) / `tbl_RequisitionNew` (`ProductId` → `tbl_NewProduct.ProductID`) via `sp_GeneratePO_FromReqNo` |
 | Live pages | `RequisitionNew` → `View_PR` / `View_PR_Details` → `Approve_PR` → `Generate_PO_From_PR` → `Generate_PO_Preview?reqNo=` → `View_PO` / `View_PO_Details?poId=` |
 | Print | `Print_PO.aspx?poId=` — `EnsurePrint` on `tbl_PO_Header.PO_Id`; payload `sp_GetReleasedPO_Details` |
 | Also | Three PR implementations (modern SP path, hidden Manual*, leftover bank `tbl_requisition`) — details in the catalog |
 
 There is no live `PurchaseOrder.aspx` in this tree.
+
+UAT also has **amendment/cancellation** tables and SPs (`tbl_PO_Amendment_*`, `tbl_PO_Cancellation_Request`, `sp_CreatePO_Amendment`, …) with **0 rows** and **no C# callers**. Status after generate-PO includes **`PO_Created`** on the PR. Schema: [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md). Legacy `tbl_requisition` / `tbl_requisitionBankDetails` are **not** on UAT.
 
 ---
 

@@ -24,4 +24,4 @@ Planner, daily report, manager search, visit expenses. Narrative: docs/06, docs/
 
 `visit_planner` (calendar WM `GetCalendarEvents`) → `daily_rpt` (QS `date`/`start`/`end`/`mode`) → `vw_dailyrpts` (owner list + thread) → manager `srch_dailyrpts` (QS `dt`/`emp`). Visit expenses `expense_entry?visitId=` upload `~/Uploads/Expenses/` — **not** GL `general_expences`.
 
-Visit chat/approval mail uses `CommunicationGateway`. Audit findings D-01/D-04/D-05/D-08/D-11 vs current code: [00_SNAPSHOT_STATUS.md](../sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
+Visit chat/approval mail uses `CommunicationGateway`. Audit findings D-01/D-04/D-05/D-08/D-11 vs current code: [00_SNAPSHOT_STATUS.md](../sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md). Live columns/FKs/UAT counts: [SHARED_SCHEMA.md](SHARED_SCHEMA.md).

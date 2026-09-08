@@ -23,8 +23,8 @@ There is no table named `daily_rpt`. That is the **page** name.
 
 ## Unique leftovers (do not recopy the audit)
 
-- **D-01 (forward remediating):** new INSERTs set `CompanyID`. Historical NULL rows still miss manager/home/`Create_quotation` filters.
-- **D-03 (live):** `daily_rpt` null-coalesces `CreatedByCode` to `"FLM03"`.
+- **D-01 (forward remediating):** new INSERTs set `CompanyID`. On **UAT** the column is `NOT NULL DEFAULT (1)` and **no visit is NULL** — historical-NULL leftover is not in this copy. Keep the caveat for older live backups. [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).
+- **D-03 (live):** `daily_rpt` null-coalesces `CreatedByCode` to `"FLM03"`. UAT evidence: **2** rows.
 - **D-05 / D-04 / D-08 / D-11:** remediating or stale for these files — see `00_SNAPSHOT_STATUS.md`.
 - Chat/approval mail uses **`CommunicationGateway`**. Remaining direct `SmtpClient` pages: docs/11.
 

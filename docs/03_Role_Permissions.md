@@ -24,4 +24,6 @@ Do **not** document Bill.Master as the only enforcement point. That was true bef
 
 `UserRoles` has **no** `CompanyID` column. Tenant isolation is query-level, not role-row-level.
 
+UAT: 3 roles, **4** `UserRoles` rows (all Super Admin); all 25 `tbl_login.RoleId` are NULL. **`UserCompanyAccess` is not on UAT** — `AuthGuard` company membership fails closed until the in-repo DDL is applied. [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).
+
 Pages: `corporate/business/app/Update_Designation.aspx` (not `admin/`).

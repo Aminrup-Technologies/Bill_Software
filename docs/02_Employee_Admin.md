@@ -26,3 +26,4 @@ There are no `Add_user.ascx` hosts. Profile popups live under `corporate/busines
 - `sp_AllocateEmployeeLeaves` runs on AddUser insert. It is **not** the only stored procedure in the solution.
 - `ViewUser` WebMethod `SaveGeoFence`.
 - `tbl_login.Password` is the legacy plaintext column; lockout completion that nulls it and writes hash/salt is **`settings.aspx`**, not the Update popups.
+- `tbl_login.User_Id` is unique in UAT data but **has no unique constraint** (non-unique `IDX_User_Id`). Filtered unique on Email / Phone when not null. [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).

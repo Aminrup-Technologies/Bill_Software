@@ -20,4 +20,4 @@ Follow-up INSERT copies `@CompanyID` and sets `ParentVisitId`. **Nothing in the 
 
 ## Downstream links (unique)
 
-Executed-visit UI can deep-link `expense_entry.aspx?visitId=` and `Create_quotation.aspx?visitId=`. Quote prefill still filters by `CompanyID`; **historical NULL `CompanyID` visits** fail to prefill. New INSERTs set the column.
+Executed-visit UI can deep-link `expense_entry.aspx?visitId=` and `Create_quotation.aspx?visitId=`. Quote prefill still filters by `CompanyID`. **`flamex_uat` has 0 NULL visit CompanyID**; older live backups may still fail to prefill those rows. New INSERTs set the column. Schema: [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).

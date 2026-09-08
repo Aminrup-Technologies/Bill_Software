@@ -30,4 +30,4 @@ Visit GPS is captured on `visit_planner` execute, not on `attendance.aspx`. Join
 
 ## Tenant leftover
 
-Admin FieldSales aggregation filters `tbl_SalesVisitReport.CompanyID`. **New** visit INSERTs populate that column. Rows created before the D-01 fix (NULL `CompanyID`) still under-count the CTE. Snapshot: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
+Admin FieldSales aggregation filters `tbl_SalesVisitReport.CompanyID`. **New** visit INSERTs populate that column. **`flamex_uat` has 0 NULL CompanyID visits** (DEFAULT 1). Older live backups may still have NULLs. Snapshot: [`00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md). Schema: [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).

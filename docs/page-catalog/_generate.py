@@ -524,8 +524,9 @@ def write_domain_file(domain: str, pages: list[dict]) -> str:
     return "\n".join(lines)
 
 
-# Do not write SHARED_CONTEXT.md, SHARED_RUNTIME.md, RECURSIVE_INSTRUCTIONS.md,
-# or SOLUTION_INDEX.md from this script. Those are hand-maintained.
+# Do not write SHARED_CONTEXT.md, SHARED_RUNTIME.md, SHARED_SCHEMA.md,
+# RECURSIVE_INSTRUCTIONS.md, or SOLUTION_INDEX.md from this script.
+# Those are hand-maintained.
 
 
 def write_inventory(pages: list[dict]) -> str:
@@ -535,8 +536,9 @@ def write_inventory(pages: list[dict]) -> str:
         f"Total `.aspx` pages: **{len(pages)}**. Census status is Reviewed "
         "(every page has a catalog row). Domain workflows live after "
         "`<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md`. "
-        "See [SHARED_CONTEXT.md](SHARED_CONTEXT.md) for AuthN/tenancy and "
-        "[SHARED_RUNTIME.md](SHARED_RUNTIME.md) for handlers/helpers/SPs.",
+        "See [SHARED_CONTEXT.md](SHARED_CONTEXT.md) for AuthN/tenancy, "
+        "[SHARED_RUNTIME.md](SHARED_RUNTIME.md) for handlers/helpers/SPs, "
+        "and [SHARED_SCHEMA.md](SHARED_SCHEMA.md) for live UAT objects.",
         "",
         "Shared architecture is not recorded here. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md).",
         "",
