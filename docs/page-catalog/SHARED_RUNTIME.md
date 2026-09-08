@@ -47,6 +47,7 @@ Ponytail CSS/JS is not a user control here — see [`SHARED_CONTEXT.md`](SHARED_
 | `PurchaseOrderPrintHelper` | HTML bind for **client PO** print (`NewPurchaseOrder_Print.aspx?ID=` = `tbl_Quotation.ID`). Not vendor `tbl_PO_Header`. |
 | `MoneyConvDS` | Amount-in-words on print pages. |
 | `CryptoRandom` | Token/salt bytes for hasher and reset. |
+| `UserRoleAssignment` | Static helper (`TryEnsureMapping`, `AlignDisplayRoleFromUserRoles`, `TrySyncDisplayRoleChange`). Seeds `UserRoles` from `tbl_login.RoleId` on create/edit, keeping the display role in sync. Called from `AddUser`, `Update_Designation`, `ViewUser`. |
 | `App_Start/AuthConfig` | Empty OpenAuth stub (`RegisterOpenAuth`). Not ERP login. |
 | `App_Start/BundleConfig` | Script/style bundles. Not AuthN. |
 
