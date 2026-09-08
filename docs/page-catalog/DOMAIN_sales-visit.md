@@ -24,4 +24,4 @@ Planner, daily report, manager search, visit expenses. Narrative: docs/06, docs/
 
 `visit_planner` (calendar WM `GetCalendarEvents`) → `daily_rpt` (QS `date`/`start`/`end`/`mode`) → `vw_dailyrpts` (owner list + thread) → manager `srch_dailyrpts` (QS `dt`/`emp`). Visit expenses `expense_entry?visitId=` upload `~/Uploads/Expenses/` — **not** GL `general_expences`.
 
-SMTP still hardcoded on `vw_dailyrpts` / `srch_dailyrpts` (defect D-11 in the audit).
+Visit chat/approval mail uses `CommunicationGateway` (AppSettings SMTP). Audit **D-11 hardcoded Zoho in these two files is stale** — see [docs/11](../11_Communications.md).

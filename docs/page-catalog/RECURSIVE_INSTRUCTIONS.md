@@ -9,9 +9,10 @@ Maintain a complete, non-duplicative catalog:
 | Artifact | Role |
 |----------|------|
 | [SHARED_CONTEXT.md](SHARED_CONTEXT.md) | Cross-cutting facts — **read once per session** |
+| [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Handlers, ASCX, helpers, SQL scripts, SP call sites — **not** page census |
 | [PAGE_INVENTORY.md](PAGE_INVENTORY.md) | Census of all pages + domain + review status |
 | `DOMAIN_*.md` | Unique facts per page, grouped by business domain |
-| Existing `docs/01`–`docs/22` and `sales-visit-workflow-audit/` | Deep narrative — **link, never copy** |
+| Existing `docs/01`–`docs/22` and `sales-visit-workflow-audit/` | Leftover pointers + specialist narrative — **link, never copy** |
 
 ## Recursion (do this until the queue is empty)
 
@@ -19,8 +20,9 @@ Maintain a complete, non-duplicative catalog:
 REVIEW_NEXT_PAGE:
   1. Open PAGE_INVENTORY.md. If every row is Reviewed, STOP and run CONSISTENCY_PASS.
   2. Take the first row whose status is Pending (or Stale if the .aspx/.cs hash changed).
-  3. Load SHARED_CONTEXT.md if not already loaded this session. Do not reload README or
-     security docs unless the page is auth, print, or card-kiosk.
+  3. Load SHARED_CONTEXT.md if not already loaded this session. Load SHARED_RUNTIME.md
+     only for .ashx / .ascx / helper / SP work. Do not reload README or security docs
+     unless the page is auth, print, or card-kiosk.
   4. Read only:
        a. the .aspx Page directive (Title, MasterPageFile, Inherits)
        b. the .aspx.cs class declaration, RequiredPermissionKey / EnsurePrint,
@@ -43,7 +45,8 @@ CONSISTENCY_PASS:
   4. Menu ids in Bill.Master that point at an .aspx must appear as menu_id on that page.
   5. Pages inheriting SecurePage must show a permission key or any-keys.
   6. Print pages must show EnsurePrint resource (including unmapped/fail-closed).
-  7. STOP.
+  7. docs/01–docs/13 must not contradict DOMAIN_*.md (wrong table names, admin/ vs app/ paths).
+  8. STOP.
 ```
 
 ## Classification (first fit)
@@ -59,8 +62,8 @@ commercial domain; the print page is documented once under print with a resource
 - **No copy-forward.** Do not clone a neighbor page's paragraph and change the filename.
 - **Shared SQL tables** (e.g. `tbl_login`, `ActiveSessions`) belong in SHARED_CONTEXT
   unless this page's use is unusual (writes password hash, bypasses CompanyID, etc.).
-- **Existing module docs** remain the narrative. Catalog rows only add file-level facts
-  those narratives omitted (class name, permission key, QS, WebMethods).
+- **Existing module docs** are leftover-fact pointers (01–13) or specialist history (14–22).
+  Catalog rows hold file-level facts (class name, permission key, QS, WebMethods).
 - **Do not create one markdown file per page.** That duplicates context. One table per domain.
 
 ## When source changes
@@ -94,4 +97,5 @@ python3 docs/page-catalog/_generate.py
 
 Everything after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md` is preserved.
 Unique one-liners in `_generate.py` (`UNIQUE_NOTES`) are regenerated into “Page-unique notes”.
+The generator writes **only** `PAGE_INVENTORY.md` and `DOMAIN_*.md` census tables. It must not overwrite `SHARED_CONTEXT.md`, `SHARED_RUNTIME.md`, `RECURSIVE_INSTRUCTIONS.md`, or `SOLUTION_INDEX.md`.
 Do not copy SHARED_CONTEXT into domain files.

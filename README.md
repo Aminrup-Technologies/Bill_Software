@@ -289,6 +289,7 @@ The solution is documented so **shared architecture is written once** and **ever
 | [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md) | Hub: catalogs + module narratives |
 | [`docs/page-catalog/RECURSIVE_INSTRUCTIONS.md`](docs/page-catalog/RECURSIVE_INSTRUCTIONS.md) | Self-recursive playbook to review the next page |
 | [`docs/page-catalog/SHARED_CONTEXT.md`](docs/page-catalog/SHARED_CONTEXT.md) | AuthN, tenancy, master, print gate — do not copy |
+| [`docs/page-catalog/SHARED_RUNTIME.md`](docs/page-catalog/SHARED_RUNTIME.md) | Handlers, helpers, SQL scripts, SP call index |
 | [`docs/page-catalog/PAGE_INVENTORY.md`](docs/page-catalog/PAGE_INVENTORY.md) | Census of all 188 pages |
 
 When documenting or changing a page, follow the recursive playbook: read shared context once, write **only unique facts** into the matching `DOMAIN_*.md` row, and link existing module docs instead of restating them.

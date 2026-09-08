@@ -1,118 +1,41 @@
-# Module 11 — Email & SMS Integration
+# Communications (email / SMS)
 
-> Master Page Menu Position: **Corporate → Email** / **Corporate → SMS** (or accessible from administrative areas)
+AuthN/tenancy: [`page-catalog/SHARED_CONTEXT.md`](page-catalog/SHARED_CONTEXT.md).  
+SMTP keys + `CommunicationGateway` + reset tokens: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md).  
+Mailer **pages**: invoice [`DOMAIN_invoice.md`](page-catalog/DOMAIN_invoice.md), proforma [`DOMAIN_proforma.md`](page-catalog/DOMAIN_proforma.md), payment [`DOMAIN_payments.md`](page-catalog/DOMAIN_payments.md).
 
----
-
-## 1. Overview
-
-The Communications module provides email and SMS integration for the ERP system. Email is used for authentication flows (login OTP, password reset), sales visit notifications (chat messages, approval/rejection alerts), and potentially for quotation/PO delivery. SMS integration provides an additional notification channel for time-sensitive communications.
+This file is the **mailer inventory**. Do not copy page census here.
 
 ---
 
-## 2. Files
+## Two send paths (current code)
 
-| File | Type | Purpose |
-|------|------|---------|
-| `corporate/business/app/vw_dailyrpts.aspx.cs` | Backend | `SendChatEmailNotification` — salesperson-side chat notification email |
-| `corporate/business/app/srch_dailyrpts.aspx.cs` | Backend | `SendChatEmailNotification`, `SendApprovalNotification` — manager-side notification emails |
-| `index.aspx.cs` | Backend | `SendEmail` — authentication-related emails (OTP, password reset) |
-| SMS pages (inferred) | Frontend/Backend | SMS sending and history |
+| Path | Config | Used by |
+|------|--------|---------|
+| **`CommunicationGateway`** | `Smtp*` AppSettings + MSG91 | Visit chat/approval (`vw_dailyrpts`, `srch_dailyrpts`), `index` reset mail, `settings` verification, `MyLeaves` / `AdminOverride` / `AdminApprovalDashboard` / `attendance` / `QuickAction` |
+| **Direct `SmtpClient`** | Mix of AppSettings and leftover construction | `InvoiceMail`, `ProformaMail`, `PaymentMail`, `Set_quatation` (send commented out), `ViewUser`, `Update/password` |
 
-### Email Configuration Sources
-
-| Source | Files | Pattern |
-|--------|-------|---------|
-| **Hardcoded in source** | `vw_dailyrpts.aspx.cs`, `srch_dailyrpts.aspx.cs` | Literal `SmtpClient("smtp.zoho.in", 587)` + `NetworkCredential(email, password)` — **Defect D-11** |
-| **`ConfigurationManager.AppSettings`** | `index.aspx.cs` | Reads `SmtpFrom`, `SmtpUser`, `SmtpPass`, `SmtpHost`, `SmtpPort`, `SmtpEnableSsl` from `Web.config` — **correct pattern** |
+Visit pages **no longer hardcode Zoho credentials** in source (audit **D-11 is stale** for `vw_dailyrpts` / `srch_dailyrpts`). They call `CommunicationGateway.SendCustomEmail`. Credential values still live in `Web.config` AppSettings — do not paste them into docs.
 
 ---
 
-## 3. Core Database Tables
+## Mailer pages / services
 
-| Table | Usage in This Module |
-|-------|---------------------|
-| `tbl_login` | Email address resolution for notification recipients |
-| `tbl_SalesVisitReport` | Visit data embedded in email body |
-| `tbl_SalesVisitResponses` | Chat history embedded in email body |
-| `tbl_Expenses` | Expense data embedded in email body |
-| `tbl_SystemNotification` | Audit trail for sent notifications |
+| Surface | Unique job |
+|---------|------------|
+| `InvoiceMail.aspx` | Stamps `tbl_Invoice.mailStatus` / `mailDate`. UI title wrongly “Set Quotation”; grid print wrongly `proforma_invoice.aspx`. Menu `InvoiceMail`. Not a `SecurePage`. |
+| `ProformaMail.aspx` | Stamps proforma `mailStatus` / `mail_Date`. Menu `ProformaMail`. |
+| `PaymentMail.aspx` | Stamps payment mail fields. Body historically hard-codes host `i2isoft.aminruptechnologies.co.in`. Menu `PaymentMail`. |
+| `Set_quatation.aspx` | Menu “Set Quotation Permission”; stamps quote mail flags; **SendMail commented out**. |
+| `QuickAction.aspx` | AES token `t` (leave/reg approve). Emails via gateway. |
+| `PasswordResetService` | `dbo.PasswordResetTokens`; `{reset_password.aspx}?token=` + `uid`. |
+| MSG91 | WhatsApp/SMS from `CommunicationGateway.SendAlertsAsync` when a mobile is passed. |
+| iTop AppSettings | Support-ticket REST — **not** SMTP. |
 
-### Key Queries for Email Recipient Resolution
-
-| Recipient | Resolution Path |
-|-----------|----------------|
-| Manager (for salesperson chat reply) | `tbl_SalesVisitReport.CreatedByCode` → `tbl_login.User_Id` → `tbl_login.ReportingManagerId` → `Manager.Email` |
-| Salesperson (for manager chat reply) | `tbl_SalesVisitReport.CreatedByCode` → `tbl_login.User_Id` → `tbl_login.Email` |
-| Visit creator (for approval notification) | `tbl_SalesVisitReport.CreatedByCode` → `tbl_login.Email` |
+PDF bytes typically come from the matching **print** page, not a third renderer.
 
 ---
 
-## 4. Multi-Tenant Constraints
+## Not email
 
-| Constraint | Status | Evidence |
-|-----------|--------|----------|
-| Email recipient resolution scoped by tenant | ❌ **Not enforced** | `ReportingManagerId` join does not include `CompanyID` — a manager in a different company could theoretically be the target if `ReportingManagerId` points to them |
-
-### Tenant Isolation Gap
-
-Email routing uses `ReportingManagerId` (which is a global, non-tenant-scoped column) to resolve the manager's email. If a `ReportingManagerId` value happens to point to a user in a different company, the notification email would be sent across tenant boundaries. This is a low-probability but theoretically possible cross-tenant data leak via email.
-
----
-
-## 5. Proactive Notification Triggers
-
-| Trigger | Email Subject | Recipient |
-|---------|--------------|-----------|
-| Salesperson sends chat reply | "Sales Visit Report - Salesperson Reply" | Manager (via `ReportingManagerId`) |
-| Manager sends chat reply | "Sales Visit Report - Manager Reply" | Salesperson (via `CreatedByCode`) |
-| Visit approved | "Sales Visit & Expenses - Approved (ID: {id})" | Visit creator (via `CreatedByCode`) |
-| Visit rejected | "Sales Visit & Expenses - Rejected (ID: {id})" | Visit creator (via `CreatedByCode`) |
-
----
-
-## 6. Architectural Notes
-
-### Two Incompatible SMTP Configurations
-
-The application uses **two different SMTP configurations** simultaneously:
-
-1. **Authentication emails** (`index.aspx.cs`): Read from `ConfigurationManager.AppSettings` — configurable, rotatable without code changes.
-2. **Sales Visit notifications** (`vw_dailyrpts.aspx.cs`, `srch_dailyrpts.aspx.cs`): **Hardcoded** in source code — requires code change and redeploy to rotate.
-
-This means the Sales Visit workflow's SMTP credentials are:
-- **Exposed in source control history** to anyone with repository access.
-- **Not rotatable** via configuration — requires a code change and redeployment.
-- **Inconsistent** with the application's own established pattern.
-
-### Silent Failure Pattern (D-10)
-
-All three notification-sending methods wrap their entire body in `catch (Exception) { /* fail silently */ }`. If SMTP delivery fails for any reason (credential expiry, network issue, DNS failure, recipient rejection), the user receives **zero indication** that the notification was not delivered. The underlying business action (chat message, approval) still reports success.
-
-### Email Validation Inconsistency (D-07)
-
-- `srch_dailyrpts.aspx.cs`: Validates recipient email with regex `^[^@\s]+@[^@\s]+\.[^@\s]+$` before attempting to send.
-- `vw_dailyrpts.aspx.cs`: Only checks `string.IsNullOrWhiteSpace(emailTo)` — no format validation. A malformed address will reach `SmtpClient`, fail, and be silently swallowed (D-10).
-
-### Email Body Content
-
-Email templates embed:
-- Full visit record details
-- Complete chat history
-- Hardcoded absolute attachment URL: `https://www.exc.aagroupindia.com/Uploads/{AttachmentName}`
-- **Incorrect claim** that expenses were auto-updated with visit approval (see `08_Expense_Management.md`)
-
-The hardcoded domain in email links means email content is environment-specific and would break if the deployment domain changes.
-
----
-
-## 7. Known Defects
-
-| ID | Severity | Description |
-|----|----------|-------------|
-| D-07 | Medium | Missing email format validation in salesperson-side notification |
-| D-10 | Medium | Silent notification failures — all SMTP errors swallowed |
-| D-11 | **High** | Hardcoded SMTP credentials committed to source control |
-| D-18 | Architectural | Duplicated email template logic across two files |
-| — | Medium | Email body incorrectly claims expenses were auto-updated |
-| — | Low | Hardcoded deployment domain in email attachment links |
+`GlobalNotification.ascx` is in-app (and currently throws in `OnInit`) — [`SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). `tbl_SystemNotification` INSERTs are audit/feed rows, not SMTP.

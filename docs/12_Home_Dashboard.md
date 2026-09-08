@@ -1,89 +1,28 @@
-# Module 12 — Homepage Dashboard & KPIs
+# Homepage dashboard
 
-> Master Page Menu Position: **Home** (primary navigation item, all authenticated users)
+Canonical pages: [`page-catalog/DOMAIN_dashboard.md`](page-catalog/DOMAIN_dashboard.md) (`home.aspx`, `QuickAction.aspx`).  
+AuthN/tenancy: [`page-catalog/SHARED_CONTEXT.md`](page-catalog/SHARED_CONTEXT.md).
 
----
-
-## 1. Overview
-
-The Homepage Dashboard provides at-a-glance KPIs and summaries for field-sales personnel. It displays today's visit count, monthly visit totals, revenue realized, and other operational metrics drawn from the `tbl_SalesVisitReport` table. The dashboard serves as the landing page after login and the primary orientation point for the application.
+This file keeps **leftover facts** that are not in the catalog.
 
 ---
 
-## 2. Files
+## What `home.aspx` actually aggregates
 
-| File | Type | Purpose |
-|------|------|---------|
-| `corporate/business/app/home.aspx` | Frontend | Dashboard layout, KPI cards, chart containers |
-| `corporate/business/app/home.aspx.cs` | Backend | KPI aggregation queries (`COUNT(Id)`, `SUM(RevenueRealized)`) |
+Menu id **`home1`** (label “My Profile”; title “Dashboard”). Not `admin/home.aspx` (that is the **kiosk** home).
 
-### Supporting Files
+| KPI | Source |
+|-----|--------|
+| Punch status / days present | `tbl_Attendance` (`UserCode`, `AttendanceStatus`) |
+| Visits / quotes / revenue today and this month | `tbl_SalesVisitReport` filtered by **`CreatedByCode` and `CompanyID`** |
+| Toasts | `tbl_SystemNotification` |
 
-| File | Relationship |
-|------|-------------|
-| `Bill.Master[.cs]` | Master Page — shell layout, navigation, session validation |
-| `Chart.js` (Scripts/) | Client-side charting library for KPI visualization |
-| `DB_UTILITY.cs` | Database connection utilities |
+There is no `tbl_SalesVisitReport`-only dashboard, and Chart.js is not the current KPI implementation to document as required.
 
----
-
-## 3. Core Database Tables
-
-| Table | Usage in This Module |
-|-------|---------------------|
-| `tbl_SalesVisitReport` | Primary data source — `COUNT(Id)` for visit counts, `SUM(RevenueRealized)` for revenue KPIs |
-| `tbl_login` | Current user identity for scoping queries |
-
-### Key Queries
-
-| Query | Purpose | Filter |
-|-------|---------|--------|
-| `COUNT(Id)` | Today's visit count | `WHERE CreatedByCode = @UserId AND CAST(VisitDate AS DATE) = @Today` |
-| `COUNT(Id)` | This month's visit count | `WHERE CreatedByCode = @UserId AND MONTH(VisitDate) = @Month AND YEAR(VisitDate) = @Year` |
-| `SUM(RevenueRealized)` | Revenue realized (this month) | `WHERE CreatedByCode = @UserId AND ...` |
+Visit counts still depend on **D-01** (NULL `CompanyID` visits drop out of these queries) and **D-03** (`FLM03` mis-attribution). `LinkedQuotationNo` drives the “quotes” KPI — not a join to `tbl_Quotation`.
 
 ---
 
-## 4. Multi-Tenant Constraints
+## `QuickAction.aspx`
 
-| Constraint | Status | Evidence |
-|-----------|--------|----------|
-| `CreatedByCode` filter on KPI queries | ✅ Enforced | Dashboard queries scope by the current user's `CreatedByCode` |
-| `CompanyID` filter | ❌ **Not applied** | Dashboard is self-service (own data only), so `CompanyID` scoping is not strictly necessary — but consistency with the broader pattern would recommend it |
-
-### Tenant Isolation Pattern
-
-The dashboard is a **self-service view** — it shows only the current user's own KPIs, scoped by `CreatedByCode = @UserId`. Since the query already filters to a single user, `CompanyID` scoping is redundant (a user can only belong to one company). However, the `RevenueRealized` metric is impacted by the D-01 defect: visits created without a `CompanyID` will still appear in this user-scoped query, but they may be absent from company-level rollups (e.g., `AdminAttendanceDashboard`).
-
----
-
-## 5. Proactive Notification Triggers
-
-| Trigger | Table | Description |
-|---------|-------|-------------|
-| None | — | This module is read-only (dashboard/aggregation). No CRUD operations trigger `tbl_SystemNotification` inserts. |
-
----
-
-## 6. Architectural Notes
-
-### KPI Accuracy
-
-Dashboard KPIs are derived from `tbl_SalesVisitReport` aggregations. The accuracy of these KPIs depends on:
-
-1. **`CreatedByCode` consistency** — visits created with the hardcoded `"FLM03"` fallback (Defect D-03) during session expiry would appear under the wrong user's dashboard.
-2. **`RevenueRealized` population** — this column is not referenced by the Sales Visit Workflow Audit's analyzed files, so its population source and completeness are uncertain.
-3. **Visit status filtering** — the dashboard appears to count all visits regardless of `ApprovalStatus` or `VisitPhase`, meaning Planned visits that were never executed are counted alongside completed visits.
-
-### Navigation Hub
-
-The homepage serves as the navigation hub connecting to all major modules:
-- Sales Visit Planner (calendar view)
-- My Sales Visits (visit list)
-- Manager Dashboard (for authorized users)
-- Expense Management
-- Admin modules (for admin users)
-
-### No Server-Side Validation Concerns
-
-As a read-only dashboard, this module has no server-side validation or mutation concerns. The primary risk is data accuracy based on upstream data quality issues (D-01, D-03).
+Same domain, **not** the dashboard UI. Unauthenticated AES token `t` for leave / attendance-regularization approve/reject. Helpers: [`SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md).

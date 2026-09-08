@@ -1,5 +1,9 @@
 # Discovery Report: Invoice Search, Invoice View, and Purchase Order Print
 
+Canonical current census: [`page-catalog/DOMAIN_invoice.md`](page-catalog/DOMAIN_invoice.md) (`seartch_invoice`, `View_Invoice`), [`page-catalog/DOMAIN_print.md`](page-catalog/DOMAIN_print.md) (`NewPurchaseOrder.aspx?ID=` = **quotation** id / client PO). Export helper is now `InvoiceListHelper` ClosedXML `.xlsx` — [`SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Two PO stacks: [`docs/10_Purchase_Order.md`](10_Purchase_Order.md).
+
+**This file is a dated discovery snapshot.** Where it disagrees with the catalogs (CSV vs xlsx, “no session auth” vs `EnsurePrint`, `DB_UTILITY.SPreturn_dt`), **trust the catalogs**. Unique leftovers that remain: filename `seartch_invoice`, Repeater (not GridView) lists, `SPreturn_dt` misnomer.
+
 **Pass type:** Read-only discovery. No code was modified.  
 **Date:** 2026-09-03  
 **Branch context:** `July_to_Sept26_DevNSupport`  

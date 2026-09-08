@@ -1,6 +1,6 @@
 # Page inventory
 
-Total `.aspx` pages: **188**. Census status is Reviewed (every page has a catalog row). Domain workflows live after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md`. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md) for AuthN/tenancy.
+Total `.aspx` pages: **188**. Census status is Reviewed (every page has a catalog row). Domain workflows live after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md`. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md) for AuthN/tenancy and [SHARED_RUNTIME.md](SHARED_RUNTIME.md) for handlers/helpers/SPs.
 
 Shared architecture is not recorded here. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md).
 

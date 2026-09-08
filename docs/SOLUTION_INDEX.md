@@ -2,7 +2,7 @@
 
 AminrupERP / Flame-ex (`Bill_Software`) documentation is split so **shared architecture is written once** and **every `.aspx` page is listed once**.
 
-**Coverage:** all **188** pages are in the census. Each of the **19** domains has a workflow + page-behavior narrative (not a duplicate of AuthN/tenancy). Deep specialist write-ups remain in `docs/01`–`docs/22` and are linked from the catalogs.
+**Coverage:** all **188** pages are in the census. Each of the **19** domains has a workflow + page-behavior narrative (not a duplicate of AuthN/tenancy). Handlers, helpers, SQL scripts, and SP call sites are in [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). `docs/01`–`docs/13` are **leftover-fact pointers** into those catalogs (not a second census). Deep specialist write-ups remain in `docs/14`–`docs/22` and `sales-visit-workflow-audit/`.
 
 ## Commercial spine (ERP)
 
@@ -14,7 +14,7 @@ Quotation (or Client PO) [tbl_Quotation]
 Vendor PR [tbl_RequisitionMain] → Vendor PO [tbl_PO_Header] → Print_PO
 Vendor purchase [tbl_Purches] → purchase payment [tbl_Purchess_payment]
 Hydrant track (hidden menu): qsHydrentQuotation → HydrentInvoice
-Visit track: planner → daily_rpt → vw/srch_dailyrpts + expense_entry
+Visit track: visit_planner → daily_rpt → vw/srch_dailyrpts + expense_entry
 GL expenses: tlb_General_expences / tbl_patty_cash_expenses (not visit expenses)
 Card kiosk: tbl_card_login / tbl_employee (isolated)
 ```
@@ -25,6 +25,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 |--------------|------|
 | How to review the next undocumented/stale page | [page-catalog/RECURSIVE_INSTRUCTIONS.md](page-catalog/RECURSIVE_INSTRUCTIONS.md) |
 | Cross-cutting AuthN, tenancy, master page, print gate | [page-catalog/SHARED_CONTEXT.md](page-catalog/SHARED_CONTEXT.md) |
+| Handlers, ASCX, helpers, SQL scripts, SP call index | [page-catalog/SHARED_RUNTIME.md](page-catalog/SHARED_RUNTIME.md) |
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
@@ -53,23 +54,23 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Print layouts | 29 | [page-catalog/DOMAIN_print.md](page-catalog/DOMAIN_print.md) |
 | ID-card kiosk (isolated) | 17 | [page-catalog/DOMAIN_card-kiosk.md](page-catalog/DOMAIN_card-kiosk.md) |
 
-## Module narratives (do not duplicate into catalogs)
+## Module narratives (pointers + unique leftovers — do not duplicate catalogs)
 
 | Doc | Topic |
 |-----|--------|
-| [01_Attendance_Clock.md](01_Attendance_Clock.md) | Attendance |
-| [02_Employee_Admin.md](02_Employee_Admin.md) | User provisioning |
-| [03_Role_Permissions.md](03_Role_Permissions.md) | Roles / permissions |
-| [04_Department_Designation.md](04_Department_Designation.md) | Dept / designation |
-| [05_Customer_Vendor.md](05_Customer_Vendor.md) | Customer / vendor directory |
-| [06_Sales_Visit_Planner.md](06_Sales_Visit_Planner.md) | Visit calendar |
-| [07_Sales_Visit_Reporting.md](07_Sales_Visit_Reporting.md) | Daily reports / approval |
-| [08_Expense_Management.md](08_Expense_Management.md) | Visit expenses |
-| [09_Quotation_Generation.md](09_Quotation_Generation.md) | Quotations |
-| [10_Purchase_Order.md](10_Purchase_Order.md) | Purchase orders |
-| [11_Communications.md](11_Communications.md) | Email / SMS |
-| [12_Home_Dashboard.md](12_Home_Dashboard.md) | Home KPIs |
-| [13_Invoice_Search_View_PO_Discovery.md](13_Invoice_Search_View_PO_Discovery.md) | Invoice search/view discovery |
+| [01_Attendance_Clock.md](01_Attendance_Clock.md) | Attendance leftover (FieldSales CTE, D-01) |
+| [02_Employee_Admin.md](02_Employee_Admin.md) | ERP user leftover (`tbl_login`, not `admin/`) |
+| [03_Role_Permissions.md](03_Role_Permissions.md) | Dual role systems; SecurePage is a gate |
+| [04_Department_Designation.md](04_Department_Designation.md) | No dept CRUD; `Update_Designation` = UserRoles |
+| [05_Customer_Vendor.md](05_Customer_Vendor.md) | `tbl_Client` / `tbl_Vendor`; visit name is free text |
+| [06_Sales_Visit_Planner.md](06_Sales_Visit_Planner.md) | Calendar GPS + D-06 ParentVisitId |
+| [07_Sales_Visit_Reporting.md](07_Sales_Visit_Reporting.md) | Visit D-01…D-03; D-11 stale |
+| [08_Expense_Management.md](08_Expense_Management.md) | Visit `tbl_Expenses` ≠ GL expenses |
+| [09_Quotation_Generation.md](09_Quotation_Generation.md) | Confirmed `tbl_Quotation`; visit prefill D-01 |
+| [10_Purchase_Order.md](10_Purchase_Order.md) | Two PO stacks (vendor vs client) |
+| [11_Communications.md](11_Communications.md) | Gateway vs direct SmtpClient |
+| [12_Home_Dashboard.md](12_Home_Dashboard.md) | `home.aspx` KPIs + QuickAction |
+| [13_Invoice_Search_View_PO_Discovery.md](13_Invoice_Search_View_PO_Discovery.md) | Dated discovery snapshot (catalogs win) |
 | [sales-visit-workflow-audit/](sales-visit-workflow-audit/) | Visit architecture audit |
 | [14](14_Authentication_Authorization_Architecture.md)–[21](21_Phase3_Infrastructure_Hardening.md) | AuthZ phases (history) |
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |

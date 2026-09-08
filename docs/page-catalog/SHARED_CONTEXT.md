@@ -1,6 +1,7 @@
 # Shared context (read once)
 
-This file is the **only** place page-catalog documents may point for cross-cutting behavior.
+This file is the **only** place page-catalog documents may point for AuthN, tenancy, Bill.Master, and print-gate behavior.
+Handlers, helpers, SQL scripts, and SP call sites live in [SHARED_RUNTIME.md](SHARED_RUNTIME.md).
 Do **not** restate these rules inside domain catalogs or per-page notes.
 
 ## Where the canonical text lives
@@ -13,6 +14,7 @@ Do **not** restate these rules inside domain catalogs or per-page notes.
 | AuthN / AuthZ review | [14_Authentication_Authorization_Architecture.md](../14_Authentication_Authorization_Architecture.md) | Defects A-01…A-31, dual role systems |
 | Phase history 0B–3 | [15](../15_Phase0B_Secrets_Deployment.md)–[21](../21_Phase3_Infrastructure_Hardening.md) | Implementation notes — not page catalogs |
 | Sales-visit deep dive | [sales-visit-workflow-audit/](../sales-visit-workflow-audit/) | State machine, tables, defects D-* |
+| Handlers, helpers, SQL, SP callers | [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Non-page surface — do not copy into domains |
 
 ## Runtime facts used by every ERP page (do not copy)
 
