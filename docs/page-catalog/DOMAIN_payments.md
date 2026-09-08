@@ -20,3 +20,23 @@ Collections, due lists, mailers, purchase-side payments.
 | `corporate/business/app/add_payment.aspx` | Add Payment | Bill.Master / `WebForm34` | Bill.Master, CompanyID<br>menu `add_payment` | `tbl_Client`, `tbl_Quotation`, `tbl_QuoPriSerTogather`, `tbl_invoice_due`, `tbl_invoice_payment`, `tbl_Invoice`, `tbl_invoice_payment_tds` | INSERT, UPDATE | this catalog |
 | `corporate/business/app/add_payment_purchess.aspx` | Add Payment against Purchase | Bill.Master / `WebForm46` | Bill.Master, CompanyID<br>menu `add_payment_purchess` | `tbl_Vendor`, `tbl_Purches`, `tbl_purches_due`, `tbl_Purchess_payment` | INSERT, UPDATE | this catalog |
 | `corporate/business/app/seartch_payment.aspx` | Search Payment | Bill.Master / `WebForm36` | Bill.Master, CompanyID<br>menu `seartch_payment` | `tbl_Client`, `tbl_invoice_payment`, `tbl_QuoPriSerTogather` | SELECT | this catalog |
+
+<!-- NARRATIVE:BEGIN -->
+
+## Customer receipts
+
+Receipts are against **quotation**, not an invoice picker. IDs `P00{n}`. Modes Cash/Cheque/DD.
+
+`add_payment`: INSERT `tbl_invoice_payment` (TDS; column typo `currancy`); upsert `tbl_invoice_due` (`qutation_no`); optional `tbl_invoice_payment_tds`; when due=`0.00` stamps `Invoice_No` from `tbl_Invoice`; `PaymentStatus='Yes'`.
+
+Print pair: `NewPaymentInvoice.aspx?Payment_ID=` (buyer) / `NewPaymentInvoiceDuplicate` (seller). Legacy `bill.aspx` is the same document type (payment-backed).
+
+- **`View_payment`:** joined to existing quotations.
+- **`seartch_payment` / `Delete_payment`:** delete may set `PaymentStatus='No'`, `tbl_Invoice.status1='No'`, adjust due.
+- **`FinalPaymentInvoice` / `PaymentsReceived`:** `Due_amount='0.00'` only. Titles both say “Search Payment”.
+- **`PaymentsDue`:** remaining due per quotation `Net_amount - SUM(Given_amount)`. No live print on the grid. Distinct from report `Payment_due.aspx`.
+- **`PaymentMail`:** `mailStatus`/`mailDate` on payment. Email body hard-codes host `i2isoft.aminruptechnologies.co.in`. [docs/11](../11_Communications.md).
+
+## Vendor purchase payments
+
+`add_payment_purchess` → `tbl_Purchess_payment` + UPDATE `tbl_purches_due`. List/search/delete print `purchess_payment.aspx?Payment_ID=` which is **EnsurePrint unmapped (fail-closed)**. Delete restores due (`Due_amount += Given_amount`).

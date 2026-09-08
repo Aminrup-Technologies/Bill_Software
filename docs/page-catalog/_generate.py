@@ -447,6 +447,20 @@ def perm_cell(p: dict) -> str:
     return "—"
 
 
+NARRATIVE_MARK = "<!-- NARRATIVE:BEGIN -->"
+
+
+def existing_narrative(domain: str) -> str:
+    path = CATALOG / f"DOMAIN_{domain}.md"
+    if not path.exists():
+        return ""
+    text = path.read_text(encoding="utf-8")
+    idx = text.find(NARRATIVE_MARK)
+    if idx < 0:
+        return ""
+    return text[idx + len(NARRATIVE_MARK):].lstrip("\n")
+
+
 def write_domain_file(domain: str, pages: list[dict]) -> str:
     title, blurb = DOMAIN_META[domain]
     lines = [
@@ -501,7 +515,12 @@ def write_domain_file(domain: str, pages: list[dict]) -> str:
     if notes:
         lines += ["", "## Page-unique notes", ""]
         lines.extend(notes)
-    lines.append("")
+    lines += ["", NARRATIVE_MARK, ""]
+    preserved = existing_narrative(domain)
+    if preserved:
+        lines.append(preserved.rstrip() + "\n")
+    else:
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -687,9 +706,10 @@ def write_inventory(pages: list[dict]) -> str:
     lines = [
         "# Page inventory",
         "",
-        f"Total `.aspx` pages: **{len(pages)}**. Status is the recursive queue: "
-        "work top-to-bottom on `Pending`/`Stale` using "
-        "[RECURSIVE_INSTRUCTIONS.md](RECURSIVE_INSTRUCTIONS.md).",
+        f"Total `.aspx` pages: **{len(pages)}**. Census status is Reviewed "
+        "(every page has a catalog row). Domain workflows live after "
+        "`<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md`. "
+        "See [SHARED_CONTEXT.md](SHARED_CONTEXT.md) for AuthN/tenancy.",
         "",
         "Shared architecture is not recorded here. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md).",
         "",
@@ -744,8 +764,6 @@ def main():
 
     OUT_JSON.write_text(json.dumps(pages, indent=2), encoding="utf-8")
 
-    (CATALOG / "SHARED_CONTEXT.md").write_text(SHARED, encoding="utf-8")
-    (CATALOG / "RECURSIVE_INSTRUCTIONS.md").write_text(INSTRUCTIONS, encoding="utf-8")
     (CATALOG / "PAGE_INVENTORY.md").write_text(write_inventory(pages), encoding="utf-8")
 
     by_domain = defaultdict(list)
@@ -766,9 +784,6 @@ def main():
         domain_links.append(
             f"| {title} | {len(by_domain[d])} | [page-catalog/DOMAIN_{d}.md](page-catalog/DOMAIN_{d}.md) |"
         )
-
-    hub = HUB.replace("<!-- DOMAIN_LINKS -->", "\n".join(domain_links))
-    (DOCS / "SOLUTION_INDEX.md").write_text(hub, encoding="utf-8")
 
     print(f"pages={len(pages)} domains={len(by_domain)} menu_mapped={sum(1 for p in pages if p['menu_id'])}")
     for d in DOMAIN_ORDER:

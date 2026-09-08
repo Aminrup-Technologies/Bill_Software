@@ -15,3 +15,9 @@ Landing KPIs. Narrative: docs/12_Home_Dashboard.md.
 
 - `corporate/business/app/QuickAction.aspx`: Unauthenticated email action: QS `t` decrypts to ReqID/Type/Action/ManagerID/CompanyID for leave or regularization approve/reject.
 - `corporate/business/app/home.aspx`: Menu id `home1` label is My Profile; page title is Dashboard. Same file.
+
+<!-- NARRATIVE:BEGIN -->
+
+## `QuickAction.aspx`
+
+No master. QS `t` → `SecurityHelper.DecryptFromUrlToken` → `ReqID`, `Type` (`Leave`|`Reg`), `Action` (`Approve`|`Reject`), `ManagerID`, `CompanyID`. Possession of the link is the credential. Updates leave request or regularization, then leave-balance / attendance punch side-effects, then notifies the employee. Issued from `MyLeaves` / `AdminOverride`.

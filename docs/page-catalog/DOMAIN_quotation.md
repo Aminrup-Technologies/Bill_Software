@@ -25,3 +25,25 @@ Create/view/search/edit/delete + hydrant quotations. Narrative: docs/09.
 
 - `corporate/business/app/Create_quotation.aspx`: Also linked from menu id `Li2` as Create Purchase Order (same page, second entry).
 - `corporate/business/app/Edit_quatation.aspx`: Leftover v1 editor. Live menu `Edit_quatation` points at `Edit_quatation_v2.aspx`.
+
+<!-- NARRATIVE:BEGIN -->
+
+## Standard quotation (`tbl_Quotation`)
+
+`Create_quotation` inserts `RecordType` = `Quotation` **or** `Purchase Order` (second menu `Li2`). QS `visitId` prefills / stores `VisitId`. Doc nos `QTN/{CompanyCode}/{FY}/n` or `PO/{CompanyCode}/{FY}/n`. Lines `tbl_Quotaion_details` (`IsLatest=1`); also `tbl_QutPaymentPhase`, `tbl_QutPrimaryService`. Notification module `SALES`. `sp_getapplock` around save. DeliveryDate/Department blanked for quotation lines. Client PO duplicate check on DO+PO+PO_Date.
+
+Downstream flags (set by other domains): `Status1` proforma done; `Status3` cleared on DPCC delete; `PaymentStatus` on receipt.
+
+### Pages
+
+- **`View_quotation`:** current calendar month only; Excel export; print `NewQuotation.aspx?ID=` (no date gate).
+- **`Seartch_quotation`:** Client / Date / both / QutNo. Print: date > 12-Jun-2018 → `NewQuotation`; else `Quotation.aspx`.
+- **`Edit_quatation_v2`:** live editor. Update Existing (soft-delete latest lines, bump `Version`) or Save as New (archive old `IsLatest=0`, new `Quotation_no`). Print popup still `NewQuotation` even for PO rows.
+- **`Edit_quatation`:** v1 leftover; search has no `RecordType` filter.
+- **`Delete_Quotation`:** blocked if Status1/Status2/PaymentStatus = Yes; deletes quotation family tables. Search **not** limited to `RecordType='Quotation'` (can hit Client POs).
+- **`Set_quatation`:** menu “Set Quotation Permission” actually stamps `mailStatus`/`mailStatusDate`. `SendMail` call is **commented out**; UI still says email sent.
+- **`Vendor_quotation`:** orphan WIP — pick quotation + vendor GST, nothing persisted.
+
+## Hydrant quotations (parallel schema)
+
+Hidden Hydrent menu. `CreateHydrentQuatation` → `tbl_qsHydrentQuotation` / `tbl_qsHydrentDetails` (`invStatus='No'`). Numbering `I2I/{clientInitials}/{fy}/{n}`. Product from `tbl_HydrantProduct` or `tbl_Service`. Print `QuotationHydrent.aspx?Quotation_no=`. Delete also removes linked `tbl_HydrentInvoice`. Invoicing those quotes: [DOMAIN_hydrant.md](DOMAIN_hydrant.md).

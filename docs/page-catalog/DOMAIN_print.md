@@ -46,3 +46,35 @@ Standalone (no Bill.Master). Auth via AuthGuard.EnsurePrint. Shared print gate: 
 - `corporate/business/print/Patty_cash_expencess_voutcher.aspx`: `EnsurePrint` resource `unmapped` — **fails closed** (Phase 0A).
 - `corporate/business/print/Requisition.aspx`: `EnsurePrint` resource `unmapped` — **fails closed** (Phase 0A).
 - `corporate/business/print/purchess_payment.aspx`: `EnsurePrint` resource `unmapped` — **fails closed** (Phase 0A).
+
+<!-- NARRATIVE:BEGIN -->
+
+## How prints are used
+
+App pages open these as popups. Gate is `EnsurePrint(resource, QS)` — see [SHARED_CONTEXT](SHARED_CONTEXT.md). Only **`NewInvoice_v2`** applies `CompanyID` in its own code-behind (`QS id` lowercase) and offers buyer/transporter/supplier copies on one page. Live invoice search still opens `NewInvoice` / `NewInvoiceDuplicate`.
+
+### Tax invoice
+
+| Copy | Live URL | QS |
+|------|----------|-----|
+| Buyer | `NewInvoice.aspx` | `ID` |
+| Seller | `NewInvoiceDuplicate.aspx` | `ID` |
+| Legacy + factory | `Invoice.aspx` / `Invoiceduplicate.aspx` | `ID` |
+
+`bill` / `billduplicate` are **payment-receipt** tax invoices (`Payment_ID`), not `tbl_Invoice.ID`.
+
+### Quotation / client PO
+
+`NewQuotation.aspx?ID=` (terms/phases). Legacy `Quotation.aspx` for dates ≤ 12-Jun-2018. Client PO: `NewPurchaseOrder.aspx?ID=` / `NewPurchaseOrder_Print` (`letterhead`, `autoprint`) — EnsurePrint resource is **`tbl_Quotation.ID`**, not `tbl_PO_Header`. Vendor PO: `Print_PO.aspx?poId=` → `sp_GetReleasedPO_Details`.
+
+### Challan / proforma / payment / hydrant / purchase
+
+- Challan: `NewChhalan` consignee, `Duplicate` transporter, `Triplicate` consignor (`Chalan_No`). Legacy `chhalan.aspx`.
+- Proforma: `NewProformaInvoice` vs legacy `proforma_invoice`.
+- Customer payment: `NewPaymentInvoice` / `Duplicate` (`Payment_ID`).
+- Hydrant: `QuotationHydrent?Quotation_no=`; invoice `hydrentInvoice` / `Seller` (`ID`).
+- Vendor purchase bill: `purches_bill?Purches_Id=`.
+
+### Fail-closed (do not treat as authorized)
+
+`Requisition.aspx` (`requeno`), `Patty_cash_expencess_voutcher.aspx` (`payment_id`), `General_expencess_voutcher.aspx` (`pament_made_id`), `purchess_payment.aspx` (`Payment_ID`). Modern PR print is `RequisitionNew.aspx?ReqNo=` (`tbl_RequisitionMain.ReqNo`) and joins `tbl_Client` **by name** with no tenant predicate.

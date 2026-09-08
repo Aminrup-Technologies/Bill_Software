@@ -17,3 +17,11 @@ Planner, daily report, manager search, visit expenses. Narrative: docs/06, docs/
 ## Page-unique notes
 
 - `corporate/business/app/expense_entry.aspx`: Child of two menus: `RequiredAnyPermissionKeys` = visit_planner OR vw_dailyrpts.
+
+<!-- NARRATIVE:BEGIN -->
+
+## Page map (do not recopy the audit)
+
+`visit_planner` (calendar WM `GetCalendarEvents`) → `daily_rpt` (QS `date`/`start`/`end`/`mode`) → `vw_dailyrpts` (owner list + thread) → manager `srch_dailyrpts` (QS `dt`/`emp`). Visit expenses `expense_entry?visitId=` upload `~/Uploads/Expenses/` — **not** GL `general_expences`.
+
+SMTP still hardcoded on `vw_dailyrpts` / `srch_dailyrpts` (defect D-11 in the audit).

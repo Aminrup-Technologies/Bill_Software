@@ -2,6 +2,23 @@
 
 AminrupERP / Flame-ex (`Bill_Software`) documentation is split so **shared architecture is written once** and **every `.aspx` page is listed once**.
 
+**Coverage:** all **188** pages are in the census. Each of the **19** domains has a workflow + page-behavior narrative (not a duplicate of AuthN/tenancy). Deep specialist write-ups remain in `docs/01`–`docs/22` and are linked from the catalogs.
+
+## Commercial spine (ERP)
+
+```
+Quotation (or Client PO) [tbl_Quotation]
+  → DPCC [tbl_Chalan] and/or Proforma [tbl_Proforma]
+  → Tax invoice [tbl_Invoice]
+  → Payment received [tbl_invoice_payment]
+Vendor PR [tbl_RequisitionMain] → Vendor PO [tbl_PO_Header] → Print_PO
+Vendor purchase [tbl_Purches] → purchase payment [tbl_Purchess_payment]
+Hydrant track (hidden menu): qsHydrentQuotation → HydrentInvoice
+Visit track: planner → daily_rpt → vw/srch_dailyrpts + expense_entry
+GL expenses: tlb_General_expences / tbl_patty_cash_expenses (not visit expenses)
+Card kiosk: tbl_card_login / tbl_employee (isolated)
+```
+
 ## Start here
 
 | If you need… | Open |

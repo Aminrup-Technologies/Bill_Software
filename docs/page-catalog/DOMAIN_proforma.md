@@ -14,3 +14,15 @@ Create/view/search/delete/mailer + prints.
 | `corporate/business/app/ProformaMail.aspx` | Proforma Invoice Mailer | Bill.Master / `WebForm84` | Bill.Master, CompanyID<br>menu `ProformaMail` | `tbl_Client`, `tbl_Proforma`, `tbl_QuoPriSerTogather`, `tbl_QutPrimaryService`, `tbl_representative` | UPDATE | [module](../11_Communications.md) |
 | `corporate/business/app/Seartch_proforma.aspx` | Search Proforma Invoice | Bill.Master / `WebForm32` | Bill.Master, CompanyID<br>menu `Seartch_proforma` | `tbl_Client`, `tbl_Proforma`, `tbl_QuoPriSerTogather` | SELECT | this catalog |
 | `corporate/business/app/View_proforma.aspx` | View Proforma Invoice | Bill.Master / `WebForm31` | Bill.Master<br>menu `View_proforma` | `tbl_Proforma`, `tbl_Client`, `tbl_QuoPriSerTogather`, `tbl_Quotation` | SELECT | this catalog |
+
+<!-- NARRATIVE:BEGIN -->
+
+## Workflow
+
+Numbering `PINV/{clientInitial}/{fy}/{n}`. Print live: `NewProformaInvoice.aspx?ID=`. Mailer also opens legacy `proforma_invoice.aspx`.
+
+- **`Add_proforma`:** from quotation header totals only — **no** `tbl_Proforma_Details`. Sets quotation `Status1='Yes'`. If `VisitId` set, bumps `tbl_SalesVisitReport.IsProductive` and `RevenueRealized`.
+- **`Direct_Proforma`:** no quotation; `Quotation_No='Direct'`; writes `tbl_Proforma_Details`; CGST/SGST/IGST + PlaceofSupply; `mailStatus='Pending'`.
+- **`View_proforma` / `Seartch_proforma`:** list / client+date search.
+- **`Delete_proforma`:** deletes `tbl_Proforma` **only** (not details); `Status1='No'`.
+- **`ProformaMail`:** sets `mailStatus`/`mail_Date`; reps via `Copany_Id`. SMTP notes: [docs/11](../11_Communications.md).

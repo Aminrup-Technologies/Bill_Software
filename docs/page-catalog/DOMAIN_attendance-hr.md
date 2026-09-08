@@ -20,3 +20,20 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 ## Page-unique notes
 
 - `corporate/business/app/AdminApprovalDashboard.aspx`: HR approvals (leave + regularization), not sales-visit approval. Sales-visit approval is `srch_dailyrpts`.
+
+<!-- NARRATIVE:BEGIN -->
+
+## Clock and calendar
+
+`attendance.aspx` (menu `daily_attendance`) is the employee punch UI. WebMethods include `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings`, plus `GetMyGeoFence`, `SubmitRegularization`, `SubmitLeave`. Tables: `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_HolidayMaster`, `tbl_LeaveRequests`. Dashboard rollup: [docs/01](../01_Attendance_Clock.md) (`AdminAttendanceDashboard` — FieldSales CTE; can INSERT/UPDATE/DELETE attendance; **not** SecurePage).
+
+## Leave and shifts
+
+- **`MyLeaves`:** apply leave; emails manager a `QuickAction.aspx?t=` token (Approve/Reject). Not SecurePage.
+- **`AdminLeaveSetup`:** INSERT `tbl_LeaveMaster` with **no CompanyID**.
+- **`AdminShiftSetup`:** CRUD `tbl_ShiftMaster` + notifications.
+- **`AdminShiftAssignment`:** maps employees; permission key is **`AdminShiftSetup`** (shared). May run `sp_RunAttendanceRulesEngine`.
+- **`AdminOverride`:** HR resolve leave/reg; can mint QuickAction tokens for managers.
+- **`AdminApprovalDashboard`:** pending-only approve/reject; `@@ROWCOUNT=0` aborts before leave-balance SQL (Phase 2C).
+
+Token landing page: [DOMAIN_dashboard.md](DOMAIN_dashboard.md) `QuickAction`. Sales-visit approval remains `srch_dailyrpts`.

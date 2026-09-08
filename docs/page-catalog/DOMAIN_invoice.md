@@ -19,3 +19,19 @@ Create/view/search/delete/block/mailer + prints. Discovery: docs/13.
 ## Page-unique notes
 
 - `corporate/business/app/seartch_invoice.aspx`: Filename misspelled `seartch`. Discovery: docs/13.
+
+<!-- NARRATIVE:BEGIN -->
+
+## Workflow
+
+Tax invoice `INV/C/{fy}/{sl}`, `status1='No'`, `status2='Active'`. Does **not** set quotation `Status2` on create; delete sets `Status2='No'` and `InvStatus='No'` on `tbl_Quotaion_details`. Stock restore on delete is **commented out**.
+
+Lineage / export: [docs/13](../13_Invoice_Search_View_PO_Discovery.md), [invoice_insert_data_lineage.md](../invoice_insert_data_lineage.md), [invoice_export_data_inventory.md](../invoice_export_data_inventory.md).
+
+- **`Add_invoice`:** source `ddlDocType` = Quotation | Purchase Order | Delivery Challan | Proforma. WM `GetReconciliation`. Pending qty vs active invoices (`status2<>'Block'`). INSERT `tbl_Invoice`, `tbl_Invoice_details` (`Quotation_no` = source doc#), `tbl_InvSiteAddress`. Stock deduct `tbl_NewProduct` **except** when source is Delivery Challan. History prints `NewInvoice` / `NewInvoiceDuplicate` `?ID=`.
+- **`Manual_Invoice`:** no source; `Quotation_No` = PO text or `N/A`; always stock deduct; blocks zero total / missing tax type. Menu `Add_DirectInvoice`.
+- **`View_Invoice` / `seartch_invoice`:** list vs advanced search + Excel (`InvoiceListHelper.ExportXlsx`). docs/13 is the deep pass for these two.
+- **`Block_invoice`:** `status2='Block'` (search Active only). Print mix of legacy `Invoice.aspx` and `NewInvoice.aspx`.
+- **`InvoiceMail`:** stamps `mailStatus`/`mailDate`. UI title wrongly “Set Quotation”; grid print wrongly `proforma_invoice.aspx`.
+
+Hydrant tax invoices are a **different** number series `INV/{clientInitials}/…` — [DOMAIN_hydrant.md](DOMAIN_hydrant.md).

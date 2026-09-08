@@ -1,6 +1,6 @@
 # Page inventory
 
-Total `.aspx` pages: **188**. Status is the recursive queue: work top-to-bottom on `Pending`/`Stale` using [RECURSIVE_INSTRUCTIONS.md](RECURSIVE_INSTRUCTIONS.md).
+Total `.aspx` pages: **188**. Census status is Reviewed (every page has a catalog row). Domain workflows live after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md`. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md) for AuthN/tenancy.
 
 Shared architecture is not recorded here. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md).
 

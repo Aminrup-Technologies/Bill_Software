@@ -30,3 +30,28 @@ Separate `tbl_card_login` app under `/admin` + `card.Master`. Not ERP RBAC. See 
 
 - `SessionKeepAlive1.aspx`: Keep-alive for the card kiosk session (`tbl_card_login`), not ERP `ActiveSessions`.
 - `index_card.aspx`: Isolated kiosk login against `tbl_card_login` (plaintext). Not ERP RBAC. See docs/21 (A-02).
+
+<!-- NARRATIVE:BEGIN -->
+
+## Isolated app
+
+Not ERP RBAC. Tenant key is session `COMPANYID` (all-caps) on `tbl_Company` / `tbl_employee`. Login `index_card` uses plaintext `tbl_card_login` (parameterized). Cookie may prefill credentials. Success → `admin/home.aspx`. **No** `ActiveSessions`. Keep-alive: `SessionKeepAlive1.aspx` (concat SQL on `tbl_card_login`).
+
+`card.Master` missing-session / logout redirects to ERP `index.aspx`, not `index_card`.
+
+### Company and employees
+
+- `add_company`: CRUD `tbl_Company`; delete cascades `tbl_employee`.
+- `Update_Company?ComID=`: name/address/signature blob.
+- `update_image?ID=`: sets `Session["COMPANYID"]`.
+- `Show_data1` / `show_date`: employee grids for that company.
+- `Delete_date`: deletes **all** employees for selected company.
+- `Upload_data`: Excel/CSV insert `tbl_employee`.
+- `Total_id_card`: bulk print DataList (no master); needs `COMPANYID`.
+- `Print/id_card1.aspx?ID=`: single card; `tbl_employee` + `tbl_Company`; images `personal_image.ashx` / `Company.ashx`. **No auth gate.**
+
+### Profile popups (`admin/Update/`)
+
+`name` / `contactno` only if `USERID=="admin"` → `tbl_card_login`. `emailid` writes **ERP** `tbl_login`. `password` dual-writes hash path on `tbl_login` plus plaintext on `tbl_card_login`.
+
+Phase 3 isolation: [docs/21](../21_Phase3_Infrastructure_Hardening.md).

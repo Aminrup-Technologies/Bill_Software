@@ -30,3 +30,40 @@ Purchase requisition → purchase order. Narrative: docs/10.
 ## Page-unique notes
 
 - `corporate/business/app/View_PO_Details.aspx`: PO line/header detail + `sp_ReleasePO_Final`. Opened from `View_PO.aspx` with QS `poId`.
+
+<!-- NARRATIVE:BEGIN -->
+
+## Two PO stacks (do not mix)
+
+| Stack | Tables | Create | List / release | Print |
+|-------|--------|--------|----------------|-------|
+| **Vendor PO** | `tbl_PO_Header`, `tbl_PO_Items`, `tbl_PO_PartySnapshot` | PR → `Generate_PO_From_PR` → `Generate_PO_Preview?reqNo=` (`sp_GeneratePO_FromReqNo`) | `View_PO` → `View_PO_Details?poId=` (`sp_ReleasePO_Final`) | `Print_PO.aspx?poId=` (not Draft) |
+| **Client PO** | `tbl_Quotation` where `RecordType` is not Quotation | Same form as quotation: `Create_quotation` (menu `Li2`) | `View_PurchaseOrder` / `Search_purchaseorder` / `edit_purchaseorder` / `delete_purchaseorder` | `NewPurchaseOrder.aspx?ID=` (quotation ID) |
+
+## Vendor PR workflow
+
+`RequisitionNew` (draft/submit, `?reqNo=` to resume) → `View_PR` → `View_PR_Details?reqNo=` → `Approve_PR` or details `mode=approve` (`sp_Requisition_Approve`) → `Generate_PO_From_PR` (Approved PRs with no `tbl_PO_Header`) → preview → `View_PO`.
+
+Statuses: Draft / Submitted / Approved / Cancelled / Rejected. Submit requires rate>0, tax applicable, GST>0. `clientName` on modern PR stores **vendor** name.
+
+## Three requisition implementations
+
+| Kind | Menu | Tables | Notes |
+|------|------|--------|-------|
+| Modern | `pr_create` / `pr_view` / `pr_approve` | `tbl_RequisitionMain` / `tbl_RequisitionNew` + SPs | Live path |
+| Manual | `RequisitionManual*` under hidden `PurchaseRequisition` | Same tables, **no Status/SPs** | Collides with modern rows; concat SQL on search |
+| Legacy bank | orphans `RequisitionCreate` / `RequisitionView` | `tbl_requisition` / `tbl_requisitionBankDetails` | Print `print/Requisition.aspx?requeno=` is **fail-closed** |
+
+## Page behavior (vendor path)
+
+- **`RequisitionNew`:** `GetProductDetail`; `sp_Requisition_CreateDraft`, `sp_RequisitionItem_BulkUpsert` (TVP), `sp_SubmitRequisition`, `sp_CancelRequisition`.
+- **`View_PR_Details`:** Draft can edit/delete lines; non-draft read-only; approve panel when `mode=approve`.
+- **`Approve_PR`:** list is Submitted only; Reject is details-page only.
+- **`Generate_PO_Preview`:** Engineer Name mandatory; after create redirects to **list**, not `View_PO`.
+- **`View_PO_Details`:** Release when Draft and `IsLocked=false`.
+
+## Client PO pages (quotation-backed)
+
+`View_PurchaseOrder` filters `RecordType != 'Quotation'` (wider than exact `'Purchase Order'`). `Search_purchaseorder` / `edit_purchaseorder` / `delete_purchaseorder` use `'Purchase Order'`. Delete gated by Status1/Status2/PaymentStatus like quotation delete.
+
+Further quotation header/line rules: [DOMAIN_quotation.md](DOMAIN_quotation.md). Overview: [docs/10](../10_Purchase_Order.md).

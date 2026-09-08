@@ -86,12 +86,12 @@ session by re-summarizing the whole ERP.
 
 ## Regeneration
 
-Refresh the census with:
+Refresh the **census tables** with:
 
 ```
 python3 docs/page-catalog/_generate.py
 ```
 
-Unique notes live in `_generate.py` (`UNIQUE_NOTES`) so they survive regeneration.
-After a regen, re-run REVIEW_NEXT_PAGE only for rows whose unique facts changed
-(permission key, tables, ops, master, SecurePage). Do not copy SHARED_CONTEXT into domain files.
+Everything after `<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md` is preserved.
+Unique one-liners in `_generate.py` (`UNIQUE_NOTES`) are regenerated into “Page-unique notes”.
+Do not copy SHARED_CONTEXT into domain files.

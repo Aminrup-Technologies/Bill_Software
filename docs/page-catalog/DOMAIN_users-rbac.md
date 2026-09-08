@@ -24,3 +24,12 @@ Provisioning and RBAC admin. Narrative: docs/02, docs/03, docs/04, docs/16–18.
 - `corporate/business/app/Update/contactno.aspx`: Legacy profile popup (no master). Same pattern as `Update/emailid`, `Update/name`, `Update/password`. Forced lockout uses `settings.aspx`.
 - `corporate/business/app/Update/password.aspx`: Profile popup (no master). Forced-password flow redirects to `settings.aspx`, not these Update/* pages.
 - `corporate/business/app/settings.aspx`: Lockout landing when `MustUpdateUserId` or `MustVerifyContact` is set (Bill.Master).
+
+<!-- NARRATIVE:BEGIN -->
+
+## Pages unique to this catalog
+
+- **`AddUser` / `ViewUser`:** create/list employees. `ViewUser` WM `SaveGeoFence`. `Update_Designation.aspx?User_Id=` assigns `UserRoles` (permission `ViewUser`, not a designation master despite the filename).
+- **`ManageRoles` / `ManagePermissions`:** `Permissions.PermissionKey` must match Bill.Master `<li id>`.
+- **`settings.aspx`:** only path that sets `PasswordHash`/`Salt` and `Password = NULL` correctly after lockout. QS `pwd=success`.
+- **`Update/contactno|emailid|name|password`:** no master; popups on `tbl_login`. Lockout does **not** send users here. `Update/password` leftover method can still write plaintext `Password`.

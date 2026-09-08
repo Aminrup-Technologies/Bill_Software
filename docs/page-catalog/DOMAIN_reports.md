@@ -17,3 +17,15 @@ Product/service stock and due summaries.
 ## Page-unique notes
 
 - `corporate/business/app/rpts_vw_qtn_po_counts.aspx`: Stub: empty `Page_Load`, no SQL. Menu still lists it as QTN/PO Added.
+
+<!-- NARRATIVE:BEGIN -->
+
+## Page behavior
+
+- **`Product_stock`:** no server grid. WebMethods `SearchProducts` → `sp_SearchProductsFast`; `GetStock` → `sp_GetProductStockByStore`; `GetCategories` → `sp_GetProductCategories`.
+- **`Service_stock`:** `tbl_stock` where `Product_id NOT LIKE 'P%'` (excludes `PRD*` / `PRO*` product stock). Unscoped.
+- **`Payment_due`:** invoice remaining-due vs never-paid. Grids empty until Search. Popup `print/Invoice.aspx?Invoice_No=`. Second Search button is wired to the first handler; date BETWEEN uses to→from. Unscoped.
+- **`Purchess_due`:** unfiltered join `tbl_Purches` ⋈ `tbl_purches_due` ⋈ `tbl_Vendor`. Empty → “No Payments Is Due...”. Popup `print/purches_bill.aspx?Purches_Id=`.
+- **`rpts_vw_qtn_po_counts`:** iframe only — `https://reports.aminruptechnologies.co.in/superset/explore/p/EQ3Y2mZWgpP/?standalone=1&height=400`. No SQL.
+
+`PaymentsDue.aspx` (collections due per quotation) is **not** this domain — see [DOMAIN_payments.md](DOMAIN_payments.md).
