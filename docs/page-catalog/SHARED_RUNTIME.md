@@ -108,6 +108,8 @@ Bodies live in SQL Server. This is a **call-site index** only. `clientHandlerAdm
 
 Visit/report SQL is **inline** on `tbl_SalesVisitReport` / `tbl_Expenses` / `tbl_SalesVisitResponses`.
 
+Full reverse map (every table/SP → pages with verbs): [`DATA_DICTIONARY.md`](DATA_DICTIONARY.md).
+
 UAT also has procs **not** called from C# (amendment/cancel family, `sp_ApproveRequisition` vs `sp_Requisition_Approve`, `sp_ReleasePO` vs `sp_ReleasePO_Final`, stock `usp_*`, `InsertOrGetProduct`, …). Inventory: [`SHARED_SCHEMA.md`](SHARED_SCHEMA.md) §10. Do not paste bodies.
 
 ---

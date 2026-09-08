@@ -3,6 +3,7 @@
 This file is the **only** place page-catalog documents may point for AuthN, tenancy, Bill.Master, and print-gate behavior.
 Handlers, helpers, SQL scripts, and SP call sites live in [SHARED_RUNTIME.md](SHARED_RUNTIME.md).
 Live UAT objects, FKs, and code-vs-database gaps live in [SHARED_SCHEMA.md](SHARED_SCHEMA.md).
+Page ↔ table/SP verbs live in [DATA_DICTIONARY.md](DATA_DICTIONARY.md).
 Do **not** restate these rules inside domain catalogs or per-page notes.
 
 ## Where the canonical text lives
@@ -17,6 +18,7 @@ Do **not** restate these rules inside domain catalogs or per-page notes.
 | Sales-visit deep dive | [sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md](../sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md) | Which D-* findings are remediating vs still live |
 | Handlers, helpers, SQL, SP callers | [SHARED_RUNTIME.md](SHARED_RUNTIME.md) | Non-page surface — do not copy into domains |
 | Live UAT schema | [SHARED_SCHEMA.md](SHARED_SCHEMA.md) | Tables, FKs, missing objects vs code, UAT-only procs |
+| Page ↔ table/SP dictionary | [DATA_DICTIONARY.md](DATA_DICTIONARY.md) | Per-object SELECT/INSERT/UPDATE/DELETE/EXEC |
 
 ## Runtime facts used by every ERP page (do not copy)
 

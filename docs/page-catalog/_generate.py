@@ -524,9 +524,381 @@ def write_domain_file(domain: str, pages: list[dict]) -> str:
     return "\n".join(lines)
 
 
-# Do not write SHARED_CONTEXT.md, SHARED_RUNTIME.md, SHARED_SCHEMA.md,
-# RECURSIVE_INSTRUCTIONS.md, or SOLUTION_INDEX.md from this script.
-# Those are hand-maintained.
+# Hand-maintained (do not overwrite): SHARED_CONTEXT, SHARED_RUNTIME,
+# SHARED_SCHEMA, RECURSIVE_INSTRUCTIONS, SOLUTION_INDEX.
+# Generated: PAGE_INVENTORY.md, DOMAIN_*.md census tables, DATA_DICTIONARY.md.
+
+
+UAT_MISSING = {
+    "UserCompanyAccess",
+    "PasswordResetTokens",
+    "tbl_requisition",
+    "tbl_requisitionBankDetails",
+}
+
+OBJECT_RE = re.compile(
+    r"(?:dbo\.)?("
+    r"PasswordResetTokens|UserCompanyAccess|UserRememberTokens|"
+    r"RolePermissions|UserRoles|ActiveSessions|RequisitionItem_TVP|"
+    r"Permissions|AuthAudit|Stores|Roles|"
+    r"tbl_[A-Za-z0-9_]+|tlb_[A-Za-z0-9_]+|qs[A-Za-z0-9_]+"
+    r")\b",
+    re.I,
+)
+SP_NAME_RE = re.compile(
+    r"\b(sp_[A-Za-z0-9_]+|usp_[A-Za-z0-9_]+|"
+    r"InsertOrGetProduct|Get_Quotation_Details_With_Counts|"
+    r"CompareTablesAndGenerateAlter|CompareTablesFull)\b"
+)
+VERB_ORDER = ("SELECT", "INSERT", "UPDATE", "DELETE", "EXEC", "REF")
+
+
+def extract_csharp_strings(src: str) -> str:
+    """Join C# regular and verbatim string literals (SQL lives in these)."""
+    parts: list[str] = []
+    i = 0
+    n = len(src)
+    while i < n:
+        if src.startswith('@"', i):
+            i += 2
+            buf: list[str] = []
+            while i < n:
+                if src[i] == '"':
+                    if i + 1 < n and src[i + 1] == '"':
+                        buf.append('"')
+                        i += 2
+                        continue
+                    break
+                buf.append(src[i])
+                i += 1
+            parts.append("".join(buf))
+            i += 1
+            continue
+        if src[i] == '"':
+            i += 1
+            buf = []
+            while i < n:
+                if src[i] == "\\" and i + 1 < n:
+                    buf.append(src[i + 1])
+                    i += 2
+                    continue
+                if src[i] == '"':
+                    break
+                buf.append(src[i])
+                i += 1
+            parts.append("".join(buf))
+            i += 1
+            continue
+        i += 1
+    return "\n".join(parts)
+
+
+def _object_kind(name: str) -> str:
+    low = name.lower()
+    if low == "requisitionitem_tvp":
+        return "type"
+    if (
+        low.startswith("sp_")
+        or low.startswith("usp_")
+        or low in {
+            "insertorgetproduct",
+            "get_quotation_details_with_counts",
+            "comparetablesandgeneratealter",
+            "comparetablesfull",
+        }
+    ):
+        return "procedure"
+    if low.startswith("vw_"):
+        return "view"
+    return "table"
+
+
+def extract_object_ops(cs: str) -> dict[str, set[str]]:
+    """Per-object verbs from SQL in string literals + SqlCommand names."""
+    ops: dict[str, set[str]] = defaultdict(set)
+    blob = extract_csharp_strings(cs)
+    if not blob and not cs:
+        return {}
+
+    def add(name: str, verb: str) -> None:
+        if not name:
+            return
+        ops[name].add(verb)
+
+    ident = (
+        r"(?:dbo\.)?("
+        r"PasswordResetTokens|UserCompanyAccess|UserRememberTokens|"
+        r"RolePermissions|UserRoles|ActiveSessions|RequisitionItem_TVP|"
+        r"Permissions|AuthAudit|Stores|Roles|"
+        r"tbl_[A-Za-z0-9_]+|tlb_[A-Za-z0-9_]+|qs[A-Za-z0-9_]+"
+        r")\b"
+    )
+    for m in re.finditer(rf"INSERT\s+INTO\s+{ident}", blob, re.I):
+        add(m.group(1), "INSERT")
+    for m in re.finditer(rf"UPDATE\s+{ident}", blob, re.I):
+        add(m.group(1), "UPDATE")
+    for m in re.finditer(rf"DELETE\s+FROM\s+{ident}", blob, re.I):
+        add(m.group(1), "DELETE")
+    for m in re.finditer(rf"DELETE\s+{ident}\s+WHERE", blob, re.I):
+        add(m.group(1), "DELETE")
+    for m in re.finditer(rf"(?:FROM|JOIN)\s+{ident}", blob, re.I):
+        add(m.group(1), "SELECT")
+
+    for m in SP_NAME_RE.finditer(blob):
+        add(m.group(1), "EXEC")
+    for m in SP_NAME_RE.finditer(cs):
+        add(m.group(1), "EXEC")
+
+    mentioned: set[str] = set()
+    for m in OBJECT_RE.finditer(blob):
+        mentioned.add(m.group(1))
+    for name in mentioned:
+        if name not in ops:
+            ops[name].add("REF")
+    return ops
+
+
+def _caller_label(path: Path) -> tuple[str, str]:
+    """Return (display path, kind: page|handler|helper)."""
+    rel = str(path.relative_to(APP)).replace("\\", "/")
+    if rel.endswith(".aspx.cs"):
+        return rel[:-3], "page"
+    if rel.endswith(".ashx.cs"):
+        return rel[:-3], "handler"
+    if rel.endswith(".ascx.cs"):
+        return rel[:-3], "control"
+    return rel, "helper"
+
+
+def scan_data_usage(page_domain: dict[str, str]) -> tuple[list[dict], dict[str, dict]]:
+    """Scan C# sources. Returns forward rows + reverse map."""
+    reverse: dict[str, dict] = {}
+    forward_by_caller: dict[str, dict] = {}
+
+    for src in sorted(APP.rglob("*.cs")):
+        if "packages" in src.parts:
+            continue
+        if src.name.endswith(".designer.cs"):
+            continue
+        text = read(src)
+        if not text:
+            continue
+        ops = extract_object_ops(text)
+        if not ops:
+            continue
+        caller, kind = _caller_label(src)
+        domain = page_domain.get(caller, "")
+        if kind != "page":
+            domain = kind
+        rec = {
+            "caller": caller,
+            "kind": kind,
+            "domain": domain,
+            "objects": {},
+        }
+        display: dict[str, str] = {}
+        buckets: dict[str, set[str]] = defaultdict(set)
+        for n, v in ops.items():
+            low = n.lower()
+            prev = display.get(low, n)
+            if prev.islower() and not n.islower():
+                display[low] = n
+            elif low not in display:
+                display[low] = n
+            buckets[low] |= v
+        rec["objects"] = {
+            display[low]: sorted(vs, key=lambda x: VERB_ORDER.index(x) if x in VERB_ORDER else 99)
+            for low, vs in buckets.items()
+        }
+        forward_by_caller[caller] = rec
+        for name, verbs in rec["objects"].items():
+            slot = reverse.setdefault(
+                name,
+                {"name": name, "kind": _object_kind(name), "callers": [], "_key": name.lower()},
+            )
+            if slot["name"].islower() and not name.islower():
+                slot["name"] = name
+            slot["callers"].append(
+                {"caller": caller, "src_kind": kind, "domain": domain, "verbs": verbs}
+            )
+
+    folded: dict[str, dict] = {}
+    for meta in reverse.values():
+        key = meta["_key"]
+        if key in folded:
+            folded[key]["callers"].extend(meta["callers"])
+            if folded[key]["name"].islower() and not meta["name"].islower():
+                folded[key]["name"] = meta["name"]
+        else:
+            folded[key] = meta
+    out = {}
+    for m in folded.values():
+        merged: dict[str, dict] = {}
+        for c in m["callers"]:
+            existing = merged.get(c["caller"])
+            if existing:
+                verbs = list(dict.fromkeys(existing["verbs"] + c["verbs"]))
+                existing["verbs"] = sorted(
+                    verbs, key=lambda x: VERB_ORDER.index(x) if x in VERB_ORDER else 99
+                )
+            else:
+                merged[c["caller"]] = dict(c)
+        m["callers"] = list(merged.values())
+        m.pop("_key", None)
+        out[m["name"]] = m
+
+    return list(forward_by_caller.values()), out
+
+
+def _fmt_verbs(verbs: list[str]) -> str:
+    return ",".join(verbs)
+
+
+def write_data_dictionary(pages: list[dict]) -> str:
+    page_domain = {p["path"]: p["domain"] for p in pages}
+    forward, reverse = scan_data_usage(page_domain)
+
+    table_names = sorted(
+        (n for n, m in reverse.items() if m["kind"] == "table"),
+        key=str.lower,
+    )
+    proc_names = sorted(
+        (n for n, m in reverse.items() if m["kind"] == "procedure"),
+        key=str.lower,
+    )
+    type_names = sorted(
+        (n for n, m in reverse.items() if m["kind"] == "type"),
+        key=str.lower,
+    )
+
+    pages_with = sum(1 for r in forward if r["kind"] == "page")
+    pages_without = [p["path"] for p in pages if p["path"] not in {r["caller"] for r in forward if r["kind"] == "page"}]
+
+    lines = [
+        "# Data dictionary (page ↔ tables / SPs)",
+        "",
+        "Generated by [`_generate.py`](_generate.py). **Do not hand-edit.**",
+        "Domain catalogs stay the unique-facts census; this file is the full object map.",
+        "",
+        "Verbs are taken from SQL inside C# string literals (and `SqlCommand` names):",
+        "`SELECT` (FROM/JOIN), `INSERT`, `UPDATE`, `DELETE`, `EXEC` (procedure), "
+        "`REF` (object named in a string with no SQL verb — print-gate key, identifier, leftover).",
+        "Concatenated SQL that splits a table name across strings can be missed.",
+        "",
+        f"Scanned: **{len(pages)}** pages, **{pages_with}** with at least one object, "
+        f"**{len(table_names)}** tables/views, **{len(proc_names)}** procedures.",
+        "Handlers/helpers (`AuthGuard`, `.ashx`, `Bill.Master`, …) are included as callers.",
+        "UAT missing objects: [`SHARED_SCHEMA.md`](SHARED_SCHEMA.md) §4.",
+        "SP bodies are not documented here. Call-site notes: [`SHARED_RUNTIME.md`](SHARED_RUNTIME.md).",
+        "",
+        "## How to use",
+        "",
+        "| Need | Section |",
+        "|------|---------|",
+        "| Which pages touch `tbl_Quotation`? | [Reverse index](#reverse-index-object--pages) |",
+        "| What does `Create_quotation.aspx` write? | [Forward index](#forward-index-page--objects) |",
+        "| Live columns / FKs | [SHARED_SCHEMA.md](SHARED_SCHEMA.md) |",
+        "",
+        "## Reverse index (object → pages)",
+        "",
+        "### Tables",
+        "",
+        "| Object | UAT | # | Callers (verbs) |",
+        "|--------|-----|--:|-----------------|",
+    ]
+
+    def uat_cell(name: str) -> str:
+        return "**missing**" if name in UAT_MISSING else "—"
+
+    def callers_cell(meta: dict) -> str:
+        bits = []
+        for c in sorted(meta["callers"], key=lambda x: x["caller"].lower()):
+            short = c["caller"]
+            bits.append(f"`{short}` {_fmt_verbs(c['verbs'])}")
+        return "<br>".join(bits)
+
+    for name in table_names:
+        meta = reverse[name]
+        lines.append(
+            f"| `{name}` | {uat_cell(name)} | {len(meta['callers'])} | {callers_cell(meta)} |"
+        )
+
+    lines += ["", "### Stored procedures", "", "| Procedure | UAT | # | Callers |", "|-----------|-----|--:|---------|"]
+    for name in proc_names:
+        meta = reverse[name]
+        lines.append(
+            f"| `{name}` | {uat_cell(name)} | {len(meta['callers'])} | {callers_cell(meta)} |"
+        )
+
+    if type_names:
+        lines += ["", "### Types (TVP)", "", "| Type | # | Callers |", "|------|--:|---------|"]
+        for name in type_names:
+            meta = reverse[name]
+            lines.append(f"| `{name}` | {len(meta['callers'])} | {callers_cell(meta)} |")
+
+    lines += [
+        "",
+        "## Forward index (page → objects)",
+        "",
+        "Every `.aspx` is listed. Helpers/handlers follow the pages.",
+        "",
+    ]
+
+    by_domain = defaultdict(list)
+    helpers = []
+    forward_map = {r["caller"]: r for r in forward}
+    for p in pages:
+        by_domain[p["domain"]].append(p)
+    for r in forward:
+        if r["kind"] != "page":
+            helpers.append(r)
+
+    def objects_cell(rec: dict | None) -> str:
+        if not rec or not rec["objects"]:
+            return "—"
+        bits = []
+        for name in sorted(rec["objects"], key=str.lower):
+            bits.append(f"`{name}` {_fmt_verbs(rec['objects'][name])}")
+        return "<br>".join(bits)
+
+    for d in DOMAIN_ORDER:
+        if d not in by_domain:
+            continue
+        title = DOMAIN_META[d][0]
+        lines += [
+            f"### `{d}` — {title}",
+            "",
+            "| Page | Objects (verbs) |",
+            "|------|-----------------|",
+        ]
+        for p in sorted(by_domain[d], key=lambda x: x["path"]):
+            rec = forward_map.get(p["path"])
+            lines.append(f"| `{p['path']}` | {objects_cell(rec)} |")
+        lines.append("")
+
+    if helpers:
+        lines += [
+            "### Handlers, controls, helpers",
+            "",
+            "| Caller | Kind | Objects (verbs) |",
+            "|--------|------|-----------------|",
+        ]
+        for r in sorted(helpers, key=lambda x: x["caller"]):
+            lines.append(
+                f"| `{r['caller']}` | {r['kind']} | {objects_cell(r)} |"
+            )
+        lines.append("")
+
+    if pages_without:
+        listed = ", ".join(f"`{p}`" for p in pages_without)
+        lines += [
+            f"Pages with **no** SQL object in string literals ({len(pages_without)}): {listed}. "
+            "`reset_password.aspx` uses [`PasswordResetService.cs`](../../Bill_Software/corporate/business/app/PasswordResetService.cs) "
+            "(see helpers below).",
+            "",
+        ]
+
+    return "\n".join(lines) + "\n"
 
 
 def write_inventory(pages: list[dict]) -> str:
@@ -538,7 +910,8 @@ def write_inventory(pages: list[dict]) -> str:
         "`<!-- NARRATIVE:BEGIN -->` in each `DOMAIN_*.md`. "
         "See [SHARED_CONTEXT.md](SHARED_CONTEXT.md) for AuthN/tenancy, "
         "[SHARED_RUNTIME.md](SHARED_RUNTIME.md) for handlers/helpers/SPs, "
-        "and [SHARED_SCHEMA.md](SHARED_SCHEMA.md) for live UAT objects.",
+        "[SHARED_SCHEMA.md](SHARED_SCHEMA.md) for live UAT objects, "
+        "and [DATA_DICTIONARY.md](DATA_DICTIONARY.md) for page↔table/SP verbs.",
         "",
         "Shared architecture is not recorded here. See [SHARED_CONTEXT.md](SHARED_CONTEXT.md).",
         "",
@@ -594,6 +967,7 @@ def main():
     OUT_JSON.write_text(json.dumps(pages, indent=2), encoding="utf-8")
 
     (CATALOG / "PAGE_INVENTORY.md").write_text(write_inventory(pages), encoding="utf-8")
+    (CATALOG / "DATA_DICTIONARY.md").write_text(write_data_dictionary(pages), encoding="utf-8")
 
     by_domain = defaultdict(list)
     for p in pages:
@@ -618,6 +992,8 @@ def main():
     for d in DOMAIN_ORDER:
         if d in by_domain:
             print(f"  {d:20s} {len(by_domain[d]):3d}")
+    dict_path = CATALOG / "DATA_DICTIONARY.md"
+    print(f"data_dictionary_lines={sum(1 for _ in dict_path.open())}")
 
 
 if __name__ == "__main__":

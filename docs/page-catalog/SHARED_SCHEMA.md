@@ -16,6 +16,7 @@ Read after [`SHARED_CONTEXT.md`](SHARED_CONTEXT.md) and [`SHARED_RUNTIME.md`](SH
 |------|--------|
 | AuthN / tenancy / Bill.Master / print gate | [`SHARED_CONTEXT.md`](SHARED_CONTEXT.md) |
 | C# SP **call sites**, handlers, in-repo `.sql` patches | [`SHARED_RUNTIME.md`](SHARED_RUNTIME.md) |
+| Which page reads/writes an object | [`DATA_DICTIONARY.md`](DATA_DICTIONARY.md) |
 | Whether an in-repo `.sql` has been applied | §4 below (UAT gaps) |
 | Table / FK / unique-key facts for a domain | This file, then the matching `DOMAIN_*.md` |
 
