@@ -523,6 +523,7 @@
     <Content Include="index_start.aspx" />
     <Content Include="index.aspx" />
     <Content Include="reset_password.aspx" />
+    <Content Include="corporate\business\app\SwitchUser.aspx" />
     <Content Include="corporate\WebProperty\css\sf.eot" />
     <Content Include="corporate\WebProperty\css\sf.svg" />
     <Content Include="corporate\WebProperty\css\sf.ttf" />
@@ -1900,6 +1901,13 @@
     </Compile>
     <Compile Include="reset_password.aspx.designer.cs">
       <DependentUpon>reset_password.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\SwitchUser.aspx.cs">
+      <DependentUpon>SwitchUser.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\SwitchUser.aspx.designer.cs">
+      <DependentUpon>SwitchUser.aspx</DependentUpon>
     </Compile>
     <Compile Include="index_card.aspx.cs">
       <DependentUpon>index_card.aspx</DependentUpon>

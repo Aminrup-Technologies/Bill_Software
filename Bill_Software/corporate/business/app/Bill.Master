@@ -511,6 +511,9 @@
                     </div>
                     <asp:Image ID="imgProfile" runat="server" ImageUrl="~/corporate/business/WebImages/representative.png" CssClass="header-avatar" />
                 </div>
+                <asp:Panel ID="pnlSwitchUser" runat="server" Visible="false">
+                    <asp:HyperLink ID="lnkSwitchUser" runat="server" NavigateUrl="~/corporate/business/app/SwitchUser.aspx" Style="color:#fff;padding:0 10px;white-space:nowrap;font-size:12px;text-decoration:none;">🔄 Switch User</asp:HyperLink>
+                </asp:Panel>
                 <asp:LinkButton ID="btnLogOut" runat="server" class="logout" OnClick="btnLogOut_Click" OnClientClick="return confirm('Are you sure you want to Logout ...?')">Logout</asp:LinkButton>
             </div>
         </header>

@@ -101,6 +101,7 @@ namespace Bill_Software.corporate.business.app
             }
 
             GetAdminName();
+            UpdateSwitchUserVisibility();
         }
 
         // --- MULTI-COMPANY METHODS ---
@@ -176,6 +177,13 @@ namespace Bill_Software.corporate.business.app
             Session["CompanyID"] = selectedCompanyId;
             Response.Redirect(Request.RawUrl, false);
             Context.ApplicationInstance.CompleteRequest();
+        }
+
+        private void UpdateSwitchUserVisibility()
+        {
+            bool isImpersonating = Session["SwitchedFrom"] != null && (bool)Session["SwitchedFrom"];
+            bool hasPermission = AuthGuard.HasPermission(Session["USERID"].ToString(), "SwitchUser", CompanyContext.CurrentCompanyID);
+            pnlSwitchUser.Visible = hasPermission && !isImpersonating;
         }
 
         private void GetAdminName()
