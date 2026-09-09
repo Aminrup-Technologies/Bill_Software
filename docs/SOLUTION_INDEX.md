@@ -84,6 +84,25 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [14](14_Authentication_Authorization_Architecture.md)–[21](21_Phase3_Infrastructure_Hardening.md) | AuthZ phases (history) |
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |
 
+## Administrator Impersonation Architecture
+
+The Link Model (Doc 23) is the accepted design; [ADR-001](ADR-001-Impersonation-Link-Model.md) is the canonical summary and holds the normative invariants INV-13–INV-17. Implementation sequence: **PR-1 → PR-2 → PR-3 → PR-4** (Doc 31).
+
+| Doc | Description |
+|-----|-------------|
+| [ADR-001](ADR-001-Impersonation-Link-Model.md) | **Canonical ADR** — Link Model accepted; decision, rationale, invariants INV-13–INV-17, non-goals, superseded assumptions |
+| [23](23_Impersonation_Architecture_Review.md) | Architecture review — Link Model feature design: eligibility gates, superset rule, permission model |
+| [24](24_Impersonation_Lifecycle.md) | Lifecycle analysis — authentication lifecycle safety, invariants INV-1…INV-12, safe/unsafe interception points |
+| [25](25_Impersonation_Session_Model.md) | Session model — DB-anchored lease, session-holds-pointer, state machine, failure recovery, concurrency |
+| [26](26_Impersonation_STRIDE.md) | STRIDE threat model — per-threat risk, attack scenarios, detection, mitigations, residual risks |
+| [27](27_Impersonation_Database_Review.md) | Database review — `ImpersonationLink` / `SecurityAudit` schema, migration plan, retention, backward compatibility |
+| [28](28_Impersonation_MasterPage_UX.md) | MasterPage UX — impersonation banner, search modal, rollback UX, mobile and accessibility |
+| [29](29_Impersonation_Implementation_Plan.md) | Implementation plan — `SecurityContext`, `ImpersonationService`, `AuthGuard` fork, probe duties, test matrix |
+| [30](30_Impersonation_Audit_Architecture.md) | Audit architecture — event catalog, correlation keys, financial attribution, reporting queries |
+| [31](31_Impersonation_Implementation_Roadmap.md) | Implementation roadmap — PR-1 → PR-4 with scope, validation checklists, rollback plans, regression risks |
+| [32](32_Impersonation_Final_Architecture_Review.md) | Final architecture review — Go-with-changes verdict, architecture score, hidden risks HR-1…HR-9, prerequisites P-1…P-7 |
+| [33](33_Impersonation_PR1_Implementation_Readiness.md) | PR-1 readiness gate — Ready verdict; INV-13…INV-17, probe duties, edge-case matrix, canonical EndReason set, PR-1 checklist |
+
 ## Invoice lineage (specialist, not page catalogs)
 
 - [invoice_export_data_inventory.md](invoice_export_data_inventory.md)
