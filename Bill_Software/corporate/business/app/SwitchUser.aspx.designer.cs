@@ -11,12 +11,5 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class SwitchUser
     {
-        protected global::System.Web.UI.WebControls.Panel pnlImpersonating;
-        protected global::System.Web.UI.WebControls.Label lblImpersonatingUser;
-        protected global::System.Web.UI.WebControls.Button btnSwitchBack;
-        protected global::System.Web.UI.WebControls.TextBox txtSearch;
-        protected global::System.Web.UI.WebControls.Repeater rptUsers;
-        protected global::System.Web.UI.WebControls.Label lblNoResults;
-        protected global::System.Web.UI.WebControls.Label lblStatus;
     }
 }
