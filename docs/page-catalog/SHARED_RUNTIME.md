@@ -78,6 +78,7 @@ The **live database is not versioned**. These files are patches or snapshots. Do
 | `…/sql/user_company_access_reconciliation.sql` | Membership repair. |
 | `…/sql/user_roles_reconciliation.sql` | `UserRoles` repair. |
 | `…/sql/SwitchUser_permission.sql` | Catalog-only `SwitchUser` permission. No RolePermissions grant. DBA only. |
+| `…/sql/SwitchUser_superadmin_grant_uat.sql` | UAT Super Admin `RolePermissions` grant for `SwitchUser`. DBA only. Not for production. |
 | `…/sql/ensure_purchaseorder_schema.sql` | Vendor PO objects. |
 | `…/sql/requisition_po_companyid.sql` | PR/PO `CompanyID`. |
 | `…/sql/tbl_NewProduct_CompanyID.sql` | Product tenant column. |

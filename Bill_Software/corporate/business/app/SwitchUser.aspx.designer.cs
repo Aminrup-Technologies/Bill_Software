@@ -11,5 +11,11 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class SwitchUser
     {
+        protected global::System.Web.UI.WebControls.Panel pnlDisabled;
+        protected global::System.Web.UI.WebControls.Panel pnlActive;
+        protected global::System.Web.UI.WebControls.TextBox txtSearch;
+        protected global::System.Web.UI.WebControls.Repeater rptUsers;
+        protected global::System.Web.UI.WebControls.Label lblNoResults;
+        protected global::System.Web.UI.WebControls.Label lblStatus;
     }
 }

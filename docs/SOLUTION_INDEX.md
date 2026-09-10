@@ -36,7 +36,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
-| Administrator impersonation (off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[35](35_Impersonation_Runtime_Engine.md) |
+| Administrator impersonation (UAT flag + grant) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[36](36_Impersonation_UAT_Activation.md) |
 
 ## Page catalogs (unique facts only)
 
@@ -85,12 +85,13 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [14](14_Authentication_Authorization_Architecture.md)–[21](21_Phase3_Infrastructure_Hardening.md) | AuthZ phases (history) |
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |
 | [ADR-001](ADR-001_Administrator_Impersonation.md) | Impersonation stays off until flag + grant |
-| [29](29_Impersonation_Governance.md)–[35](35_Impersonation_Runtime_Engine.md) | Impersonation governance + dormant runtime (no live swap) |
+| [29](29_Impersonation_Governance.md)–[36](36_Impersonation_UAT_Activation.md) | Impersonation governance, runtime, UAT activation |
 
 ## Database Migrations
 
 - [`user_company_access_seed.sql`](../db/user_company_access_seed.sql) — Seeds missing home-tenant memberships after Phase 2A rollout.
 - [`SwitchUser_permission.sql`](../Bill_Software/corporate/business/sql/SwitchUser_permission.sql) — Catalog-only `SwitchUser` permission (no grant).
+- [`SwitchUser_superadmin_grant_uat.sql`](../Bill_Software/corporate/business/sql/SwitchUser_superadmin_grant_uat.sql) — UAT Super Admin grant only (DBA; do not execute from the app).
 
 ## Invoice lineage (specialist, not page catalogs)
 

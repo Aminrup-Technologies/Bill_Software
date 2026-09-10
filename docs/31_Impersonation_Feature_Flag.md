@@ -14,3 +14,5 @@
 Missing, empty, `false`, `0`, or any other string → disabled (`ImpersonationGovernance.IsSwitchUserEnabled` is false).
 
 Every public `ImpersonationRuntime` method returns `Disabled` with no database access when this reader is false. Do not treat the catalog row as enablement.
+
+Committed transforms stay `false` (`InsertIfMissing`). UAT-only enablement is an operator AppSetting on the UAT host. Production Release deploys must keep `false`.

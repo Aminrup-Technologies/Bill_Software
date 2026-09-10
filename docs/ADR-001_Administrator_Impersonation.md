@@ -6,15 +6,14 @@
 
 ## Decision
 
-Administrator impersonation is a future capability. The runtime engine exists in-process and stays inert until **all** of these are true: feature flag `SwitchUser=true`, an explicit `RolePermissions` grant, and a caller of `ImpersonationRuntime` other than the dormant banner/logout hooks.
+Administrator impersonation stays fail-closed unless **all** of these are true: AppSetting `SwitchUser=true`, Super Admin `RolePermissions` grant, and a caller of `ImpersonationRuntime`.
 
-- `Permissions.PermissionKey = SwitchUser` may exist as catalog metadata.
-- `RolePermissions` must not grant that key in this PR.
-- AppSetting `SwitchUser` defaults to `false`. Missing or any non-`true` value is disabled.
+PR-83 wires UAT callers only. Production `Web.Release.config` remains `SwitchUser=false`. UAT operators set the flag on the UAT host. DBA grant script is not executed by the app.
+
 - `AuthGuard` is unchanged.
-- `ImpersonationRuntime` public entry points return `Disabled` with no SQL when the flag is off.
-- Bill.Master banner is `Visible=false` unless the flag is on **and** a lease is active.
-- `SwitchUser.aspx` remains a session-only stub: "This function is not available."
+- `Heartbeat.ashx` is unchanged.
+- Banner uses existing `BindMasterBanner`.
+- Menu `SwitchUser` is visible only when the flag is true and the user has the permission.
 
 ## Contracts
 
@@ -27,6 +26,7 @@ Administrator impersonation is a future capability. The runtime engine exists in
 | [33_Impersonation_EndReasons.md](33_Impersonation_EndReasons.md) | 11 EndReason values |
 | [34_Impersonation_Invariants_13_17.md](34_Impersonation_Invariants_13_17.md) | INV-13–17 |
 | [35_Impersonation_Runtime_Engine.md](35_Impersonation_Runtime_Engine.md) | Start/Rollback engine |
+| [36_Impersonation_UAT_Activation.md](36_Impersonation_UAT_Activation.md) | UAT callers + Super Admin grant script |
 
 Code: `ImpersonationGovernance`, `ImpersonationLink`, `ImpersonationIntentToken`, `ImpersonationRuntime`, `SecurityAudit` (`dbo.AuthAudit`).
 
