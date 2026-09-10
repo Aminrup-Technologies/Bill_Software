@@ -28,6 +28,7 @@ Implementation history remains in:
 | `docs/19_Phase2B_Resource_Authorization.md` | Visit / expense resource scope |
 | `docs/20_Phase2C_Remaining_Hardening.md` | Directory delete, quotation attach, approval replay |
 | `docs/21_Phase3_Infrastructure_Hardening.md` | Kiosk isolation, secret inventory, machineKey |
+| `docs/ADR-001` + `docs/29`–`docs/33` | Impersonation governance. Flag default false. No identity swap in PR-2A |
 
 Those files explain how the foundation was built. This file defines what must remain true.
 
