@@ -333,7 +333,9 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            if (!AuthGuard.HasPermission(ImpersonationGovernance.PermissionKey))
+            // Actor owns SwitchUser, not the observed user. AuthGuard.HasPermission
+            // reads Session["USERID"] (the target) and would revoke immediately.
+            if (!ActorHoldsSwitchUser(link))
             {
                 Close(link.ImpersonationId, ImpersonationGovernance.EndReason.PermissionRevoked);
                 banner.Visible = false;
@@ -350,6 +352,41 @@ namespace Bill_Software.corporate.business.app
             }
             if (endButton != null)
                 endButton.Visible = true;
+        }
+
+        /// <summary>
+        /// Same join as AuthGuard.HasPermission, keyed to the actor snapshot.
+        /// Does not change AuthGuard. Fail closed on SQL errors.
+        /// </summary>
+        private static bool ActorHoldsSwitchUser(ImpersonationLink link)
+        {
+            if (link == null || string.IsNullOrWhiteSpace(link.ActorUserKey) || link.CompanyID <= 0)
+                return false;
+
+            const string sql = @"
+                SELECT TOP 1 1
+                FROM dbo.Permissions p
+                INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
+                INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
+                INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id AND u.CompanyID = @CompanyID
+                WHERE u.User_Id = @UserId AND p.PermissionKey = @Key";
+
+            try
+            {
+                using (var cn = new SqlConnection(AppSecrets.DbConnectionString))
+                using (var cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.Parameters.Add("@UserId", SqlDbType.NVarChar, 100).Value = link.ActorUserKey;
+                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = link.CompanyID;
+                    cmd.Parameters.Add("@Key", SqlDbType.NVarChar, 100).Value = ImpersonationGovernance.PermissionKey;
+                    cn.Open();
+                    return cmd.ExecuteScalar() != null;
+                }
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
         }
 
         private static ImpersonationResult GateActor(int targetUserId)

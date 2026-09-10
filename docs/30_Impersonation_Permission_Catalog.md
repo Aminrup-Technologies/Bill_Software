@@ -14,4 +14,4 @@
 
 Idempotent `INSERT` when the key is missing. **No** `RolePermissions` insert. Super Admin does not receive the key from this script.
 
-`ImpersonationGovernance.PermissionKey` is the C# constant. PR-2A does not pass it to `EnsurePage`.
+`ImpersonationGovernance.PermissionKey` is the C# constant. Catalog script does not grant. UAT Super Admin grant is `SwitchUser_superadmin_grant_uat.sql` (DBA only).

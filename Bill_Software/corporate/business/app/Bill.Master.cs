@@ -101,6 +101,7 @@ namespace Bill_Software.corporate.business.app
             }
 
             GetAdminName();
+            BindSwitchUserMenu();
             ImpersonationRuntime.BindMasterBanner(pnlImpersonationBanner, lblImpersonationBanner, lnkEndImpersonation);
         }
 
@@ -264,6 +265,22 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
+        private void BindSwitchUserMenu()
+        {
+            if (this.SwitchUser == null)
+                return;
+
+            if (Session[ImpersonationGovernance.SessionLinkKey] != null)
+            {
+                this.SwitchUser.Visible = false;
+                return;
+            }
+
+            bool granted = ImpersonationGovernance.IsSwitchUserEnabled
+                && AuthGuard.HasPermission(ImpersonationGovernance.PermissionKey);
+            this.SwitchUser.Visible = granted;
+        }
+
         private Control FindControlRecursive(Control rootControl, string controlID)
         {
             if (rootControl.ID == controlID) return rootControl;
@@ -278,6 +295,8 @@ namespace Bill_Software.corporate.business.app
         protected void lnkEndImpersonation_Click(object sender, EventArgs e)
         {
             ImpersonationRuntime.CloseCurrent(ImpersonationGovernance.EndReason.ManualRollback);
+            GetMenuControl();
+            BindSwitchUserMenu();
             GetAdminName();
             ImpersonationRuntime.BindMasterBanner(pnlImpersonationBanner, lblImpersonationBanner, lnkEndImpersonation);
         }

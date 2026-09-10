@@ -1214,6 +1214,11 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl ViewUser;
+
+        /// <summary>
+        /// SwitchUser control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl SwitchUser;
         
         /// <summary>
         /// ManageRoles control.

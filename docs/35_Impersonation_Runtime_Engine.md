@@ -23,9 +23,8 @@ First line of every public runtime method: if `!ImpersonationGovernance.IsSwitch
 | `Bill.Master` `BindMasterBanner` | Panel stays `Visible=false`. |
 | `lnkEndImpersonation_Click` | `CloseCurrent` no-ops. |
 | `btnLogOut_Click` | `CloseCurrent(ActorLogout)` no-ops, then existing logout. |
-| `SwitchUser.aspx` | Does **not** call the engine. Stub copy unchanged. |
+| `SwitchUser.aspx` | Flag off: unavailable stub. Flag on: `IssueIntent` + `Start`. |
+| Users menu `SwitchUser` | Visible only when flag + permission + no active link. |
 | `Heartbeat.ashx` | Unchanged. Lease heartbeat is not registered. |
 
-## Not in this PR
-
-Menu item for Switch User, `RolePermissions` grants, AuthGuard API changes, UAT SQL execution, live identity swap.
+UAT grant: `SwitchUser_superadmin_grant_uat.sql` (DBA only). Production flag remains false. See [docs/36](36_Impersonation_UAT_Activation.md).
