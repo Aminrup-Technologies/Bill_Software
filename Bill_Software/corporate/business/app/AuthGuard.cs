@@ -250,7 +250,7 @@ namespace Bill_Software.corporate.business.app
 
         public static bool EnsurePage(Page page, bool requireCompany, string permissionKey)
         {
-            HttpContext ctx = page != null ? page.Context : HttpContext.Current;
+            HttpContext ctx = HttpContext.Current;
             if (!TryValidateSession(ctx))
             {
                 RedirectLogin(ctx);
@@ -272,7 +272,7 @@ namespace Bill_Software.corporate.business.app
         /// </summary>
         public static bool EnsurePageAny(Page page, bool requireCompany, string[] permissionKeys)
         {
-            HttpContext ctx = page != null ? page.Context : HttpContext.Current;
+            HttpContext ctx = HttpContext.Current;
             if (!TryValidateSession(ctx))
             {
                 RedirectLogin(ctx);
@@ -299,7 +299,7 @@ namespace Bill_Software.corporate.business.app
             if (!EnsurePage(page, true, null)) return false;
             if (string.IsNullOrEmpty(id)) return true;
             if (RecordInCompany(mapKey, id)) return true;
-            Deny(page.Context, 403);
+            Deny(HttpContext.Current, 403);
             return false;
         }
 
