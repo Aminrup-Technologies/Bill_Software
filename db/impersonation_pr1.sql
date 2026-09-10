@@ -8,11 +8,11 @@
 --       catalog insert. No RolePermissions grant. No ActiveSessions INSERT
 --       or ALTER. Application code in PR-1 does not read or write this table.
 -- =============================================================================
--- INERT / DO NOT EXECUTE FROM THE APPLICATION.
--- EndReason list is also docs/33_Impersonation_EndReasons.md and
--- ImpersonationGovernance.EndReason (PR-2A; no runtime writers).
+-- INERT DDL. Application writers (ImpersonationRuntime) run only when
+-- AppSetting SwitchUser is exactly true (default false). Do not execute
+-- this script from the app. EndReason list: docs/33 and ImpersonationGovernance.
 -- Canonical EndReason values (11). Documented here and enforced by CHECK.
--- Runtime writers belong to later PRs; do not seed these as rows.
+-- Do not seed these as rows.
 --   1. ManualRollback
 --   2. ActorLogout
 --   3. TargetLogout

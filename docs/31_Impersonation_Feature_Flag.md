@@ -13,4 +13,4 @@
 
 Missing, empty, `false`, `0`, or any other string → disabled (`ImpersonationGovernance.IsSwitchUserEnabled` is false).
 
-PR-2A does not read this flag on the request path. A later PR may gate runtime impersonation on it. Do not treat the catalog row as enablement.
+Every public `ImpersonationRuntime` method returns `Disabled` with no database access when this reader is false. Do not treat the catalog row as enablement.

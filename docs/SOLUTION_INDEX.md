@@ -36,7 +36,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
-| Administrator impersonation (off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[33](33_Impersonation_EndReasons.md) |
+| Administrator impersonation (off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[35](35_Impersonation_Runtime_Engine.md) |
 
 ## Page catalogs (unique facts only)
 
@@ -85,7 +85,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [14](14_Authentication_Authorization_Architecture.md)–[21](21_Phase3_Infrastructure_Hardening.md) | AuthZ phases (history) |
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |
 | [ADR-001](ADR-001_Administrator_Impersonation.md) | Impersonation stays off until flag + grant |
-| [29](29_Impersonation_Governance.md)–[33](33_Impersonation_EndReasons.md) | Impersonation governance (PR-2A; no runtime swap) |
+| [29](29_Impersonation_Governance.md)–[35](35_Impersonation_Runtime_Engine.md) | Impersonation governance + dormant runtime (no live swap) |
 
 ## Database Migrations
 

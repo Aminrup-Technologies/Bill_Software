@@ -18,4 +18,4 @@
 | 10 | PermissionRevoked |
 | 11 | SystemFault |
 
-PR-2A does not write `EndReason`. Do not invent additional values without changing the CHECK constraint and this list together.
+PR-3 writes `EndReason` only from `ImpersonationRuntime.Close` when the feature flag is on. Do not invent additional values without changing the CHECK constraint and this list together.

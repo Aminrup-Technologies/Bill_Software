@@ -7,8 +7,8 @@ namespace Bill_Software.corporate.business.app
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            // PR-1: retain the route, do not activate impersonation.
-            // Session-only gate via AuthGuard. No permission key, no SQL, no identity swap.
+            // Route retained. ImpersonationRuntime is gated on SwitchUser=false and
+            // is not invoked from this page. Session-only AuthGuard. No identity swap.
             AuthGuard.EnsurePage(this, false, null);
         }
     }

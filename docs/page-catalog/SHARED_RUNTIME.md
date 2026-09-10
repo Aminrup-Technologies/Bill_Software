@@ -35,7 +35,10 @@ Ponytail CSS/JS is not a user control here — see [`SHARED_CONTEXT.md`](SHARED_
 | Type | Unique job |
 |------|------------|
 | `AuthGuard` | Cookie + session + `ActiveSessions`; `EnsurePage` / `EnsurePrint` / `HasPermission`. Contract: [`docs/22_Security_Baseline.md`](../22_Security_Baseline.md). |
-| `ImpersonationGovernance` | PR-2A constants: `SwitchUser` permission key, disabled feature flag reader, EndReason list. Not called from AuthGuard. [`ADR-001`](../ADR-001_Administrator_Impersonation.md). |
+| `ImpersonationGovernance` | `SwitchUser` permission key, fail-closed flag reader, EndReason list, INV-13–17 constants. Not used by AuthGuard. [`ADR-001`](../ADR-001_Administrator_Impersonation.md). |
+| `ImpersonationRuntime` | Dormant Start/Rollback engine. No SQL while `SwitchUser` is not `true`. [`docs/35`](../35_Impersonation_Runtime_Engine.md). |
+| `ImpersonationLink` / `ImpersonationIntentToken` | Session lease snapshot + HMAC intent token. |
+| `SecurityAudit` | `dbo.AuthAudit` INSERT helper used by the impersonation engine. |
 | `SecurePage` | Base page; `OnInit` → `AuthGuard.EnsurePage` using `RequiredPermissionKey` / `RequiredAnyPermissionKeys`. |
 | `CompanyContext` | Nested on `Bill.Master.cs`. `CurrentCompanyID` from `Session["CompanyID"]`. |
 | `AppSecrets` | `DbConn` connection string; `GetAppSetting` / `GetInt`; `GetUrlTokenAesKey` (empty key keeps legacy QuickAction decrypt). |

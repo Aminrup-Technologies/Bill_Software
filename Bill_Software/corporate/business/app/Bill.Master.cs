@@ -101,6 +101,7 @@ namespace Bill_Software.corporate.business.app
             }
 
             GetAdminName();
+            ImpersonationRuntime.BindMasterBanner(pnlImpersonationBanner, lblImpersonationBanner, lnkEndImpersonation);
         }
 
         // --- MULTI-COMPANY METHODS ---
@@ -293,8 +294,17 @@ namespace Bill_Software.corporate.business.app
             return null;
         }
 
+        protected void lnkEndImpersonation_Click(object sender, EventArgs e)
+        {
+            ImpersonationRuntime.CloseCurrent(ImpersonationGovernance.EndReason.ManualRollback);
+            GetAdminName();
+            ImpersonationRuntime.BindMasterBanner(pnlImpersonationBanner, lblImpersonationBanner, lnkEndImpersonation);
+        }
+
         protected void btnLogOut_Click(object sender, EventArgs e)
         {
+            ImpersonationRuntime.CloseCurrent(ImpersonationGovernance.EndReason.ActorLogout);
+
             if (Session["SessionToken"] != null)
             {
                 try

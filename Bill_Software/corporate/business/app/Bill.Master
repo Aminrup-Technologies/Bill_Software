@@ -98,6 +98,17 @@
         #nav li ul ul { top: 0; left: 100%; }
 
         .header-profile { flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+        .impersonation-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #7a1f1f;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .impersonation-banner a { color: #fff; text-decoration: underline; }
 
         .top-header-bar .clock_style {
             margin: 0;
@@ -511,6 +522,10 @@
                     </div>
                     <asp:Image ID="imgProfile" runat="server" ImageUrl="~/corporate/business/WebImages/representative.png" CssClass="header-avatar" />
                 </div>
+                <asp:Panel ID="pnlImpersonationBanner" runat="server" Visible="false" CssClass="impersonation-banner">
+                    <asp:Label ID="lblImpersonationBanner" runat="server" />
+                    <asp:LinkButton ID="lnkEndImpersonation" runat="server" OnClick="lnkEndImpersonation_Click" Text="End impersonation" />
+                </asp:Panel>
                 <asp:LinkButton ID="btnLogOut" runat="server" class="logout" OnClick="btnLogOut_Click" OnClientClick="return confirm('Are you sure you want to Logout ...?')">Logout</asp:LinkButton>
             </div>
         </header>

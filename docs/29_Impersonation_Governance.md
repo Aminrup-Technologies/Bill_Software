@@ -1,17 +1,19 @@
-# 29 — Impersonation governance (PR-2A)
+# 29 — Impersonation governance
 
-**Status:** Governance only. Runtime impersonation is off.  
+**Status:** Governance + dormant runtime. Live impersonation is off.  
 **ADR:** [ADR-001_Administrator_Impersonation.md](ADR-001_Administrator_Impersonation.md)
 
-## In this PR
+## In tree
 
 - Catalog metadata for `SwitchUser` (SQL, DBA-executed, no grant).
 - Disabled feature flag `SwitchUser=false`.
 - `ImpersonationGovernance` constants aligned with `db/impersonation_pr1.sql`.
-- Documentation: ADR-001 and docs 30–33.
+- `ImpersonationRuntime` Start/Rollback engine, gated on the flag (no SQL when disabled).
+- Bill.Master banner plumbing, hidden unless flag **and** active lease.
+- Documentation: ADR-001 and docs 30–35.
 
-## Not in this PR
+## Still not activated
 
-Session switching, heartbeat, impersonation banner, lease timers, `AuthGuard` changes, `RolePermissions` grants, writers to `dbo.ImpersonationSessions`.
+Menu enablement, `RolePermissions` grants, `AuthGuard` contract changes, `Heartbeat.ashx` lease pings, `SwitchUser.aspx` identity swap.
 
-`SwitchUser.aspx` is unchanged from PR-1: `AuthGuard.EnsurePage(this, false, null)` and no identity swap.
+`SwitchUser.aspx` remains PR-1: `AuthGuard.EnsurePage(this, false, null)` and "This function is not available."
