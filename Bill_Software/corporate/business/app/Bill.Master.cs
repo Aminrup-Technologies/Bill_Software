@@ -289,9 +289,14 @@ namespace Bill_Software.corporate.business.app
             if (this.SwitchUser == null)
                 return;
 
+            if (Session[ImpersonationGovernance.SessionLinkKey] != null)
+            {
+                this.SwitchUser.Visible = false;
+                return;
+            }
+
             bool granted = ImpersonationGovernance.IsSwitchUserEnabled
-                && AuthGuard.HasPermission(ImpersonationGovernance.PermissionKey)
-                && Session[ImpersonationGovernance.SessionLinkKey] == null;
+                && AuthGuard.HasPermission(ImpersonationGovernance.PermissionKey);
             this.SwitchUser.Visible = granted;
         }
 
