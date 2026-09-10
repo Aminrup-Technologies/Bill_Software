@@ -84,6 +84,10 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [14](14_Authentication_Authorization_Architecture.md)–[21](21_Phase3_Infrastructure_Hardening.md) | AuthZ phases (history) |
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |
 
+## Database Migrations
+
+- [`user_company_access_seed.sql`](../db/user_company_access_seed.sql) — Seeds missing home-tenant memberships after Phase 2A rollout.
+
 ## Invoice lineage (specialist, not page catalogs)
 
 - [invoice_export_data_inventory.md](invoice_export_data_inventory.md)
