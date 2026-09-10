@@ -35,6 +35,7 @@ Ponytail CSS/JS is not a user control here — see [`SHARED_CONTEXT.md`](SHARED_
 | Type | Unique job |
 |------|------------|
 | `AuthGuard` | Cookie + session + `ActiveSessions`; `EnsurePage` / `EnsurePrint` / `HasPermission`. Contract: [`docs/22_Security_Baseline.md`](../22_Security_Baseline.md). |
+| `ImpersonationGovernance` | PR-2A constants: `SwitchUser` permission key, disabled feature flag reader, EndReason list. Not called from AuthGuard. [`ADR-001`](../ADR-001_Administrator_Impersonation.md). |
 | `SecurePage` | Base page; `OnInit` → `AuthGuard.EnsurePage` using `RequiredPermissionKey` / `RequiredAnyPermissionKeys`. |
 | `CompanyContext` | Nested on `Bill.Master.cs`. `CurrentCompanyID` from `Session["CompanyID"]`. |
 | `AppSecrets` | `DbConn` connection string; `GetAppSetting` / `GetInt`; `GetUrlTokenAesKey` (empty key keeps legacy QuickAction decrypt). |
@@ -73,6 +74,7 @@ The **live database is not versioned**. These files are patches or snapshots. Do
 | `…/sql/UserCompanyAccess.sql` | `UserCompanyAccess` membership. |
 | `…/sql/user_company_access_reconciliation.sql` | Membership repair. |
 | `…/sql/user_roles_reconciliation.sql` | `UserRoles` repair. |
+| `…/sql/SwitchUser_permission.sql` | Catalog-only `SwitchUser` permission. No RolePermissions grant. DBA only. |
 | `…/sql/ensure_purchaseorder_schema.sql` | Vendor PO objects. |
 | `…/sql/requisition_po_companyid.sql` | PR/PO `CompanyID`. |
 | `…/sql/tbl_NewProduct_CompanyID.sql` | Product tenant column. |

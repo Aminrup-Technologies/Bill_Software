@@ -9,6 +9,8 @@
 --       or ALTER. Application code in PR-1 does not read or write this table.
 -- =============================================================================
 -- INERT / DO NOT EXECUTE FROM THE APPLICATION.
+-- EndReason list is also docs/33_Impersonation_EndReasons.md and
+-- ImpersonationGovernance.EndReason (PR-2A; no runtime writers).
 -- Canonical EndReason values (11). Documented here and enforced by CHECK.
 -- Runtime writers belong to later PRs; do not seed these as rows.
 --   1. ManualRollback
