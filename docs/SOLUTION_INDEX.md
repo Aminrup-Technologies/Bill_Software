@@ -36,7 +36,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
-| Administrator impersonation (UAT flag + grant) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[36](36_Impersonation_UAT_Activation.md) |
+| Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
 
 ## Page catalogs (unique facts only)
 
@@ -86,6 +86,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |
 | [ADR-001](ADR-001_Administrator_Impersonation.md) | Impersonation stays off until flag + grant |
 | [29](29_Impersonation_Governance.md)–[36](36_Impersonation_UAT_Activation.md) | Impersonation governance, runtime, UAT activation |
+| [37_SwitchUser_UAT_Completion.md](37_SwitchUser_UAT_Completion.md) | Phase 2A Switch User UAT completion |
 
 ## Database Migrations
 
