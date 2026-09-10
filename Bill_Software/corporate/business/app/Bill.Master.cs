@@ -314,6 +314,8 @@ namespace Bill_Software.corporate.business.app
         protected void lnkEndImpersonation_Click(object sender, EventArgs e)
         {
             ImpersonationRuntime.CloseCurrent(ImpersonationGovernance.EndReason.ManualRollback);
+            GetMenuControl();
+            BindSwitchUserMenu();
             GetAdminName();
             ImpersonationRuntime.BindMasterBanner(pnlImpersonationBanner, lblImpersonationBanner, lnkEndImpersonation);
         }
