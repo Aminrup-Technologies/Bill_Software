@@ -251,25 +251,6 @@ namespace Bill_Software.corporate.business.app
                         while (rdrUser.Read()) userGrantedPermissions.Add(rdrUser.GetString(0));
                     }
                 }
-
-                if (userGrantedPermissions.Count == 0)
-                {
-                    const string sqlUserPermsFallback = @"
-                        SELECT DISTINCT p.PermissionKey 
-                        FROM dbo.Permissions p
-                        INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
-                        INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
-                        INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id
-                        WHERE u.User_Id = @UserId";
-                    using (var cmdFb = new SqlCommand(sqlUserPermsFallback, cn))
-                    {
-                        cmdFb.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = UserName });
-                        using (var rdrFb = cmdFb.ExecuteReader())
-                        {
-                            while (rdrFb.Read()) userGrantedPermissions.Add(rdrFb.GetString(0));
-                        }
-                    }
-                }
             }
 
             foreach (string menuId in allSystemPermissions)
