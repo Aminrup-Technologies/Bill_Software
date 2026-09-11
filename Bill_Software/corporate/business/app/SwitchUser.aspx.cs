@@ -25,13 +25,14 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
-            if (!AuthGuard.EnsurePage(this, true, ImpersonationGovernance.PermissionKey))
+            bool impersonating = Session[ImpersonationGovernance.SessionLinkKey] != null;
+            if (!AuthGuard.EnsurePage(this, true, impersonating ? null : ImpersonationGovernance.PermissionKey))
                 return;
 
             pnlDisabled.Visible = false;
             pnlActive.Visible = true;
 
-            if (Session[ImpersonationGovernance.SessionLinkKey] != null)
+            if (impersonating)
             {
                 ShowStatus("Nested impersonation is rejected (INV-13). Use End impersonation on the banner.", Color.DarkRed);
                 rptUsers.Visible = false;
@@ -81,6 +82,7 @@ namespace Bill_Software.corporate.business.app
             }
 
             Response.Redirect("~/corporate/business/app/home.aspx", false);
+            Context.ApplicationInstance.CompleteRequest();
         }
 
         private void BindUsers(string search)
