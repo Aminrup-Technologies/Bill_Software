@@ -6,7 +6,9 @@ Lightweight working status. Prefer this file over chat history. Update the secti
 
 ## Current Status
 
-Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`.
+PR **#84** is merged to `master` (merge commit `d67e854`; PR head `49b1e16`). Next development cycle is open. Wait for an explicit `@filename` task.
+
+Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`. `July_to_Sept26_DevNSupport` remains as the historical implementation branch.
 
 **Root cause:** after `ImpersonationRuntime.Start`, `Session["USERID"]` is the target. `AuthGuard.HasPermission("SwitchUser")` reads that identity, so `EnsurePage(..., PermissionKey)` 403'd the impersonated session. `Redirect(..., false)` without `CompleteRequest()` let the Switch User request keep running.
 
@@ -31,13 +33,13 @@ Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGu
 
 ## Current Task
 
-None. Switch User runtime investigation is closed.
+None. Next scoped change is not assigned.
 
 ---
 
 ## Pending Work
 
-- _TBD – next scoped change (not Switch User runtime)._
+- _TBD - name the next scoped change (module, files, defect/ADR id)._
 - Known debt (do not start unless requested): leftover concatenated SQL on invoice / PO / stock / scheduler surfaces; kiosk plaintext; some direct `SmtpClient` pages; UAT objects not applied.
 - Product stops still closed: Decision #8 (`ReportingManagerId` ACL), Decision #9 (HQ cross-company), `machineKey` rotation, secret cutover ops.
 
@@ -57,7 +59,7 @@ None. Switch User runtime investigation is closed.
 
 ## Next Action
 
-Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named.
+Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested.
 
 ---
 
