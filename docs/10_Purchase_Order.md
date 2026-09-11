@@ -1,55 +1,42 @@
-# Module 10 — Purchase Order Management
+# Purchase orders — two stacks
 
-> Master Page Menu Position: **Corporate → Purchase Orders** (or similar navigation item)
+There are **two unrelated PO implementations**. Do not merge them. A third thing named “purchase” is vendor goods received (`tbl_Purches`).
 
----
-
-## 1. Overview
-
-The Purchase Order Management module handles procurement workflows — creating, tracking, and managing purchase orders for goods and services. While not directly analyzed in the Sales Visit Workflow Audit, this module is part of the core ERP ecosystem and interacts with the customer/vendor directory and potentially the quotation module.
-
----
-
-## 2. Files
-
-| File | Type | Purpose |
-|------|------|---------|
-| Corporate business pages (inferred) | Frontend/Backend | Purchase order CRUD operations |
-
-> **Note:** Specific `.aspx`/`.aspx.cs` file names for this module were not directly referenced in the Sales Visit Workflow Audit. File paths are inferred from the overall application structure.
+Canonical vendor PR/PO pages: [`page-catalog/DOMAIN_pr-po.md`](page-catalog/DOMAIN_pr-po.md).  
+Canonical quotation / client-PO pages: [`page-catalog/DOMAIN_quotation.md`](page-catalog/DOMAIN_quotation.md).  
+Print pages: [`page-catalog/DOMAIN_print.md`](page-catalog/DOMAIN_print.md).  
+SPs / print helper: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md).
 
 ---
 
-## 3. Core Database Tables
+## Stack A — vendor PO (procurement)
 
-| Table | Usage in This Module |
-|-------|---------------------|
-| Purchase order table(s) (name not confirmed) | PO creation and tracking |
-| `tbl_login` | User identity for PO author and approver |
-| Customer/Vendor directory tables | Supplier reference for PO line items |
-| `tbl_SystemNotification` | Audit logging on PO status changes |
+| Item | Fact |
+|------|------|
+| Tables | `tbl_PO_Header` (PK `PO_Id`, unique `PO_No`), `tbl_PO_Items`, `tbl_PO_PartySnapshot` (not `tbl_PO_Details` / `tbl_PO_Charges`) |
+| Upstream | `tbl_RequisitionMain` (`VendorId` → `tbl_Vendor.Id`) / `tbl_RequisitionNew` (`ProductId` → `tbl_NewProduct.ProductID`) via `sp_GeneratePO_FromReqNo` |
+| Live pages | `RequisitionNew` → `View_PR` / `View_PR_Details` → `Approve_PR` → `Generate_PO_From_PR` → `Generate_PO_Preview?reqNo=` → `View_PO` / `View_PO_Details?poId=` |
+| Print | `Print_PO.aspx?poId=` — `EnsurePrint` on `tbl_PO_Header.PO_Id`; payload `sp_GetReleasedPO_Details` |
+| Also | Three PR implementations (modern SP path, hidden Manual*, leftover bank `tbl_requisition`) — details in the catalog |
 
----
+There is no live `PurchaseOrder.aspx` in this tree.
 
-## 4. Multi-Tenant Constraints
-
-| Constraint | Status | Evidence |
-|-----------|--------|----------|
-| `CompanyID` scoping | ⚠️ Not directly verified | Expected to follow the standard `CompanyContext.CurrentCompanyID` pattern based on other modules in the corporate business area |
+UAT also has **amendment/cancellation** tables and SPs (`tbl_PO_Amendment_*`, `tbl_PO_Cancellation_Request`, `sp_CreatePO_Amendment`, …) with **0 rows** and **no C# callers**. Status after generate-PO includes **`PO_Created`** on the PR. Schema: [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md). Legacy `tbl_requisition` / `tbl_requisitionBankDetails` are **not** on UAT.
 
 ---
 
-## 5. Proactive Notification Triggers
+## Stack B — client PO (sales document)
 
-| Trigger | Table | Description |
-|---------|-------|-------------|
-| PO creation/status change | `tbl_SystemNotification` | Audit notification logged |
-| PO approval | `tbl_SystemNotification` + Email | Notification and email to relevant parties |
+| Item | Fact |
+|------|------|
+| Tables | **`tbl_Quotation` + `tbl_Quotaion_details`** with `RecordType` = `Purchase Order` (list pages also use `RecordType != 'Quotation'`) |
+| Create | **Same page as quotation:** `Create_quotation.aspx` (menu id `Li2`) |
+| List / edit / delete | `View_PurchaseOrder`, `Search_purchaseorder`, `edit_purchaseorder`, `delete_purchaseorder` |
+| Print | `NewPurchaseOrder.aspx?ID=` and `NewPurchaseOrder_Print.aspx?ID=` — id is **quotation header id**. `PurchaseOrderPrintHelper` binds this stack, not vendor `tbl_PO_Header`. |
 
 ---
 
-## 6. Architectural Notes
+## Not this module
 
-- Purchase orders likely follow the same ADO.NET + parameterized query patterns established throughout the application.
-- The module may reference `tbl_SalesVisitReport` indirectly (e.g., linking a PO to a customer relationship established during a sales visit).
-- Full documentation of this module's implementation details requires direct source code analysis beyond the Sales Visit Workflow Audit scope.
+- Vendor **purchase** (`tbl_Purches`) = goods received / bill from vendor — [`DOMAIN_vendor-purchase.md`](page-catalog/DOMAIN_vendor-purchase.md).
+- Client **tax invoice** = `tbl_Invoice` — [`DOMAIN_invoice.md`](page-catalog/DOMAIN_invoice.md).

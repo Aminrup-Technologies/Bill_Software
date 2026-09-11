@@ -1,69 +1,31 @@
-# Module 04 — Department & Designation Management
+# Departments & designations
 
-> Master Page Menu Position: **Administration → Departments** / **Administration → Designations** (admin-role only)
+There is **no** dedicated department/designation CRUD module.
 
----
-
-## 1. Overview
-
-The Department & Designation Management module maintains the organizational structure reference tables (`tbl_Departments`, `tbl_Designations`) that are used throughout the application for employee classification. These lookup tables feed dropdowns in user provisioning, reporting, and potentially in visit/customer records.
+Canonical user-admin pages: [`page-catalog/DOMAIN_users-rbac.md`](page-catalog/DOMAIN_users-rbac.md).  
+HR / punch pages: [`page-catalog/DOMAIN_attendance-hr.md`](page-catalog/DOMAIN_attendance-hr.md).  
+Kiosk employee photos: [`page-catalog/DOMAIN_card-kiosk.md`](page-catalog/DOMAIN_card-kiosk.md).
 
 ---
 
-## 2. Files
+## What the tables are for
 
-| File | Type | Purpose |
-|------|------|---------|
-| `admin/Update/` subdirectory | Backend | Department and designation CRUD operations (exact file names inferred from directory structure) |
+| Table | Used on | Unique job |
+|-------|---------|------------|
+| `tbl_Departments` | `AddUser.aspx`, `ViewUser.aspx` dropdowns | Label on **ERP login accounts** (`tbl_login`). |
+| `tbl_Designations` | Same | Job-title master (`DesignationID`). **4** rows on UAT. |
+| `tbl_Designation` (singular) | **not** the AddUser dropdown | Leftover **per-user menu-flag** table. **0** rows on UAT. Views `vw_FullDesignation` / `flame_ex.vw_FullDesignation` select this leftover. |
 
-### Supporting Files
-
-| File | Relationship |
-|------|-------------|
-| `admin/AddUser.aspx[.cs]` | Consumes `tbl_Departments` and `tbl_Designations` for dropdown population during user creation |
-| `admin/ViewUser.aspx[.cs]` | Displays department/designation in user management grid |
+No `Add_department.aspx` / `Add_designation.aspx`. New rows are expected via SQL. Do not document `admin/Update/` or `app/Update/` as that UI — those are **profile popups** (kiosk vs ERP).
 
 ---
 
-## 3. Core Database Tables
+## What `Update_Designation.aspx` actually does
 
-| Table | Usage in This Module |
-|-------|---------------------|
-| `tbl_Departments` | Department directory — CRUD managed by this module |
-| `tbl_Designations` | Designation directory — CRUD managed by this module |
-| `tbl_login` | References `DepartmentID` and `DesignationID` as FKs |
-
-### Key Columns
-
-- `tbl_Departments` — department ID, name, and associated metadata
-- `tbl_Designations` — designation ID, name, and associated metadata
-- `tbl_login.DepartmentID` → `tbl_Departments` (FK)
-- `tbl_login.DesignationID` → `tbl_Designations` (FK)
+Assigns **`UserRoles`** (permission **`ViewUser`**). It is **not** a designation master.
 
 ---
 
-## 4. Multi-Tenant Constraints
+## HR vs ERP vs kiosk labels
 
-| Constraint | Status | Evidence |
-|-----------|--------|----------|
-| `CompanyID` scoping on department/designation CRUD | ⚠️ Likely not enforced | These appear to be global reference tables, not tenant-scoped; all companies share the same department/designation vocabulary |
-
-### Tenant Isolation Pattern
-
-Departments and designations are treated as **global reference data** — a shared vocabulary across all tenants. This is a common ERP pattern: the organizational taxonomy is consistent across the company group, while individual employee assignments are tenant-scoped via `tbl_login.CompanyID`.
-
----
-
-## 5. Proactive Notification Triggers
-
-| Trigger | Table | Description |
-|---------|-------|-------------|
-| Department/Designation creation or modification | `tbl_SystemNotification` | Audit logging expected on reference data changes |
-
----
-
-## 6. Architectural Notes
-
-- These reference tables are small and relatively static — they are populated once during initial setup and updated infrequently.
-- The department/designation IDs are used as display attributes in user management and potentially in visit reports, but they do not participate in any query-level authorization or tenancy logic.
-- No defects or security concerns have been identified in this module. It is the simplest CRUD module in the application.
+`tbl_employee` (card kiosk) is a separate person list (`imgdata`, `Company_ID` varchar). Attendance/leave uses `tbl_login.User_Id` as `UserCode`. Do not join `tbl_Departments` to `tbl_employee` as one org chart unless a live FK is proven. UAT: [`SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md).

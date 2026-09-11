@@ -1,5 +1,7 @@
 # 02 — Database Dependency Map
 
+> **Snapshot.** Live visit table is still `tbl_SalesVisitReport`. The claim that `sp_AllocateEmployeeLeaves` is the only stored procedure in the solution is **stale** — see [`00_SNAPSHOT_STATUS.md`](00_SNAPSHOT_STATUS.md) and [`SHARED_RUNTIME.md`](../page-catalog/SHARED_RUNTIME.md).
+
 > **Source-of-truth caveat:** No `.sql` DDL files, EF migrations, or stored-procedure definitions exist anywhere in this repository. Every table/column/constraint listed below is **reverse-engineered from ADO.NET `SqlCommand` text** in the 8 in-scope files plus a small number of cross-referenced files (`Create_quotation.aspx.cs`, `AdminAttendanceDashboard.aspx.cs`, `home.aspx.cs`, `AddUser.aspx.cs`, `index.aspx.cs`) needed to disambiguate columns. **Primary keys, foreign keys, indexes, and constraints are inferred from usage patterns only** — none are declared anywhere in code, because SQL Server enforces them out-of-band. Triggers: **none observed or referenced** anywhere in the analyzed code (no `INSTEAD OF`/`AFTER` trigger names, no evidence of trigger-driven side effects). Stored procedures: **none used by this workflow** (the only SP found in the whole codebase, `sp_AllocateEmployeeLeaves`, belongs to the unrelated user-provisioning flow in `AddUser.aspx.cs`).
 
 ---

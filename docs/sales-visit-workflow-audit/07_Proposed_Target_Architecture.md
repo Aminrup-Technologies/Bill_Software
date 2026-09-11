@@ -1,5 +1,7 @@
 # 07 — Proposed Target Architecture (Sales Visit Workflow)
 
+> **Snapshot / proposal.** Several proposed PRs (D-01 CompanyID INSERT, D-05 parameterization, D-11 CommunicationGateway, D-04 AuthGuard visit checks) **already landed** in later code. Do not implement this document as if the defects were untouched. Status: [`00_SNAPSHOT_STATUS.md`](00_SNAPSHOT_STATUS.md).
+
 **Status: PROPOSAL ONLY. READ-ONLY DELIVERABLE.**
 No source code, database object, or configuration has been changed as part of producing this document. No SQL migrations are included or implied to be ready-to-run. This document is an input to a future planning/implementation decision, not an implementation.
 

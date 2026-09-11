@@ -53,7 +53,7 @@ Runtime resolution is already **configuration-first** (`ConfigurationManager` / 
 | `<machineKey>` validationKey / decryptionKey | `system.web` | ViewState + Forms cookie MAC | **No.** See §3. |
 | Compiled AES fallback in `AppSecrets` | source | Pre-Phase 0B QuickAction key | **Do not drop** until `UrlTokenAesKey` is set to that same operational value on every server. |
 
-Out of this phase: hardcoded SMTP in `vw_dailyrpts.aspx.cs` / `srch_dailyrpts.aspx.cs` (D-11).
+Out of this phase **at the time of writing:** hardcoded SMTP in `vw_dailyrpts.aspx.cs` / `srch_dailyrpts.aspx.cs` (D-11). **Later code** routes those two files through `CommunicationGateway` — [`docs/11_Communications.md`](11_Communications.md), [`00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md). This phase document is history, not the live mailer inventory.
 
 ---
 

@@ -1,6 +1,8 @@
 # 05 — Potential Defects (L)
 
-**No code, database, or configuration has been modified in the course of this audit.** Every finding below is documented for review; none have been fixed. Each finding lists: **File**, **Method**, **Relevant Code Area**, **Database Object**, **Impact**, and **Confidence** (`Confirmed` / `Probable` / `Architectural Inconsistency` / `Business-Rule Ambiguity`).
+> **Snapshot.** Re-check status of D-01, D-03, D-04, D-05, D-08, D-11 against current code: [`00_SNAPSHOT_STATUS.md`](00_SNAPSHOT_STATUS.md). Do not treat this file as the live defect list.
+
+**No code, database, or configuration has been modified in the course of this audit.** Every finding below is documented for review; none have been fixed **in the audit session**. Later PRs remediating some items are recorded in `00_SNAPSHOT_STATUS.md`. Each finding lists: **File**, **Method**, **Relevant Code Area**, **Database Object**, **Impact**, and **Confidence** (`Confirmed` / `Probable` / `Architectural Inconsistency` / `Business-Rule Ambiguity`).
 
 ---
 

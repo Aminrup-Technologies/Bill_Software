@@ -83,6 +83,21 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Image imgProfile;
+
+        /// <summary>
+        /// pnlImpersonationBanner control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Panel pnlImpersonationBanner;
+
+        /// <summary>
+        /// lblImpersonationBanner control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Label lblImpersonationBanner;
+
+        /// <summary>
+        /// lnkEndImpersonation control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.LinkButton lnkEndImpersonation;
         
         /// <summary>
         /// btnLogOut control.
@@ -1199,6 +1214,11 @@ namespace Bill_Software.corporate.business.app {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl ViewUser;
+
+        /// <summary>
+        /// SwitchUser control.
+        /// </summary>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl SwitchUser;
         
         /// <summary>
         /// ManageRoles control.

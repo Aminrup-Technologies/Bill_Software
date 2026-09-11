@@ -12,6 +12,7 @@
 - [Core Architectural Standards (The "Ponytail" Philosophy)](#core-architectural-standards-the-ponytail-philosophy)
 - [Setup and Compilation](#setup-and-compilation)
 - [Database Overview](#database-overview)
+- [Solution documentation (every page)](#solution-documentation-every-page)
 - [Module Reference](#module-reference)
 - [Security Baseline](#security-baseline)
 - [Documentation](#documentation)
@@ -30,20 +31,20 @@ The application serves two primary user roles:
 - **Salesperson** — Plans visits on a calendar, executes them with GPS-tagged confirmation, logs past visits, manages expenses, and communicates with managers via an integrated chat thread.
 - **Manager** — Reviews, approves/rejects sales visits and associated expenses across their company's sales team through a search-filtered dashboard.
 
-Additional modules handle attendance (clock-in/clock-out with GPS), employee administration (user provisioning, department/designation management, role-based menu access), customer/vendor records, purchase orders, email/SMS communications, and a homepage dashboard with KPIs.
+Additional modules handle attendance (clock-in/clock-out with GPS), ERP user provisioning (`tbl_login` under `corporate/business/app/`, not `admin/`), customer/vendor records, purchase orders, email/SMS, and a homepage dashboard with KPIs. There is **no** department/designation CRUD UI — those are dropdowns on AddUser.
 
 ### Key Business Domains
 
 | Domain | Description |
 |--------|-------------|
-| **Sales Visit Lifecycle** | Full calendar-based planning → GPS execution → manager review/approval → follow-up generation |
-| **Attendance & Field Tracking** | Clock-in/clock-out with geolocation, daily attendance dashboard for admins |
-| **Expense Management** | Per-visit expense claims with receipts, manager approval workflow |
-| **Quotation Generation** | Customer-quote creation linked to visit records |
-| **Purchase Orders** | Procurement workflow management |
-| **Customer & Vendor Directory** | Customer and vendor record management |
-| **Communication** | SMTP email notifications, SMS integration for visit updates and approvals |
-| **Administration** | User provisioning, department/designation management, role-based menu access control |
+| **Sales Visit Lifecycle** | Calendar planning → GPS execution → manager review/approval → follow-up |
+| **Attendance & Field Tracking** | Punch UI + admin attendance register |
+| **Expense Management** | Visit claims (`tbl_Expenses`) **and** GL payments made (different tables) |
+| **Quotation Generation** | `tbl_Quotation` (also client PO via `RecordType`) |
+| **Purchase Orders** | Two stacks: vendor `tbl_PO_*` vs client PO on `tbl_Quotation` |
+| **Customer & Vendor Directory** | `tbl_Client` / `tbl_Vendor` |
+| **Communication** | `CommunicationGateway` (AppSettings SMTP + MSG91) plus leftover direct `SmtpClient` pages |
+| **Administration** | `AddUser` / `ViewUser` / `ManageRoles` / `ManagePermissions`; `Update_Designation` assigns `UserRoles` |
 
 ---
 
@@ -60,8 +61,7 @@ Additional modules handle attendance (clock-in/clock-out with GPS), employee adm
 | **Authentication** | Custom session-based | `tbl_login` + `ActiveSessions` token table + `Session["USERID"]` |
 | **Frontend Libraries** | jQuery, jQuery UI | Datepicker, dialogs, Select2 dropdowns |
 | **Calendar** | FullCalendar | Visit planner calendar widget |
-| **Charts** | Chart.js | Dashboard KPI visualizations |
-| **Email** | System.Net.Mail | `SmtpClient` / `MailMessage` (Zoho SMTP for Sales Visit notifications; config-driven for auth flows) |
+| **Email** | System.Net.Mail | `CommunicationGateway` (AppSettings SMTP) + leftover direct `SmtpClient` on invoice/proforma/payment mailers |
 | **CSS Frameworks** | jQuery UI Themes | `ui-lightness` and `base` themes |
 | **Package Manager** | NuGet | `packages.config` |
 
@@ -103,12 +103,11 @@ Bill_Software/
 │       ├── js/
 │       └── images/
 │
-├── admin/                             # ◄ ADMINISTRATION MODULE
-│   ├── AdminAttendanceDashboard.aspx[.cs] # Company-wide attendance & field-sales rollup
-│   ├── AddUser.aspx[.cs]              # User provisioning (new employee accounts)
-│   ├── ViewUser.aspx[.cs]             # User management grid (edit roles, view details)
-│   ├── Update_Designation.aspx[.cs]   # Role/permission assignment (UserRoles maintenance)
-│   └── Update/                        # Admin update sub-pages
+├── admin/                             # ID-card kiosk (`tbl_card_login`) — not ERP user admin
+│   ├── home.aspx
+│   ├── add_company.aspx / Upload_data.aspx / update_image.aspx
+│   ├── personal_image.ashx / Company.ashx
+│   └── Update/                        # Kiosk profile popups
 │
 ├── Scripts/                           # JavaScript libraries (jQuery, jQuery UI, MS Ajax)
 │   └── WebForms/MSAjax/              # ASP.NET AJAX framework scripts
@@ -123,6 +122,8 @@ Bill_Software/
     ├── ProformaLogs/
     └── (dynamic visit/expense attachment directories)
 ```
+
+ERP user admin (`AddUser`, `ViewUser`, `Update_Designation`, `ManageRoles`, `ManagePermissions`, `AdminAttendanceDashboard`) lives under `corporate/business/app/`, not `admin/`.
 
 ---
 
@@ -269,7 +270,7 @@ This is a known assembly version conflict warning. Review detailed build log out
 | `tbl_Expenses` | Expense claims (may or may not link to a visit) | `VisitId` → `tbl_SalesVisitReport.Id` (nullable), `UserCode`/`ApprovedBy` → `tbl_login.User_Id` |
 | `tbl_SystemNotification` | Transactional audit notifications | Inserted prior to major CRUD operations |
 | `ActiveSessions` | Active session tracking | `SessionToken`, `UserId`, `IsActive` — re-validated on every Master Page load |
-| `UserRoles` | Many-to-many user↔role mapping | Controls navigation menu visibility via `Bill.Master.cs :: GetMenuControl()` |
+| `UserRoles` | Many-to-many user↔role mapping | Menu visibility **and** `SecurePage` / `AuthGuard.EnsurePage` |
 | `RolePermissions` | Role↔permission mapping | Joined with `UserRoles` to determine menu item visibility |
 | `Roles` | Role definitions | `RoleName`, joined via `tbl_login.RoleId` |
 | `tbl_Departments` | Department directory | Referenced by `tbl_login.DepartmentID` |
@@ -281,34 +282,25 @@ Every query against tenant-scoped tables must include a `CompanyId` filter. The 
 
 ---
 
+## Solution documentation (every page)
+
+The solution is documented so **shared architecture is written once** and **every `.aspx` page is listed once**.
+
+| Start here | What it is |
+|------------|------------|
+| [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md) | Hub: catalogs + module narratives |
+| [`docs/page-catalog/RECURSIVE_INSTRUCTIONS.md`](docs/page-catalog/RECURSIVE_INSTRUCTIONS.md) | Self-recursive playbook to review the next page |
+| [`docs/page-catalog/SHARED_CONTEXT.md`](docs/page-catalog/SHARED_CONTEXT.md) | AuthN, tenancy, master, print gate — do not copy |
+| [`docs/page-catalog/SHARED_RUNTIME.md`](docs/page-catalog/SHARED_RUNTIME.md) | Handlers, helpers, SQL scripts, SP call index |
+| [`docs/page-catalog/PAGE_INVENTORY.md`](docs/page-catalog/PAGE_INVENTORY.md) | Census of all 188 pages |
+
+When documenting or changing a page, follow the recursive playbook: read shared context once, write **only unique facts** into the matching `DOMAIN_*.md` row, and link existing module docs instead of restating them.
+
 ## Module Reference
 
-Detailed module documentation is organized by the navigation sequence found in the Master Page (`~/corporate/business/app/Bill.Master`). Each module document covers:
+Narrative module docs (`docs/01`–`docs/13`) are leftover-fact pointers. The page catalog is the census. The sales-visit folder is a dated snapshot — start at [`docs/sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](docs/sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
 
-- Associated frontend (`.aspx`) and backend (`.aspx.cs`) files
-- Core database tables involved
-- Multi-tenant constraints and proactive notification triggers
-
-See the `docs/` directory for module-specific documentation:
-
-| Doc | Module |
-|-----|--------|
-| `docs/01_Attendance_Clock.md` | Attendance & Clock-In/Out |
-| `docs/02_Employee_Admin.md` | Employee Administration (User Provisioning) |
-| `docs/03_Role_Permissions.md` | Role & Permission Management |
-| `docs/14_Authentication_Authorization_Architecture.md` | Whole-app AuthN/AuthZ architecture review (bugs + improvement scope) |
-| `docs/04_Department_Designation.md` | Department & Designation Management |
-| `docs/05_Customer_Vendor.md` | Customer & Vendor Directory |
-| `docs/06_Sales_Visit_Planner.md` | Sales Visit Calendar & Planning |
-| `docs/07_Sales_Visit_Reporting.md` | Daily Visit Reports & Manager Approval |
-| `docs/08_Expense_Management.md` | Expense Claims & Approval |
-| `docs/09_Quotation_Generation.md` | Quotation Generation |
-| `docs/10_Purchase_Order.md` | Purchase Order Management |
-| `docs/11_Communications.md` | Email & SMS Integration |
-| `docs/12_Home_Dashboard.md` | Homepage Dashboard & KPIs |
-| `docs/22_Security_Baseline.md` | Canonical AuthN/AuthZ engineering contract (v2.1-security-foundation) |
-
----
+See the map in [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md).
 
 ## Security Baseline
 
@@ -372,7 +364,7 @@ Sales-visit defects D-04 / D-09 / D-10 / D-11 are documented in `docs/sales-visi
 ### Before Making Changes
 
 1. Read the **Core Architectural Standards** above — violations are defects.
-2. Check if the module you are modifying has documentation in `docs/`.
+2. Check [`docs/SOLUTION_INDEX.md`](docs/SOLUTION_INDEX.md) and the page-catalog row for the `.aspx` you are changing. Follow [`docs/page-catalog/RECURSIVE_INSTRUCTIONS.md`](docs/page-catalog/RECURSIVE_INSTRUCTIONS.md); do not copy shared AuthN/tenancy into module docs.
 3. Review the Sales Visit Workflow Audit (`docs/sales-visit-workflow-audit/`) for precedent on how enterprise rules are applied.
 4. For login, session, RBAC, or tenant-isolation changes, read `docs/22_Security_Baseline.md` first (canonical contract). `docs/14_Authentication_Authorization_Architecture.md` is the original review; `docs/15`–`docs/21` are implementation history. Menu visibility is not authorization.
 

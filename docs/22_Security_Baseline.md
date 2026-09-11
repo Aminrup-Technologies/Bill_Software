@@ -28,6 +28,7 @@ Implementation history remains in:
 | `docs/19_Phase2B_Resource_Authorization.md` | Visit / expense resource scope |
 | `docs/20_Phase2C_Remaining_Hardening.md` | Directory delete, quotation attach, approval replay |
 | `docs/21_Phase3_Infrastructure_Hardening.md` | Kiosk isolation, secret inventory, machineKey |
+| `docs/ADR-001` + `docs/29`–`docs/33` | Impersonation governance. Flag default false. No identity swap in PR-2A |
 
 Those files explain how the foundation was built. This file defines what must remain true.
 
@@ -414,7 +415,7 @@ Documented constraints. Do not “solve” them in ordinary feature work.
 | **Decision #9** | No HQ cross-company role. Membership in `UserCompanyAccess` is the only way to hold another `CompanyID`. Do not invent an all-tenant exception. |
 | **Kiosk subsystem** | `index_card.aspx` / `tbl_card_login` / `admin/card.Master` is a separate plaintext domain. Parameterized login SQL only. No `AuthGuard`, no `ActiveSessions`, no `UserRoles`, no `UserCompanyAccess`. Do not merge into ERP auth. Remaining concatenated kiosk profile SQL is isolated debt. |
 | **machineKey governance** | ViewState and Forms-cookie MAC. Do not rotate without a scheduled full-farm IIS recycle. Changing keys invalidates postbacks and the `/Uploads` companion cookie. Rotation is an ops procedure (`docs/21` §3). |
-| **Secret rotation (ops)** | Runtime is configuration-first (`ConfigurationManager` / `AppSecrets`). Do not strip live values from `Web.config` until server-level config is in place. Do not rotate `DbConn`, SMTP, iTop, Msg91, or `UrlTokenAesKey` in a feature PR. Empty `UrlTokenAesKey` keeps the compiled AES fallback so existing QuickAction links decrypt. Wrong-length key fails closed. Hardcoded SMTP on sales-visit pages remains defect D-11. |
+| **Secret rotation (ops)** | Runtime is configuration-first (`ConfigurationManager` / `AppSecrets`). Do not strip live values from `Web.config` until server-level config is in place. Do not rotate `DbConn`, SMTP, iTop, Msg91, or `UrlTokenAesKey` in a feature PR. Empty `UrlTokenAesKey` keeps the compiled AES fallback so existing QuickAction links decrypt. Wrong-length key fails closed. Visit chat/approval mail uses `CommunicationGateway` (D-11 hardcoded SMTP in those two files is **stale**). Remaining direct `SmtpClient` pages: [`docs/11_Communications.md`](11_Communications.md). |
 
 Other documented stops that remain out of ordinary feature scope:
 
