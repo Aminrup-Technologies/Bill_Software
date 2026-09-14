@@ -124,7 +124,7 @@
         <asp:TextBox ID="txtSearch" runat="server" CssClass="search-box" placeholder="Search users by name or ID..." AutoPostBack="true" OnTextChanged="txtSearch_TextChanged" />
         
         <div class="user-results">
-            <asp:Repeater ID="rptUsers" runat="server">
+            <asp:Repeater ID="rptUsers" runat="server" OnItemDataBound="rptUsers_ItemDataBound">
                 <ItemTemplate>
                     <div class="user-row">
                         <div class="user-info">
@@ -133,8 +133,8 @@
                             <span class="user-role"><%# Eval("RoleName") %></span>
                         </div>
                         <asp:Button ID="btnSwitch" runat="server" Text="Switch" CssClass="btn-switch"
-                            CommandArgument='<%# Eval("User_Id") %>' OnClick="btnSwitch_Click"
-                            OnClientClick="return confirm('Switch to <%# Eval("Name") %> (<%# Eval("User_Id") %>)?');" />
+                            CommandArgument='<%# Eval("User_Id") %>'
+                            OnClick="btnSwitch_Click" />
                     </div>
                 </ItemTemplate>
             </asp:Repeater>

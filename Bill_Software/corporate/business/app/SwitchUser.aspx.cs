@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI;
+using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
@@ -71,6 +72,24 @@ namespace Bill_Software.corporate.business.app
                          "WHERE u.CompanyID = @CompanyID AND u.User_Id <> @CurrentUserId " +
                          "AND (u.Name LIKE @Search OR u.User_Id LIKE @Search) " +
                          "ORDER BY u.Name");
+        }
+
+        protected void rptUsers_ItemDataBound(object sender, RepeaterItemEventArgs e)
+        {
+            if (e.Item.ItemType != ListItemType.Item && e.Item.ItemType != ListItemType.AlternatingItem)
+                return;
+
+            Button btn = e.Item.FindControl("btnSwitch") as Button;
+            if (btn == null) return;
+
+            DataRowView row = e.Item.DataItem as DataRowView;
+            if (row == null) return;
+
+            string name = Convert.ToString(row["Name"]) ?? string.Empty;
+            string userId = Convert.ToString(row["User_Id"]) ?? string.Empty;
+            string safeName = name.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
+            string safeUserId = userId.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
+            btn.OnClientClick = "return confirm('Switch to " + safeName + " (" + safeUserId + ")?');";
         }
 
         private void BindUserGrid(string sql)
