@@ -150,14 +150,16 @@
             </div>
         </div>
 
-        <div style="margin-top: 15px; margin-bottom: 10px;">
+        <div style="margin-top: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px;">
             <asp:Label ID="lblRecordCount" runat="server" Font-Bold="true" Font-Size="13px"></asp:Label>
+            <asp:Button ID="btnBulkDuplicateClient" runat="server" Text="📋 Bulk Duplicate Selected" CssClass="btn_style btn-primary" OnClientClick="return collectSelectedClients();" OnClick="btnBulkDuplicateClient_Click" Style="font-size: 12px; padding: 6px 14px;" />
         </div>
 
-        <asp:DataList ID="DataList1" runat="server" Width="100%" OnItemCommand="DataList1_ItemCommand">
+        <asp:DataList ID="DataList1" runat="server" Width="100%" OnItemCommand="DataList1_ItemCommand" OnItemDataBound="DataList1_ItemDataBound">
             <HeaderTemplate>
                 <table class="modern-table">
                     <tr>
+                        <th style="width: 3%; text-align: center;"><input type="checkbox" id="chkSelectAllClient" onclick="toggleAllClient(this);" title="Select All" /></th>
                         <th style="width: 17%; text-align: left; padding-left: 15px;">Client Identity</th>
                         <th style="width: 19%; text-align: left;">Location & Supply</th>
                         <th style="width: 17%; text-align: left;">Contact Info</th>
@@ -168,6 +170,9 @@
             </HeaderTemplate>
             <ItemTemplate>
                 <tr>
+                    <td style="text-align: center; vertical-align: middle;">
+                        <asp:CheckBox ID="chkSelectClient" runat="server" CssClass="client-select-cb" />
+                    </td>
                     <td style="text-align: left; padding-left: 15px; vertical-align: top;">
                         <span style="color: #FF6600; font-weight: bold; font-size: 11px;"><%# Eval("Client_Id") %></span><br />
                         <strong style="font-size: 14px; color: #19658A;"><%# Eval("Client_Name") %></strong><br />
@@ -236,6 +241,7 @@
 
     <%-- Duplicate Target Tenant Modal --%>
     <asp:HiddenField ID="hfPendingClientId" runat="server" />
+    <asp:HiddenField ID="hfBulkClientIds" runat="server" />
     <div id="duplicateModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
         <div style="background-color:#fff; margin: 15% auto; padding: 20px; border-radius: 8px; width: 420px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
             <h4 style="color: #19658A; margin-top: 0; border-bottom: 2px solid #19658A; padding-bottom: 10px;">📋 Duplicate Client to Another Company</h4>
@@ -254,7 +260,37 @@
     <script type="text/javascript">
         function openDuplicateModal(clientId) {
             document.getElementById('<%=hfPendingClientId.ClientID%>').value = clientId;
+            document.getElementById('<%=hfBulkClientIds.ClientID%>').value = '';
             document.getElementById('duplicateModal').style.display = 'block';
+        }
+        function openBulkDuplicateModal() {
+            document.getElementById('<%=hfPendingClientId.ClientID%>').value = '';
+            document.getElementById('duplicateModal').style.display = 'block';
+        }
+        function toggleAllClient(src) {
+            var cbs = document.querySelectorAll('.client-select-cb input[type=checkbox]');
+            for (var i = 0; i < cbs.length; i++) cbs[i].checked = src.checked;
+        }
+        function collectSelectedClients() {
+            var cbs = document.querySelectorAll('.client-select-cb input[type=checkbox]');
+            var ids = [];
+            for (var i = 0; i < cbs.length; i++) {
+                if (cbs[i].checked) {
+                    var row = cbs[i].closest('tr');
+                    if (row) {
+                        var hf = row.querySelector('[id$="hfClientId"]');
+                        if (hf && hf.value) ids.push(hf.value);
+                    }
+                }
+            }
+            if (ids.length === 0) {
+                alert('Please select at least one client to duplicate.');
+                return false;
+            }
+            document.getElementById('<%=hfBulkClientIds.ClientID%>').value = ids.join(',');
+            document.getElementById('<%=hfPendingClientId.ClientID%>').value = '';
+            document.getElementById('duplicateModal').style.display = 'block';
+            return false;
         }
         function closeDuplicateModal() {
             document.getElementById('duplicateModal').style.display = 'none';
@@ -266,10 +302,17 @@
                 alert('Please select a target company before duplicating.');
                 return false;
             }
-            if (!confirm('Duplicate this client and child records to the selected company?')) {
-                return false;
+            var bulkIds = document.getElementById('<%=hfBulkClientIds.ClientID%>').value;
+            if (bulkIds && bulkIds.length > 0) {
+                if (!confirm('Duplicate ' + bulkIds.split(',').length + ' client(s) and child records to the selected company?')) {
+                    return false;
+                }
+            } else {
+                if (!confirm('Duplicate this client and child records to the selected company?')) {
+                    return false;
+                }
             }
-            // Prevent double-submission
+            // Prevent double-submission: disable the confirm button
             var btn = document.getElementById('<%=btnConfirmDuplicateClient.ClientID%>');
             if (btn) {
                 btn.disabled = true;

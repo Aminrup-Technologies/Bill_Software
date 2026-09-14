@@ -188,6 +188,7 @@ namespace Bill_Software.corporate.business.app
             try
             {
                 string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+                int sourceCompanyId = CompanyContext.CurrentCompanyID;
                 int targetCompanyId = 0;
 
                 if (!int.TryParse(ddlTargetCompanyGlobal.SelectedValue, out targetCompanyId) || targetCompanyId <= 0)
@@ -196,7 +197,7 @@ namespace Bill_Software.corporate.business.app
                     return;
                 }
 
-                if (targetCompanyId == CompanyContext.CurrentCompanyID)
+                if (targetCompanyId == sourceCompanyId)
                 {
                     ShowMessage("Source and target companies must be different. Please select another company.", false);
                     return;
@@ -208,6 +209,15 @@ namespace Bill_Software.corporate.business.app
                     return;
                 }
 
+                // Check if this is a bulk operation
+                string bulkIdsRaw = hfBulkVendorIds.Value;
+                if (!string.IsNullOrWhiteSpace(bulkIdsRaw))
+                {
+                    HandleBulkVendorDuplication(bulkIdsRaw, targetCompanyId, userId);
+                    return;
+                }
+
+                // Single vendor duplication
                 string vendorId = hfPendingVendorId.Value;
                 if (string.IsNullOrWhiteSpace(vendorId))
                 {
@@ -222,7 +232,7 @@ namespace Bill_Software.corporate.business.app
                     return;
                 }
 
-                int sourceId = ResolveVendorId(vendorId, CompanyContext.CurrentCompanyID);
+                int sourceId = ResolveVendorId(vendorId, sourceCompanyId);
                 if (sourceId <= 0)
                 {
                     ShowMessage("Vendor not found in your current company.", false);
@@ -260,10 +270,55 @@ namespace Bill_Software.corporate.business.app
             finally
             {
                 hfPendingVendorId.Value = string.Empty;
+                hfBulkVendorIds.Value = string.Empty;
                 ddlTargetCompanyGlobal.SelectedIndex = 0;
                 btnConfirmDuplicateVendor.Enabled = true;
                 btnConfirmDuplicateVendor.Text = "Confirm Duplicate";
             }
+        }
+
+        private void HandleBulkVendorDuplication(string bulkIdsRaw, int targetCompanyId, string userId)
+        {
+            string[] parts = bulkIdsRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var sourceIds = new System.Collections.Generic.List<int>();
+            foreach (string part in parts)
+            {
+                int id;
+                if (int.TryParse(part.Trim(), out id) && id > 0)
+                    sourceIds.Add(id);
+            }
+
+            if (sourceIds.Count == 0)
+            {
+                ShowMessage("No valid vendors selected for duplication.", false);
+                return;
+            }
+
+            string targetCompanyName = ddlTargetCompanyGlobal.SelectedItem != null
+                ? ddlTargetCompanyGlobal.SelectedItem.Text : "target company";
+
+            var result = DuplicationService.BulkDuplicateVendors(sourceIds.ToArray(), targetCompanyId, userId);
+
+            if (result.FailedCount > 0 && result.SuccessCount == 0)
+            {
+                ShowMessage(
+                    string.Format("Bulk duplication to '{0}' failed: {1}", targetCompanyName, result.FailureReason ?? "All vendors failed."),
+                    false);
+            }
+            else if (result.FailedCount > 0)
+            {
+                ShowMessage(
+                    string.Format("Bulk duplication to '{0}': {1} duplicated, {2} failed.", targetCompanyName, result.SuccessCount, result.FailedCount),
+                    false);
+            }
+            else
+            {
+                ShowMessage(
+                    string.Format("Bulk duplication to '{0}' successful: {1} vendor(s) duplicated.", targetCompanyName, result.SuccessCount),
+                    true);
+            }
+
+            BindGrid();
         }
 
         private void ShowMessage(string text, bool isSuccess)
