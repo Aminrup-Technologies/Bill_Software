@@ -192,31 +192,40 @@ namespace Bill_Software.corporate.business.app
 
                 if (!int.TryParse(ddlTargetCompanyGlobal.SelectedValue, out targetCompanyId) || targetCompanyId <= 0)
                 {
-                    lblRecordCount.Text = "Please select a valid target company.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Please select a valid target company from the list.", false);
                     return;
                 }
 
                 if (targetCompanyId == CompanyContext.CurrentCompanyID)
                 {
-                    lblRecordCount.Text = "Source and target companies must be different.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Source and target companies must be different. Please select another company.", false);
+                    return;
+                }
+
+                if (!AuthGuard.UserCanAccessCompany(targetCompanyId))
+                {
+                    ShowMessage("You do not have access to the selected target company.", false);
                     return;
                 }
 
                 string vendorId = hfPendingVendorId.Value;
                 if (string.IsNullOrWhiteSpace(vendorId))
                 {
-                    lblRecordCount.Text = "No vendor selected for duplication.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("No vendor selected for duplication. Please try again.", false);
                     return;
                 }
 
-                int sourceId = ResolveVendorId(vendorId.Trim());
+                vendorId = vendorId.Trim();
+                if (vendorId.Length < 3 || !vendorId.StartsWith("AA", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowMessage("Invalid vendor identifier. Please refresh and try again.", false);
+                    return;
+                }
+
+                int sourceId = ResolveVendorId(vendorId, CompanyContext.CurrentCompanyID);
                 if (sourceId <= 0)
                 {
-                    lblRecordCount.Text = "Vendor not found in your current company.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Vendor not found in your current company.", false);
                     return;
                 }
 
@@ -224,29 +233,48 @@ namespace Bill_Software.corporate.business.app
 
                 if (success)
                 {
-                    lblRecordCount.Text = $"Vendor '{vendorId}' duplicated successfully to the selected company.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Green;
+                    string targetCompanyName = ddlTargetCompanyGlobal.SelectedItem != null
+                        ? ddlTargetCompanyGlobal.SelectedItem.Text : "target company";
+                    ShowMessage(
+                        string.Format("Vendor '{0}' duplicated successfully to '{1}'.", vendorId, targetCompanyName),
+                        true);
                     BindGrid();
                 }
                 else
                 {
-                    lblRecordCount.Text = "Duplication failed. The vendor could not be created in the target company.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Duplication failed. The vendor could not be created in the target company.", false);
                 }
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
-                lblRecordCount.Text = "An error occurred during duplication: " + ex.Message;
-                lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                ShowMessage("Duplication could not be completed: " + ex.Message, false);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                ShowMessage("You do not have permission to perform this action.", false);
+            }
+            catch (Exception)
+            {
+                ShowMessage("An unexpected error occurred during duplication. Please try again or contact support.", false);
             }
             finally
             {
                 hfPendingVendorId.Value = string.Empty;
                 ddlTargetCompanyGlobal.SelectedIndex = 0;
+                btnConfirmDuplicateVendor.Enabled = true;
+                btnConfirmDuplicateVendor.Text = "Confirm Duplicate";
             }
         }
 
-        private int ResolveVendorId(string vendorId)
+        private void ShowMessage(string text, bool isSuccess)
+        {
+            lblRecordCount.Text = text;
+            lblRecordCount.ForeColor = isSuccess
+                ? System.Drawing.Color.Green
+                : System.Drawing.Color.Red;
+        }
+
+        private int ResolveVendorId(string vendorId, int companyId)
         {
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
@@ -254,7 +282,7 @@ namespace Bill_Software.corporate.business.app
                     "SELECT Id FROM tbl_Vendor WHERE Vendor_Id = @VendorId AND CompanyID = @CompanyID", conn))
                 {
                     cmd.Parameters.AddWithValue("@VendorId", vendorId);
-                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
                     conn.Open();
                     object result = cmd.ExecuteScalar();
                     if (result != null && result != DBNull.Value)
