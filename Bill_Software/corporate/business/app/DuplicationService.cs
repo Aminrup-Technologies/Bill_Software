@@ -133,19 +133,24 @@ namespace Bill_Software.corporate.business.app
                             cmd.ExecuteNonQuery();
                         }
 
-                        // Audit trail — scoped to TARGET company
-                        using (var cmdNotif = new SqlCommand(@"
-                            INSERT INTO tbl_SystemNotification
-                            (CompanyID, Title, Message, Module, Type, UserId, CreatedOn)
-                            VALUES (@CompanyID, 'Vendor Duplicated', @Message, 'Vendor Management', 'Success', @UserId, GETDATE())", conn, tran))
-                        {
-                            cmdNotif.Parameters.AddWithValue("@CompanyID", targetCompanyId);
-                            cmdNotif.Parameters.AddWithValue("@Message", string.Format(
-                                "Vendor '{0}' duplicated from source ID {1} as '{2}' by user '{3}'.",
-                                RowStr(src, "Vendor_Name"), sourceId, newVendorId, userName));
-                            cmdNotif.Parameters.AddWithValue("@UserId", userName);
-                            cmdNotif.ExecuteNonQuery();
-                        }
+                        // Audit trail — scoped to TARGET company (live tbl_SystemNotification schema)
+                        string sourceVendorId = RowStr(src, "Vendor_Id");
+                        WriteDuplicationAudit(
+                            conn,
+                            tran,
+                            targetCompanyId,
+                            "Vendor Duplicated",
+                            "Vendor",
+                            string.Format(
+                                "Vendor '{0}' duplicated from company {1} to company {2}: source code '{3}' (Id {4}) → new code '{5}' by user '{6}'.",
+                                RowStr(src, "Vendor_Name"),
+                                CompanyContext.CurrentCompanyID,
+                                targetCompanyId,
+                                sourceVendorId,
+                                sourceId,
+                                newVendorId,
+                                userName),
+                            userName);
 
                         tran.Commit();
                         return true;
@@ -266,19 +271,23 @@ namespace Bill_Software.corporate.business.app
                         CopyFactoryRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                         CopyRepresentativeRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
 
-                        // Audit trail — scoped to TARGET company
-                        using (var cmdNotif = new SqlCommand(@"
-                            INSERT INTO tbl_SystemNotification
-                            (CompanyID, Title, Message, Module, Type, UserId, CreatedOn)
-                            VALUES (@CompanyID, 'Customer Duplicated', @Message, 'Client Management', 'Success', @UserId, GETDATE())", conn, tran))
-                        {
-                            cmdNotif.Parameters.AddWithValue("@CompanyID", targetCompanyId);
-                            cmdNotif.Parameters.AddWithValue("@Message", string.Format(
-                                "Customer '{0}' (source ID {1}) duplicated as '{2}' by user '{3}'.",
-                                RowStr(src, "Client_Name"), sourceId, newClientId, userName));
-                            cmdNotif.Parameters.AddWithValue("@UserId", userName);
-                            cmdNotif.ExecuteNonQuery();
-                        }
+                        // Audit trail — scoped to TARGET company (live tbl_SystemNotification schema)
+                        WriteDuplicationAudit(
+                            conn,
+                            tran,
+                            targetCompanyId,
+                            "Customer Duplicated",
+                            "Client",
+                            string.Format(
+                                "Customer '{0}' duplicated from company {1} to company {2}: source code '{3}' (Id {4}) → new code '{5}' by user '{6}'.",
+                                RowStr(src, "Client_Name"),
+                                CompanyContext.CurrentCompanyID,
+                                targetCompanyId,
+                                srcClientId,
+                                sourceId,
+                                newClientId,
+                                userName),
+                            userName);
 
                         tran.Commit();
                         return true;
@@ -391,6 +400,39 @@ namespace Bill_Software.corporate.business.app
         // ───────────────────────────────────────────────────────────
         //  INTERNAL HELPERS
         // ───────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Live tbl_SystemNotification columns: Title, Message, ModuleCode, Severity,
+        /// StartDate, EndDate, IsActive, CreatedBy, CompanyID (not Module/Type/UserId).
+        /// </summary>
+        private static void WriteDuplicationAudit(
+            SqlConnection conn,
+            SqlTransaction tran,
+            int targetCompanyId,
+            string title,
+            string moduleCode,
+            string message,
+            string userName)
+        {
+            using (var cmd = new SqlCommand(@"
+                INSERT INTO dbo.tbl_SystemNotification
+                (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CompanyID)
+                VALUES
+                (@Title, @Message, @ModuleCode, @Severity, GETDATE(), DATEADD(DAY, 30, GETDATE()), 1, @CreatedBy, @CompanyID)",
+                conn, tran))
+            {
+                cmd.Parameters.Add(new SqlParameter("@Title", SqlDbType.NVarChar, 200) { Value = title ?? string.Empty });
+                cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar, -1) { Value = message ?? string.Empty });
+                cmd.Parameters.Add(new SqlParameter("@ModuleCode", SqlDbType.VarChar, 50) { Value = moduleCode ?? string.Empty });
+                cmd.Parameters.Add(new SqlParameter("@Severity", SqlDbType.VarChar, 20) { Value = "Success" });
+                cmd.Parameters.Add(new SqlParameter("@CreatedBy", SqlDbType.VarChar, 50)
+                {
+                    Value = string.IsNullOrEmpty(userName) ? (object)DBNull.Value : userName
+                });
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = targetCompanyId });
+                cmd.ExecuteNonQuery();
+            }
+        }
 
         private static string RowStr(DataRow row, string column)
         {
