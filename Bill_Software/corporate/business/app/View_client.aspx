@@ -266,7 +266,16 @@
                 alert('Please select a target company before duplicating.');
                 return false;
             }
-            return confirm('Duplicate this client and child records to the selected company?');
+            if (!confirm('Duplicate this client and child records to the selected company?')) {
+                return false;
+            }
+            // Prevent double-submission
+            var btn = document.getElementById('<%=btnConfirmDuplicateClient.ClientID%>');
+            if (btn) {
+                btn.disabled = true;
+                btn.value = 'Duplicating...';
+            }
+            return true;
         }
     </script>
 </asp:Content>
