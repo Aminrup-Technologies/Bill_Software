@@ -100,7 +100,11 @@
                         </td>
 
                         <td style="text-align: center; vertical-align: middle;">
+                            <asp:HiddenField ID="hfVendorId" runat="server" Value='<%# Eval("Vendor_Id") %>' />
                             <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CommandArgument='<%# Eval("Vendor_Id") %>' style="padding: 6px 15px; font-size: 12px; text-decoration: none; background: #ffc107; color: #212529; border-radius: 4px; font-weight: bold; display: inline-block;">✏️ Edit Profile</asp:LinkButton>
+                            <div style="margin-top: 8px;">
+                                <a href="javascript:void(0);" onclick="openDuplicateModal('<%# Eval("Vendor_Id") %>');" style="padding: 4px 10px; font-size: 11px; text-decoration: none; background: #17a2b8; color: white; border-radius: 4px; font-weight: bold; display: inline-block;">📋 Duplicate</a>
+                            </div>
                         </td>
                     </tr>
             </ItemTemplate>
@@ -108,6 +112,23 @@
                 </table>
             </FooterTemplate>
         </asp:DataList>
+    </div>
+
+    <%-- Duplicate Target Tenant Modal --%>
+    <asp:HiddenField ID="hfPendingVendorId" runat="server" />
+    <div id="duplicateModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+        <div style="background-color:#fff; margin: 15% auto; padding: 20px; border-radius: 8px; width: 420px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <h4 style="color: #19658A; margin-top: 0; border-bottom: 2px solid #19658A; padding-bottom: 10px;">📋 Duplicate Vendor to Another Company</h4>
+            <p style="font-size: 13px; color: #444; margin-top: 12px;">Select the target company to duplicate this vendor into:</p>
+            <div class="form-group" style="margin-top: 10px;">
+                <asp:DropDownList ID="ddlTargetCompanyGlobal" runat="server" CssClass="form-control" Style="max-width: 100%;">
+                </asp:DropDownList>
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" class="btn-secondary" onclick="closeDuplicateModal();">Cancel</button>
+                <asp:Button ID="btnConfirmDuplicateVendor" runat="server" Text="Confirm Duplicate" CssClass="btn-success" OnClick="btnConfirmDuplicateVendor_Click" OnClientClick="return validateDuplicateSelection();" />
+            </div>
+        </div>
     </div>
 
     <div id="exportModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
@@ -134,6 +155,23 @@
 
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script type="text/javascript">
+        function openDuplicateModal(vendorId) {
+            document.getElementById('<%=hfPendingVendorId.ClientID%>').value = vendorId;
+            document.getElementById('duplicateModal').style.display = 'block';
+        }
+        function closeDuplicateModal() {
+            document.getElementById('duplicateModal').style.display = 'none';
+            document.getElementById('<%=hfPendingVendorId.ClientID%>').value = '';
+        }
+        function validateDuplicateSelection() {
+            var ddl = document.getElementById('<%=ddlTargetCompanyGlobal.ClientID%>');
+            if (!ddl || ddl.value === '') {
+                alert('Please select a target company before duplicating.');
+                return false;
+            }
+            return confirm('Duplicate this vendor to the selected company?');
+        }
+
         $(function () {
             $("#<%=txtVendorSearch.ClientID%>").autocomplete({
                 source: function (request, response) {

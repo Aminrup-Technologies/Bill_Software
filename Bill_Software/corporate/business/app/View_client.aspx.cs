@@ -23,7 +23,12 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                BindGrid(); // Load all clients initially
+                PopulateTargetCompanyDropdown();
+                BindGrid();
+            }
+            else
+            {
+                PopulateTargetCompanyDropdown();
             }
         }
 
@@ -169,6 +174,106 @@ namespace Bill_Software.corporate.business.app
             {
                 Response.Redirect("AddFactory.aspx?Client_Id=" + Client_Id);
             }
+
+        }
+
+        private void PopulateTargetCompanyDropdown()
+        {
+            ddlTargetCompanyGlobal.Items.Clear();
+            ddlTargetCompanyGlobal.Items.Add(new ListItem("-- Select Target Company --", ""));
+            try
+            {
+                List<Bill_Software.corporate.business.app.AuthorizedCompany> companies = AuthGuard.GetAuthorizedCompanies();
+                foreach (var c in companies)
+                {
+                    if (c.Id != CompanyContext.CurrentCompanyID)
+                    {
+                        ddlTargetCompanyGlobal.Items.Add(new ListItem(c.Name, c.Id.ToString()));
+                    }
+                }
+            }
+            catch { }
+        }
+
+        protected void btnConfirmDuplicateClient_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+                int targetCompanyId = 0;
+
+                if (!int.TryParse(ddlTargetCompanyGlobal.SelectedValue, out targetCompanyId) || targetCompanyId <= 0)
+                {
+                    lblRecordCount.Text = "Please select a valid target company.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                if (targetCompanyId == CompanyContext.CurrentCompanyID)
+                {
+                    lblRecordCount.Text = "Source and target companies must be different.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                string clientId = hfPendingClientId.Value;
+                if (string.IsNullOrWhiteSpace(clientId))
+                {
+                    lblRecordCount.Text = "No client selected for duplication.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                int sourceId = ResolveClientId(clientId.Trim());
+                if (sourceId <= 0)
+                {
+                    lblRecordCount.Text = "Client not found in your current company.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                bool success = DuplicationService.DuplicateCustomer(sourceId, targetCompanyId, userId);
+
+                if (success)
+                {
+                    lblRecordCount.Text = $"Client '{clientId}' and child records duplicated successfully.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Green;
+                    BindGrid();
+                }
+                else
+                {
+                    lblRecordCount.Text = "Duplication failed. The client could not be created in the target company.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                }
+            }
+            catch (Exception ex)
+            {
+                lblRecordCount.Text = "An error occurred during duplication: " + ex.Message;
+                lblRecordCount.ForeColor = System.Drawing.Color.Red;
+            }
+            finally
+            {
+                hfPendingClientId.Value = string.Empty;
+                ddlTargetCompanyGlobal.SelectedIndex = 0;
+            }
+        }
+
+        private int ResolveClientId(string clientId)
+        {
+            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    "SELECT Id FROM tbl_Client WHERE Client_Id = @ClientId AND CompanyID = @CompanyID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ClientId", clientId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);
+                }
+            }
+            return 0;
         }
 
         protected void btnDownloadExcel_Click(object sender, EventArgs e)

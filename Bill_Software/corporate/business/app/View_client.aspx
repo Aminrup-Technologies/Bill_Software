@@ -158,12 +158,12 @@
             <HeaderTemplate>
                 <table class="modern-table">
                     <tr>
-                        <th style="width: 18%; text-align: left; padding-left: 15px;">Client Identity</th>
-                        <th style="width: 20%; text-align: left;">Location & Supply</th>
-                        <th style="width: 18%; text-align: left;">Contact Info</th>
+                        <th style="width: 17%; text-align: left; padding-left: 15px;">Client Identity</th>
+                        <th style="width: 19%; text-align: left;">Location & Supply</th>
+                        <th style="width: 17%; text-align: left;">Contact Info</th>
                         <th style="width: 14%; text-align: left;">Compliance</th>
-                        <th style="width: 15%; text-align: left;">Audit Info</th>
-                        <th style="width: 15%; text-align: center;">Manage</th>
+                        <th style="width: 14%; text-align: left;">Audit Info</th>
+                        <th style="width: 16%; text-align: center;">Manage</th>
                     </tr>
             </HeaderTemplate>
             <ItemTemplate>
@@ -222,6 +222,8 @@
                                 <asp:LinkButton ID="btnReps" runat="server" CommandName="Representative" CommandArgument='<%# Eval("Client_Id") %>' CssClass="btn-secondary" Style="padding: 4px 8px; font-size: 11px; text-decoration: none; background: #6c757d; color: white; border-radius: 3px;">👥 Reps</asp:LinkButton>
                             </div>
                             <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CommandArgument='<%# Eval("Client_Id") %>' Style="padding: 4px 15px; font-size: 11px; text-decoration: none; background: #ffc107; color: #212529; border-radius: 3px; font-weight: bold; width: 100%; box-sizing: border-box; text-align: center;">✏️ Edit</asp:LinkButton>
+                            <asp:HiddenField ID="hfClientId" runat="server" Value='<%# Eval("Client_Id") %>' />
+                            <a href="javascript:void(0);" onclick="openDuplicateModal('<%# Eval("Client_Id") %>');" style="padding: 4px 10px; font-size: 11px; text-decoration: none; background: #17a2b8; color: white; border-radius: 3px; font-weight: bold;">📋 Duplicate</a>
                         </div>
                     </td>
                 </tr>
@@ -231,4 +233,40 @@
             </FooterTemplate>
         </asp:DataList>
     </div>
+
+    <%-- Duplicate Target Tenant Modal --%>
+    <asp:HiddenField ID="hfPendingClientId" runat="server" />
+    <div id="duplicateModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+        <div style="background-color:#fff; margin: 15% auto; padding: 20px; border-radius: 8px; width: 420px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <h4 style="color: #19658A; margin-top: 0; border-bottom: 2px solid #19658A; padding-bottom: 10px;">📋 Duplicate Client to Another Company</h4>
+            <p style="font-size: 13px; color: #444; margin-top: 12px;">Select the target company to duplicate this client and its child records into:</p>
+            <div class="form-group" style="margin-top: 10px;">
+                <asp:DropDownList ID="ddlTargetCompanyGlobal" runat="server" CssClass="form-control" Style="max-width: 100%;">
+                </asp:DropDownList>
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" class="btn_style btn-secondary" onclick="closeDuplicateModal();">Cancel</button>
+                <asp:Button ID="btnConfirmDuplicateClient" runat="server" Text="Confirm Duplicate" CssClass="btn_style btn-primary" OnClick="btnConfirmDuplicateClient_Click" OnClientClick="return validateDuplicateSelection();" />
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        function openDuplicateModal(clientId) {
+            document.getElementById('<%=hfPendingClientId.ClientID%>').value = clientId;
+            document.getElementById('duplicateModal').style.display = 'block';
+        }
+        function closeDuplicateModal() {
+            document.getElementById('duplicateModal').style.display = 'none';
+            document.getElementById('<%=hfPendingClientId.ClientID%>').value = '';
+        }
+        function validateDuplicateSelection() {
+            var ddl = document.getElementById('<%=ddlTargetCompanyGlobal.ClientID%>');
+            if (!ddl || ddl.value === '') {
+                alert('Please select a target company before duplicating.');
+                return false;
+            }
+            return confirm('Duplicate this client and child records to the selected company?');
+        }
+    </script>
 </asp:Content>

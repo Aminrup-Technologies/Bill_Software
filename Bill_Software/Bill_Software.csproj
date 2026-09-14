@@ -757,6 +757,7 @@
       <DependentUpon>clientHandlerAdmin.ashx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\CommunicationGateway.cs" />
+    <Compile Include="corporate\business\app\DuplicationService.cs" />
     <Compile Include="corporate\business\app\CreateHydrentQuatation.aspx.cs">
       <DependentUpon>CreateHydrentQuatation.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

@@ -23,7 +23,12 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
+                PopulateTargetCompanyDropdown();
                 BindGrid();
+            }
+            else
+            {
+                PopulateTargetCompanyDropdown();
             }
         }
 
@@ -113,6 +118,24 @@ namespace Bill_Software.corporate.business.app
             DataList1.DataBind();
         }
 
+        private void PopulateTargetCompanyDropdown()
+        {
+            ddlTargetCompanyGlobal.Items.Clear();
+            ddlTargetCompanyGlobal.Items.Add(new ListItem("-- Select Target Company --", ""));
+            try
+            {
+                List<Bill_Software.corporate.business.app.AuthorizedCompany> companies = AuthGuard.GetAuthorizedCompanies();
+                foreach (var c in companies)
+                {
+                    if (c.Id != CompanyContext.CurrentCompanyID)
+                    {
+                        ddlTargetCompanyGlobal.Items.Add(new ListItem(c.Name, c.Id.ToString()));
+                    }
+                }
+            }
+            catch { }
+        }
+
         private void BindGrid1()
         {
             DbCL.Sqlconnection();
@@ -158,6 +181,87 @@ namespace Bill_Software.corporate.business.app
             {
                 Response.Redirect("Update_vendor.aspx?Vendor_Id=" + Vendor_Id);
             }
+        }
+
+        protected void btnConfirmDuplicateVendor_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+                int targetCompanyId = 0;
+
+                if (!int.TryParse(ddlTargetCompanyGlobal.SelectedValue, out targetCompanyId) || targetCompanyId <= 0)
+                {
+                    lblRecordCount.Text = "Please select a valid target company.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                if (targetCompanyId == CompanyContext.CurrentCompanyID)
+                {
+                    lblRecordCount.Text = "Source and target companies must be different.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                string vendorId = hfPendingVendorId.Value;
+                if (string.IsNullOrWhiteSpace(vendorId))
+                {
+                    lblRecordCount.Text = "No vendor selected for duplication.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                int sourceId = ResolveVendorId(vendorId.Trim());
+                if (sourceId <= 0)
+                {
+                    lblRecordCount.Text = "Vendor not found in your current company.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    return;
+                }
+
+                bool success = DuplicationService.DuplicateVendor(sourceId, targetCompanyId, userId);
+
+                if (success)
+                {
+                    lblRecordCount.Text = $"Vendor '{vendorId}' duplicated successfully to the selected company.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Green;
+                    BindGrid();
+                }
+                else
+                {
+                    lblRecordCount.Text = "Duplication failed. The vendor could not be created in the target company.";
+                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                }
+            }
+            catch (Exception ex)
+            {
+                lblRecordCount.Text = "An error occurred during duplication: " + ex.Message;
+                lblRecordCount.ForeColor = System.Drawing.Color.Red;
+            }
+            finally
+            {
+                hfPendingVendorId.Value = string.Empty;
+                ddlTargetCompanyGlobal.SelectedIndex = 0;
+            }
+        }
+
+        private int ResolveVendorId(string vendorId)
+        {
+            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    "SELECT Id FROM tbl_Vendor WHERE Vendor_Id = @VendorId AND CompanyID = @CompanyID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@VendorId", vendorId);
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);
+                }
+            }
+            return 0;
         }
 
         // --- 5. SMART EXPORT LOGIC ---
