@@ -204,31 +204,40 @@ namespace Bill_Software.corporate.business.app
 
                 if (!int.TryParse(ddlTargetCompanyGlobal.SelectedValue, out targetCompanyId) || targetCompanyId <= 0)
                 {
-                    lblRecordCount.Text = "Please select a valid target company.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Please select a valid target company from the list.", false);
                     return;
                 }
 
                 if (targetCompanyId == CompanyContext.CurrentCompanyID)
                 {
-                    lblRecordCount.Text = "Source and target companies must be different.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Source and target companies must be different. Please select another company.", false);
+                    return;
+                }
+
+                if (!AuthGuard.UserCanAccessCompany(targetCompanyId))
+                {
+                    ShowMessage("You do not have access to the selected target company.", false);
                     return;
                 }
 
                 string clientId = hfPendingClientId.Value;
                 if (string.IsNullOrWhiteSpace(clientId))
                 {
-                    lblRecordCount.Text = "No client selected for duplication.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("No client selected for duplication. Please try again.", false);
                     return;
                 }
 
-                int sourceId = ResolveClientId(clientId.Trim());
+                clientId = clientId.Trim();
+                if (clientId.Length < 3 || !clientId.StartsWith("AD", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowMessage("Invalid client identifier. Please refresh and try again.", false);
+                    return;
+                }
+
+                int sourceId = ResolveClientId(clientId, CompanyContext.CurrentCompanyID);
                 if (sourceId <= 0)
                 {
-                    lblRecordCount.Text = "Client not found in your current company.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Client not found in your current company.", false);
                     return;
                 }
 
@@ -236,29 +245,48 @@ namespace Bill_Software.corporate.business.app
 
                 if (success)
                 {
-                    lblRecordCount.Text = $"Client '{clientId}' and child records duplicated successfully.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Green;
+                    string targetCompanyName = ddlTargetCompanyGlobal.SelectedItem != null
+                        ? ddlTargetCompanyGlobal.SelectedItem.Text : "target company";
+                    ShowMessage(
+                        string.Format("Client '{0}' and child records duplicated successfully to '{1}'.", clientId, targetCompanyName),
+                        true);
                     BindGrid();
                 }
                 else
                 {
-                    lblRecordCount.Text = "Duplication failed. The client could not be created in the target company.";
-                    lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                    ShowMessage("Duplication failed. The client could not be created in the target company.", false);
                 }
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
-                lblRecordCount.Text = "An error occurred during duplication: " + ex.Message;
-                lblRecordCount.ForeColor = System.Drawing.Color.Red;
+                ShowMessage("Duplication could not be completed: " + ex.Message, false);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                ShowMessage("You do not have permission to perform this action.", false);
+            }
+            catch (Exception)
+            {
+                ShowMessage("An unexpected error occurred during duplication. Please try again or contact support.", false);
             }
             finally
             {
                 hfPendingClientId.Value = string.Empty;
                 ddlTargetCompanyGlobal.SelectedIndex = 0;
+                btnConfirmDuplicateClient.Enabled = true;
+                btnConfirmDuplicateClient.Text = "Confirm Duplicate";
             }
         }
 
-        private int ResolveClientId(string clientId)
+        private void ShowMessage(string text, bool isSuccess)
+        {
+            lblRecordCount.Text = text;
+            lblRecordCount.ForeColor = isSuccess
+                ? System.Drawing.Color.Green
+                : System.Drawing.Color.Red;
+        }
+
+        private int ResolveClientId(string clientId, int companyId)
         {
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
@@ -266,7 +294,7 @@ namespace Bill_Software.corporate.business.app
                     "SELECT Id FROM tbl_Client WHERE Client_Id = @ClientId AND CompanyID = @CompanyID", conn))
                 {
                     cmd.Parameters.AddWithValue("@ClientId", clientId);
-                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
                     conn.Open();
                     object result = cmd.ExecuteScalar();
                     if (result != null && result != DBNull.Value)

@@ -5,6 +5,16 @@ using System.Data.SqlClient;
 
 namespace Bill_Software.corporate.business.app
 {
+    public class BulkDuplicateResult
+    {
+        public int SuccessCount { get; set; }
+        public int FailedCount { get; set; }
+        public int SkippedCount { get; set; }
+        public string EntityType { get; set; }
+        public string TargetCompanyName { get; set; }
+        public string FailureReason { get; set; }
+    }
+
     /// <summary>
     /// Provides cross-tenant duplication infrastructure for Vendor and Customer entities.
     /// All operations use modern ADO.NET with explicit transactions.
@@ -22,20 +32,21 @@ namespace Bill_Software.corporate.business.app
         }
 
         // ───────────────────────────────────────────────────────────
-        //  VENDOR DUPLICATION
+        //  GENERALIZED BUSINESS-CODE GENERATION
         // ───────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Generates the next unique Vendor_Id (AA prefix) scoped to the target company.
-        /// Retries up to <paramref name="maxRetries"/> times if a collision occurs.
-        /// </summary>
-        public static string GenerateNextVendorCode(SqlConnection conn, SqlTransaction tran, int targetCompanyId, int maxRetries = 5)
+        private static string GenerateNextBusinessCode(
+            SqlConnection conn, SqlTransaction tran,
+            string prefix, string tableName, string codeColumn,
+            int targetCompanyId, int maxRetries = 5)
         {
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
                 string lastCode = null;
-                using (var cmd = new SqlCommand(
-                    "SELECT TOP 1 [Vendor_Id] FROM [tbl_Vendor] WHERE CompanyID = @CompanyID ORDER BY Id DESC", conn, tran))
+                string query = string.Format(
+                    "SELECT TOP 1 [{0}] FROM [{1}] WHERE CompanyID = @CompanyID ORDER BY Id DESC",
+                    codeColumn, tableName);
+                using (var cmd = new SqlCommand(query, conn, tran))
                 {
                     cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
                     using (var r = cmd.ExecuteReader())
@@ -46,13 +57,15 @@ namespace Bill_Software.corporate.business.app
                 }
 
                 int num = 1;
-                if (!string.IsNullOrEmpty(lastCode) && lastCode.Length > 2)
-                    int.TryParse(lastCode.Substring(2), out num);
+                if (!string.IsNullOrEmpty(lastCode) && lastCode.Length > prefix.Length)
+                    int.TryParse(lastCode.Substring(prefix.Length), out num);
                 num++;
-                string candidate = "AA" + num.ToString("D2");
+                string candidate = prefix + num.ToString("D2");
 
-                using (var cmd = new SqlCommand(
-                    "SELECT COUNT(*) FROM [tbl_Vendor] WHERE [Vendor_Id] = @Code AND CompanyID = @CompanyID", conn, tran))
+                string checkQuery = string.Format(
+                    "SELECT COUNT(*) FROM [{0}] WHERE [{1}] = @Code AND CompanyID = @CompanyID",
+                    tableName, codeColumn);
+                using (var cmd = new SqlCommand(checkQuery, conn, tran))
                 {
                     cmd.Parameters.AddWithValue("@Code", candidate);
                     cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
@@ -61,18 +74,22 @@ namespace Bill_Software.corporate.business.app
                 }
             }
             throw new InvalidOperationException(
-                string.Format("Unable to generate a unique Vendor code for company {0} after {1} attempts.",
-                    targetCompanyId, maxRetries));
+                string.Format("Unable to generate a unique code (prefix '{0}') for table {1} in company {2} after {3} attempts.",
+                    prefix, tableName, targetCompanyId, maxRetries));
         }
 
-        /// <summary>
-        /// Resolves a deterministic vendor name for the target company.
-        /// Returns original name if no collision; appends (Copy), (Copy 2), etc.
-        /// </summary>
-        private static string ResolveDuplicateVendorName(
-            SqlConnection conn, SqlTransaction tran, string originalName, int targetCompanyId)
+        // ───────────────────────────────────────────────────────────
+        //  GENERALIZED DUPLICATE-NAME RESOLUTION
+        // ───────────────────────────────────────────────────────────
+
+        private static string ResolveDuplicateName(
+            SqlConnection conn, SqlTransaction tran,
+            string tableName, string nameColumn,
+            string originalName, int targetCompanyId)
         {
-            string baseQuery = "SELECT COUNT(*) FROM [tbl_Vendor] WHERE [Vendor_Name] = @Name AND CompanyID = @CompanyID";
+            string baseQuery = string.Format(
+                "SELECT COUNT(*) FROM [{0}] WHERE [{1}] = @Name AND CompanyID = @CompanyID",
+                tableName, nameColumn);
             using (var cmd = new SqlCommand(baseQuery, conn, tran))
             {
                 cmd.Parameters.AddWithValue("@Name", originalName);
@@ -80,9 +97,14 @@ namespace Bill_Software.corporate.business.app
                 if (Convert.ToInt32(cmd.ExecuteScalar()) == 0)
                     return originalName;
             }
-            for (int i = 0; i < 10; i++)
+
+            const int maxAttempts = 10;
+            for (int i = 0; i < maxAttempts; i++)
             {
-                string candidate = i == 0 ? originalName + " (Copy)" : originalName + " (Copy " + (i + 1) + ")";
+                string candidate = i == 0
+                    ? originalName + " (Copy)"
+                    : originalName + " (Copy " + (i + 1) + ")";
+
                 using (var cmd = new SqlCommand(baseQuery, conn, tran))
                 {
                     cmd.Parameters.AddWithValue("@Name", candidate);
@@ -91,15 +113,19 @@ namespace Bill_Software.corporate.business.app
                         return candidate;
                 }
             }
+
             return originalName + " (Copy " + DateTime.Now.ToString("yyyyMMddHHmmss") + ")";
         }
 
-        /// <summary>
-        /// Duplicates a single vendor from one tenant to another within one SQL transaction.
-        /// Copies master data only; skips purchase history.
-        /// Generates a new Vendor_Id using the AA prefix.
-        /// Writes an audit entry to tbl_SystemNotification scoped to the target company.
-        /// </summary>
+        // ───────────────────────────────────────────────────────────
+        //  VENDOR DUPLICATION (backward-compatible public API)
+        // ───────────────────────────────────────────────────────────
+
+        public static string GenerateNextVendorCode(SqlConnection conn, SqlTransaction tran, int targetCompanyId)
+        {
+            return GenerateNextBusinessCode(conn, tran, "AA", "tbl_Vendor", "Vendor_Id", targetCompanyId);
+        }
+
         public static bool DuplicateVendor(int sourceId, int targetCompanyId, string userName)
         {
             if (sourceId <= 0)
@@ -112,6 +138,15 @@ namespace Bill_Software.corporate.business.app
             using (var conn = new SqlConnection(ConnString))
             {
                 conn.Open();
+
+                if (!VendorInCurrentCompany(conn, sourceId))
+                    throw new InvalidOperationException(
+                        "Source vendor not found or does not belong to your current company.");
+
+                if (!UserCanAccessCompany(targetCompanyId))
+                    throw new UnauthorizedAccessException(
+                        "You do not have access to the selected target company.");
+
                 using (var tran = conn.BeginTransaction(IsolationLevel.ReadCommitted))
                 {
                     try
@@ -137,7 +172,7 @@ namespace Bill_Software.corporate.business.app
                         string srcName = RowStr(src, "Vendor_Name");
                         if (string.IsNullOrEmpty(srcName)) srcName = "Vendor";
 
-                        string targetName = ResolveDuplicateVendorName(conn, tran, srcName, targetCompanyId);
+                        string targetName = ResolveDuplicateName(conn, tran, "tbl_Vendor", "Vendor_Name", srcName, targetCompanyId);
                         string newVendorId = GenerateNextVendorCode(conn, tran, targetCompanyId);
 
                         using (var cmd = new SqlCommand(@"
@@ -216,52 +251,36 @@ namespace Bill_Software.corporate.business.app
         //  CUSTOMER DUPLICATION
         // ───────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Generates the next unique Client_Id (AD prefix) using a MAX() counter
-        /// within the active transaction.
-        /// </summary>
-        public static string GenerateNextClientCode(SqlConnection conn, SqlTransaction tran)
+        public static string GenerateNextClientCode(SqlConnection conn, SqlTransaction tran, int targetCompanyId)
         {
-            string lastCode = null;
-            using (var cmd = new SqlCommand(
-                "SELECT TOP 1 [Client_Id] FROM [tbl_Client] WHERE CompanyID = @CompanyID ORDER BY Id DESC", conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                using (var r = cmd.ExecuteReader())
-                {
-                    if (r.Read() && !r.IsDBNull(0))
-                        lastCode = r.GetString(0);
-                }
-            }
-
-            int num = 1;
-            if (!string.IsNullOrEmpty(lastCode) && lastCode.Length > 2)
-            {
-                int.TryParse(lastCode.Substring(2), out num);
-            }
-            num++;
-            return "AD" + num.ToString("D2");
+            return GenerateNextBusinessCode(conn, tran, "AD", "tbl_Client", "Client_Id", targetCompanyId);
         }
 
-        /// <summary>
-        /// Duplicates a customer and child records (ClientRegAddress, Factory, Representative)
-        /// from one tenant to another within one SQL transaction.
-        /// Excludes downstream transactional tables (Quotation, Invoice, Chalan, Proforma, Purchases).
-        /// </summary>
         public static bool DuplicateCustomer(int sourceId, int targetCompanyId, string userName)
         {
-            if (sourceId <= 0) return false;
-            if (targetCompanyId <= 0) return false;
-            if (string.IsNullOrWhiteSpace(userName)) userName = "System";
+            if (sourceId <= 0)
+                throw new ArgumentException("Invalid source client identifier.", "sourceId");
+            if (targetCompanyId <= 0)
+                throw new ArgumentException("Invalid target company identifier.", "targetCompanyId");
+            if (string.IsNullOrWhiteSpace(userName))
+                userName = "System";
 
             using (var conn = new SqlConnection(ConnString))
             {
                 conn.Open();
+
+                if (!ClientInCurrentCompany(conn, sourceId))
+                    throw new InvalidOperationException(
+                        "Source client not found or does not belong to your current company.");
+
+                if (!UserCanAccessCompany(targetCompanyId))
+                    throw new UnauthorizedAccessException(
+                        "You do not have access to the selected target company.");
+
                 using (var tran = conn.BeginTransaction(IsolationLevel.ReadCommitted))
                 {
                     try
                     {
-                        // Read source client data
                         DataTable dtClient = new DataTable();
                         using (var cmd = new SqlCommand(
                             "SELECT * FROM tbl_Client WHERE Id = @Id AND CompanyID = @CompanyID", conn, tran))
@@ -280,9 +299,12 @@ namespace Bill_Software.corporate.business.app
 
                         DataRow src = dtClient.Rows[0];
                         string srcClientId = RowStr(src, "Client_Id");
-                        string newClientId = GenerateNextClientCode(conn, tran);
+                        string srcName = RowStr(src, "Client_Name");
+                        if (string.IsNullOrEmpty(srcName)) srcName = "Client";
 
-                        // Insert the duplicated client master
+                        string targetName = ResolveDuplicateName(conn, tran, "tbl_Client", "Client_Name", srcName, targetCompanyId);
+                        string newClientId = GenerateNextClientCode(conn, tran, targetCompanyId);
+
                         using (var cmd = new SqlCommand(@"
                             INSERT INTO tbl_Client
                             (Client_Id, Client_Name, Industry, Address1, State, City, pin,
@@ -296,7 +318,7 @@ namespace Bill_Software.corporate.business.app
                              @CompanyID, @CreatedBy, GETDATE())", conn, tran))
                         {
                             cmd.Parameters.AddWithValue("@Client_Id", newClientId);
-                            cmd.Parameters.AddWithValue("@Client_Name", RowStr(src, "Client_Name"));
+                            cmd.Parameters.AddWithValue("@Client_Name", targetName);
                             cmd.Parameters.AddWithValue("@Industry", RowStr(src, "Industry"));
                             cmd.Parameters.AddWithValue("@Address1", RowStr(src, "Address1"));
                             cmd.Parameters.AddWithValue("@State", RowStr(src, "State"));
@@ -314,12 +336,13 @@ namespace Bill_Software.corporate.business.app
                             cmd.ExecuteNonQuery();
                         }
 
-                        // Clone child entities
                         CopyClientRegAddress(conn, tran, srcClientId, newClientId);
                         CopyFactoryRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                         CopyRepresentativeRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
 
-                        // Audit trail — scoped to TARGET company
+                        string nameNote = targetName != srcName
+                            ? string.Format(" (renamed from '{0}' due to name collision)", srcName)
+                            : "";
                         using (var cmdNotif = new SqlCommand(@"
                             INSERT INTO tbl_SystemNotification
                             (CompanyID, Title, Message, Module, Type, UserId, CreatedOn)
@@ -327,8 +350,9 @@ namespace Bill_Software.corporate.business.app
                         {
                             cmdNotif.Parameters.AddWithValue("@CompanyID", targetCompanyId);
                             cmdNotif.Parameters.AddWithValue("@Message", string.Format(
-                                "Customer '{0}' (source ID {1}) duplicated as '{2}' by user '{3}'.",
-                                RowStr(src, "Client_Name"), sourceId, newClientId, userName));
+                                "User '{0}' duplicated customer '{1}' (source code: {2}) as '{3}' (new code: {4}) from company {5}.{6}",
+                                userName, srcName, srcClientId, targetName, newClientId,
+                                CompanyContext.CurrentCompanyID, nameNote));
                             cmdNotif.Parameters.AddWithValue("@UserId", userName);
                             cmdNotif.ExecuteNonQuery();
                         }
@@ -444,6 +468,33 @@ namespace Bill_Software.corporate.business.app
         // ───────────────────────────────────────────────────────────
         //  INTERNAL HELPERS
         // ───────────────────────────────────────────────────────────
+
+        private static bool VendorInCurrentCompany(SqlConnection conn, int vendorId)
+        {
+            using (var cmd = new SqlCommand(
+                "SELECT TOP 1 1 FROM tbl_Vendor WHERE Id = @Id AND CompanyID = @CompanyID", conn))
+            {
+                cmd.Parameters.AddWithValue("@Id", vendorId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                return cmd.ExecuteScalar() != null;
+            }
+        }
+
+        private static bool ClientInCurrentCompany(SqlConnection conn, int clientId)
+        {
+            using (var cmd = new SqlCommand(
+                "SELECT TOP 1 1 FROM tbl_Client WHERE Id = @Id AND CompanyID = @CompanyID", conn))
+            {
+                cmd.Parameters.AddWithValue("@Id", clientId);
+                cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                return cmd.ExecuteScalar() != null;
+            }
+        }
+
+        private static bool UserCanAccessCompany(int companyId)
+        {
+            return AuthGuard.UserCanAccessCompany(companyId);
+        }
 
         private static string RowStr(DataRow row, string column)
         {
