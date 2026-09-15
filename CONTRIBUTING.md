@@ -9,9 +9,9 @@ Release baseline: `v2.1-security-foundation`.
 
 ## 1. Branch Strategy
 
-- **`master`** is the production trunk.
-- **`July_to_Sept26_DevNSupport`** tracks the same HEAD as `master` (integration line).
+- **`master`** is the production trunk and the only integration baseline.
 - Create feature branches from **`master`**.
+- The former `July_to_Sept26_DevNSupport` integration line was retired on 2026-09-15; its entire history is contained in `master` (verified: its tip `fa777e9` is the direct parent of the PR #89 merge commit `148e6ed`).
 - Do not rewrite `v2.1-security-foundation` history.
 - Do not change `AuthGuard`, `SecurePage`, `UserRoleAssignment`, or `UserCompanyAccess` without architectural review (see `.github/CODEOWNERS`).
 

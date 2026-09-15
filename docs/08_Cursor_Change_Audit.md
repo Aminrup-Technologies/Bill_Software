@@ -1,6 +1,6 @@
 # 08 — Cursor Change Audit
 
-> **Historical.** One-shot audit of branch `cursor/document-sales-visit-workflow-architecture-799c`. Not a module guide. Current solution map: [`SOLUTION_INDEX.md`](SOLUTION_INDEX.md). Visit findings vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
+> **Historical.** One-shot audit of branch `cursor/document-sales-visit-workflow-architecture-799c`. Not a module guide. Current solution map: [`SOLUTION_INDEX.md`](SOLUTION_INDEX.md). Visit findings vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md). References below to base `July_to_Sept26_DevNSupport` are point-in-time; that branch was retired on 2026-09-15 and its full history is merged into `master`.
 
 **Purpose:** Independent, read-only audit of everything the previous two agent turns actually changed in this repository, before any further work proceeds. **No file was modified, created, deleted, or reverted while producing this audit.** Only the read-only commands `git status --short`, `git diff --stat`, and `git diff` were executed, plus supplementary read-only `git log`/`git diff --stat`/`git diff --name-status` comparisons against the base branch (needed because the previous turns' changes were already committed and pushed, so a plain working-tree `git diff` shows nothing — see §0 for why both views are provided).
 

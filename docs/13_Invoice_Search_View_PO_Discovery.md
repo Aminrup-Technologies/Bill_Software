@@ -6,7 +6,7 @@ Canonical current census: [`page-catalog/DOMAIN_invoice.md`](page-catalog/DOMAIN
 
 **Pass type:** Read-only discovery. No code was modified.  
 **Date:** 2026-09-03  
-**Branch context:** `July_to_Sept26_DevNSupport`  
+**Branch context:** `July_to_Sept26_DevNSupport` (branch retired 2026-09-15; history merged into `master`)  
 **Scope files:**
 
 | Requested | Actual path | Notes |

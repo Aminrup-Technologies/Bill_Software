@@ -1,7 +1,7 @@
 # Cross-Tenant Duplication Architecture — Vendor & Customer
 
 **Date:** 2026-09-12  
-**Branch:** `July_to_Sept26_DevNSupport`  
+**Branch:** `July_to_Sept26_DevNSupport` (retired 2026-09-15; feature merged to `master` via PR #89)  
 **Status:** Investigation & Architecture (no code modified)
 
 ---
