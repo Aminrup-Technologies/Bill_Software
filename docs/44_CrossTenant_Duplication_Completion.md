@@ -16,9 +16,9 @@ The feature was delivered across 7 iterative turns, each building on the previou
 
 | Turn | Deliverable | Files |
 |------|-------------|-------|
-| 1 | Architecture report (6-phase analysis) | `docs/34` |
-| 2 | Validation report (9-point checklist) | `docs/35` |
-| 3 | Implementation readiness (file inventory, DAL contract, dependency graph) | `docs/36` |
+| 1 | Architecture report (6-phase analysis) | `docs/41` |
+| 2 | Validation report (9-point checklist) | `docs/42` |
+| 3 | Implementation readiness (file inventory, DAL contract, dependency graph) | `docs/43` |
 | 4 | DuplicationService.cs + Vendor View page wiring | `DuplicationService.cs`, `View_vendor.*` |
 | 5 | Vendor hardening (collision retry, name resolution, double-submit, safe errors) | Same files |
 | 6 | Customer hardening (generalized helpers, targetCompanyId-scoped AD generation, child cloning) | Same + `View_client.*` |
@@ -325,10 +325,10 @@ Every duplication (single or bulk) writes to `tbl_SystemNotification`:
 
 | # | File | Purpose |
 |---|------|---------|
-| 7 | `docs/34_CrossTenant_Duplication_Architecture.md` | 6-phase architecture analysis |
-| 8 | `docs/35_PR1_Validation_Report.md` | 9-point validation checklist |
-| 9 | `docs/36_PR1_Implementation_Readiness.md` | File inventory, DAL contract, dependency graph |
-| 10 | `docs/37_CrossTenant_Duplication_Completion.md` | This document |
+| 7 | `docs/41_CrossTenant_Duplication_Architecture.md` | 6-phase architecture analysis |
+| 8 | `docs/42_PR1_Validation_Report.md` | 9-point validation checklist |
+| 9 | `docs/43_PR1_Implementation_Readiness.md` | File inventory, DAL contract, dependency graph |
+| 10 | `docs/44_CrossTenant_Duplication_Completion.md` | This document |
 
 ### Total Impact
 

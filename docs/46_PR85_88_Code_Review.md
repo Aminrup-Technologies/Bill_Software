@@ -139,7 +139,7 @@
 
 | # | Severity | File | Line | Finding | Status |
 |---|----------|------|------|---------|--------|
-| 13.1 | **Low** | `DuplicationService.cs` | `GenerateNextBusinessCode` | The SELECT MAX + INSERT pattern within `ReadCommitted` is vulnerable to TOCTOU race under concurrent duplication of the same entity type to the same company. The 5-retry loop with COUNT verification reduces but does not eliminate the risk. A unique index on `(Vendor_Id, CompanyID)` would provide database-level protection. | **Low** — Add `UNIQUE INDEX` on `(tbl_Vendor.Vendor_Id, tbl_Vendor.CompanyID)` and `(tbl_Client.Client_Id, tbl_Client.CompanyID)` as a follow-up database migration. This is already identified in `docs/35_PR1_Validation_Report.md` as a pre-existing gap. |
+| 13.1 | **Low** | `DuplicationService.cs` | `GenerateNextBusinessCode` | The SELECT MAX + INSERT pattern within `ReadCommitted` is vulnerable to TOCTOU race under concurrent duplication of the same entity type to the same company. The 5-retry loop with COUNT verification reduces but does not eliminate the risk. A unique index on `(Vendor_Id, CompanyID)` would provide database-level protection. | **Low** — Add `UNIQUE INDEX` on `(tbl_Vendor.Vendor_Id, tbl_Vendor.CompanyID)` and `(tbl_Client.Client_Id, tbl_Client.CompanyID)` as a follow-up database migration. This is already identified in `docs/42_PR1_Validation_Report.md` as a pre-existing gap. |
 | 13.2 | — | `DuplicationService.cs` | `BulkDuplicate*` | Within a single bulk operation, all records share one transaction. The retry loop prevents self-collision within the batch. | **No issue found** |
 
 ---

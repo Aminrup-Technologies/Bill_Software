@@ -3,7 +3,7 @@
 **Date:** 2026-09-12  
 **Branch:** `July_to_Sept26_DevNSupport`  
 **Scope:** Implementation-blocking validation only  
-**Sources:** `UAT_CATALOG.md`, `SHARED_SCHEMA.md`, `DATA_DICTIONARY.md`, `DOMAIN_customer.md`, `DOMAIN_vendor-purchase.md`, `09_Current_Authorization_Implementation_Audit.md`, existing architecture report `docs/34`
+**Sources:** `UAT_CATALOG.md`, `SHARED_SCHEMA.md`, `DATA_DICTIONARY.md`, `DOMAIN_customer.md`, `DOMAIN_vendor-purchase.md`, `09_Current_Authorization_Implementation_Audit.md`, existing architecture report `docs/41`
 
 ---
 
