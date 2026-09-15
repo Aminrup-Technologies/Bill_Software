@@ -636,22 +636,23 @@ namespace Bill_Software.corporate.business.app
                                 cmd.ExecuteNonQuery();
                             }
 
-                            string nameNote = targetName != srcName
-                                ? string.Format(" (renamed from '{0}' due to name collision)", srcName)
-                                : "";
-                            using (var cmdNotif = new SqlCommand(@"
-                                INSERT INTO tbl_SystemNotification
-                                (CompanyID, Title, Message, Module, Type, UserId, CreatedOn)
-                                VALUES (@CompanyID, 'Vendor Duplicated', @Message, 'Vendor Management', 'Success', @UserId, GETDATE())", conn, tran))
-                            {
-                                cmdNotif.Parameters.AddWithValue("@CompanyID", targetCompanyId);
-                                cmdNotif.Parameters.AddWithValue("@Message", string.Format(
-                                    "User '{0}' duplicated vendor '{1}' (source code: {2}) as '{3}' (new code: {4}) from company {5}.{6}",
-                                    userName, srcName, srcVendorId, targetName, newVendorId,
-                                    CompanyContext.CurrentCompanyID, nameNote));
-                                cmdNotif.Parameters.AddWithValue("@UserId", userName);
-                                cmdNotif.ExecuteNonQuery();
-                            }
+                            // Audit trail — scoped to TARGET company (live tbl_SystemNotification schema)
+                            WriteDuplicationAudit(
+                                conn,
+                                tran,
+                                targetCompanyId,
+                                "Vendor Duplicated",
+                                "Vendor",
+                                string.Format(
+                                    "Vendor '{0}' duplicated from company {1} to company {2}: source code '{3}' as '{4}' (new code {5}) by user '{6}' (bulk).",
+                                    srcName,
+                                    CompanyContext.CurrentCompanyID,
+                                    targetCompanyId,
+                                    srcVendorId,
+                                    targetName,
+                                    newVendorId,
+                                    userName),
+                                userName);
 
                             result.SuccessCount++;
                         }
@@ -776,22 +777,23 @@ namespace Bill_Software.corporate.business.app
                             CopyFactoryRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                             CopyRepresentativeRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
 
-                            string nameNote = targetName != srcName
-                                ? string.Format(" (renamed from '{0}' due to name collision)", srcName)
-                                : "";
-                            using (var cmdNotif = new SqlCommand(@"
-                                INSERT INTO tbl_SystemNotification
-                                (CompanyID, Title, Message, Module, Type, UserId, CreatedOn)
-                                VALUES (@CompanyID, 'Customer Duplicated', @Message, 'Client Management', 'Success', @UserId, GETDATE())", conn, tran))
-                            {
-                                cmdNotif.Parameters.AddWithValue("@CompanyID", targetCompanyId);
-                                cmdNotif.Parameters.AddWithValue("@Message", string.Format(
-                                    "User '{0}' duplicated customer '{1}' (source code: {2}) as '{3}' (new code: {4}) from company {5}.{6}",
-                                    userName, srcName, srcClientId, targetName, newClientId,
-                                    CompanyContext.CurrentCompanyID, nameNote));
-                                cmdNotif.Parameters.AddWithValue("@UserId", userName);
-                                cmdNotif.ExecuteNonQuery();
-                            }
+                            // Audit trail — scoped to TARGET company (live tbl_SystemNotification schema)
+                            WriteDuplicationAudit(
+                                conn,
+                                tran,
+                                targetCompanyId,
+                                "Customer Duplicated",
+                                "Client",
+                                string.Format(
+                                    "Customer '{0}' duplicated from company {1} to company {2}: source code '{3}' as '{4}' (new code {5}) by user '{6}' (bulk).",
+                                    srcName,
+                                    CompanyContext.CurrentCompanyID,
+                                    targetCompanyId,
+                                    srcClientId,
+                                    targetName,
+                                    newClientId,
+                                    userName),
+                                userName);
 
                             result.SuccessCount++;
                         }
