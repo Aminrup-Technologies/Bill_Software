@@ -172,11 +172,12 @@
             if (!confirm('Duplicate this vendor to the selected company?')) {
                 return false;
             }
-            // Prevent double-submission
+            // Prevent double-submission after postback starts.
+            // Disabling the submit button synchronously cancels ASP.NET postback.
             var btn = document.getElementById('<%=btnConfirmDuplicateVendor.ClientID%>');
             if (btn) {
-                btn.disabled = true;
                 btn.value = 'Duplicating...';
+                setTimeout(function () { btn.disabled = true; }, 0);
             }
             return true;
         }
