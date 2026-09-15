@@ -6,9 +6,9 @@ Lightweight working status. Prefer this file over chat history. Update the secti
 
 ## Current Status
 
-PR **#84** is merged to `master` (merge commit `d67e854`; PR head `49b1e16`). Next development cycle is open. Wait for an explicit `@filename` task.
+**v2.1 Cross-Tenant Duplication enterprise release frozen:** PR **#89** merged to `master` (merge commit `148e6ed`), annotated tag `v2.1-cross-tenant-enterprise`, release record [`docs/49`](49_v2.1_CrossTenant_Release.md). Master is the default and sole integration baseline.
 
-Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`. `July_to_Sept26_DevNSupport` remains as the historical implementation branch.
+Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`. `July_to_Sept26_DevNSupport` was retired on 2026-09-15; its full history is contained in `master` and dated references remain in the docs snapshots.
 
 **Root cause:** after `ImpersonationRuntime.Start`, `Session["USERID"]` is the target. `AuthGuard.HasPermission("SwitchUser")` reads that identity, so `EnsurePage(..., PermissionKey)` 403'd the impersonated session. `Redirect(..., false)` without `CompleteRequest()` let the Switch User request keep running.
 
@@ -25,6 +25,8 @@ Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGu
 - v2.1 Security Foundation (AuthGuard, SecurePage, tenant membership, resource scope phases). Contract: `docs/22`.
 - Page catalog + data dictionary + UAT catalog generators.
 - Impersonation governance + dormant runtime + UAT activation docs (`ADR-001`, `docs/29`–`docs/37`).
+- Cross-tenant duplication — vendor, customer, and bulk — merged via PR #89 with audit writes aligned to the live `tbl_SystemNotification` schema (`docs/41`–`48`; release `docs/49`; tag `v2.1-cross-tenant-enterprise`).
+- July_to_Sept26_DevNSupport baseline retired; single-baseline governance established (`CONTRIBUTING.md` §1).
 - Switch User runtime patch: `SessionLinkKey` permission exception + `CompleteRequest` redirect. Investigation closed (no remaining Switch User runtime work).
 - Ponytail + solution-docs Cursor rules (existing).
 - This bootstrap: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/CURSOR_RULES.md`, `Bill_Software/.cursor/rules/project.mdc`.
@@ -59,7 +61,9 @@ None. Next scoped change is not assigned.
 
 ## Next Action
 
-Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested.
+Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named.
+
+Before enabling duplication in production tenants: review + UAT **PR #90** (double-submit postback fix, vendor + customer paths) and run the [`docs/45`](45_CrossTenant_UAT_Checklist.md) checklist. PR #21 (dashboard restyle) remains an intentionally parked Draft.
 
 ---
 

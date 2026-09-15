@@ -37,6 +37,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
 | Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
+| Cross-tenant duplication (vendor, customer, bulk; audit-aligned) | [41](41_CrossTenant_Duplication_Architecture.md)–[48](48_CrossTenant_Docs_Consistency_Audit.md), [49](49_v2.1_CrossTenant_Release.md) |
 
 ## Page catalogs (unique facts only)
 
@@ -87,6 +88,8 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [ADR-001](ADR-001_Administrator_Impersonation.md) | Impersonation stays off until flag + grant |
 | [29](29_Impersonation_Governance.md)–[36](36_Impersonation_UAT_Activation.md) | Impersonation governance, runtime, UAT activation |
 | [37_SwitchUser_UAT_Completion.md](37_SwitchUser_UAT_Completion.md) | Phase 2A Switch User UAT completion |
+| [MILESTONE_v2.1_Security_Foundation_Closure.md](MILESTONE_v2.1_Security_Foundation_Closure.md) | v2.1 Security Foundation closeout (`v2.1-security-foundation`) |
+| [49_v2.1_CrossTenant_Release.md](49_v2.1_CrossTenant_Release.md) | v2.1 Cross-Tenant Duplication enterprise release (`v2.1-cross-tenant-enterprise`) |
 
 ## Database Migrations
 
