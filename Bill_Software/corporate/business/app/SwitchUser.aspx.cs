@@ -2,7 +2,7 @@ using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Web;
+using System.Drawing;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -10,378 +10,151 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class SwitchUser : Page
     {
-        private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+        private string ConnString
+        {
+            get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; }
+        }
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Guard: must be logged in
-            if (Session["USERID"] == null)
+            if (!ImpersonationGovernance.IsSwitchUserEnabled)
             {
-                Response.Redirect("~/index.aspx", false);
+                AuthGuard.EnsurePage(this, false, null);
+                pnlDisabled.Visible = true;
+                pnlActive.Visible = false;
                 return;
             }
 
-            // Guard: must have SwitchUser permission
-            if (!AuthGuard.HasPermission(Session["USERID"].ToString(), "SwitchUser", CompanyContext.CurrentCompanyID))
+            bool impersonating = Session[ImpersonationGovernance.SessionLinkKey] != null;
+            if (!AuthGuard.EnsurePage(this, true, impersonating ? null : ImpersonationGovernance.PermissionKey))
+                return;
+
+            pnlDisabled.Visible = false;
+            pnlActive.Visible = true;
+
+            if (impersonating)
             {
-                Response.Redirect("~/corporate/business/app/home.aspx", false);
+                ShowStatus("Nested impersonation is rejected (INV-13). Use End impersonation on the banner.", Color.DarkRed);
+                rptUsers.Visible = false;
+                txtSearch.Visible = false;
                 return;
             }
 
             if (!IsPostBack)
-            {
-                ShowImpersonationBanner();
-                BindDefaultUsers();
-            }
-        }
-
-        private void ShowImpersonationBanner()
-        {
-            bool isImpersonating = Session["SwitchedFrom"] != null && (bool)Session["SwitchedFrom"];
-            pnlImpersonating.Visible = isImpersonating;
-            if (isImpersonating)
-            {
-                lblImpersonatingUser.Text = Session["OriginalUserId"] != null
-                    ? Session["OriginalUserId"].ToString()
-                    : "Unknown";
-            }
-        }
-
-        private void BindDefaultUsers()
-        {
-            // Show recent/active users when no search term
-            BindUserGrid("SELECT TOP 50 u.User_Id, u.Name, ISNULL(r.RoleName, '') AS RoleName " +
-                         "FROM tbl_login u " +
-                         "LEFT JOIN Roles r ON u.RoleId = r.RoleId AND r.CompanyID = @CompanyID " +
-                         "WHERE u.CompanyID = @CompanyID AND u.User_Id <> @CurrentUserId " +
-                         "ORDER BY u.Name");
+                BindUsers(null);
         }
 
         protected void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            string search = txtSearch.Text.Trim();
-            if (string.IsNullOrEmpty(search))
-            {
-                BindDefaultUsers();
+            if (!ImpersonationGovernance.IsSwitchUserEnabled)
                 return;
-            }
-
-            BindUserGrid("SELECT TOP 50 u.User_Id, u.Name, ISNULL(r.RoleName, '') AS RoleName " +
-                         "FROM tbl_login u " +
-                         "LEFT JOIN Roles r ON u.RoleId = r.RoleId AND r.CompanyID = @CompanyID " +
-                         "WHERE u.CompanyID = @CompanyID AND u.User_Id <> @CurrentUserId " +
-                         "AND (u.Name LIKE @Search OR u.User_Id LIKE @Search) " +
-                         "ORDER BY u.Name");
-        }
-
-        protected void rptUsers_ItemDataBound(object sender, RepeaterItemEventArgs e)
-        {
-            if (e.Item.ItemType != ListItemType.Item && e.Item.ItemType != ListItemType.AlternatingItem)
-                return;
-
-            Button btn = e.Item.FindControl("btnSwitch") as Button;
-            if (btn == null) return;
-
-            DataRowView row = e.Item.DataItem as DataRowView;
-            if (row == null) return;
-
-            string name = Convert.ToString(row["Name"]) ?? string.Empty;
-            string userId = Convert.ToString(row["User_Id"]) ?? string.Empty;
-            string safeName = name.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
-            string safeUserId = userId.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
-            btn.OnClientClick = "return confirm('Switch to " + safeName + " (" + safeUserId + ")?');";
-        }
-
-        private void BindUserGrid(string sql)
-        {
-            using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand(sql, cn))
-            {
-                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
-                cmd.Parameters.Add(new SqlParameter("@CurrentUserId", SqlDbType.NVarChar, 100) { Value = Session["USERID"].ToString() });
-
-                if (sql.Contains("@Search"))
-                {
-                    cmd.Parameters.Add(new SqlParameter("@Search", SqlDbType.NVarChar, 100)
-                    {
-                        Value = "%" + txtSearch.Text.Trim() + "%"
-                    });
-                }
-
-                cn.Open();
-                using (var rdr = cmd.ExecuteReader())
-                {
-                    DataTable dt = new DataTable();
-                    dt.Load(rdr);
-                    rptUsers.DataSource = dt;
-                    rptUsers.DataBind();
-                    lblNoResults.Visible = dt.Rows.Count == 0;
-                }
-            }
+            BindUsers(txtSearch.Text);
         }
 
         protected void btnSwitch_Click(object sender, EventArgs e)
         {
-            Button btn = (Button)sender;
-            string targetUserId = btn.CommandArgument;
-
-            if (string.IsNullOrEmpty(targetUserId)) return;
-
-            // Don't allow switching to yourself
-            if (string.Equals(targetUserId, Session["USERID"].ToString(), StringComparison.OrdinalIgnoreCase))
+            if (!ImpersonationGovernance.IsSwitchUserEnabled)
             {
-                lblStatus.Text = "You are already logged in as this user.";
-                lblStatus.ForeColor = System.Drawing.Color.Red;
-                lblStatus.Visible = true;
+                ShowStatus("SwitchUser is disabled.", Color.DarkRed);
                 return;
             }
 
-            // Validate target user exists and belongs to current company
-            string targetName = ValidateTargetUser(targetUserId);
-            if (string.IsNullOrEmpty(targetName))
+            Button btn = sender as Button;
+            int targetUserId;
+            if (btn == null || !int.TryParse(btn.CommandArgument, out targetUserId) || targetUserId <= 0)
             {
-                lblStatus.Text = "User not found in the current company.";
-                lblStatus.ForeColor = System.Drawing.Color.Red;
-                lblStatus.Visible = true;
+                ShowStatus("Target user is required.", Color.DarkRed);
                 return;
             }
 
-            // Save original user state (only if not already impersonating — prevent nested switches)
-            if (Session["SwitchedFrom"] == null || !(bool)Session["SwitchedFrom"])
+            ImpersonationResult issued = ImpersonationRuntime.IssueIntent(targetUserId);
+            if (issued.Status != ImpersonationStatus.Issued || string.IsNullOrEmpty(issued.Token))
             {
-                Session["OriginalUserId"] = Session["USERID"];
-                Session["OriginalRoleId"] = Session["RoleId"];
-                Session["OriginalRoleName"] = Session["RoleName"];
-                Session["OriginalCompanyId"] = Session["CompanyID"];
-            }
-
-            // Resolve the target user's numeric ID, role, and company
-            int targetNumericId = 0;
-            string targetRoleId = null;
-            string targetRoleName = null;
-            int targetCompanyId = CompanyContext.CurrentCompanyID;
-
-            using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand(
-                "SELECT u.Id, u.RoleId, ISNULL(r.RoleName, '') AS RoleName " +
-                "FROM tbl_login u " +
-                "LEFT JOIN Roles r ON u.RoleId = r.RoleId AND r.CompanyID = @CompanyID " +
-                "WHERE u.User_Id = @UserId AND u.CompanyID = @CompanyID", cn))
-            {
-                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = targetUserId });
-                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = targetCompanyId });
-                cn.Open();
-                using (var rdr = cmd.ExecuteReader())
-                {
-                    if (rdr.Read())
-                    {
-                        targetNumericId = rdr.GetInt32(0);
-                        targetRoleId = rdr["RoleId"] != DBNull.Value ? rdr["RoleId"].ToString() : null;
-                        targetRoleName = rdr["RoleName"].ToString();
-                    }
-                }
-            }
-
-            if (targetNumericId == 0)
-            {
-                lblStatus.Text = "User not found.";
-                lblStatus.ForeColor = System.Drawing.Color.Red;
-                lblStatus.Visible = true;
+                ShowStatus(FormatResult(issued), Color.DarkRed);
                 return;
             }
 
-            // Create a new ActiveSessions entry for the target user
-            Guid sessionToken = Guid.NewGuid();
-            using (var cn = new SqlConnection(ConnString))
+            ImpersonationResult started = ImpersonationRuntime.Start(issued.Token);
+            if (started.Status != ImpersonationStatus.Started)
             {
-                cn.Open();
-
-                // Deactivate old session for this browser
-                if (Session["SessionToken"] != null)
-                {
-                    using (var cmd = new SqlCommand(
-                        "UPDATE dbo.ActiveSessions SET IsActive = 0 WHERE SessionToken = @Token", cn))
-                    {
-                        cmd.Parameters.Add(new SqlParameter("@Token", SqlDbType.UniqueIdentifier)
-                        {
-                            Value = new Guid(Session["SessionToken"].ToString())
-                        });
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-
-                // Insert new session for target user
-                using (var cmd = new SqlCommand(
-                    "INSERT INTO dbo.ActiveSessions (SessionToken, UserId, LoginTime, LastHeartbeat, IPAddress, UserAgent, IsActive, CompanyID) " +
-                    "VALUES (@Token, @UserId, SYSUTCDATETIME(), SYSUTCDATETIME(), @IP, @UA, 1, @CompanyID)", cn))
-                {
-                    cmd.Parameters.Add(new SqlParameter("@Token", SqlDbType.UniqueIdentifier) { Value = sessionToken });
-                    cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.Int) { Value = targetNumericId });
-                    cmd.Parameters.Add(new SqlParameter("@IP", SqlDbType.NVarChar, 50)
-                    {
-                        Value = HttpContext.Current.Request.UserHostAddress ?? ""
-                    });
-                    cmd.Parameters.Add(new SqlParameter("@UA", SqlDbType.NVarChar, 500)
-                    {
-                        Value = (HttpContext.Current.Request.UserAgent ?? "").Substring(0,
-                            Math.Min(HttpContext.Current.Request.UserAgent?.Length ?? 0, 500))
-                    });
-                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = targetCompanyId });
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            // Swap session identity
-            Session["USERID"] = targetUserId;
-            Session["SessionToken"] = sessionToken.ToString();
-            Session["RoleId"] = targetRoleId;
-            Session["RoleName"] = targetRoleName;
-            Session["CompanyID"] = targetCompanyId;
-            Session["SwitchedFrom"] = true;
-
-            // Log the switch
-            LogSwitch(Session["OriginalUserId"].ToString(), targetUserId);
-
-            // Redirect to home as the new user
-            Response.Redirect("~/corporate/business/app/home.aspx", false);
-            Context.ApplicationInstance.CompleteRequest();
-        }
-
-        protected void btnSwitchBack_Click(object sender, EventArgs e)
-        {
-            if (Session["OriginalUserId"] == null) return;
-
-            string originalUserId = Session["OriginalUserId"].ToString();
-
-            // Deactivate current (impersonated) session
-            if (Session["SessionToken"] != null)
-            {
-                using (var cn = new SqlConnection(ConnString))
-                using (var cmd = new SqlCommand(
-                    "UPDATE dbo.ActiveSessions SET IsActive = 0 WHERE SessionToken = @Token", cn))
-                {
-                    cmd.Parameters.Add(new SqlParameter("@Token", SqlDbType.UniqueIdentifier)
-                    {
-                        Value = new Guid(Session["SessionToken"].ToString())
-                    });
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            // Resolve original user's details
-            int originalNumericId = 0;
-            int originalCompanyId = Session["OriginalCompanyId"] != null
-                ? Convert.ToInt32(Session["OriginalCompanyId"])
-                : CompanyContext.CurrentCompanyID;
-
-            using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand(
-                "SELECT Id FROM tbl_login WHERE User_Id = @UserId AND CompanyID = @CompanyID", cn))
-            {
-                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = originalUserId });
-                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = originalCompanyId });
-                cn.Open();
-                using (var rdr = cmd.ExecuteReader())
-                {
-                    if (rdr.Read()) originalNumericId = rdr.GetInt32(0);
-                }
-            }
-
-            if (originalNumericId == 0)
-            {
-                // Original user not found — force logout
-                Session.Abandon();
-                Response.Redirect("~/index.aspx", false);
+                ShowStatus(FormatResult(started), Color.DarkRed);
                 return;
             }
-
-            // Create new session for original user
-            Guid sessionToken = Guid.NewGuid();
-            using (var cn = new SqlConnection(ConnString))
-            {
-                cn.Open();
-                using (var cmd = new SqlCommand(
-                    "INSERT INTO dbo.ActiveSessions (SessionToken, UserId, LoginTime, LastHeartbeat, IPAddress, UserAgent, IsActive, CompanyID) " +
-                    "VALUES (@Token, @UserId, SYSUTCDATETIME(), SYSUTCDATETIME(), @IP, @UA, 1, @CompanyID)", cn))
-                {
-                    cmd.Parameters.Add(new SqlParameter("@Token", SqlDbType.UniqueIdentifier) { Value = sessionToken });
-                    cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.Int) { Value = originalNumericId });
-                    cmd.Parameters.Add(new SqlParameter("@IP", SqlDbType.NVarChar, 50)
-                    {
-                        Value = HttpContext.Current.Request.UserHostAddress ?? ""
-                    });
-                    cmd.Parameters.Add(new SqlParameter("@UA", SqlDbType.NVarChar, 500)
-                    {
-                        Value = (HttpContext.Current.Request.UserAgent ?? "").Substring(0,
-                            Math.Min(HttpContext.Current.Request.UserAgent?.Length ?? 0, 500))
-                    });
-                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = originalCompanyId });
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            // Restore original session
-            Session["USERID"] = originalUserId;
-            Session["SessionToken"] = sessionToken.ToString();
-            Session["RoleId"] = Session["OriginalRoleId"];
-            Session["RoleName"] = Session["OriginalRoleName"];
-            Session["CompanyID"] = Session["OriginalCompanyId"];
-
-            // Clear impersonation state
-            Session["SwitchedFrom"] = null;
-            Session["OriginalUserId"] = null;
-            Session["OriginalRoleId"] = null;
-            Session["OriginalRoleName"] = null;
-            Session["OriginalCompanyId"] = null;
 
             Response.Redirect("~/corporate/business/app/home.aspx", false);
             Context.ApplicationInstance.CompleteRequest();
         }
 
-        private string ValidateTargetUser(string targetUserId)
+        private void BindUsers(string search)
         {
-            using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand(
-                "SELECT Name FROM tbl_login WHERE User_Id = @UserId AND CompanyID = @CompanyID", cn))
+            int currentUserId;
+            if (Session["UserDbId"] == null || !int.TryParse(Convert.ToString(Session["UserDbId"]), out currentUserId) || currentUserId <= 0)
             {
-                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = targetUserId });
-                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
-                cn.Open();
-                using (var rdr = cmd.ExecuteReader())
-                {
-                    return rdr.Read() ? rdr["Name"].ToString() : null;
-                }
+                lblNoResults.Visible = true;
+                rptUsers.DataSource = null;
+                rptUsers.DataBind();
+                return;
             }
-        }
 
-        private void LogSwitch(string fromUserId, string toUserId)
-        {
+            string term = search == null ? string.Empty : search.Trim();
+            const string sql = @"
+                SELECT TOP 50 u.Id, u.User_Id, u.Name, ISNULL(r.RoleName, '') AS RoleName
+                FROM dbo.tbl_login u
+                INNER JOIN dbo.UserCompanyAccess a
+                    ON a.UserId = u.Id AND a.CompanyID = @CompanyID AND a.IsActive = 1
+                LEFT JOIN dbo.Roles r ON r.RoleId = u.RoleId AND r.CompanyID = @CompanyID
+                WHERE u.CompanyID = @CompanyID
+                  AND u.IsActive = 1
+                  AND u.Id <> @CurrentUserId
+                  AND (u.LockoutEnd IS NULL OR u.LockoutEnd < SYSUTCDATETIME())
+                  AND (@Search = N'' OR u.Name LIKE @SearchLike OR u.User_Id LIKE @SearchLike)
+                ORDER BY u.Name";
+
             try
             {
                 using (var cn = new SqlConnection(ConnString))
-                using (var cmd = new SqlCommand(
-                    "INSERT INTO dbo.tbl_SystemNotification (Title, Message, ModuleCode, Severity, StartDate, EndDate, IsActive, CreatedBy, CompanyID) " +
-                    "VALUES (@Title, @Message, 'Admin', 'Info', GETDATE(), DATEADD(DAY, 7, GETDATE()), 1, @CreatedBy, @CompanyID)", cn))
+                using (var cmd = new SqlCommand(sql, cn))
                 {
-                    cmd.Parameters.Add(new SqlParameter("@Title", SqlDbType.NVarChar, 200)
-                    {
-                        Value = "User Switch Performed"
-                    });
-                    cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar)
-                    {
-                        Value = $"Admin {fromUserId} switched to user {toUserId}"
-                    });
-                    cmd.Parameters.Add(new SqlParameter("@CreatedBy", SqlDbType.NVarChar, 50) { Value = fromUserId });
-                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = CompanyContext.CurrentCompanyID;
+                    cmd.Parameters.Add("@CurrentUserId", SqlDbType.Int).Value = currentUserId;
+                    cmd.Parameters.Add("@Search", SqlDbType.NVarChar, 100).Value = term;
+                    cmd.Parameters.Add("@SearchLike", SqlDbType.NVarChar, 110).Value = "%" + term + "%";
                     cn.Open();
-                    cmd.ExecuteNonQuery();
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        DataTable dt = new DataTable();
+                        dt.Load(rdr);
+                        rptUsers.Visible = true;
+                        rptUsers.DataSource = dt;
+                        rptUsers.DataBind();
+                        lblNoResults.Visible = dt.Rows.Count == 0;
+                    }
                 }
             }
-            catch
+            catch (SqlException)
             {
-                // Audit log failure should not block the switch
+                rptUsers.DataSource = null;
+                rptUsers.DataBind();
+                lblNoResults.Visible = true;
             }
+        }
+
+        private static string FormatResult(ImpersonationResult result)
+        {
+            if (result == null)
+                return "Start failed.";
+            if (!string.IsNullOrEmpty(result.Invariant) && !string.IsNullOrEmpty(result.Message))
+                return result.Invariant + ": " + result.Message;
+            if (!string.IsNullOrEmpty(result.Message))
+                return result.Message;
+            return result.Status.ToString();
+        }
+
+        private void ShowStatus(string message, Color color)
+        {
+            lblStatus.Visible = true;
+            lblStatus.ForeColor = color;
+            lblStatus.Text = message;
         }
     }
 }

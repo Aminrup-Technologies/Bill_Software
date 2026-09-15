@@ -101,7 +101,8 @@ namespace Bill_Software.corporate.business.app
             }
 
             GetAdminName();
-            UpdateSwitchUserVisibility();
+            BindSwitchUserMenu();
+            ImpersonationRuntime.BindMasterBanner(pnlImpersonationBanner, lblImpersonationBanner, lnkEndImpersonation);
         }
 
         // --- MULTI-COMPANY METHODS ---
@@ -171,13 +172,6 @@ namespace Bill_Software.corporate.business.app
             Session["CompanyID"] = selectedCompanyId;
             Response.Redirect(Request.RawUrl, false);
             Context.ApplicationInstance.CompleteRequest();
-        }
-
-        private void UpdateSwitchUserVisibility()
-        {
-            bool isImpersonating = Session["SwitchedFrom"] != null && (bool)Session["SwitchedFrom"];
-            bool hasPermission = AuthGuard.HasPermission(Session["USERID"].ToString(), "SwitchUser", CompanyContext.CurrentCompanyID);
-            pnlSwitchUser.Visible = hasPermission && !isImpersonating;
         }
 
         private void GetAdminName()
@@ -253,25 +247,6 @@ namespace Bill_Software.corporate.business.app
                         while (rdrUser.Read()) userGrantedPermissions.Add(rdrUser.GetString(0));
                     }
                 }
-
-                if (userGrantedPermissions.Count == 0)
-                {
-                    const string sqlUserPermsFallback = @"
-                        SELECT DISTINCT p.PermissionKey 
-                        FROM dbo.Permissions p
-                        INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
-                        INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
-                        INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id
-                        WHERE u.User_Id = @UserId";
-                    using (var cmdFb = new SqlCommand(sqlUserPermsFallback, cn))
-                    {
-                        cmdFb.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = UserName });
-                        using (var rdrFb = cmdFb.ExecuteReader())
-                        {
-                            while (rdrFb.Read()) userGrantedPermissions.Add(rdrFb.GetString(0));
-                        }
-                    }
-                }
             }
 
             foreach (string menuId in allSystemPermissions)
@@ -282,6 +257,22 @@ namespace Bill_Software.corporate.business.app
                     menuControl.Visible = userGrantedPermissions.Contains(menuId);
                 }
             }
+        }
+
+        private void BindSwitchUserMenu()
+        {
+            if (this.SwitchUser == null)
+                return;
+
+            if (Session[ImpersonationGovernance.SessionLinkKey] != null)
+            {
+                this.SwitchUser.Visible = false;
+                return;
+            }
+
+            bool granted = ImpersonationGovernance.IsSwitchUserEnabled
+                && AuthGuard.HasPermission(ImpersonationGovernance.PermissionKey);
+            this.SwitchUser.Visible = granted;
         }
 
         private Control FindControlRecursive(Control rootControl, string controlID)
@@ -295,8 +286,19 @@ namespace Bill_Software.corporate.business.app
             return null;
         }
 
+        protected void lnkEndImpersonation_Click(object sender, EventArgs e)
+        {
+            ImpersonationRuntime.CloseCurrent(ImpersonationGovernance.EndReason.ManualRollback);
+            GetMenuControl();
+            BindSwitchUserMenu();
+            GetAdminName();
+            ImpersonationRuntime.BindMasterBanner(pnlImpersonationBanner, lblImpersonationBanner, lnkEndImpersonation);
+        }
+
         protected void btnLogOut_Click(object sender, EventArgs e)
         {
+            ImpersonationRuntime.CloseCurrent(ImpersonationGovernance.EndReason.ActorLogout);
+
             if (Session["SessionToken"] != null)
             {
                 try
