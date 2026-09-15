@@ -100,6 +100,24 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.LinkButton lnkEndImpersonation;
         
         /// <summary>
+        /// pnlSwitchUser control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlSwitchUser;
+        
+        /// <summary>
+        /// lnkSwitchUser control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkSwitchUser;
+        
+        /// <summary>
         /// btnLogOut control.
         /// </summary>
         /// <remarks>

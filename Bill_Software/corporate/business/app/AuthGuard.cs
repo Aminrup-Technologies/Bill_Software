@@ -212,8 +212,15 @@ namespace Bill_Software.corporate.business.app
             HttpContext ctx = HttpContext.Current;
             if (ctx == null || ctx.Session == null || ctx.Session["USERID"] == null) return false;
             if (string.IsNullOrEmpty(permissionKey) || !HasCompanyContext()) return false;
+            return HasPermission(ctx.Session["USERID"].ToString(), permissionKey, CompanyContext.CurrentCompanyID);
+        }
 
-            const string sql = @"
+        public static bool HasPermission(string userId, string permissionKey, int companyId)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(permissionKey) || companyId <= 0) return false;
+
+            // Same join chain as Bill.Master.GetMenuControl (PermissionKey, not Module/Type/UserId).
+            const string sqlCompanyScoped = @"
                 SELECT TOP 1 1
                 FROM dbo.Permissions p
                 INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
@@ -221,14 +228,32 @@ namespace Bill_Software.corporate.business.app
                 INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id AND u.CompanyID = @CompanyID
                 WHERE u.User_Id = @UserId AND p.PermissionKey = @Key";
 
+            const string sqlFallback = @"
+                SELECT TOP 1 1
+                FROM dbo.Permissions p
+                INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
+                INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
+                INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id
+                WHERE u.User_Id = @UserId AND p.PermissionKey = @Key";
+
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand(sql, cn))
             {
-                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = ctx.Session["USERID"].ToString() });
-                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
-                cmd.Parameters.Add(new SqlParameter("@Key", SqlDbType.NVarChar, 100) { Value = permissionKey });
                 cn.Open();
-                return cmd.ExecuteScalar() != null;
+                using (var cmd = new SqlCommand(sqlCompanyScoped, cn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = userId });
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
+                    cmd.Parameters.Add(new SqlParameter("@Key", SqlDbType.NVarChar, 200) { Value = permissionKey });
+                    if (cmd.ExecuteScalar() != null)
+                        return true;
+                }
+
+                using (var cmdFb = new SqlCommand(sqlFallback, cn))
+                {
+                    cmdFb.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100) { Value = userId });
+                    cmdFb.Parameters.Add(new SqlParameter("@Key", SqlDbType.NVarChar, 200) { Value = permissionKey });
+                    return cmdFb.ExecuteScalar() != null;
+                }
             }
         }
 

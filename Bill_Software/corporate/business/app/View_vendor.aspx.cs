@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Web;
@@ -23,6 +24,7 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
+                PopulateTargetCompanyDropdown();
                 BindGrid();
             }
         }
@@ -113,6 +115,65 @@ namespace Bill_Software.corporate.business.app
             DataList1.DataBind();
         }
 
+        private void PopulateTargetCompanyDropdown()
+        {
+            ddlTargetCompanyGlobal.Items.Clear();
+
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            DataTable dt = new DataTable();
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlCommand cmd = new SqlCommand(@"
+                SELECT c.ID, c.Name
+                FROM dbo.tbl_Company c
+                INNER JOIN dbo.UserCompanyAccess a ON a.CompanyID = c.ID
+                INNER JOIN dbo.tbl_login u ON u.Id = a.UserId
+                WHERE u.User_Id = @UserId
+                  AND a.IsActive = 1
+                  AND (c.IsActive = 1 OR c.IsActive IS NULL)
+                  AND c.ID <> @CompanyID
+                ORDER BY c.Name", conn))
+            {
+                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100)
+                {
+                    Value = Session["USERID"] != null ? Session["USERID"].ToString() : string.Empty
+                });
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int)
+                {
+                    Value = CompanyContext.CurrentCompanyID
+                });
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    da.Fill(dt);
+            }
+
+            // Membership can list only the current tenant. Other active companies
+            // are still valid duplication targets and must appear in the dropdown.
+            if (dt.Rows.Count == 0)
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                using (SqlCommand cmd = new SqlCommand(@"
+                    SELECT ID, Name
+                    FROM dbo.tbl_Company
+                    WHERE (IsActive = 1 OR IsActive IS NULL)
+                      AND ID <> @CompanyID
+                    ORDER BY Name", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int)
+                    {
+                        Value = CompanyContext.CurrentCompanyID
+                    });
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        da.Fill(dt);
+                }
+            }
+
+            ddlTargetCompanyGlobal.DataSource = dt;
+            ddlTargetCompanyGlobal.DataTextField = "Name";
+            ddlTargetCompanyGlobal.DataValueField = "ID";
+            ddlTargetCompanyGlobal.DataBind();
+            ddlTargetCompanyGlobal.Items.Insert(0, new ListItem("-- Select Target Company --", ""));
+        }
+
         private void BindGrid1()
         {
             DbCL.Sqlconnection();
@@ -158,6 +219,170 @@ namespace Bill_Software.corporate.business.app
             {
                 Response.Redirect("Update_vendor.aspx?Vendor_Id=" + Vendor_Id);
             }
+        }
+
+        protected void btnConfirmDuplicateVendor_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+                int sourceCompanyId = CompanyContext.CurrentCompanyID;
+                int targetCompanyId = 0;
+
+                if (!int.TryParse(ddlTargetCompanyGlobal.SelectedValue, out targetCompanyId) || targetCompanyId <= 0)
+                {
+                    ShowMessage("Please select a valid target company from the list.", false);
+                    return;
+                }
+
+                if (targetCompanyId == sourceCompanyId)
+                {
+                    ShowMessage("Source and target companies must be different. Please select another company.", false);
+                    return;
+                }
+
+                if (!AuthGuard.UserCanAccessCompany(targetCompanyId))
+                {
+                    ShowMessage("You do not have access to the selected target company.", false);
+                    return;
+                }
+
+                // Check if this is a bulk operation
+                string bulkIdsRaw = hfBulkVendorIds.Value;
+                if (!string.IsNullOrWhiteSpace(bulkIdsRaw))
+                {
+                    HandleBulkVendorDuplication(bulkIdsRaw, targetCompanyId, userId);
+                    return;
+                }
+
+                // Single vendor duplication
+                string vendorId = hfPendingVendorId.Value;
+                if (string.IsNullOrWhiteSpace(vendorId))
+                {
+                    ShowMessage("No vendor selected for duplication. Please try again.", false);
+                    return;
+                }
+
+                vendorId = vendorId.Trim();
+                if (vendorId.Length < 3 || !vendorId.StartsWith("AA", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowMessage("Invalid vendor identifier. Please refresh and try again.", false);
+                    return;
+                }
+
+                int sourceId = ResolveVendorId(vendorId, sourceCompanyId);
+                if (sourceId <= 0)
+                {
+                    ShowMessage("Vendor not found in your current company.", false);
+                    return;
+                }
+
+                bool success = DuplicationService.DuplicateVendor(sourceId, targetCompanyId, userId);
+
+                if (success)
+                {
+                    string targetCompanyName = ddlTargetCompanyGlobal.SelectedItem != null
+                        ? ddlTargetCompanyGlobal.SelectedItem.Text : "target company";
+                    ShowMessage(
+                        string.Format("Vendor '{0}' duplicated successfully to '{1}'.", vendorId, targetCompanyName),
+                        true);
+                    BindGrid();
+                }
+                else
+                {
+                    ShowMessage("Duplication failed. The vendor could not be created in the target company.", false);
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                ShowMessage("Duplication could not be completed: " + ex.Message, false);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                ShowMessage("You do not have permission to perform this action.", false);
+            }
+            catch (Exception)
+            {
+                ShowMessage("An unexpected error occurred during duplication. Please try again or contact support.", false);
+            }
+            finally
+            {
+                hfPendingVendorId.Value = string.Empty;
+                hfBulkVendorIds.Value = string.Empty;
+                ddlTargetCompanyGlobal.SelectedIndex = 0;
+                btnConfirmDuplicateVendor.Enabled = true;
+                btnConfirmDuplicateVendor.Text = "Confirm Duplicate";
+            }
+        }
+
+        private void HandleBulkVendorDuplication(string bulkIdsRaw, int targetCompanyId, string userId)
+        {
+            string[] parts = bulkIdsRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var sourceIds = new System.Collections.Generic.List<int>();
+            foreach (string part in parts)
+            {
+                int id;
+                if (int.TryParse(part.Trim(), out id) && id > 0)
+                    sourceIds.Add(id);
+            }
+
+            if (sourceIds.Count == 0)
+            {
+                ShowMessage("No valid vendors selected for duplication.", false);
+                return;
+            }
+
+            string targetCompanyName = ddlTargetCompanyGlobal.SelectedItem != null
+                ? ddlTargetCompanyGlobal.SelectedItem.Text : "target company";
+
+            var result = DuplicationService.BulkDuplicateVendors(sourceIds.ToArray(), targetCompanyId, userId);
+
+            if (result.FailedCount > 0 && result.SuccessCount == 0)
+            {
+                ShowMessage(
+                    string.Format("Bulk duplication to '{0}' failed: {1}", targetCompanyName, result.FailureReason ?? "All vendors failed."),
+                    false);
+            }
+            else if (result.FailedCount > 0)
+            {
+                ShowMessage(
+                    string.Format("Bulk duplication to '{0}': {1} duplicated, {2} failed.", targetCompanyName, result.SuccessCount, result.FailedCount),
+                    false);
+            }
+            else
+            {
+                ShowMessage(
+                    string.Format("Bulk duplication to '{0}' successful: {1} vendor(s) duplicated.", targetCompanyName, result.SuccessCount),
+                    true);
+            }
+
+            BindGrid();
+        }
+
+        private void ShowMessage(string text, bool isSuccess)
+        {
+            lblRecordCount.Text = text;
+            lblRecordCount.ForeColor = isSuccess
+                ? System.Drawing.Color.Green
+                : System.Drawing.Color.Red;
+        }
+
+        private int ResolveVendorId(string vendorId, int companyId)
+        {
+            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    "SELECT Id FROM tbl_Vendor WHERE Vendor_Id = @VendorId AND CompanyID = @CompanyID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@VendorId", vendorId);
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);
+                }
+            }
+            return 0;
         }
 
         // --- 5. SMART EXPORT LOGIC ---
