@@ -26,10 +26,6 @@ namespace Bill_Software.corporate.business.app
                 PopulateTargetCompanyDropdown();
                 BindGrid();
             }
-            else
-            {
-                PopulateTargetCompanyDropdown();
-            }
         }
 
         // 1. AJAX WebMethod to fetch keyword suggestions
