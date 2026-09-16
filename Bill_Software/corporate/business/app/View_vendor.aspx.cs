@@ -83,7 +83,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = @"SELECT Vendor_Id, Vendor_Name, PrincipleVndrCode, 
+            string cmdstring = @"SELECT Id, Vendor_Id, Vendor_Name, PrincipleVndrCode,
                                         Address1, City, State, pin, 
                                         Com_phone, Com_email, 
                                         Service_tax_No, Pan_No, BankAccNo, BankIfscCode,
@@ -179,7 +179,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-            string cmdstring = @"SELECT Vendor_Id, Vendor_Name, PrincipleVndrCode, 
+            string cmdstring = @"SELECT Id, Vendor_Id, Vendor_Name, PrincipleVndrCode,
                                         Address1, City, State, pin, 
                                         Com_phone, Com_email, 
                                         Service_tax_No, Pan_No, BankAccNo, BankIfscCode,
@@ -219,6 +219,23 @@ namespace Bill_Software.corporate.business.app
             {
                 Response.Redirect("Update_vendor.aspx?Vendor_Id=" + Vendor_Id);
             }
+        }
+
+        protected void DataList1_ItemDataBound(object sender, DataListItemEventArgs e)
+        {
+            if (e.Item.ItemType != ListItemType.Item &&
+                e.Item.ItemType != ListItemType.AlternatingItem)
+                return;
+
+            DataRowView row = e.Item.DataItem as DataRowView;
+            HiddenField sourceId = e.Item.FindControl("hfVendorId") as HiddenField;
+            if (row != null && sourceId != null)
+                sourceId.Value = Convert.ToString(row["Id"]);
+        }
+
+        protected void btnBulkDuplicateVendor_Click(object sender, EventArgs e)
+        {
+            btnConfirmDuplicateVendor_Click(sender, e);
         }
 
         protected void btnConfirmDuplicateVendor_Click(object sender, EventArgs e)
@@ -337,26 +354,36 @@ namespace Bill_Software.corporate.business.app
 
             var result = DuplicationService.BulkDuplicateVendors(sourceIds.ToArray(), targetCompanyId, userId);
 
+            string message;
+            bool isSuccess;
             if (result.FailedCount > 0 && result.SuccessCount == 0)
             {
-                ShowMessage(
-                    string.Format("Bulk duplication to '{0}' failed: {1}", targetCompanyName, result.FailureReason ?? "All vendors failed."),
-                    false);
+                message = string.Format(
+                    "Bulk duplication to '{0}' failed: {1}",
+                    targetCompanyName,
+                    result.FailureReason ?? "All vendors failed.");
+                isSuccess = false;
             }
             else if (result.FailedCount > 0)
             {
-                ShowMessage(
-                    string.Format("Bulk duplication to '{0}': {1} duplicated, {2} failed.", targetCompanyName, result.SuccessCount, result.FailedCount),
-                    false);
+                message = string.Format(
+                    "Bulk duplication to '{0}': {1} duplicated, {2} failed.",
+                    targetCompanyName,
+                    result.SuccessCount,
+                    result.FailedCount);
+                isSuccess = false;
             }
             else
             {
-                ShowMessage(
-                    string.Format("Bulk duplication to '{0}' successful: {1} vendor(s) duplicated.", targetCompanyName, result.SuccessCount),
-                    true);
+                message = string.Format(
+                    "Bulk duplication to '{0}' successful: {1} vendor(s) duplicated.",
+                    targetCompanyName,
+                    result.SuccessCount);
+                isSuccess = true;
             }
 
             BindGrid();
+            ShowMessage(message, isSuccess);
         }
 
         private void ShowMessage(string text, bool isSuccess)

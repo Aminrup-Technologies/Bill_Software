@@ -278,7 +278,7 @@
                 if (cbs[i].checked) {
                     var row = cbs[i].closest('tr');
                     if (row) {
-                        var hf = row.querySelector('[id$="hfClientId"]');
+                        var hf = row.querySelector('[id*="hfClientId"]');
                         if (hf && hf.value) ids.push(hf.value);
                     }
                 }

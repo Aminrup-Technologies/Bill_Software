@@ -82,7 +82,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = @"SELECT Client_Id, Client_Name, Industry, 
+            string cmdstring = @"SELECT Id, Client_Id, Client_Name, Industry,
                             Address1, City, State, pin, PlaceofSupply,
                             Com_phone, Com_email, Com_web_site, 
                             Service_tax_no, Pan_no,
@@ -121,7 +121,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-            string cmdstring = @"SELECT Client_Id, Client_Name, Industry, 
+            string cmdstring = @"SELECT Id, Client_Id, Client_Name, Industry,
                             Address1, City, State, pin, PlaceofSupply,
                             Com_phone, Com_email, Com_web_site, 
                             Service_tax_no, Pan_no,
@@ -171,6 +171,23 @@ namespace Bill_Software.corporate.business.app
                 Response.Redirect("AddFactory.aspx?Client_Id=" + Client_Id);
             }
 
+        }
+
+        protected void DataList1_ItemDataBound(object sender, DataListItemEventArgs e)
+        {
+            if (e.Item.ItemType != ListItemType.Item &&
+                e.Item.ItemType != ListItemType.AlternatingItem)
+                return;
+
+            DataRowView row = e.Item.DataItem as DataRowView;
+            HiddenField sourceId = e.Item.FindControl("hfClientId") as HiddenField;
+            if (row != null && sourceId != null)
+                sourceId.Value = Convert.ToString(row["Id"]);
+        }
+
+        protected void btnBulkDuplicateClient_Click(object sender, EventArgs e)
+        {
+            btnConfirmDuplicateClient_Click(sender, e);
         }
 
         private void PopulateTargetCompanyDropdown()
@@ -307,26 +324,36 @@ namespace Bill_Software.corporate.business.app
 
             var result = DuplicationService.BulkDuplicateCustomers(sourceIds.ToArray(), targetCompanyId, userId);
 
+            string message;
+            bool isSuccess;
             if (result.FailedCount > 0 && result.SuccessCount == 0)
             {
-                ShowMessage(
-                    string.Format("Bulk duplication to '{0}' failed: {1}", targetCompanyName, result.FailureReason ?? "All clients failed."),
-                    false);
+                message = string.Format(
+                    "Bulk duplication to '{0}' failed: {1}",
+                    targetCompanyName,
+                    result.FailureReason ?? "All clients failed.");
+                isSuccess = false;
             }
             else if (result.FailedCount > 0)
             {
-                ShowMessage(
-                    string.Format("Bulk duplication to '{0}': {1} duplicated, {2} failed.", targetCompanyName, result.SuccessCount, result.FailedCount),
-                    false);
+                message = string.Format(
+                    "Bulk duplication to '{0}': {1} duplicated, {2} failed.",
+                    targetCompanyName,
+                    result.SuccessCount,
+                    result.FailedCount);
+                isSuccess = false;
             }
             else
             {
-                ShowMessage(
-                    string.Format("Bulk duplication to '{0}' successful: {1} client(s) and child records duplicated.", targetCompanyName, result.SuccessCount),
-                    true);
+                message = string.Format(
+                    "Bulk duplication to '{0}' successful: {1} client(s) and child records duplicated.",
+                    targetCompanyName,
+                    result.SuccessCount);
+                isSuccess = true;
             }
 
             BindGrid();
+            ShowMessage(message, isSuccess);
         }
 
         private void ShowMessage(string text, bool isSuccess)

@@ -561,7 +561,7 @@ namespace Bill_Software.corporate.business.app
                                 continue;
                             }
 
-                            if (!VendorInCurrentCompany(conn, sourceId))
+                            if (!VendorInCurrentCompany(conn, sourceId, tran))
                             {
                                 result.SkippedCount++;
                                 continue;
@@ -708,7 +708,7 @@ namespace Bill_Software.corporate.business.app
                                 continue;
                             }
 
-                            if (!ClientInCurrentCompany(conn, sourceId))
+                            if (!ClientInCurrentCompany(conn, sourceId, tran))
                             {
                                 result.SkippedCount++;
                                 continue;
@@ -844,10 +844,15 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private static bool VendorInCurrentCompany(SqlConnection conn, int vendorId)
+        private static bool VendorInCurrentCompany(
+            SqlConnection conn,
+            int vendorId,
+            SqlTransaction tran = null)
         {
             using (var cmd = new SqlCommand(
-                "SELECT TOP 1 1 FROM tbl_Vendor WHERE Id = @Id AND CompanyID = @CompanyID", conn))
+                "SELECT TOP 1 1 FROM tbl_Vendor WHERE Id = @Id AND CompanyID = @CompanyID",
+                conn,
+                tran))
             {
                 cmd.Parameters.AddWithValue("@Id", vendorId);
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
@@ -855,10 +860,15 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        private static bool ClientInCurrentCompany(SqlConnection conn, int clientId)
+        private static bool ClientInCurrentCompany(
+            SqlConnection conn,
+            int clientId,
+            SqlTransaction tran = null)
         {
             using (var cmd = new SqlCommand(
-                "SELECT TOP 1 1 FROM tbl_Client WHERE Id = @Id AND CompanyID = @CompanyID", conn))
+                "SELECT TOP 1 1 FROM tbl_Client WHERE Id = @Id AND CompanyID = @CompanyID",
+                conn,
+                tran))
             {
                 cmd.Parameters.AddWithValue("@Id", clientId);
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);

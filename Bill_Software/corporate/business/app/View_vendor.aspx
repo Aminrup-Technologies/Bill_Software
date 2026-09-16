@@ -181,7 +181,7 @@
                 if (cbs[i].checked) {
                     var row = cbs[i].closest('tr');
                     if (row) {
-                        var hf = row.querySelector('[id$="hfVendorId"]');
+                        var hf = row.querySelector('[id*="hfVendorId"]');
                         if (hf && hf.value) ids.push(hf.value);
                     }
                 }
