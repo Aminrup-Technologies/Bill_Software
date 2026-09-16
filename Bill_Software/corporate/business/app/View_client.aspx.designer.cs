@@ -85,6 +85,15 @@ namespace Bill_Software.corporate.business.app {
         protected global::System.Web.UI.WebControls.HiddenField hfPendingClientId;
         
         /// <summary>
+        /// hfBulkClientIds control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfBulkClientIds;
+
+        /// <summary>
         /// ddlTargetCompanyGlobal control.
         /// </summary>
         /// <remarks>
