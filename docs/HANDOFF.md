@@ -63,7 +63,9 @@ None. Next scoped change is not assigned.
 
 Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named.
 
-Before enabling duplication in production tenants: review + UAT **PR #90** (double-submit postback fix, vendor + customer paths) and run the [`docs/45`](45_CrossTenant_UAT_Checklist.md) checklist. PR #21 (dashboard restyle) remains an intentionally parked Draft.
+Before enabling duplication in production tenants: review + UAT **PR #90** (double-submit postback fix, vendor + customer paths) and run the [`docs/45`](45_CrossTenant_UAT_Checklist.md) checklist. On approval, mark #90 Ready for Review, merge with a merge commit, and tag **`v2.1.1`** as the hotfix release — `v2.1-cross-tenant-enterprise` stays the immutable feature milestone. PR #21 (dashboard restyle) remains an intentionally parked Draft.
+
+**Coordination flag (2026-09-16):** `feat/cross-tenant-duplication-pr2` and `-pr3` were force-pushed with post-merge work (KK - TL) built on the pre-integration #85 lineage — those tips predate PR-4 bulk duplication and the `691f057` bulk-audit fix, so merging them as-is would regress shipped v2.1 functionality (e.g. removal of bulk-duplicate UI). No PR is open for them. The vendor postback fix from that lineage is already preserved verbatim in PR #90; any further fixes must be rebased onto `master` and opened as PRs before review. Do not delete these branches until the owner confirms their deltas are reconciled.
 
 ---
 
