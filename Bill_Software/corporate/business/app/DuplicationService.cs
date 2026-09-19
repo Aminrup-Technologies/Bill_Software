@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -14,9 +15,16 @@ namespace Bill_Software.corporate.business.app
         public int SuccessCount { get; set; }
         public int FailedCount { get; set; }
         public int SkippedCount { get; set; }
+        public List<string> SkippedItems { get; set; }
+        public string SkipReason { get; set; }
         public string EntityType { get; set; }
         public string TargetCompanyName { get; set; }
         public string FailureReason { get; set; }
+
+        public BulkDuplicateResult()
+        {
+            SkippedItems = new List<string>();
+        }
     }
 
     public static class DuplicationService
@@ -528,7 +536,8 @@ namespace Bill_Software.corporate.business.app
 
         /// <summary>
         /// Duplicates multiple vendors inside a single transaction.
-        /// Aborts and rolls back the entire batch on first failure.
+        /// Skips vendors whose normalized name already exists in the target company.
+        /// Aborts and rolls back the entire batch on first genuine failure.
         /// </summary>
         public static BulkDuplicateResult BulkDuplicateVendors(int[] sourceIds, int targetCompanyId, string userName)
         {
@@ -588,6 +597,14 @@ namespace Bill_Software.corporate.business.app
                             string srcVendorId = RowStr(src, "Vendor_Id");
                             string srcName = RowStr(src, "Vendor_Name");
                             if (string.IsNullOrEmpty(srcName)) srcName = "Vendor";
+
+                            if (VendorExistsInTarget(conn, tran, srcName, targetCompanyId))
+                            {
+                                result.SkippedCount++;
+                                result.SkippedItems.Add(srcName);
+                                result.SkipReason = "Already exists in target company";
+                                continue;
+                            }
 
                             string targetName = ResolveDuplicateName(conn, tran, "tbl_Vendor", "Vendor_Name", srcName, targetCompanyId);
                             string newVendorId = GenerateNextVendorCode(conn, tran, targetCompanyId);
@@ -660,6 +677,9 @@ namespace Bill_Software.corporate.business.app
                         try { tran.Rollback(); } catch { }
                         result.FailedCount = result.SuccessCount + result.FailedCount + result.SkippedCount;
                         result.SuccessCount = 0;
+                        result.SkippedCount = 0;
+                        result.SkippedItems.Clear();
+                        result.SkipReason = null;
                         result.FailureReason = "Batch aborted: one or more vendors failed to duplicate. The entire batch has been rolled back.";
                         throw;
                     }
@@ -675,7 +695,9 @@ namespace Bill_Software.corporate.business.app
 
         /// <summary>
         /// Duplicates multiple customers and child records inside a single transaction.
-        /// Aborts and rolls back the entire batch on first failure.
+        /// Skips customers whose normalized name already exists in the target company.
+        /// Child cloning runs only for newly created customers.
+        /// Aborts and rolls back the entire batch on first genuine failure.
         /// </summary>
         public static BulkDuplicateResult BulkDuplicateCustomers(int[] sourceIds, int targetCompanyId, string userName)
         {
@@ -734,6 +756,14 @@ namespace Bill_Software.corporate.business.app
                             string srcClientId = RowStr(src, "Client_Id");
                             string srcName = RowStr(src, "Client_Name");
                             if (string.IsNullOrEmpty(srcName)) srcName = "Client";
+
+                            if (CustomerExistsInTarget(conn, tran, srcName, targetCompanyId))
+                            {
+                                result.SkippedCount++;
+                                result.SkippedItems.Add(srcName);
+                                result.SkipReason = "Already exists in target company";
+                                continue;
+                            }
 
                             string targetName = ResolveDuplicateName(conn, tran, "tbl_Client", "Client_Name", srcName, targetCompanyId);
                             string newClientId = GenerateNextClientCode(conn, tran, targetCompanyId);
@@ -798,6 +828,9 @@ namespace Bill_Software.corporate.business.app
                         try { tran.Rollback(); } catch { }
                         result.FailedCount = result.SuccessCount + result.FailedCount + result.SkippedCount;
                         result.SuccessCount = 0;
+                        result.SkippedCount = 0;
+                        result.SkippedItems.Clear();
+                        result.SkipReason = null;
                         result.FailureReason = "Batch aborted: one or more customers failed to duplicate. The entire batch has been rolled back.";
                         throw;
                     }
@@ -841,6 +874,53 @@ namespace Bill_Software.corporate.business.app
                 });
                 cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = targetCompanyId });
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static string NormalizeDuplicateName(string name)
+        {
+            return string.IsNullOrEmpty(name) ? string.Empty : name.Trim().ToLowerInvariant();
+        }
+
+        private static bool VendorExistsInTarget(
+            SqlConnection conn,
+            SqlTransaction tran,
+            string vendorName,
+            int targetCompanyId)
+        {
+            string normalized = NormalizeDuplicateName(vendorName);
+            if (string.IsNullOrEmpty(normalized))
+                return false;
+
+            using (var cmd = new SqlCommand(
+                "SELECT TOP 1 1 FROM tbl_Vendor WHERE CompanyID = @CompanyID AND LOWER(LTRIM(RTRIM(Vendor_Name))) = @Name",
+                conn,
+                tran))
+            {
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = targetCompanyId });
+                cmd.Parameters.Add(new SqlParameter("@Name", SqlDbType.NVarChar, 200) { Value = normalized });
+                return cmd.ExecuteScalar() != null;
+            }
+        }
+
+        private static bool CustomerExistsInTarget(
+            SqlConnection conn,
+            SqlTransaction tran,
+            string clientName,
+            int targetCompanyId)
+        {
+            string normalized = NormalizeDuplicateName(clientName);
+            if (string.IsNullOrEmpty(normalized))
+                return false;
+
+            using (var cmd = new SqlCommand(
+                "SELECT TOP 1 1 FROM tbl_Client WHERE CompanyID = @CompanyID AND LOWER(LTRIM(RTRIM(Client_Name))) = @Name",
+                conn,
+                tran))
+            {
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = targetCompanyId });
+                cmd.Parameters.Add(new SqlParameter("@Name", SqlDbType.NVarChar, 200) { Value = normalized });
+                return cmd.ExecuteScalar() != null;
             }
         }
 
