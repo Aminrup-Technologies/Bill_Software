@@ -28,7 +28,8 @@ Solution build succeeded before and after integration (zero compile errors). The
 | Item | Value |
 |------|-------|
 | Branch | `July_to_Sept26_DevNSupport` |
-| Merge commit | `577ebcf2fcf303d7007d6294414f9b4b98efdaa8` |
+| Integration merge | `577ebcf2fcf303d7007d6294414f9b4b98efdaa8` |
+| Documentation commit | `46f65ce5a2ee1e086e8d4c26c4f90238065db9ef` |
 | First parent (pre-integration target) | `fa777e9b3d27a513b3ba8dce66fa370e949d85c5` |
 | Second parent (validated stack tip) | `c121344a89ff4294cb7c44d64a0359fc6a25ba02` |
 | Merge-base | `ec2acebfca2be98967adcdf084aea29881551362` |
