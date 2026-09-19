@@ -19,7 +19,7 @@ The merge preserves:
 - `CompanyContext` as the source-tenant authority
 - The later Switch User impersonation runtime already UAT-completed on the target (PR #84)
 
-Solution build succeeded before and after integration (zero compile errors). The only remaining planned product enhancement is **Skip Already Duplicated**.
+Solution build succeeded before and after integration (zero compile errors). **Skip Already Duplicated** is implemented on `feat/skip-existing-bulk-duplication`; see [`45_SkipExisting_BulkDuplication.md`](45_SkipExisting_BulkDuplication.md).
 
 ---
 
@@ -205,13 +205,9 @@ Those files remain the PR #84 impersonation runtime. Rolling back duplication do
 
 ### Skip Already Duplicated
 
-**Status:** Not implemented. Recorded in PR-4 UAT (`docs/43`).
+**Status:** Implemented on `feat/skip-existing-bulk-duplication`. Specification and UAT scenarios: [`45_SkipExisting_BulkDuplication.md`](45_SkipExisting_BulkDuplication.md).
 
-Current bulk behavior creates another suffixed copy when the source name already exists in the target tenant (for example Heatworks Pvt. Ltd. → `Heatworks Pvt. Ltd. (Copy 2)` as `AD04`).
-
-Planned behavior: detect an already-duplicated source in the target company and skip it (`SkippedCount`), rather than inserting another `(Copy N)` row.
-
-This is a separate enhancement. Do not treat it as a merge defect.
+PR-4 bulk behavior created another suffixed copy when the source name already existed in the target tenant (for example Heatworks Pvt. Ltd. → `Heatworks Pvt. Ltd. (Copy 2)` as `AD04`). Bulk duplication now skips that name after trim + case-insensitive compare within the target `CompanyID`, continues the batch, and reports duplicated/skipped/failed. Single-record duplication is unchanged.
 
 Other non-blocking observations (not blockers for this integration):
 

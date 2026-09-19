@@ -364,22 +364,14 @@ namespace Bill_Software.corporate.business.app
                     result.FailureReason ?? "All vendors failed.");
                 isSuccess = false;
             }
-            else if (result.FailedCount > 0)
-            {
-                message = string.Format(
-                    "Bulk duplication to '{0}': {1} duplicated, {2} failed.",
-                    targetCompanyName,
-                    result.SuccessCount,
-                    result.FailedCount);
-                isSuccess = false;
-            }
             else
             {
                 message = string.Format(
-                    "Bulk duplication to '{0}' successful: {1} vendor(s) duplicated.",
-                    targetCompanyName,
-                    result.SuccessCount);
-                isSuccess = true;
+                    "{0} duplicated, {1} skipped, {2} failed.",
+                    result.SuccessCount,
+                    result.SkippedCount,
+                    result.FailedCount);
+                isSuccess = result.FailedCount == 0;
             }
 
             BindGrid();
