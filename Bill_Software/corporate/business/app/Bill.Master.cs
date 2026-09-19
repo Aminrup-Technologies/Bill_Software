@@ -119,17 +119,11 @@ namespace Bill_Software.corporate.business.app
 
         private void BindCompanies()
         {
-            DataTable dt = new DataTable();
-            dt.Columns.Add("ID", typeof(int));
-            dt.Columns.Add("Name", typeof(string));
-
-            List<AuthorizedCompany> companies = AuthGuard.GetAuthorizedCompanies();
-            for (int i = 0; i < companies.Count; i++)
-                dt.Rows.Add(companies[i].Id, companies[i].Name);
-
-            ddlCompany.DataSource = dt;
+            // Canonical source: UserCompanyAccess via AuthGuard (tbl_login.Id / Session UserDbId).
+            // Fail closed — do not list all tbl_Company rows when membership is empty or partial.
+            ddlCompany.DataSource = AuthGuard.GetAuthorizedCompanies();
             ddlCompany.DataTextField = "Name";
-            ddlCompany.DataValueField = "ID";
+            ddlCompany.DataValueField = "Id";
             ddlCompany.DataBind();
         }
 

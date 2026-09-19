@@ -23,7 +23,8 @@ namespace Bill_Software.corporate.business.app
             }
             if (!IsPostBack)
             {
-                BindGrid(); // Load all clients initially
+                PopulateTargetCompanyDropdown();
+                BindGrid();
             }
         }
 
@@ -81,7 +82,7 @@ namespace Bill_Software.corporate.business.app
         {
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
-            string cmdstring = @"SELECT Client_Id, Client_Name, Industry, 
+            string cmdstring = @"SELECT Id, Client_Id, Client_Name, Industry,
                             Address1, City, State, pin, PlaceofSupply,
                             Com_phone, Com_email, Com_web_site, 
                             Service_tax_no, Pan_no,
@@ -120,7 +121,7 @@ namespace Bill_Software.corporate.business.app
             DbCL.Sqlconnection();
             DbCL.ConnectDb();
 
-            string cmdstring = @"SELECT Client_Id, Client_Name, Industry, 
+            string cmdstring = @"SELECT Id, Client_Id, Client_Name, Industry,
                             Address1, City, State, pin, PlaceofSupply,
                             Com_phone, Com_email, Com_web_site, 
                             Service_tax_no, Pan_no,
@@ -169,6 +170,216 @@ namespace Bill_Software.corporate.business.app
             {
                 Response.Redirect("AddFactory.aspx?Client_Id=" + Client_Id);
             }
+
+        }
+
+        protected void DataList1_ItemDataBound(object sender, DataListItemEventArgs e)
+        {
+            if (e.Item.ItemType != ListItemType.Item &&
+                e.Item.ItemType != ListItemType.AlternatingItem)
+                return;
+
+            DataRowView row = e.Item.DataItem as DataRowView;
+            HiddenField sourceId = e.Item.FindControl("hfClientId") as HiddenField;
+            if (row != null && sourceId != null)
+                sourceId.Value = Convert.ToString(row["Id"]);
+        }
+
+        protected void btnBulkDuplicateClient_Click(object sender, EventArgs e)
+        {
+            btnConfirmDuplicateClient_Click(sender, e);
+        }
+
+        private void PopulateTargetCompanyDropdown()
+        {
+            ddlTargetCompanyGlobal.Items.Clear();
+            ddlTargetCompanyGlobal.Items.Add(new ListItem("-- Select Target Company --", ""));
+            try
+            {
+                List<Bill_Software.corporate.business.app.AuthorizedCompany> companies = AuthGuard.GetAuthorizedCompanies();
+                foreach (var c in companies)
+                {
+                    if (c.Id != CompanyContext.CurrentCompanyID)
+                    {
+                        ddlTargetCompanyGlobal.Items.Add(new ListItem(c.Name, c.Id.ToString()));
+                    }
+                }
+            }
+            catch { }
+        }
+
+        protected void btnConfirmDuplicateClient_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : "System";
+                int sourceCompanyId = CompanyContext.CurrentCompanyID;
+                int targetCompanyId = 0;
+
+                if (!int.TryParse(ddlTargetCompanyGlobal.SelectedValue, out targetCompanyId) || targetCompanyId <= 0)
+                {
+                    ShowMessage("Please select a valid target company from the list.", false);
+                    return;
+                }
+
+                if (targetCompanyId == sourceCompanyId)
+                {
+                    ShowMessage("Source and target companies must be different. Please select another company.", false);
+                    return;
+                }
+
+                if (!AuthGuard.UserCanAccessCompany(targetCompanyId))
+                {
+                    ShowMessage("You do not have access to the selected target company.", false);
+                    return;
+                }
+
+                // Check if this is a bulk operation
+                string bulkIdsRaw = hfBulkClientIds.Value;
+                if (!string.IsNullOrWhiteSpace(bulkIdsRaw))
+                {
+                    HandleBulkClientDuplication(bulkIdsRaw, targetCompanyId, userId);
+                    return;
+                }
+
+                // Single client duplication
+                string clientId = hfPendingClientId.Value;
+                if (string.IsNullOrWhiteSpace(clientId))
+                {
+                    ShowMessage("No client selected for duplication. Please try again.", false);
+                    return;
+                }
+
+                clientId = clientId.Trim();
+                if (clientId.Length < 3 || !clientId.StartsWith("AD", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowMessage("Invalid client identifier. Please refresh and try again.", false);
+                    return;
+                }
+
+                int sourceId = ResolveClientId(clientId, sourceCompanyId);
+                if (sourceId <= 0)
+                {
+                    ShowMessage("Client not found in your current company.", false);
+                    return;
+                }
+
+                bool success = DuplicationService.DuplicateCustomer(sourceId, targetCompanyId, userId);
+
+                if (success)
+                {
+                    string targetCompanyName = ddlTargetCompanyGlobal.SelectedItem != null
+                        ? ddlTargetCompanyGlobal.SelectedItem.Text : "target company";
+                    ShowMessage(
+                        string.Format("Client '{0}' and child records duplicated successfully to '{1}'.", clientId, targetCompanyName),
+                        true);
+                    BindGrid();
+                }
+                else
+                {
+                    ShowMessage("Duplication failed. The client could not be created in the target company.", false);
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                ShowMessage("Duplication could not be completed: " + ex.Message, false);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                ShowMessage("You do not have permission to perform this action.", false);
+            }
+            catch (Exception)
+            {
+                ShowMessage("An unexpected error occurred during duplication. Please try again or contact support.", false);
+            }
+            finally
+            {
+                hfPendingClientId.Value = string.Empty;
+                hfBulkClientIds.Value = string.Empty;
+                ddlTargetCompanyGlobal.SelectedIndex = 0;
+                btnConfirmDuplicateClient.Enabled = true;
+                btnConfirmDuplicateClient.Text = "Confirm Duplicate";
+            }
+        }
+
+        private void HandleBulkClientDuplication(string bulkIdsRaw, int targetCompanyId, string userId)
+        {
+            string[] parts = bulkIdsRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var sourceIds = new System.Collections.Generic.List<int>();
+            foreach (string part in parts)
+            {
+                int id;
+                if (int.TryParse(part.Trim(), out id) && id > 0)
+                    sourceIds.Add(id);
+            }
+
+            if (sourceIds.Count == 0)
+            {
+                ShowMessage("No valid clients selected for duplication.", false);
+                return;
+            }
+
+            string targetCompanyName = ddlTargetCompanyGlobal.SelectedItem != null
+                ? ddlTargetCompanyGlobal.SelectedItem.Text : "target company";
+
+            var result = DuplicationService.BulkDuplicateCustomers(sourceIds.ToArray(), targetCompanyId, userId);
+
+            string message;
+            bool isSuccess;
+            if (result.FailedCount > 0 && result.SuccessCount == 0)
+            {
+                message = string.Format(
+                    "Bulk duplication to '{0}' failed: {1}",
+                    targetCompanyName,
+                    result.FailureReason ?? "All clients failed.");
+                isSuccess = false;
+            }
+            else if (result.FailedCount > 0)
+            {
+                message = string.Format(
+                    "Bulk duplication to '{0}': {1} duplicated, {2} failed.",
+                    targetCompanyName,
+                    result.SuccessCount,
+                    result.FailedCount);
+                isSuccess = false;
+            }
+            else
+            {
+                message = string.Format(
+                    "Bulk duplication to '{0}' successful: {1} client(s) and child records duplicated.",
+                    targetCompanyName,
+                    result.SuccessCount);
+                isSuccess = true;
+            }
+
+            BindGrid();
+            ShowMessage(message, isSuccess);
+        }
+
+        private void ShowMessage(string text, bool isSuccess)
+        {
+            lblRecordCount.Text = text;
+            lblRecordCount.ForeColor = isSuccess
+                ? System.Drawing.Color.Green
+                : System.Drawing.Color.Red;
+        }
+
+        private int ResolveClientId(string clientId, int companyId)
+        {
+            using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(
+                    "SELECT Id FROM tbl_Client WHERE Client_Id = @ClientId AND CompanyID = @CompanyID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ClientId", clientId);
+                    cmd.Parameters.AddWithValue("@CompanyID", companyId);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);
+                }
+            }
+            return 0;
         }
 
         protected void btnDownloadExcel_Click(object sender, EventArgs e)
