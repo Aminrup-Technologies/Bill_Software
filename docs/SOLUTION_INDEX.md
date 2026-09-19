@@ -37,7 +37,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
 | Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
-| Cross-tenant vendor/customer duplication (PR-1–PR-4 integrated) | [34 CrossTenant](34_CrossTenant_Duplication_Architecture.md), [37 completion](37_CrossTenant_Duplication_Completion.md), [44 integration](44_CrossTenant_Final_Integration.md) |
+| Cross-tenant vendor/customer duplication (v1.1 complete at `88f9d0f`) | [34 CrossTenant](34_CrossTenant_Duplication_Architecture.md), [37 completion](37_CrossTenant_Duplication_Completion.md), [44 integration](44_CrossTenant_Final_Integration.md), [45 skip existing](45_SkipExisting_BulkDuplication.md) |
 
 ## Page catalogs (unique facts only)
 
@@ -96,6 +96,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [42_PR3_CustomerDuplication_UAT.md](42_PR3_CustomerDuplication_UAT.md) | PR-3 customer duplication UAT |
 | [43_PR4_BulkDuplication_UAT.md](43_PR4_BulkDuplication_UAT.md) | PR-4 bulk duplication UAT |
 | [44_CrossTenant_Final_Integration.md](44_CrossTenant_Final_Integration.md) | Final integration of PR-1–PR-4 onto `July_to_Sept26_DevNSupport` |
+| [45_SkipExisting_BulkDuplication.md](45_SkipExisting_BulkDuplication.md) | PR-4.1 Skip Already Duplicated (v1.1; merged at `88f9d0f`) |
 
 ## Database Migrations
 

@@ -1,9 +1,9 @@
 # PR-4.1 Skip Already Duplicated — Bulk Enhancement
 
 **Date:** 2026-09-19  
-**Branch:** `feat/skip-existing-bulk-duplication`  
-**Base:** `July_to_Sept26_DevNSupport` @ `bffa253`  
-**Status:** Implemented — bulk skip of existing vendor/customer names in the target tenant
+**Branch:** `July_to_Sept26_DevNSupport`  
+**HEAD:** `88f9d0f` (PR **#92**)  
+**Status:** Completed — Cross-Tenant Duplication v1.1; bulk skip of existing vendor/customer names in the target tenant
 
 ---
 
@@ -138,4 +138,4 @@ Same-tenant protection, `CompanyContext`, and `Session["CompanyID"]` are unchang
 
 ---
 
-*PR-4.1 enhancement on `feat/skip-existing-bulk-duplication`.*
+*PR-4.1 / Cross-Tenant Duplication v1.1, merged to `July_to_Sept26_DevNSupport` at `88f9d0f` (PR #92).*

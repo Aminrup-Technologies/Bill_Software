@@ -6,7 +6,7 @@ Lightweight working status. Prefer this file over chat history. Update the secti
 
 ## Current Status
 
-Cross-Tenant Vendor and Customer Duplication (PR-1–PR-4) is **integrated** on `July_to_Sept26_DevNSupport` at merge `577ebcf`. Report: [`44_CrossTenant_Final_Integration.md`](44_CrossTenant_Final_Integration.md).
+Cross-Tenant Duplication **v1.1** is **completed** on `July_to_Sept26_DevNSupport` at `88f9d0f` (PR **#92** merge of Skip Already Duplicated). Baseline reports: [`44_CrossTenant_Final_Integration.md`](44_CrossTenant_Final_Integration.md), [`45_SkipExisting_BulkDuplication.md`](45_SkipExisting_BulkDuplication.md).
 
 PR **#84** Switch User work remains on this branch (first parent `fa777e9`; merge commit `d67e854` on `master`). Impersonation runtime was preserved during the duplication merge. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`.
 
@@ -29,6 +29,7 @@ Switch User post-Start runtime failure is **closed**.
 - Impersonation governance + dormant runtime + UAT activation docs (`ADR-001`, `docs/29`–`docs/37`).
 - Switch User runtime patch: `SessionLinkKey` permission exception + `CompleteRequest` redirect. Investigation closed (no remaining Switch User runtime work).
 - Cross-Tenant Duplication PR-1–PR-4 merged at `577ebcf` (`DuplicationService`, View Vendor/Customer single + bulk, live `WriteDuplicationAudit`). Docs: `34` CrossTenant, `37` completion, `41`–`43` UAT, `44` integration.
+- Cross-Tenant Duplication **v1.1** completed at `88f9d0f` (PR **#92**): bulk Skip Already Duplicated. Spec: `docs/45`.
 - Ponytail + solution-docs Cursor rules (existing).
 - This bootstrap: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/CURSOR_RULES.md`, `Bill_Software/.cursor/rules/project.mdc`.
 
@@ -42,7 +43,6 @@ None. Next scoped change is not assigned.
 
 ## Pending Work
 
-- Planned enhancement (not started): **Skip Already Duplicated** for bulk cross-tenant copy. See `docs/43` and `docs/44` section 12.
 - Known debt (do not start unless requested): leftover concatenated SQL on invoice / PO / stock / scheduler surfaces; kiosk plaintext; some direct `SmtpClient` pages; UAT objects not applied.
 - Product stops still closed: Decision #8 (`ReportingManagerId` ACL), Decision #9 (HQ cross-company), `machineKey` rotation, secret cutover ops.
 
@@ -62,7 +62,7 @@ None. Next scoped change is not assigned.
 
 ## Next Action
 
-Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not implement Skip Already Duplicated unless that enhancement is assigned. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested.
+Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested. Cross-Tenant Duplication v1.1 is closed at `88f9d0f`.
 
 ---
 
