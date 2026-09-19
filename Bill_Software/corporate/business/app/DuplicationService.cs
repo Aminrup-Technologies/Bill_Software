@@ -393,7 +393,7 @@ namespace Bill_Software.corporate.business.app
                         }
 
                         // Clone child entities
-                        CopyClientRegAddress(conn, tran, srcClientId, newClientId);
+                        CopyClientRegAddress(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                         CopyFactoryRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                         CopyRepresentativeRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
 
@@ -431,31 +431,32 @@ namespace Bill_Software.corporate.business.app
         //  CHILD-ENTITY CLONING
         // ───────────────────────────────────────────────────────────
 
-        private static void CopyClientRegAddress(SqlConnection conn, SqlTransaction tran, string sourceClientId, string targetClientId)
+        private static void CopyClientRegAddress(SqlConnection conn, SqlTransaction tran, string sourceClientId, string targetClientId, int targetCompanyId, string userName)
         {
             DataTable dt = new DataTable();
-            using (var cmd = new SqlCommand("SELECT * FROM tbl_ClientRegAddress WHERE Client_Id = @ClientId", conn, tran))
+            using (var cmd = new SqlCommand(
+                "SELECT * FROM tbl_ClientRegAddress WHERE Client_Id = @ClientId AND CompanyID = @SourceCompanyID", conn, tran))
             {
                 cmd.Parameters.AddWithValue("@ClientId", sourceClientId);
+                cmd.Parameters.AddWithValue("@SourceCompanyID", CompanyContext.CurrentCompanyID);
                 using (var da = new SqlDataAdapter(cmd)) da.Fill(dt);
             }
             foreach (DataRow r in dt.Rows)
             {
                 using (var cmd = new SqlCommand(@"
                     INSERT INTO tbl_ClientRegAddress
-                    (Client_Id, Address1, Address2, City, State, pin, ContactPerson, Phone, Email)
+                    (Client_Id, Address, State, City, Phno, pin, CompanyID, CreatedBy, CreatedOn)
                     VALUES
-                    (@Client_Id, @Address1, @Address2, @City, @State, @pin, @ContactPerson, @Phone, @Email)", conn, tran))
+                    (@Client_Id, @Address, @State, @City, @Phno, @pin, @CompanyID, @CreatedBy, GETDATE())", conn, tran))
                 {
                     cmd.Parameters.AddWithValue("@Client_Id", targetClientId);
-                    cmd.Parameters.AddWithValue("@Address1", RowStr(r, "Address1"));
-                    cmd.Parameters.AddWithValue("@Address2", RowStr(r, "Address2"));
-                    cmd.Parameters.AddWithValue("@City", RowStr(r, "City"));
+                    cmd.Parameters.AddWithValue("@Address", RowStr(r, "Address"));
                     cmd.Parameters.AddWithValue("@State", RowStr(r, "State"));
+                    cmd.Parameters.AddWithValue("@City", RowStr(r, "City"));
+                    cmd.Parameters.AddWithValue("@Phno", RowStr(r, "Phno"));
                     cmd.Parameters.AddWithValue("@pin", RowStr(r, "pin"));
-                    cmd.Parameters.AddWithValue("@ContactPerson", RowStr(r, "ContactPerson"));
-                    cmd.Parameters.AddWithValue("@Phone", RowStr(r, "Phone"));
-                    cmd.Parameters.AddWithValue("@Email", RowStr(r, "Email"));
+                    cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
+                    cmd.Parameters.AddWithValue("@CreatedBy", userName);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -464,9 +465,11 @@ namespace Bill_Software.corporate.business.app
         private static void CopyFactoryRecords(SqlConnection conn, SqlTransaction tran, string sourceClientId, string targetClientId, int targetCompanyId, string userName)
         {
             DataTable dt = new DataTable();
-            using (var cmd = new SqlCommand("SELECT * FROM tbl_Factory WHERE Client_id = @ClientId", conn, tran))
+            using (var cmd = new SqlCommand(
+                "SELECT * FROM tbl_Factory WHERE Client_id = @ClientId AND CompanyID = @SourceCompanyID", conn, tran))
             {
                 cmd.Parameters.AddWithValue("@ClientId", sourceClientId);
+                cmd.Parameters.AddWithValue("@SourceCompanyID", CompanyContext.CurrentCompanyID);
                 using (var da = new SqlDataAdapter(cmd)) da.Fill(dt);
             }
             foreach (DataRow r in dt.Rows)
@@ -494,9 +497,11 @@ namespace Bill_Software.corporate.business.app
         private static void CopyRepresentativeRecords(SqlConnection conn, SqlTransaction tran, string sourceClientId, string targetClientId, int targetCompanyId, string userName)
         {
             DataTable dt = new DataTable();
-            using (var cmd = new SqlCommand("SELECT * FROM tbl_representative WHERE Copany_Id = @ClientId", conn, tran))
+            using (var cmd = new SqlCommand(
+                "SELECT * FROM tbl_representative WHERE Copany_Id = @ClientId AND CompanyID = @SourceCompanyID", conn, tran))
             {
                 cmd.Parameters.AddWithValue("@ClientId", sourceClientId);
+                cmd.Parameters.AddWithValue("@SourceCompanyID", CompanyContext.CurrentCompanyID);
                 using (var da = new SqlDataAdapter(cmd)) da.Fill(dt);
             }
             foreach (DataRow r in dt.Rows)
@@ -773,7 +778,7 @@ namespace Bill_Software.corporate.business.app
                                 cmd.ExecuteNonQuery();
                             }
 
-                            CopyClientRegAddress(conn, tran, srcClientId, newClientId);
+                            CopyClientRegAddress(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                             CopyFactoryRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                             CopyRepresentativeRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
 
