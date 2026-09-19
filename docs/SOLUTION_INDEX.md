@@ -37,6 +37,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
 | Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
+| Cross-tenant vendor/customer duplication (PR-1–PR-4 integrated) | [34 CrossTenant](34_CrossTenant_Duplication_Architecture.md), [37 completion](37_CrossTenant_Duplication_Completion.md), [44 integration](44_CrossTenant_Final_Integration.md) |
 
 ## Page catalogs (unique facts only)
 
@@ -87,12 +88,21 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [ADR-001](ADR-001_Administrator_Impersonation.md) | Impersonation stays off until flag + grant |
 | [29](29_Impersonation_Governance.md)–[36](36_Impersonation_UAT_Activation.md) | Impersonation governance, runtime, UAT activation |
 | [37_SwitchUser_UAT_Completion.md](37_SwitchUser_UAT_Completion.md) | Phase 2A Switch User UAT completion |
+| [34_CrossTenant_Duplication_Architecture.md](34_CrossTenant_Duplication_Architecture.md) | Cross-tenant vendor/customer duplication architecture (distinct from impersonation `docs/34`) |
+| [35_PR1_Validation_Report.md](35_PR1_Validation_Report.md) | PR-1 duplication validation checklist |
+| [36_PR1_Implementation_Readiness.md](36_PR1_Implementation_Readiness.md) | PR-1 file inventory and DAL contract |
+| [37_CrossTenant_Duplication_Completion.md](37_CrossTenant_Duplication_Completion.md) | Duplication completion report (distinct from Switch User `docs/37`) |
+| [41_PR2_VendorHardening_UAT.md](41_PR2_VendorHardening_UAT.md) | PR-2 vendor hardening UAT |
+| [42_PR3_CustomerDuplication_UAT.md](42_PR3_CustomerDuplication_UAT.md) | PR-3 customer duplication UAT |
+| [43_PR4_BulkDuplication_UAT.md](43_PR4_BulkDuplication_UAT.md) | PR-4 bulk duplication UAT |
+| [44_CrossTenant_Final_Integration.md](44_CrossTenant_Final_Integration.md) | Final integration of PR-1–PR-4 onto `July_to_Sept26_DevNSupport` |
 
 ## Database Migrations
 
 - [`user_company_access_seed.sql`](../db/user_company_access_seed.sql) — Seeds missing home-tenant memberships after Phase 2A rollout.
 - [`SwitchUser_permission.sql`](../Bill_Software/corporate/business/sql/SwitchUser_permission.sql) — Catalog-only `SwitchUser` permission (no grant).
 - [`SwitchUser_superadmin_grant_uat.sql`](../Bill_Software/corporate/business/sql/SwitchUser_superadmin_grant_uat.sql) — UAT Super Admin grant only (DBA; do not execute from the app).
+- [`user_company_access_admin_aa_associates.sql`](../Bill_Software/corporate/business/sql/user_company_access_admin_aa_associates.sql) — Optional UAT membership helper for duplication target-company access.
 
 ## Invoice lineage (specialist, not page catalogs)
 

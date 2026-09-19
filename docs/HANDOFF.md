@@ -6,9 +6,11 @@ Lightweight working status. Prefer this file over chat history. Update the secti
 
 ## Current Status
 
-PR **#84** is merged to `master` (merge commit `d67e854`; PR head `49b1e16`). Next development cycle is open. Wait for an explicit `@filename` task.
+Cross-Tenant Vendor and Customer Duplication (PR-1–PR-4) is **integrated** on `July_to_Sept26_DevNSupport` at merge `577ebcf`. Report: [`44_CrossTenant_Final_Integration.md`](44_CrossTenant_Final_Integration.md).
 
-Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`. `July_to_Sept26_DevNSupport` remains as the historical implementation branch.
+PR **#84** Switch User work remains on this branch (first parent `fa777e9`; merge commit `d67e854` on `master`). Impersonation runtime was preserved during the duplication merge. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`.
+
+Switch User post-Start runtime failure is **closed**.
 
 **Root cause:** after `ImpersonationRuntime.Start`, `Session["USERID"]` is the target. `AuthGuard.HasPermission("SwitchUser")` reads that identity, so `EnsurePage(..., PermissionKey)` 403'd the impersonated session. `Redirect(..., false)` without `CompleteRequest()` let the Switch User request keep running.
 
@@ -26,6 +28,7 @@ Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGu
 - Page catalog + data dictionary + UAT catalog generators.
 - Impersonation governance + dormant runtime + UAT activation docs (`ADR-001`, `docs/29`–`docs/37`).
 - Switch User runtime patch: `SessionLinkKey` permission exception + `CompleteRequest` redirect. Investigation closed (no remaining Switch User runtime work).
+- Cross-Tenant Duplication PR-1–PR-4 merged at `577ebcf` (`DuplicationService`, View Vendor/Customer single + bulk, live `WriteDuplicationAudit`). Docs: `34` CrossTenant, `37` completion, `41`–`43` UAT, `44` integration.
 - Ponytail + solution-docs Cursor rules (existing).
 - This bootstrap: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/CURSOR_RULES.md`, `Bill_Software/.cursor/rules/project.mdc`.
 
@@ -39,7 +42,7 @@ None. Next scoped change is not assigned.
 
 ## Pending Work
 
-- _TBD - name the next scoped change (module, files, defect/ADR id)._
+- Planned enhancement (not started): **Skip Already Duplicated** for bulk cross-tenant copy. See `docs/43` and `docs/44` section 12.
 - Known debt (do not start unless requested): leftover concatenated SQL on invoice / PO / stock / scheduler surfaces; kiosk plaintext; some direct `SmtpClient` pages; UAT objects not applied.
 - Product stops still closed: Decision #8 (`ReportingManagerId` ACL), Decision #9 (HQ cross-company), `machineKey` rotation, secret cutover ops.
 
@@ -59,7 +62,7 @@ None. Next scoped change is not assigned.
 
 ## Next Action
 
-Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested.
+Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not implement Skip Already Duplicated unless that enhancement is assigned. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested.
 
 ---
 
