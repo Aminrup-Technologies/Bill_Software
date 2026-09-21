@@ -1,0 +1,37 @@
+---
+description: Prefer repository docs over chat; unified diffs; preserve FLMX architecture
+alwaysApply: true
+---
+
+# Project_FLMX Cursor project rule
+
+Prefer **repository context over chat history**. Prior conversation is not architecture unless it is written in `docs/HANDOFF.md` or another named doc.
+
+## Context order (read these first)
+
+1. `docs/ARCHITECTURE.md`
+2. `docs/HANDOFF.md`
+3. `docs/CURSOR_RULES.md`
+
+Documentation map: `docs/SOLUTION_INDEX.md`
+
+Then read:
+
+- `ponytail.md`
+- `solution-docs.md` (documentation tasks only)
+
+## Implementation files
+
+- Read **only** explicitly referenced implementation files (`@filename`).
+- If more code is required, **request additional `@filename` references**. Do not scan the repository.
+
+## Output and scope
+
+- Produce **unified diffs only**.
+- Modify only referenced files.
+- Preserve existing architecture (ASP.NET Web Forms, `AuthGuard` / `SecurePage`, ADO.NET, tenant `CompanyID`, kiosk isolation). Do not add a Windows Service or a second auth stack.
+- Avoid unrelated edits (formatting, drive-by refactors, extra files).
+
+## SQL
+
+`.sql` changes use the NAME / WHEN / WHY / WHAT header in `docs/CURSOR_RULES.md`. Parameterize all SQL.
