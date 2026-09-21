@@ -115,3 +115,43 @@ When authoring or modifying `.sql` files, document **When**, **Why**, and **What
 
 - Update `HANDOFF.md` Current Status / Current Task / Next Action if the work is ongoing.
 - Do not paste secrets. Do not expand scope to “while we are here.”
+- Git-affecting work follows **Controlled Execution** below and stops at the approval gate. Do not commit or push unless the user explicitly approved that step.
+
+---
+
+## Controlled Execution Workflow
+
+Permanent Git-affecting operating model. **Enforcement:** `Bill_Software/.cursor/rules/project.mdc` (always-on). This section documents the architecture; `project.mdc` is what Cursor must follow without being re-prompted.
+
+Cursor automatically:
+
+1. **Inspect** — verifies branch, HEAD SHA, working tree, index; inventory stashes when the task is stash-related.
+2. **Execute** — runs the approved scope in the agent environment (`git restore --source` preferred). Does not ask the user to paste Git commands unless execution fails. Does not apply/pop/drop a stash unless explicitly requested.
+3. **Verify** — runs `git status`, `git diff --stat`, `git diff --cached --stat`; confirms expected files only and that secrets were not restored.
+4. **Approval** — stops before commit, push, merge, or stash mutation; presents an execution summary and waits for explicit approval. Commit approval is not push approval.
+
+### Execution modes
+
+| Mode | Cursor may | Stops before |
+|------|------------|--------------|
+| **Analyze** | Read-only | Any write |
+| **Restore** | Restore named paths | commit |
+| **Implement** | Modify named files | commit |
+| **Publish** | Push after a **separate** explicit approval | push until that approval |
+
+Unnamed tasks: infer Analyze / Restore / Implement from the objective. Never Publish unless named or push is explicitly approved.
+
+### Prompt contract
+
+Implementation prompts should contain **only**:
+
+- Objective
+- Required files
+- Task-specific constraints
+- Acceptance criteria
+
+Do not repeat Inspect → Execute → Verify → Approval, stash preservation, or secret-file exclusions in each prompt. Those are repository rules. Task-specific constraints hold only what is unique to that change (paths, SHAs, “do not edit X”).
+
+### Git safeguards (summary)
+
+Encoded in `project.mdc`: `git status` first; verify HEAD; preserve stashes; prefer `git restore`; never commit `Web.config`, `*.pubxml`, or MCP files; separate commit and push gates; never mutate stash state without explicit approval.

@@ -35,3 +35,78 @@ Then read:
 ## SQL
 
 `.sql` changes use the NAME / WHEN / WHY / WHAT header in `docs/CURSOR_RULES.md`. Parameterize all SQL.
+
+## Execution modes
+
+Default operating model. Infer from the objective if unnamed. Never treat a task as **Publish** unless the user named that mode or explicitly approved push.
+
+| Mode | Allowed | Stop before |
+|------|---------|-------------|
+| **Analyze** | Read-only inspection (docs, `git status` / `log` / `stash list` / `show`) | Any write, restore, commit, push, stash mutation |
+| **Restore** | Restore named paths (`git restore --source` preferred) | commit, push, stash mutation |
+| **Implement** | Modify named repository files | commit, push, stash mutation |
+| **Publish** | Push / remote update | push until a **separate** explicit approval (commit approval is not push approval) |
+
+## Prompt contract
+
+Future implementation prompts need only:
+
+1. Objective
+2. Required files (`@filename`)
+3. Task-specific constraints
+4. Acceptance criteria
+
+Do **not** require the user to repeat Git workflow, inspect/verify steps, or stash safeguards in the prompt. Those live here and in `docs/CURSOR_RULES.md`.
+
+## Controlled Git Execution Workflow
+
+Mandatory for any task that reads or changes Git state (restore, stage, commit, push, stash, branch, merge). Four phases, in order. Do not skip. Execute Git commands in the agent environment; do not ask the user to run them unless a command fails.
+
+### 1. Inspect
+
+Before any state-changing Git command:
+
+- Verify current branch.
+- Verify HEAD SHA (`git log -1 --oneline` / `git rev-parse HEAD`).
+- Verify working tree (`git status`).
+- Verify index (`git diff --cached --name-only`).
+- If the task is stash-related: `git stash list` and inspect only named stashes. Do not apply/pop/drop.
+
+Abort the state-changing step if branch, HEAD, or cleanliness preconditions the task named are not met.
+
+### 2. Execute
+
+- Run only the approved Git operations for the named mode and paths.
+- Prefer `git restore --source="<tree>" --worktree -- <path>` over `git checkout` / `git stash apply`.
+- Never widen scope beyond required files.
+- Never `git stash apply`, `pop`, `branch`, or `drop` unless the user explicitly requested that exact command.
+
+### 3. Verify
+
+Automatically run:
+
+- `git status`
+- `git diff --stat`
+- `git diff --cached --stat`
+
+Confirm only expected files changed, no secrets restored, and stash list unchanged when the task required that.
+
+### 4. Approval
+
+Stop and wait for **explicit** user approval before:
+
+- commit
+- push
+- merge
+- stash mutation (`apply` / `pop` / `branch` / `drop`)
+
+Present: commands executed, verification results, file list, concise summary. Commit approval is not push approval.
+
+## Git safeguards
+
+- `git status` first; then verify HEAD.
+- Preserve all stashes unless the user names a mutation.
+- Prefer `git restore` for path recovery.
+- Never restore or commit secrets: `Web.config`, `*.pubxml`, `Bill_Software/.cursor/mcp.json`, `Bill_Software/.cursor/mcp.local.json`, connection strings, passwords, keys.
+- Separate approval gates: commit ≠ push.
+- Never mutate stash state without explicit approval.
