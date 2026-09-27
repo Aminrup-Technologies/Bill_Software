@@ -355,12 +355,14 @@ namespace Bill_Software.corporate.business.app
         }
 
         /// <summary>
-        /// Same join as AuthGuard.HasPermission, keyed to the actor snapshot.
-        /// Does not change AuthGuard. Fail closed on SQL errors.
+        /// Actor snapshot must hold SwitchUser and an active UserCompanyAccess
+        /// membership for the current Session["CompanyID"] (not tbl_login.CompanyID,
+        /// which is the home tenant only). Does not change AuthGuard. Fail closed on SQL errors.
         /// </summary>
         private static bool ActorHoldsSwitchUser(ImpersonationLink link)
         {
-            if (link == null || string.IsNullOrWhiteSpace(link.ActorUserKey) || link.CompanyID <= 0)
+            int companyId = CompanyContext.CurrentCompanyID;
+            if (link == null || string.IsNullOrWhiteSpace(link.ActorUserKey) || companyId <= 0)
                 return false;
 
             const string sql = @"
@@ -368,7 +370,9 @@ namespace Bill_Software.corporate.business.app
                 FROM dbo.Permissions p
                 INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
                 INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
-                INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id AND u.CompanyID = @CompanyID
+                INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id
+                INNER JOIN dbo.UserCompanyAccess a
+                    ON a.UserId = u.Id AND a.CompanyID = @CompanyID AND a.IsActive = 1
                 WHERE u.User_Id = @UserId AND p.PermissionKey = @Key";
 
             try
@@ -377,7 +381,7 @@ namespace Bill_Software.corporate.business.app
                 using (var cmd = new SqlCommand(sql, cn))
                 {
                     cmd.Parameters.Add("@UserId", SqlDbType.NVarChar, 100).Value = link.ActorUserKey;
-                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = link.CompanyID;
+                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
                     cmd.Parameters.Add("@Key", SqlDbType.NVarChar, 100).Value = ImpersonationGovernance.PermissionKey;
                     cn.Open();
                     return cmd.ExecuteScalar() != null;
@@ -421,7 +425,6 @@ namespace Bill_Software.corporate.business.app
                     ON a.UserId = u.Id AND a.CompanyID = @CompanyID AND a.IsActive = 1
                 LEFT JOIN dbo.Roles r ON r.RoleId = u.RoleId AND r.CompanyID = @CompanyID
                 WHERE u.Id = @TargetUserId
-                  AND u.CompanyID = @CompanyID
                   AND u.IsActive = 1
                   AND (u.LockoutEnd IS NULL OR u.LockoutEnd < SYSUTCDATETIME())";
 
