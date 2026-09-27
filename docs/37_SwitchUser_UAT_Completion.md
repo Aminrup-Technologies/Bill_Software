@@ -19,7 +19,7 @@ Administrator Switch User is **complete on UAT** and **off in production**. The 
 | Piece | Contract |
 |-------|----------|
 | Actor / Target | `ImpersonationLink` snapshots actor identity. Start swaps `USERID` / `UserDbId` to the target. Rollback restores the actor. Observed users do not need `SwitchUser`. |
-| `UserCompanyAccess` | Company gate before `HasPermission`. Target must have active membership in the actor’s current company (INV-15). |
+| `UserCompanyAccess` | Company gate before `HasPermission`. Target must have active membership in the actor’s current company (INV-15); home `tbl_login.CompanyID` is not checked. Actor continuation also requires `SwitchUser` plus active membership in `CompanyContext.CurrentCompanyID` ([35](35_Impersonation_Runtime_Engine.md#actor-continuation)). |
 | `ImpersonationSessions` | Lease: `IsActive`, `EndedAt`, `EndReason`, tokens, `LeaseExpiresAt`. Empty until Start. |
 | `AuthAudit` | `SecurityAudit` writes Intent / Start / Closed in the same transaction as the lease. Exactly-once close: second close is `ClosedNoOp` with no extra session mutation. |
 
@@ -58,6 +58,8 @@ Catalog: `Permissions.SwitchUser` = **PermissionId 132**. Super Admin granted on
 UAT also applied `SwitchUser_permission.sql`, Super Admin grant SQL, and `impersonation_pr1.sql` (plus filtered index with `QUOTED_IDENTIFIER ON`). Those are host/DBA steps, not app runtime.
 
 ## 6. Production readiness
+
+**Deployment prerequisite ([PR #94](https://github.com/Aminrup-Technologies/Bill_Software/pull/94)):** complete `UserCompanyAccess` reconciliation (`user_company_access_reconciliation.sql`, DBA review) before deploying, so every existing actor account holding `SwitchUser` has an active membership for each company it operates in. Missing membership fails closed: targets are rejected (INV-15) and actor sessions end with `PermissionRevoked`.
 
 | Item | State |
 |------|--------|

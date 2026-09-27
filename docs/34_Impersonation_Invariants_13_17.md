@@ -9,7 +9,7 @@ These gates run only after `IsSwitchUserEnabled` is true. While `SwitchUser=fals
 |----|------|----------|
 | INV-13 | Nested impersonation | Reject Issue/Start when `Session["ImpersonationLink"]` is set or an active ledger row exists for the actor token / target token / actor user. |
 | INV-14 | Self-impersonation | Reject when `targetUserId == Session["UserDbId"]`. |
-| INV-15 | Target company | Reject unless the target is `tbl_login.IsActive=1`, home `CompanyID` equals the actor's current company, not locked out, and has active `UserCompanyAccess` for that company. Missing membership table → reject. |
+| INV-15 | Target company | Reject unless the target is `tbl_login.IsActive=1`, not locked out, and has active `UserCompanyAccess` (`IsActive=1`) for the actor's current company (`CompanyContext.CurrentCompanyID`). Home `tbl_login.CompanyID` is not checked. Missing membership table → reject. |
 | INV-16 | Intent token | Reject when HMAC fails, payload is malformed, TTL elapsed, actor/company/session mismatch, or Start INSERT hits the pre-allocated `ImpersonationId` PK (replay). |
 | INV-17 | Exactly-once close | `UPDATE … WHERE ImpersonationId=@Id AND IsActive=1 AND EndedAt IS NULL`. Zero rows → `ClosedNoOp`, no `ActiveSessions` or identity mutation. One row → restore actor once. |
 
