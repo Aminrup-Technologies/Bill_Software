@@ -23,6 +23,35 @@ namespace Bill_Software.corporate.business.app
             get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; }
         }
 
+        // userIdColumn must be a compile-time column reference, never user input.
+        private static string JoinCurrentCompanyMembers(string userIdColumn)
+        {
+            return " INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = " + userIdColumn
+                + " AND uca.CompanyID = @CompanyID AND uca.IsActive = 1 ";
+        }
+
+        private const string HomeCompanyMsgPrefix = "This user belongs to another home company. ";
+        private const string NotFoundMsg = "User not found or access denied.";
+
+        // Writes stay scoped to tbl_login.CompanyID (home company); this only classifies a zero-row write.
+        private static bool IsCrossCompanyMember(SqlConnection cn, SqlTransaction tran, int id, int companyId)
+        {
+            using (var cmd = new SqlCommand(
+                "SELECT COUNT(1) FROM dbo.tbl_login u" + JoinCurrentCompanyMembers("u.Id") + "WHERE u.Id = @Id AND u.CompanyID <> @CompanyID", cn))
+            {
+                if (tran != null)
+                    cmd.Transaction = tran;
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
+                return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+            }
+        }
+
+        private static string BlockedWriteMessage(SqlConnection cn, SqlTransaction tran, int id, int companyId, string homeCompanyMsg)
+        {
+            return IsCrossCompanyMember(cn, tran, id, companyId) ? HomeCompanyMsgPrefix + homeCompanyMsg : NotFoundMsg;
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
@@ -94,12 +123,12 @@ namespace Bill_Software.corporate.business.app
                             ISNULL(u.AllowGeoFenceOverride, 1) AS AllowGeoFenceOverride,
                             ISNULL(u.MaxGeoFenceAttempts, 3) AS MaxGeoFenceAttempts,
                           (SELECT TOP 1 LastHeartbeat FROM ActiveSessions s WHERE s.UserId = u.Id ORDER BY LastHeartbeat DESC) AS LatestHeartbeat
-                   FROM dbo.tbl_login u
+                   FROM dbo.tbl_login u" + JoinCurrentCompanyMembers("u.Id") + @"
                    LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
                    LEFT JOIN dbo.tbl_Departments d ON u.DepartmentID = d.DepartmentID
                    LEFT JOIN dbo.tbl_Designations des ON u.DesignationID = des.DesignationID
                    LEFT JOIN dbo.tbl_login mgr ON u.ReportingManagerId = mgr.User_Id
-                   WHERE u.CompanyID = @CompanyID ";
+                   WHERE 1 = 1 ";
 
             // 3. Dynamic Admin Filter
             if (!loggedInUser.Equals("admin", StringComparison.OrdinalIgnoreCase))
@@ -293,7 +322,7 @@ namespace Bill_Software.corporate.business.app
                 {
                     int? previousRoleId = null;
                     using (var cmdPrev = new SqlCommand(
-                        "SELECT RoleId FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID", cn, tran))
+                        "SELECT u.RoleId FROM dbo.tbl_login u" + JoinCurrentCompanyMembers("u.Id") + "WHERE u.Id = @Id", cn, tran))
                     {
                         cmdPrev.Parameters.AddWithValue("@Id", id);
                         cmdPrev.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
@@ -326,7 +355,8 @@ namespace Bill_Software.corporate.business.app
                         int rows = cmd.ExecuteNonQuery();
                         if (rows <= 0)
                         {
-                            ShowError("User not found or access denied.");
+                            ShowError(BlockedWriteMessage(cn, tran, id, CompanyContext.CurrentCompanyID,
+                                "Edit is available only from the user's home company."));
                             return;
                         }
 
@@ -432,17 +462,17 @@ namespace Bill_Software.corporate.business.app
                             string loggedInUser = Session["USERID"] != null ? Session["USERID"].ToString() : "";
 
                             // Base query restricted by CompanyContext
-                            string managerSql = "SELECT User_Id, Name FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompID";
+                            string managerSql = "SELECT u.User_Id, u.Name FROM dbo.tbl_login u" + JoinCurrentCompanyMembers("u.Id") + "WHERE u.IsActive = 1";
 
                             // Append exclusion if the current user is NOT admin
                             if (!loggedInUser.Equals("admin", StringComparison.OrdinalIgnoreCase))
                             {
-                                managerSql += " AND User_Id NOT IN ('admin', 'AT01')";
+                                managerSql += " AND u.User_Id NOT IN ('admin', 'AT01')";
                             }
 
                             using (var cmdM = new SqlCommand(managerSql, cn))
                             {
-                                cmdM.Parameters.AddWithValue("@CompID", CompanyContext.CurrentCompanyID);
+                                cmdM.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                                 var dtM = new DataTable();
                                 new SqlDataAdapter(cmdM).Fill(dtM);
                                 ddlManager.DataSource = dtM;
@@ -510,7 +540,7 @@ namespace Bill_Software.corporate.business.app
         private string GetUserIdById(int id)
         {
             using (var cn = new SqlConnection(ConnString))
-            using (var cmd = new SqlCommand("SELECT User_Id FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID", cn))
+            using (var cmd = new SqlCommand("SELECT u.User_Id FROM dbo.tbl_login u" + JoinCurrentCompanyMembers("u.Id") + "WHERE u.Id = @Id", cn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
@@ -534,6 +564,11 @@ namespace Bill_Software.corporate.business.app
                 {
                     InsertSystemNotification("User Status Changed", $"An employee account status was toggled.", "User Management", "Warning", Session["USERID"]?.ToString() ?? "System");
                     ShowOk("User active status updated.");
+                }
+                else
+                {
+                    ShowError(BlockedWriteMessage(cn, null, id, CompanyContext.CurrentCompanyID,
+                        "Activate/Deactivate is available only from the user's home company."));
                 }
             }
         }
@@ -559,13 +594,20 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
 
+                int rows;
                 if (currentlyLocked)
                 {
                     using (var upd = new SqlCommand("UPDATE dbo.tbl_login SET LockoutEnd = NULL, FailedAccessCount = 0 WHERE Id = @Id AND CompanyID = @CompanyID", cn))
                     {
                         upd.Parameters.AddWithValue("@Id", id);
                         upd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                        upd.ExecuteNonQuery();
+                        rows = upd.ExecuteNonQuery();
+                    }
+                    if (rows <= 0)
+                    {
+                        ShowError(BlockedWriteMessage(cn, null, id, CompanyContext.CurrentCompanyID,
+                            "Lock/Unlock is available only from the user's home company."));
+                        return;
                     }
                     InsertSystemNotification("User Unlocked", $"An employee account was manually unlocked.", "Security", "Info", Session["USERID"]?.ToString() ?? "System");
                     ShowOk("User unlocked.");
@@ -578,7 +620,13 @@ namespace Bill_Software.corporate.business.app
                         upd.Parameters.AddWithValue("@LockoutEnd", lockUntil);
                         upd.Parameters.AddWithValue("@Id", id);
                         upd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
-                        upd.ExecuteNonQuery();
+                        rows = upd.ExecuteNonQuery();
+                    }
+                    if (rows <= 0)
+                    {
+                        ShowError(BlockedWriteMessage(cn, null, id, CompanyContext.CurrentCompanyID,
+                            "Lock/Unlock is available only from the user's home company."));
+                        return;
                     }
                     InsertSystemNotification("User Locked", $"An employee account was manually locked.", "Security", "Danger", Session["USERID"]?.ToString() ?? "System");
                     ShowOk("User locked.");
@@ -621,10 +669,13 @@ namespace Bill_Software.corporate.business.app
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                 cn.Open();
 
-                if (cmd.ExecuteNonQuery() > 0)
+                if (cmd.ExecuteNonQuery() <= 0)
                 {
-                    InsertSystemNotification("Password Reset", $"Admin triggered a password reset for an employee.", "Security", "Warning", Session["USERID"]?.ToString() ?? "System");
+                    ShowError(BlockedWriteMessage(cn, null, id, CompanyContext.CurrentCompanyID,
+                        "Password Reset is available only from the user's home company."));
+                    return;
                 }
+                InsertSystemNotification("Password Reset", $"Admin triggered a password reset for an employee.", "Security", "Warning", Session["USERID"]?.ToString() ?? "System");
             }
 
             string userId, email;
@@ -788,8 +839,8 @@ namespace Bill_Software.corporate.business.app
                 string sql = @"
                     SELECT TOP 15 s.LoginTime, s.LastHeartbeat, s.IPAddress, s.UserAgent, s.IsActive 
                     FROM ActiveSessions s
-                    INNER JOIN tbl_login u ON s.UserId = u.Id
-                    WHERE s.UserId = @UserId AND u.CompanyID = @CompanyID
+                    INNER JOIN tbl_login u ON s.UserId = u.Id" + JoinCurrentCompanyMembers("u.Id") + @"
+                    WHERE s.UserId = @UserId
                     ORDER BY s.LoginTime DESC";
 
                 using (SqlCommand cmd = new SqlCommand(sql, cn))
@@ -940,7 +991,9 @@ namespace Bill_Software.corporate.business.app
                         }
                         else
                         {
-                            return "Update failed. User not found or belongs to a different Company.";
+                            return IsCrossCompanyMember(conn, null, userId, currentCompanyId)
+                                ? HomeCompanyMsgPrefix + "Geo-Fence settings can only be changed from the user's home company."
+                                : "Update failed. User not found or belongs to a different Company.";
                         }
                     }
                 }
