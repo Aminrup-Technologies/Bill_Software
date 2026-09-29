@@ -39,6 +39,8 @@ Switch User post-Start runtime failure is **closed**.
 
 Switch User deployment contract: canonical [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Committed at `1bb4754` on `cursor/impersonation-membership-runtime`. As of `3e04c58`: 6 ahead / 0 behind `July_to_Sept26_DevNSupport`. **Not pushed.**
 
+Menu membership (assigned): `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-membership-menu`) — menu permissions filtered by active `UserCompanyAccess` for the current company instead of `tbl_login.CompanyID`. `AuthGuard.cs`, `BindSwitchUserMenu`, `SwitchUser.aspx.cs`, and page authorization unchanged; ADR-001 not amended. Uncommitted; awaiting commit approval, then UAT (non-home member menu, single-company unchanged, impersonated target menu, End Impersonation restores menu without F5).
+
 Local state (not in git):
 - `Bill_Software/Web.config` and `flamexuat … Web Deploy.pubxml` hold local UAT overlay values (connection string, `SwitchUser=true`). Never stage or commit; do not use `git commit -a`.
 - `stash@{0}` ("undocumented menu/SwitchUser membership changes … pending review"): still holds `AuthGuard.cs`, `Bill.Master.cs`, `SwitchUser.aspx.cs` edits (stash not mutated).

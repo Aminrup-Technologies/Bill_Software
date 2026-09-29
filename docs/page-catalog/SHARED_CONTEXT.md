@@ -23,7 +23,7 @@ Do **not** restate these rules inside domain catalogs or per-page notes.
 
 ## Runtime facts used by every ERP page (do not copy)
 
-1. **Master:** `corporate/business/app/Bill.Master` validates `AuthGuard.TryValidateSession`, binds `UserCompanyAccess` companies, renders menu from `Permissions` ∩ `UserRoles` ∩ `RolePermissions`. **UAT does not have `UserCompanyAccess`** — membership queries fail closed ([SHARED_SCHEMA.md](SHARED_SCHEMA.md) §4).
+1. **Master:** `corporate/business/app/Bill.Master` validates `AuthGuard.TryValidateSession`, binds `UserCompanyAccess` companies, renders menu from `Permissions` ∩ `UserRoles` ∩ `RolePermissions`, filtered by active `UserCompanyAccess` for the current `CompanyID` (not `tbl_login.CompanyID`); presentation only. **UAT does not have `UserCompanyAccess`** — membership queries fail closed ([SHARED_SCHEMA.md](SHARED_SCHEMA.md) §4).
 2. **Page gate:** pages that inherit `SecurePage` call `AuthGuard.EnsurePage` / `EnsurePageAny` in `OnInit` using `RequiredPermissionKey` (must match the `id` on the menu `<li>` in Bill.Master).
 3. **Print gate:** `corporate/business/print/*.aspx` have **no master**. They call `AuthGuard.EnsurePrint(this, resourceKey, queryValue)`. Resource `"unmapped"` **fails closed**.
 4. **Tenant:** `CompanyContext.CurrentCompanyID` from `Session["CompanyID"]`. Queries on tenant tables must use `@CompanyID`.

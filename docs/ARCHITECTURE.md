@@ -85,6 +85,8 @@ Protected assets (architectural review required): `AuthGuard.cs`, `SecurePage.cs
 
 Request lifecycle (contract): Authentication → ActiveSessions → company membership (`UserCompanyAccess`) → page permission → resource authorization → business operation. Menu visibility is not authorization.
 
+Menu visibility (`Bill.Master.GetMenuControl`) is membership-aware: `UserRoles` → `RolePermissions` filtered by active `UserCompanyAccess` for `CompanyContext.CurrentCompanyID`, not `tbl_login.CompanyID`. Page authorization is unchanged and authoritative (`EnsurePage` / `HasPermission` behind the company-membership gate). The Switch User menu link still uses `AuthGuard.HasPermission`.
+
 ---
 
 ## Business layer responsibilities
