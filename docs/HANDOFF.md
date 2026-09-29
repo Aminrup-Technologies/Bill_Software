@@ -41,7 +41,9 @@ Switch User deployment contract: canonical [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`
 
 Local state (not in git):
 - `Bill_Software/Web.config` and `flamexuat … Web Deploy.pubxml` hold local UAT overlay values (connection string, `SwitchUser=true`). Never stage or commit; do not use `git commit -a`.
-- `stash@{0}` ("undocumented menu/SwitchUser membership changes … pending review"): uncommitted `AuthGuard.cs`, `Bill.Master.cs`, `SwitchUser.aspx.cs` edits. Not in any branch. Conflicts with ADR-001 "`AuthGuard` unchanged"; needs architectural review before apply or drop.
+- `stash@{0}` ("undocumented menu/SwitchUser membership changes … pending review"): still holds `AuthGuard.cs`, `Bill.Master.cs`, `SwitchUser.aspx.cs` edits (stash not mutated).
+  - `SwitchUser.aspx.cs` portion restored via `git restore --source` and committed with the Switch User work: target list drops the `tbl_login.CompanyID` home-company filter, matching `ImpersonationRuntime.LoadEligibleTarget` (INV-15, `5e0a550`). Do not re-apply it from the stash.
+  - `AuthGuard.cs` (`GetMenuPermissions`) + `Bill.Master.cs` (menu and Switch User link from `UserCompanyAccess`) remain parked. Coupled (Bill.Master calls the new AuthGuard method). Conflicts with ADR-001 "`AuthGuard` unchanged"; needs separate architectural review before apply or drop. Compare `cursor/company-membership-menu` (`cffc720`), which fixes the menu without touching AuthGuard.
 - `stash@{1}` Cursor Desktop UAT workspace; `stash@{2}` uat-pr2 challanwriter WIP; `stash@{3}` local docs/config before Cross-Tenant UAT. Stash indices shift when a stash is added or dropped; identify stashes by message.
 
 ---
@@ -67,7 +69,7 @@ Local state (not in git):
 
 ## Next Action
 
-Push of `1bb4754` requires separate explicit approval. Decide the fate of `stash@{0}` (review as its own task or drop) before any menu/membership work. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
+Push of `1bb4754` requires separate explicit approval. Decide the fate of the parked `AuthGuard.cs` + `Bill.Master.cs` changes in `stash@{0}` (separate architectural review task, or drop) before any menu/membership work. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
 
 ---
 
