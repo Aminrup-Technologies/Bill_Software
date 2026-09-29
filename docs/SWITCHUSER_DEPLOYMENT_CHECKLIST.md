@@ -59,7 +59,7 @@ UAT host overlay only. Do not commit.
 
 - Recycle the UAT app pool after the change.
 - Production publish must keep `Web.Release.config` `SwitchUser=false`.
-- `stash@{2}` historically held `SwitchUser=true` as a **local overlay**. Restore that key on the UAT host if needed; do **not** restore `Web.config` connection strings or MCP files from the stash.
+- The stash "Local docs and config before Cross-Tenant UAT" (currently `stash@{3}`; indices shift) holds `SwitchUser=true` as a **local overlay**. Restore that key on the UAT host if needed; do **not** restore `Web.config` connection strings or MCP files from the stash.
 
 ---
 
