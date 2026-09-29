@@ -39,7 +39,7 @@ Switch User post-Start runtime failure is **closed**.
 
 Switch User deployment contract: canonical [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Committed at `1bb4754` on `cursor/impersonation-membership-runtime`. As of `3e04c58`: 6 ahead / 0 behind `July_to_Sept26_DevNSupport`. **Not pushed.**
 
-Menu membership (assigned): `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-membership-menu`) — menu permissions filtered by active `UserCompanyAccess` for the current company instead of `tbl_login.CompanyID`. `AuthGuard.cs`, `BindSwitchUserMenu`, `SwitchUser.aspx.cs`, and page authorization unchanged; ADR-001 not amended. Uncommitted; awaiting commit approval, then UAT (non-home member menu, single-company unchanged, impersonated target menu, End Impersonation restores menu without F5).
+Menu membership (assigned): `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-membership-menu`) — menu permissions filtered by active `UserCompanyAccess` for the current company instead of `tbl_login.CompanyID`. `AuthGuard.cs`, `BindSwitchUserMenu`, `SwitchUser.aspx.cs`, and page authorization unchanged; ADR-001 not amended. Committed as `5ace354`; awaiting UAT (non-home member menu, single-company unchanged, impersonated target menu, End Impersonation restores menu without F5).
 
 Local state (not in git):
 - `Bill_Software/Web.config` and `flamexuat … Web Deploy.pubxml` hold local UAT overlay values (connection string, `SwitchUser=true`). Never stage or commit; do not use `git commit -a`.
@@ -71,7 +71,7 @@ Local state (not in git):
 
 ## Next Action
 
-Unpushed commits as of `3e04c58`: `1bb4754`, `300505a`, `3e04c58` (plus any later HANDOFF-only commit). Push requires separate explicit approval. Decide the fate of the parked `AuthGuard.cs` + `Bill.Master.cs` changes in `stash@{0}` (separate architectural review task, or drop) before any menu/membership work. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
+Unpushed commits as of `5ace354`: `1bb4754`, `300505a`, `3e04c58`, `fb7de2b`, `5ace354` (plus any later HANDOFF-only commit). Push requires separate explicit approval. Decide the fate of the parked `AuthGuard.cs` + `Bill.Master.cs` changes in `stash@{0}` (separate architectural review task, or drop) before any menu/membership work. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
 
 ---
 
