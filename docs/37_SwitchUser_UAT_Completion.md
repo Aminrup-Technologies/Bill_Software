@@ -55,16 +55,10 @@ Catalog: `Permissions.SwitchUser` = **PermissionId 132**. Super Admin granted on
 | `0daf8b1` | `GetMenuControl` + `BindSwitchUserMenu` after `CloseCurrent(ManualRollback)`. |
 | `efc2099` | Merge PR #83 into `July_to_Sept26_DevNSupport`. |
 
-UAT also applied `SwitchUser_permission.sql`, Super Admin grant SQL, and `impersonation_pr1.sql` (plus filtered index with `QUOTED_IDENTIFIER ON`). Those are host/DBA steps, not app runtime.
+Host/DBA steps (including `QUOTED_IDENTIFIER ON` for the filtered index) are canonical in [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md), not here.
 
 ## 6. Production readiness
 
 **Deployment prerequisite ([PR #94](https://github.com/Aminrup-Technologies/Bill_Software/pull/94)):** complete `UserCompanyAccess` reconciliation (`user_company_access_reconciliation.sql`, DBA review) before deploying, so every existing actor account holding `SwitchUser` has an active membership for each company it operates in. Missing membership fails closed: targets are rejected (INV-15) and actor sessions end with `PermissionRevoked`.
 
-| Item | State |
-|------|--------|
-| UAT | Enabled (`SwitchUser=true` on UAT host + grant + ledger table). |
-| Production | **`SwitchUser` remains false** (`Web.Release.config` `InsertIfMissing`). |
-| Remaining before production | Ops set flag only after explicit go-live; apply ledger DDL if missing; catalog + intended role grant; deploy this baseline; do not copy UAT `Web.config` secrets. |
-
-Heartbeat lease pings are still not wired to `Heartbeat.ashx`. Nested impersonation stays INV-13.
+UAT was enabled on the host; production stays fail-closed. Current enable/remain-off contract: [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Heartbeat lease pings remain unwired (`Heartbeat.ashx` unchanged). Nested impersonation stays INV-13.

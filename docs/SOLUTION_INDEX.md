@@ -37,6 +37,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
 | Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
+| Switch User host/DBA deploy | [SWITCHUSER_DEPLOYMENT_CHECKLIST.md](SWITCHUSER_DEPLOYMENT_CHECKLIST.md) |
 | Cross-tenant vendor/customer duplication (v1.1 complete at `88f9d0f`) | [34 CrossTenant](34_CrossTenant_Duplication_Architecture.md), [37 completion](37_CrossTenant_Duplication_Completion.md), [44 integration](44_CrossTenant_Final_Integration.md), [45 skip existing](45_SkipExisting_BulkDuplication.md), [46 release](46_CrossTenant_Release_v1.1.md) |
 
 ## Page catalogs (unique facts only)

@@ -8,7 +8,7 @@
 
 Administrator impersonation stays fail-closed unless **all** of these are true: AppSetting `SwitchUser=true`, Super Admin `RolePermissions` grant, and a caller of `ImpersonationRuntime`.
 
-PR-83 wires UAT callers only. Production `Web.Release.config` remains `SwitchUser=false`. UAT operators set the flag on the UAT host. DBA grant script is not executed by the app.
+PR-83 wires UAT callers only. Production `Web.Release.config` remains `SwitchUser=false`. Host overlay, DBA scripts, verification, and rollback: [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Do not commit `SwitchUser=true` to `Web.config`. DBA scripts are not executed by the app.
 
 - `AuthGuard` is unchanged.
 - `Heartbeat.ashx` is unchanged.
@@ -26,7 +26,8 @@ PR-83 wires UAT callers only. Production `Web.Release.config` remains `SwitchUse
 | [33_Impersonation_EndReasons.md](33_Impersonation_EndReasons.md) | 11 EndReason values |
 | [34_Impersonation_Invariants_13_17.md](34_Impersonation_Invariants_13_17.md) | INV-13–17 |
 | [35_Impersonation_Runtime_Engine.md](35_Impersonation_Runtime_Engine.md) | Start/Rollback engine |
-| [36_Impersonation_UAT_Activation.md](36_Impersonation_UAT_Activation.md) | UAT callers + Super Admin grant script |
+| [36_Impersonation_UAT_Activation.md](36_Impersonation_UAT_Activation.md) | UAT callers (PR-83 historical) |
+| [SWITCHUSER_DEPLOYMENT_CHECKLIST.md](SWITCHUSER_DEPLOYMENT_CHECKLIST.md) | Canonical host + DBA deploy (enable / remain-off) |
 
 Code: `ImpersonationGovernance`, `ImpersonationLink`, `ImpersonationIntentToken`, `ImpersonationRuntime`, `SecurityAudit` (`dbo.AuthAudit`).
 

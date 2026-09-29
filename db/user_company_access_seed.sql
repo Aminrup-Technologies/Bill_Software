@@ -8,6 +8,7 @@
 -- What:        Idempotent INSERT of missing home-tenant memberships only
 --              (tbl_login.CompanyID). Preserves existing rows. Does not grant
 --              every company. Does not seed inactive users. DBA execute only.
+-- Deploy:      Prerequisite for Switch User; see docs/SWITCHUSER_DEPLOYMENT_CHECKLIST.md.
 -- Evidence:    flamex_uat 2026-09-10
 --                tbl_login: 25 rows, 24 active, all home CompanyID=1
 --                tbl_Company: 1=Flame-Ex (active), 2=AA Associates (active)

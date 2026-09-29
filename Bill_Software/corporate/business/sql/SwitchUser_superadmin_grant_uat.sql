@@ -8,6 +8,7 @@
 -- What:        Idempotent INSERT of RolePermissions for RoleName = N'Super Admin'
 --              and PermissionKey = N'SwitchUser'. No other roles. DBA execute
 --              only. Do not run from the application.
+-- Deploy: docs/SWITCHUSER_DEPLOYMENT_CHECKLIST.md (UAT only; not production).
 -- =============================================================================
 -- INERT / DO NOT EXECUTE FROM THE APPLICATION.
 

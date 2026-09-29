@@ -129,7 +129,7 @@ Business rules stay unless a change explicitly states otherwise. Decision #8: `R
 - Authorization: `UserRoles` → `RolePermissions` → `Permissions.PermissionKey` at **action** (`EnsurePage` / WebMethod / `EnsurePrint`), not only menu hide.
 - Resource scope: company + owner or manager-dashboard as documented in `docs/19` / `docs/22`. Guessed ids must not cross company/owner.
 - Kiosk login is plaintext `tbl_card_login`, parameterized SQL, no `ActiveSessions`. Isolated.
-- Impersonation: ADR-001. Stays off unless `SwitchUser=true` **and** Super Admin grant **and** an explicit runtime caller. Do not rewrite AuthGuard for impersonation.
+- Impersonation: ADR-001. Stays off unless `SwitchUser=true` **and** Super Admin grant **and** an explicit runtime caller. Do not rewrite AuthGuard for impersonation. Host/DBA steps: [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md).
 
 ---
 

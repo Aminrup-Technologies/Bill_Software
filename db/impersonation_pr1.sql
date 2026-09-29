@@ -24,7 +24,11 @@
 --   9. ForcedRevoke
 --  10. PermissionRevoked
 --  11. SystemFault
+-- Deploy: docs/SWITCHUSER_DEPLOYMENT_CHECKLIST.md (DBA only; does not enable SwitchUser).
 -- =============================================================================
+
+SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON; -- required for IX_ImpersonationSessions_TargetToken filtered index
 
 IF OBJECT_ID(N'dbo.ImpersonationSessions', N'U') IS NULL
 BEGIN

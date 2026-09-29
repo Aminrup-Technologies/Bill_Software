@@ -37,7 +37,7 @@ Switch User post-Start runtime failure is **closed**.
 
 ## Current Task
 
-None. Next scoped change is not assigned.
+Switch User deployment contract: canonical [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Uncommitted. Stopped before commit.
 
 ---
 
@@ -62,7 +62,7 @@ None. Next scoped change is not assigned.
 
 ## Next Action
 
-Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested. Cross-Tenant Duplication v1.1 is closed at `88f9d0f`.
+Wait for commit approval of the Switch User deployment checklist (docs + `impersonation_pr1.sql` `QUOTED_IDENTIFIER`). Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
 
 ---
 

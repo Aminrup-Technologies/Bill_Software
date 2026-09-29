@@ -7,7 +7,8 @@
 --              No RolePermissions grant. No UserRoles change. DBA execute only.
 --              Do not run from the application. Impersonation stays disabled
 --              until the SwitchUser feature flag is true AND a later PR grants
---              the key. See docs/ADR-001_Administrator_Impersonation.md,
+--              the key. Deploy order: docs/SWITCHUSER_DEPLOYMENT_CHECKLIST.md.
+--              See docs/ADR-001_Administrator_Impersonation.md,
 --              docs/30_Impersonation_Permission_Catalog.md.
 -- =============================================================================
 
