@@ -51,9 +51,7 @@ Menu membership: `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-m
 
 Local state (not in git):
 - `Bill_Software/Web.config` and `flamexuat … Web Deploy.pubxml` hold local UAT overlay values (connection string, `SwitchUser=true`). Never stage or commit; do not use `git commit -a`.
-- `stash@{0}` ("undocumented menu/SwitchUser membership changes … pending review"): still holds `AuthGuard.cs`, `Bill.Master.cs`, `SwitchUser.aspx.cs` edits (stash not mutated).
-  - `SwitchUser.aspx.cs` portion restored via `git restore --source` and committed with the Switch User work: target list drops the `tbl_login.CompanyID` home-company filter, matching `ImpersonationRuntime.LoadEligibleTarget` (INV-15, `5e0a550`). Do not re-apply it from the stash.
-  - `AuthGuard.cs` (`GetMenuPermissions`) + `Bill.Master.cs` (menu and Switch User link from `UserCompanyAccess`) remain parked. Coupled (Bill.Master calls the new AuthGuard method). Conflicts with ADR-001 "`AuthGuard` unchanged"; needs separate architectural review before apply or drop. Compare `cursor/company-membership-menu` (`cffc720`), which fixes the menu without touching AuthGuard.
+- Dropped impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` (on `cursor/impersonation-membership-runtime`: "impersonation-membership-runtime: undocumented menu/SwitchUser membership changes (AuthGuard, Bill.Master, SwitchUser) pending review"). Audited and dropped; it does not exist. `SwitchUser.aspx.cs` (target list by active `UserCompanyAccess`, not `tbl_login.CompanyID`) is preserved in HEAD at `3e04c58`. Menu membership in `Bill.Master.cs` is preserved in HEAD at `5ace354`. `AuthGuard.GetMenuPermissions()` and the coupled Switch User-link change were rejected under ADR-001 (`AuthGuard` unchanged) and were not restored.
 - `stash@{1}` Cursor Desktop UAT workspace; `stash@{2}` uat-pr2 challanwriter WIP; `stash@{3}` local docs/config before Cross-Tenant UAT. Stash indices shift when a stash is added or dropped; identify stashes by message.
 
 ---
@@ -79,7 +77,7 @@ Local state (not in git):
 
 ## Next Action
 
-Unpushed commits as of `5ace354`: `1bb4754`, `300505a`, `3e04c58`, `fb7de2b`, `5ace354` (plus any later HANDOFF-only commit). The `5ace354` UAT record in this file is a subsequent HANDOFF-only working-tree change. It is not one of those commits and has not been pushed. Case 2 remains **BLOCKED**. Push requires separate explicit approval. Decide the fate of the parked `AuthGuard.cs` + `Bill.Master.cs` changes in `stash@{0}` (separate architectural review task, or drop) before any menu/membership work. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
+Unpushed commits as of `5ace354`: `1bb4754`, `300505a`, `3e04c58`, `fb7de2b`, `5ace354` (plus any later HANDOFF-only commit). The `5ace354` UAT record in this file is a subsequent HANDOFF-only working-tree change. It is not one of those commits and has not been pushed. Case 2 remains **BLOCKED**. Push requires separate explicit approval. Impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` was audited and dropped; superseded work is in HEAD (`3e04c58`, `5ace354`) and the rejected `GetMenuPermissions` path was not restored. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
 
 ---
 
