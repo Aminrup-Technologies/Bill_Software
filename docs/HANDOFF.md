@@ -52,7 +52,7 @@ Menu membership: `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-m
 Local state (not in git):
 - `Bill_Software/Web.config` and `flamexuat … Web Deploy.pubxml` hold local UAT overlay values (connection string, `SwitchUser=true`). Never stage or commit; do not use `git commit -a`.
 - Dropped impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` (on `cursor/impersonation-membership-runtime`: "impersonation-membership-runtime: undocumented menu/SwitchUser membership changes (AuthGuard, Bill.Master, SwitchUser) pending review"). Audited and dropped; it does not exist. `SwitchUser.aspx.cs` (target list by active `UserCompanyAccess`, not `tbl_login.CompanyID`) is preserved in HEAD at `3e04c58`. Menu membership in `Bill.Master.cs` is preserved in HEAD at `5ace354`. `AuthGuard.GetMenuPermissions()` and the coupled Switch User-link change were rejected under ADR-001 (`AuthGuard` unchanged) and were not restored.
-- `stash@{1}` Cursor Desktop UAT workspace; `stash@{2}` uat-pr2 challanwriter WIP; `stash@{3}` local docs/config before Cross-Tenant UAT. Stash indices shift when a stash is added or dropped; identify stashes by message.
+- Retained stashes: `stash@{0}` `5b29395` Cursor Desktop UAT workspace; `stash@{1}` `498247d` wip before challanwriter extraction; `stash@{2}` `8b3a36e` Local docs and config before Cross-Tenant UAT. Stash indices shift when a stash is added or dropped; identify stashes by message.
 
 ---
 
