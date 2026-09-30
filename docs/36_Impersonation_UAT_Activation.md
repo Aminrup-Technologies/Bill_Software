@@ -13,10 +13,7 @@
 
 `AuthGuard` and `Heartbeat.ashx` are unchanged. Production `Web.Release.config` still inserts `SwitchUser=false`.
 
-## UAT host (operators)
-
-1. Set AppSetting `SwitchUser` to `true` on the **UAT** `Web.config` only. Do not set this on production.
-2. DBA: `SwitchUser_permission.sql` (catalog) if missing, then `SwitchUser_superadmin_grant_uat.sql` (Super Admin grant only). Do not execute from the app.
+Host overlay, DBA order, verification, and rollback: [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Do not duplicate those steps here.
 
 ## Validation notes
 

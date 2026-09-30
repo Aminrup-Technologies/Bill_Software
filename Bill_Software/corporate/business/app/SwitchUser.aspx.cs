@@ -88,7 +88,9 @@ namespace Bill_Software.corporate.business.app
         private void BindUsers(string search)
         {
             int currentUserId;
-            if (Session["UserDbId"] == null || !int.TryParse(Convert.ToString(Session["UserDbId"]), out currentUserId) || currentUserId <= 0)
+            int companyId = CompanyContext.CurrentCompanyID;
+            if (companyId <= 0
+                || Session["UserDbId"] == null || !int.TryParse(Convert.ToString(Session["UserDbId"]), out currentUserId) || currentUserId <= 0)
             {
                 lblNoResults.Visible = true;
                 rptUsers.DataSource = null;
@@ -103,8 +105,7 @@ namespace Bill_Software.corporate.business.app
                 INNER JOIN dbo.UserCompanyAccess a
                     ON a.UserId = u.Id AND a.CompanyID = @CompanyID AND a.IsActive = 1
                 LEFT JOIN dbo.Roles r ON r.RoleId = u.RoleId AND r.CompanyID = @CompanyID
-                WHERE u.CompanyID = @CompanyID
-                  AND u.IsActive = 1
+                WHERE u.IsActive = 1
                   AND u.Id <> @CurrentUserId
                   AND (u.LockoutEnd IS NULL OR u.LockoutEnd < SYSUTCDATETIME())
                   AND (@Search = N'' OR u.Name LIKE @SearchLike OR u.User_Id LIKE @SearchLike)
@@ -115,7 +116,7 @@ namespace Bill_Software.corporate.business.app
                 using (var cn = new SqlConnection(ConnString))
                 using (var cmd = new SqlCommand(sql, cn))
                 {
-                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = CompanyContext.CurrentCompanyID;
+                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
                     cmd.Parameters.Add("@CurrentUserId", SqlDbType.Int).Value = currentUserId;
                     cmd.Parameters.Add("@Search", SqlDbType.NVarChar, 100).Value = term;
                     cmd.Parameters.Add("@SearchLike", SqlDbType.NVarChar, 110).Value = "%" + term + "%";

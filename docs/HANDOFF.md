@@ -37,7 +37,22 @@ Switch User post-Start runtime failure is **closed**.
 
 ## Current Task
 
-None. Next scoped change is not assigned.
+Switch User deployment contract: canonical [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Committed at `1bb4754` on `cursor/impersonation-membership-runtime`. As of `3e04c58`: 6 ahead / 0 behind `July_to_Sept26_DevNSupport`. **Not pushed.**
+
+Menu membership: `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-membership-menu`) — menu permissions filtered by active `UserCompanyAccess` for the current company instead of `tbl_login.CompanyID`. Menu visibility is membership-aware. `AuthGuard.cs`, `BindSwitchUserMenu`, `SwitchUser.aspx.cs`, and page authorization remain unchanged; ADR-001 not amended. Committed as `5ace354`.
+
+**UAT `5ace354` (recorded; candidates unchanged):**
+- Case 1 — **PASS:** `admin` switched to Company 2 (AA Associates) and received the expected 117-key menu despite home Company 1.
+- Case 2 — **BLOCKED:** `FLM021` is the required single-company regression candidate, but `MustChangePassword=1` prevents normal menu access. Case 2 did not pass.
+- Case 3 — **PASS:** `admin → FLM021` produced the expected 21-key Procurement Officer menu.
+- Case 4 — **PASS:** End Impersonation restored the original `admin` identity and 117-key menu without F5.
+- Observed menu transition on Cases 3–4: **117 → 21 → 117**.
+- Cases 3–4 also opened `settings.aspx`. That opening is attributable to FLM021's existing password-change lock (`MustChangePassword=1`) and is not a `5ace354` menu defect.
+
+Local state (not in git):
+- `Bill_Software/Web.config` and `flamexuat … Web Deploy.pubxml` hold local UAT overlay values (connection string, `SwitchUser=true`). Never stage or commit; do not use `git commit -a`.
+- Dropped impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` (on `cursor/impersonation-membership-runtime`: "impersonation-membership-runtime: undocumented menu/SwitchUser membership changes (AuthGuard, Bill.Master, SwitchUser) pending review"). Audited and dropped; it does not exist. `SwitchUser.aspx.cs` (target list by active `UserCompanyAccess`, not `tbl_login.CompanyID`) is preserved in HEAD at `3e04c58`. Menu membership in `Bill.Master.cs` is preserved in HEAD at `5ace354`. `AuthGuard.GetMenuPermissions()` and the coupled Switch User-link change were rejected under ADR-001 (`AuthGuard` unchanged) and were not restored.
+- Retained stashes: `stash@{0}` `5b29395` Cursor Desktop UAT workspace; `stash@{1}` `498247d` wip before challanwriter extraction; `stash@{2}` `8b3a36e` Local docs and config before Cross-Tenant UAT. Stash indices shift when a stash is added or dropped; identify stashes by message.
 
 ---
 
@@ -62,7 +77,7 @@ None. Next scoped change is not assigned.
 
 ## Next Action
 
-Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not delete `July_to_Sept26_DevNSupport` unless cleanup is requested. Cross-Tenant Duplication v1.1 is closed at `88f9d0f`.
+Unpushed commits as of `5ace354`: `1bb4754`, `300505a`, `3e04c58`, `fb7de2b`, `5ace354` (plus any later HANDOFF-only commit). The `5ace354` UAT record in this file is a subsequent HANDOFF-only working-tree change. It is not one of those commits and has not been pushed. Case 2 remains **BLOCKED**. Push requires separate explicit approval. Impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` was audited and dropped; superseded work is in HEAD (`3e04c58`, `5ace354`) and the rejected `GetMenuPermissions` path was not restored. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
 
 ---
 

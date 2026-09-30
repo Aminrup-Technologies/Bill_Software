@@ -230,12 +230,18 @@ namespace Bill_Software.corporate.business.app
                     while (rdrAll.Read()) allSystemPermissions.Add(rdrAll.GetString(0));
                 }
 
+                // Roles are global; tenant scope comes from UserCompanyAccess, not
+                // tbl_login.CompanyID (home tenant only), so members see their menu
+                // in the selected company without a per-company tbl_login row.
                 string sqlUserPerms = @"
                     SELECT DISTINCT p.PermissionKey 
                     FROM dbo.Permissions p
                     INNER JOIN dbo.RolePermissions rp ON p.PermissionId = rp.PermissionId
-                    INNER JOIN dbo.UserRoles ur ON rp.RoleId = ur.RoleId
-                    INNER JOIN dbo.tbl_login u ON ur.UserId = u.Id AND u.CompanyID = @CompanyID
+                    INNER JOIN dbo.Roles r ON r.RoleId = rp.RoleId
+                    INNER JOIN dbo.UserRoles ur ON ur.RoleId = r.RoleId
+                    INNER JOIN dbo.tbl_login u ON u.Id = ur.UserId
+                    INNER JOIN dbo.UserCompanyAccess a
+                        ON a.UserId = u.Id AND a.CompanyID = @CompanyID AND a.IsActive = 1
                     WHERE u.User_Id = @UserId";
 
                 using (var cmdUser = new SqlCommand(sqlUserPerms, cn))
