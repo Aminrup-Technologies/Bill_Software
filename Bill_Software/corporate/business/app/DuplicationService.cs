@@ -45,11 +45,12 @@ namespace Bill_Software.corporate.business.app
 
         /// <summary>
         /// Generates the next unique business code for the given prefix, scoped to the target company.
-        /// Reads MAX(code) from the specified table/column, increments, and verifies no collision.
-        /// Retries up to <paramref name="maxRetries"/> times.
+        /// Serializes allocation with a transaction-owned application lock for this table and CompanyID,
+        /// including when that company has no rows yet. Reads the latest code, increments, and verifies no collision.
+        /// A collision advances to the next candidate. Retries up to <paramref name="maxRetries"/> times.
         /// </summary>
         /// <param name="conn">Open connection inside an active transaction.</param>
-        /// <param name="tran">The active transaction (uses UPDLOCK via IsolationLevel on the caller).</param>
+        /// <param name="tran">The active transaction. Owns the application lock until commit or rollback.</param>
         /// <param name="prefix">Two-character prefix, e.g. "AA" for Vendor, "AD" for Client.</param>
         /// <param name="tableName">Source table, e.g. "tbl_Vendor" or "tbl_Client".</param>
         /// <param name="codeColumn">Business-key column, e.g. "Vendor_Id" or "Client_Id".</param>
@@ -60,35 +61,50 @@ namespace Bill_Software.corporate.business.app
             string prefix, string tableName, string codeColumn,
             int targetCompanyId, int maxRetries = 5)
         {
+            using (var lockCmd = new SqlCommand("sp_getapplock", conn, tran))
+            {
+                lockCmd.CommandType = CommandType.StoredProcedure;
+                lockCmd.Parameters.AddWithValue("@Resource", "Lock_BizCode_" + tableName + "_" + targetCompanyId.ToString(CultureInfo.InvariantCulture));
+                lockCmd.Parameters.AddWithValue("@LockMode", "Exclusive");
+                lockCmd.Parameters.AddWithValue("@LockOwner", "Transaction");
+                lockCmd.Parameters.AddWithValue("@DbPrincipal", "public");
+                SqlParameter returnCode = new SqlParameter("@return_value", SqlDbType.Int) { Direction = ParameterDirection.ReturnValue };
+                lockCmd.Parameters.Add(returnCode);
+                lockCmd.ExecuteNonQuery();
+                if (returnCode.Value == null || returnCode.Value == DBNull.Value || Convert.ToInt32(returnCode.Value) < 0)
+                    throw new InvalidOperationException(
+                        string.Format("Unable to acquire business-code lock for {0} in company {1}.", tableName, targetCompanyId));
+            }
+
+            string lastCode = null;
+            string query = string.Format(
+                "SELECT TOP 1 [{0}] FROM [{1}] WHERE CompanyID = @CompanyID ORDER BY Id DESC",
+                codeColumn, tableName);
+            using (var cmd = new SqlCommand(query, conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
+                using (var r = cmd.ExecuteReader())
+                {
+                    if (r.Read() && !r.IsDBNull(0))
+                        lastCode = r.GetString(0);
+                }
+            }
+
+            int num = 1;
+            if (!string.IsNullOrEmpty(lastCode) && lastCode.Length > prefix.Length)
+            {
+                int.TryParse(lastCode.Substring(prefix.Length), out num);
+            }
+
+            string checkQuery = string.Format(
+                "SELECT COUNT(*) FROM [{0}] WHERE [{1}] = @Code AND CompanyID = @CompanyID",
+                tableName, codeColumn);
+
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                // Read the latest code for the TARGET company
-                string lastCode = null;
-                string query = string.Format(
-                    "SELECT TOP 1 [{0}] FROM [{1}] WHERE CompanyID = @CompanyID ORDER BY Id DESC",
-                    codeColumn, tableName);
-                using (var cmd = new SqlCommand(query, conn, tran))
-                {
-                    cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
-                    using (var r = cmd.ExecuteReader())
-                    {
-                        if (r.Read() && !r.IsDBNull(0))
-                            lastCode = r.GetString(0);
-                    }
-                }
-
-                int num = 1;
-                if (!string.IsNullOrEmpty(lastCode) && lastCode.Length > prefix.Length)
-                {
-                    int.TryParse(lastCode.Substring(prefix.Length), out num);
-                }
                 num++;
                 string candidate = prefix + num.ToString("D2");
 
-                // Verify candidate does not already exist in the target company
-                string checkQuery = string.Format(
-                    "SELECT COUNT(*) FROM [{0}] WHERE [{1}] = @Code AND CompanyID = @CompanyID",
-                    tableName, codeColumn);
                 using (var cmd = new SqlCommand(checkQuery, conn, tran))
                 {
                     cmd.Parameters.AddWithValue("@Code", candidate);

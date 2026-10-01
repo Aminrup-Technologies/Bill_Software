@@ -118,60 +118,17 @@ namespace Bill_Software.corporate.business.app
         private void PopulateTargetCompanyDropdown()
         {
             ddlTargetCompanyGlobal.Items.Clear();
-
-            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
-            DataTable dt = new DataTable();
-
-            using (SqlConnection conn = new SqlConnection(connStr))
-            using (SqlCommand cmd = new SqlCommand(@"
-                SELECT c.ID, c.Name
-                FROM dbo.tbl_Company c
-                INNER JOIN dbo.UserCompanyAccess a ON a.CompanyID = c.ID
-                INNER JOIN dbo.tbl_login u ON u.Id = a.UserId
-                WHERE u.User_Id = @UserId
-                  AND a.IsActive = 1
-                  AND (c.IsActive = 1 OR c.IsActive IS NULL)
-                  AND c.ID <> @CompanyID
-                ORDER BY c.Name", conn))
+            ddlTargetCompanyGlobal.Items.Add(new ListItem("-- Select Target Company --", ""));
+            try
             {
-                cmd.Parameters.Add(new SqlParameter("@UserId", SqlDbType.NVarChar, 100)
+                List<AuthorizedCompany> companies = AuthGuard.GetAuthorizedCompanies();
+                foreach (AuthorizedCompany c in companies)
                 {
-                    Value = Session["USERID"] != null ? Session["USERID"].ToString() : string.Empty
-                });
-                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int)
-                {
-                    Value = CompanyContext.CurrentCompanyID
-                });
-                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    da.Fill(dt);
-            }
-
-            // Membership can list only the current tenant. Other active companies
-            // are still valid duplication targets and must appear in the dropdown.
-            if (dt.Rows.Count == 0)
-            {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                using (SqlCommand cmd = new SqlCommand(@"
-                    SELECT ID, Name
-                    FROM dbo.tbl_Company
-                    WHERE (IsActive = 1 OR IsActive IS NULL)
-                      AND ID <> @CompanyID
-                    ORDER BY Name", conn))
-                {
-                    cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int)
-                    {
-                        Value = CompanyContext.CurrentCompanyID
-                    });
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        da.Fill(dt);
+                    if (c.Id != CompanyContext.CurrentCompanyID)
+                        ddlTargetCompanyGlobal.Items.Add(new ListItem(c.Name, c.Id.ToString()));
                 }
             }
-
-            ddlTargetCompanyGlobal.DataSource = dt;
-            ddlTargetCompanyGlobal.DataTextField = "Name";
-            ddlTargetCompanyGlobal.DataValueField = "ID";
-            ddlTargetCompanyGlobal.DataBind();
-            ddlTargetCompanyGlobal.Items.Insert(0, new ListItem("-- Select Target Company --", ""));
+            catch { }
         }
 
         private void BindGrid1()
