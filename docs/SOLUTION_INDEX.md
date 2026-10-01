@@ -31,6 +31,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Every UAT table column + SP signature | [page-catalog/UAT_CATALOG.md](page-catalog/UAT_CATALOG.md) |
 | Which page talks to which table / SP (verbs) | [page-catalog/DATA_DICTIONARY.md](page-catalog/DATA_DICTIONARY.md) |
 | Cross-cutting AuthN, tenancy, master page, print gate | [page-catalog/SHARED_CONTEXT.md](page-catalog/SHARED_CONTEXT.md) |
+| **Ownership model (frozen):** shared masters + shared stock vs tenant-owned transactions; switcher semantics; stock identity | [ARCHITECTURE.md](ARCHITECTURE.md) → [architecture/MULTI_TENANCY.md](architecture/MULTI_TENANCY.md) |
 | Live UAT schema (tables, FKs, missing objects, SP inventory) | [page-catalog/SHARED_SCHEMA.md](page-catalog/SHARED_SCHEMA.md) |
 | Handlers, ASCX, helpers, SQL scripts, SP call index | [page-catalog/SHARED_RUNTIME.md](page-catalog/SHARED_RUNTIME.md) |
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
@@ -85,6 +86,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [08_Cursor_Change_Audit.md](08_Cursor_Change_Audit.md) | Historical agent-change audit (not a module) |
 | [14](14_Authentication_Authorization_Architecture.md)–[21](21_Phase3_Infrastructure_Hardening.md) | AuthZ phases (history) |
 | [22_Security_Baseline.md](22_Security_Baseline.md) | Canonical security contract |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Entry point → canonical multi-tenancy decision (shared Category/Product/Store/Stock vs tenant-owned transactions; frozen 2026-10-01; implementation blocked pending dependency validation) |
 | [ADR-001](ADR-001_Administrator_Impersonation.md) | Impersonation stays off until flag + grant |
 | [29](29_Impersonation_Governance.md)–[36](36_Impersonation_UAT_Activation.md) | Impersonation governance, runtime, UAT activation |
 | [37_SwitchUser_UAT_Completion.md](37_SwitchUser_UAT_Completion.md) | Phase 2A Switch User UAT completion |

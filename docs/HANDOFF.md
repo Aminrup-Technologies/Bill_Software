@@ -6,6 +6,8 @@ Lightweight working status. Prefer this file over chat history. Update the secti
 
 ## Current Status
 
+**Architecture freeze (2026-10-01):** the canonical ownership model is committed at [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) → [`docs/architecture/MULTI_TENANCY.md`](architecture/MULTI_TENANCY.md). Frozen: shared Category/Product/Store/Stock (no `CompanyID` in `tbl_stock`; stock = `ProductID + StoreId → Quantity`), tenant-owned transactions persisting `CompanyID` directly (Flame-Ex = Tenant 1, AA Associates = Tenant 2), tenant switcher = transaction context (`CompanyContext.CurrentCompanyID`), and product-master `Quantity`/`Quantity_Num` demoted from authoritative balance. **Implementation is blocked** pending dependency-complete validation of stock mutations, purchase flows, invoice/sales flows, reconciliation views/SPs, and master-data CRUD — review ledger: [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) §6.
+
 **v2.1 Cross-Tenant Duplication enterprise release frozen:** PR **#89** merged to `master` (merge commit `148e6ed`), annotated tag `v2.1-cross-tenant-enterprise`, release record [`docs/49`](49_v2.1_CrossTenant_Release.md). Master is the default and sole integration baseline.
 
 Switch User post-Start runtime failure is **closed**. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`. `July_to_Sept26_DevNSupport` was retired on 2026-09-15; its full history is contained in `master` and dated references remain in the docs snapshots.
@@ -41,6 +43,8 @@ None. Next scoped change is not assigned.
 
 ## Pending Work
 
+- **Multi-tenancy implementation is blocked** pending dependency-complete validation ([`architecture/MULTI_TENANCY.md`](architecture/MULTI_TENANCY.md) §9): stock mutations, purchase flows, invoice/sales flows, reconciliation views/SPs, master-data CRUD. Complete audits fill the review ledger in [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) §6; only then may schema/behavior changes conforming to the frozen model proceed.
+- Pending review under the frozen model: deprecation decision for `tbl_NewProduct_CompanyID.sql` / `tbl_NewparentProduct_CompanyID.sql` / `requisition_po_companyid.sql` master-table tenancy patches; direct `CompanyID` design for the `tbl_Purches` family (replacing vendor-inference); switcher-vs-shared-list audit on master/stock pages.
 - _TBD - name the next scoped change (module, files, defect/ADR id)._
 - Known debt (do not start unless requested): leftover concatenated SQL on invoice / PO / stock / scheduler surfaces; kiosk plaintext; some direct `SmtpClient` pages; UAT objects not applied.
 - Product stops still closed: Decision #8 (`ReportingManagerId` ACL), Decision #9 (HQ cross-company), `machineKey` rotation, secret cutover ops.
@@ -50,7 +54,7 @@ None. Next scoped change is not assigned.
 ## Constraints
 
 - Repository-first. Ignore chat unless summarized here or in `ARCHITECTURE.md` / `CURSOR_RULES.md`.
-- Preserve architecture in `ARCHITECTURE.md` and `docs/22`. No parallel AuthN, no JWT, no Identity, no Windows Service host.
+- Preserve architecture in `ARCHITECTURE.md`, `docs/architecture/MULTI_TENANCY.md` (ownership model, frozen), and `docs/22`. No parallel AuthN, no JWT, no Identity, no Windows Service host. No `CompanyID` on `tbl_stock`; no per-tenant duplication of shared masters.
 - Modify only files explicitly referenced. Unified diffs only.
 - Parameterized SQL + `CompanyID` (or documented ownership). No static user state in `.aspx.cs`.
 - Do not change `AuthGuard`, `SecurePage`, `UserRoleAssignment`, or `UserCompanyAccess` without architectural review.
@@ -61,7 +65,7 @@ None. Next scoped change is not assigned.
 
 ## Next Action
 
-Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named.
+Wait for an explicit `@filename` task. On start: read `ARCHITECTURE.md` → `architecture/MULTI_TENANCY.md` → this file → `CURSOR_RULES.md`, then only the referenced implementation files. Do not reopen Switch User runtime unless a new defect is named. Do not implement schema/C#/SP/view changes for the ownership model until the dependency validations above complete.
 
 Before enabling duplication in production tenants: review + UAT **PR #90** (double-submit postback fix, vendor + customer paths) and run the [`docs/45`](45_CrossTenant_UAT_Checklist.md) checklist. On approval, mark #90 Ready for Review, merge with a merge commit, and tag **`v2.1.1`** as the hotfix release — `v2.1-cross-tenant-enterprise` stays the immutable feature milestone. PR #21 (dashboard restyle) remains an intentionally parked Draft.
 
