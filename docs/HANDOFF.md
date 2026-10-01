@@ -37,6 +37,12 @@ Switch User post-Start runtime failure is **closed**.
 
 ## Current Task
 
+View User Company 2 access is a card checkbox, separate from profile Save:
+
+`chkCompany2Access` is on the user card and posts `chkCompany2Access_CheckedChanged`. That handler confirms `tbl_login.Id` with `tbl_login.CompanyID = CompanyContext.CurrentCompanyID`, then calls `TrySetCompany2Membership`. It does not run the profile `UPDATE`, so `ReportingManagerId`, role, department, designation, password, and alert fields stay untouched. Page authorization is unchanged: `SecurePage.OnInit` calls `AuthGuard.EnsurePage(this, true, "ViewUser")` before postback events. `Company2Id` stays `2`. Checked sets `IsActive = 1` (reactivate or insert one row). Unchecked sets `IsActive = 0`. Listing does not insert a membership. Profile Save no longer calls `TrySetCompany2Membership`.
+
+`dbo.UserCompanyAccess` is already on `flamex_live`. Do not seed memberships from this change.
+
 Switch User deployment contract: canonical [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Committed at `1bb4754` on `cursor/impersonation-membership-runtime`. As of `3e04c58`: 6 ahead / 0 behind `July_to_Sept26_DevNSupport`. **Not pushed.**
 
 Menu membership: `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-membership-menu`) — menu permissions filtered by active `UserCompanyAccess` for the current company instead of `tbl_login.CompanyID`. Menu visibility is membership-aware. `AuthGuard.cs`, `BindSwitchUserMenu`, `SwitchUser.aspx.cs`, and page authorization remain unchanged; ADR-001 not amended. Committed as `5ace354`.

@@ -32,6 +32,9 @@ namespace Bill_Software.corporate.business.app
 
         private const string HomeCompanyMsgPrefix = "This user belongs to another home company. ";
         private const string NotFoundMsg = "User not found or access denied.";
+        private const string Company2AccessFailedMsg = "Company 2 access could not be updated.";
+        private const int Company1Id = 1;
+        private const int Company2Id = 2;
 
         // Writes stay scoped to tbl_login.CompanyID (home company); this only classifies a zero-row write.
         private static bool IsCrossCompanyMember(SqlConnection cn, SqlTransaction tran, int id, int companyId)
@@ -45,6 +48,68 @@ namespace Bill_Software.corporate.business.app
                 cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = companyId });
                 return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
             }
+        }
+
+        // Active Company 2 membership only. Absent or inactive loads unchecked.
+        // Grant reactivates or inserts one (UserId, CompanyID) row. Withdraw sets IsActive = 0.
+        private static bool TrySetCompany2Membership(SqlConnection cn, SqlTransaction tran, int userId, bool grant)
+        {
+            if (cn == null || userId <= 0)
+                return false;
+
+            if (grant)
+            {
+                using (var cmd = new SqlCommand(
+                    @"SELECT TOP 1 1 FROM dbo.tbl_Company
+                      WHERE ID = @CompanyID AND (IsActive = 1 OR IsActive IS NULL)", cn, tran))
+                {
+                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = Company2Id;
+                    if (cmd.ExecuteScalar() == null)
+                        return false;
+                }
+            }
+
+            const string sql = @"
+                UPDATE dbo.UserCompanyAccess
+                   SET IsActive = @IsActive
+                 WHERE UserId = @UserId AND CompanyID = @CompanyID;
+                IF @@ROWCOUNT = 0 AND @IsActive = 1
+                BEGIN
+                    INSERT INTO dbo.UserCompanyAccess (UserId, CompanyID, IsActive)
+                    SELECT @UserId, @CompanyID, 1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM dbo.UserCompanyAccess
+                        WHERE UserId = @UserId AND CompanyID = @CompanyID);
+                END";
+
+            try
+            {
+                using (var cmd = new SqlCommand(sql, cn, tran))
+                {
+                    cmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = Company2Id;
+                    cmd.Parameters.Add("@IsActive", SqlDbType.Bit).Value = grant;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (SqlException ex)
+            {
+                if (!grant || (ex.Number != 2627 && ex.Number != 2601))
+                    throw;
+
+                using (var cmd = new SqlCommand(
+                    @"UPDATE dbo.UserCompanyAccess
+                         SET IsActive = 1
+                       WHERE UserId = @UserId AND CompanyID = @CompanyID", cn, tran))
+                {
+                    cmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                    cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = Company2Id;
+                    if (cmd.ExecuteNonQuery() != 1)
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         private static string BlockedWriteMessage(SqlConnection cn, SqlTransaction tran, int id, int companyId, string homeCompanyMsg)
@@ -122,13 +187,23 @@ namespace Bill_Software.corporate.business.app
                             u.GeoFenceLat, u.GeoFenceLng, u.GeoFenceRadius,
                             ISNULL(u.AllowGeoFenceOverride, 1) AS AllowGeoFenceOverride,
                             ISNULL(u.MaxGeoFenceAttempts, 3) AS MaxGeoFenceAttempts,
-                          (SELECT TOP 1 LastHeartbeat FROM ActiveSessions s WHERE s.UserId = u.Id ORDER BY LastHeartbeat DESC) AS LatestHeartbeat
-                   FROM dbo.tbl_login u" + JoinCurrentCompanyMembers("u.Id") + @"
+                          (SELECT TOP 1 LastHeartbeat FROM ActiveSessions s WHERE s.UserId = u.Id ORDER BY LastHeartbeat DESC) AS LatestHeartbeat,
+                          CAST(CASE WHEN EXISTS (
+                              SELECT 1 FROM dbo.UserCompanyAccess c2
+                              WHERE c2.UserId = u.Id AND c2.CompanyID = @Company2Id AND c2.IsActive = 1
+                          ) THEN 1 ELSE 0 END AS bit) AS HasCompany2Access
+                   FROM dbo.tbl_login u
                    LEFT JOIN dbo.Roles r ON u.RoleId = r.RoleId
                    LEFT JOIN dbo.tbl_Departments d ON u.DepartmentID = d.DepartmentID
                    LEFT JOIN dbo.tbl_Designations des ON u.DesignationID = des.DesignationID
                    LEFT JOIN dbo.tbl_login mgr ON u.ReportingManagerId = mgr.User_Id
-                   WHERE 1 = 1 ";
+                   WHERE (
+                       EXISTS (
+                           SELECT 1 FROM dbo.UserCompanyAccess uca
+                           WHERE uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1
+                       )
+                       OR (@CompanyID = @Company1Id AND u.CompanyID = @Company1Id)
+                   ) ";
 
             // 3. Dynamic Admin Filter
             if (!loggedInUser.Equals("admin", StringComparison.OrdinalIgnoreCase))
@@ -171,6 +246,8 @@ namespace Bill_Software.corporate.business.app
             {
                 // 6. Parameter Injection
                 cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                cmd.Parameters.Add("@Company1Id", SqlDbType.Int).Value = Company1Id;
+                cmd.Parameters.Add("@Company2Id", SqlDbType.Int).Value = Company2Id;
 
                 if (!string.IsNullOrEmpty(searchTerm))
                 {
@@ -262,6 +339,66 @@ namespace Bill_Software.corporate.business.app
         protected void lvUsers_ItemCanceling(object sender, ListViewCancelEventArgs e)
         {
             lvUsers.EditIndex = -1;
+            BindGrid();
+        }
+
+        // Card checkbox only. Does not open edit mode and does not write tbl_login.
+        protected void chkCompany2Access_CheckedChanged(object sender, EventArgs e)
+        {
+            CheckBox chk = sender as CheckBox;
+            ListViewDataItem item = chk == null ? null : chk.NamingContainer as ListViewDataItem;
+            if (item == null)
+                return;
+
+            int id = Convert.ToInt32(lvUsers.DataKeys[item.DisplayIndex].Value);
+            int companyId = CompanyContext.CurrentCompanyID;
+
+            using (var cn = new SqlConnection(ConnString))
+            {
+                cn.Open();
+                using (var tran = cn.BeginTransaction())
+                {
+                    bool homeCompany;
+                    using (var cmd = new SqlCommand(
+                        "SELECT COUNT(1) FROM dbo.tbl_login WHERE Id = @Id AND CompanyID = @CompanyID", cn, tran))
+                    {
+                        cmd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                        cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
+                        homeCompany = Convert.ToInt32(cmd.ExecuteScalar()) == 1;
+                    }
+
+                    if (!homeCompany)
+                    {
+                        tran.Rollback();
+                        ShowError(BlockedWriteMessage(cn, null, id, companyId,
+                            "Company 2 access can only be changed from the user's home company."));
+                        BindGrid();
+                        return;
+                    }
+
+                    try
+                    {
+                        if (!TrySetCompany2Membership(cn, tran, id, chk.Checked))
+                        {
+                            tran.Rollback();
+                            ShowError(Company2AccessFailedMsg);
+                            BindGrid();
+                            return;
+                        }
+                    }
+                    catch (SqlException)
+                    {
+                        tran.Rollback();
+                        ShowError(Company2AccessFailedMsg);
+                        BindGrid();
+                        return;
+                    }
+
+                    tran.Commit();
+                }
+            }
+
+            ShowOk(chk.Checked ? "Company 2 access granted." : "Company 2 access removed.");
             BindGrid();
         }
 

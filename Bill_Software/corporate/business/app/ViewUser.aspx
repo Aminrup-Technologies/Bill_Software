@@ -478,6 +478,10 @@
                                 </div>
 
                                 <div class="card-actions">
+                                    <asp:CheckBox ID="chkCompany2Access" runat="server" Text="Company 2 Access"
+                                        Checked='<%# Convert.ToBoolean(Eval("HasCompany2Access")) %>'
+                                        AutoPostBack="true" CausesValidation="false"
+                                        OnCheckedChanged="chkCompany2Access_CheckedChanged" />
                                     <asp:LinkButton ID="lnkEdit" runat="server" CommandName="Edit" CssClass="action-btn btn-primary">Edit</asp:LinkButton>
                                     <asp:LinkButton ID="lnkToggleActive" runat="server" CommandName="ToggleActive" CommandArgument='<%# Eval("Id") %>' CssClass="action-btn"></asp:LinkButton>
                                     <asp:LinkButton ID="lnkReset" runat="server" CommandName="ResetPassword" CommandArgument='<%# Eval("Id") %>' OnClientClick="return confirmSendCredentials();" CssClass="action-btn btn-primary">Email Access</asp:LinkButton>
