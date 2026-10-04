@@ -8,6 +8,8 @@ Lightweight working status. Prefer this file over chat history. Update the secti
 
 Cross-Tenant Duplication **v1.1** is **completed** on `July_to_Sept26_DevNSupport` at `88f9d0f` (PR **#92** merge of Skip Already Duplicated). Baseline reports: [`44_CrossTenant_Final_Integration.md`](44_CrossTenant_Final_Integration.md), [`45_SkipExisting_BulkDuplication.md`](45_SkipExisting_BulkDuplication.md).
 
+Cross-Tenant Duplication **relationships** are **completed and published** on `July_to_Sept26_DevNSupport` at `282cfce67a96f0a057cda7553beceb136ef15e50`. The push succeeded, and local HEAD and `origin/July_to_Sept26_DevNSupport` are synchronized. Delivered: persistent `dbo.tbl_CrossTenantDuplication` schema, relationship write inside the existing duplication transaction, authorized bidirectional counterpart display on View Vendor / View Customer, and historical labeling when the counterpart record no longer exists. UAT validated. Limitation: Customer-side R7 (no counterpart shown without access to the counterpart company) was not independently exercised, because the restricted UAT role could not open `View_client.aspx`. That is a test-access gap, not an implementation failure. Record: [`47_CrossTenant_Duplication_Relationship_Architecture.md`](47_CrossTenant_Duplication_Relationship_Architecture.md).
+
 PR **#84** Switch User work remains on this branch (first parent `fa777e9`; merge commit `d67e854` on `master`). Impersonation runtime was preserved during the duplication merge. ADR-001 unchanged (`AuthGuard` / `SecurePage` / `UserCompanyAccess` / fail-closed). Runtime lives only in `Bill_Software/corporate/business/app/SwitchUser.aspx.cs`.
 
 Switch User post-Start runtime failure is **closed**.
@@ -30,6 +32,7 @@ Switch User post-Start runtime failure is **closed**.
 - Switch User runtime patch: `SessionLinkKey` permission exception + `CompleteRequest` redirect. Investigation closed (no remaining Switch User runtime work).
 - Cross-Tenant Duplication PR-1–PR-4 merged at `577ebcf` (`DuplicationService`, View Vendor/Customer single + bulk, live `WriteDuplicationAudit`). Docs: `34` CrossTenant, `37` completion, `41`–`43` UAT, `44` integration.
 - Cross-Tenant Duplication **v1.1** completed at `88f9d0f` (PR **#92**): bulk Skip Already Duplicated. Spec: `docs/45`.
+- Cross-Tenant Duplication relationships published at `282cfce` (persistent source → target links, transactional write, authorized bidirectional display, historical counterpart handling; UAT validated with Customer-side R7 not independently exercised). Spec: `docs/47`.
 - Ponytail + solution-docs Cursor rules (existing).
 - This bootstrap: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/CURSOR_RULES.md`, `Bill_Software/.cursor/rules/project.mdc`.
 
@@ -83,7 +86,7 @@ Local state (not in git):
 
 ## Next Action
 
-Unpushed commits as of `5ace354`: `1bb4754`, `300505a`, `3e04c58`, `fb7de2b`, `5ace354` (plus any later HANDOFF-only commit). The `5ace354` UAT record in this file is a subsequent HANDOFF-only working-tree change. It is not one of those commits and has not been pushed. Case 2 remains **BLOCKED**. Push requires separate explicit approval. Impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` was audited and dropped; superseded work is in HEAD (`3e04c58`, `5ace354`) and the rejected `GetMenuPermissions` path was not restored. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`.
+Unpushed commits as of `5ace354`: `1bb4754`, `300505a`, `3e04c58`, `fb7de2b`, `5ace354` (plus any later HANDOFF-only commit). The `5ace354` UAT record in this file is a subsequent HANDOFF-only working-tree change. It is not one of those commits and has not been pushed. Case 2 remains **BLOCKED**. Push requires separate explicit approval. Impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` was audited and dropped; superseded work is in HEAD (`3e04c58`, `5ace354`) and the rejected `GetMenuPermissions` path was not restored. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and pushed at `282cfce`; optional follow-up only: exercise Customer-side R7 with a restricted role that can open `View_client.aspx`.
 
 ---
 

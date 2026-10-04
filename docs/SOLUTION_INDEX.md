@@ -38,7 +38,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
 | Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
 | Switch User host/DBA deploy | [SWITCHUSER_DEPLOYMENT_CHECKLIST.md](SWITCHUSER_DEPLOYMENT_CHECKLIST.md) |
-| Cross-tenant vendor/customer duplication (v1.1 complete at `88f9d0f`) | [34 CrossTenant](34_CrossTenant_Duplication_Architecture.md), [37 completion](37_CrossTenant_Duplication_Completion.md), [44 integration](44_CrossTenant_Final_Integration.md), [45 skip existing](45_SkipExisting_BulkDuplication.md), [46 release](46_CrossTenant_Release_v1.1.md) |
+| Cross-tenant vendor/customer duplication (v1.1 complete at `88f9d0f`; relationships published at `282cfce`) | [34 CrossTenant](34_CrossTenant_Duplication_Architecture.md), [37 completion](37_CrossTenant_Duplication_Completion.md), [44 integration](44_CrossTenant_Final_Integration.md), [45 skip existing](45_SkipExisting_BulkDuplication.md), [46 release](46_CrossTenant_Release_v1.1.md), [47 relationships](47_CrossTenant_Duplication_Relationship_Architecture.md) |
 
 ## Page catalogs (unique facts only)
 
@@ -99,6 +99,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | [44_CrossTenant_Final_Integration.md](44_CrossTenant_Final_Integration.md) | Final integration of PR-1–PR-4 onto `July_to_Sept26_DevNSupport` |
 | [45_SkipExisting_BulkDuplication.md](45_SkipExisting_BulkDuplication.md) | PR-4.1 Skip Already Duplicated (v1.1; merged at `88f9d0f`) |
 | [46_CrossTenant_Release_v1.1.md](46_CrossTenant_Release_v1.1.md) | Cross-Tenant Duplication v1.1 release record (tag `cross-tenant-v1.1`) |
+| [47_CrossTenant_Duplication_Relationship_Architecture.md](47_CrossTenant_Duplication_Relationship_Architecture.md) | Persistent Vendor / Customer duplication relationships (`tbl_CrossTenantDuplication`; published at `282cfce`) |
 
 ## Database Migrations
 
