@@ -15,6 +15,7 @@ namespace Bill_Software.corporate.business.app
         protected override string RequiredPermissionKey { get { return "View_client"; } }
 
         DB_UTILITY DbCL = new DB_UTILITY();
+        private Dictionary<int, List<string>> duplicationLinks;
         protected void Page_Load(object sender, EventArgs e)
         {
             if (HttpContext.Current.Session["USERID"] == null)
@@ -111,6 +112,7 @@ namespace Bill_Software.corporate.business.app
                 lblRecordCount.ForeColor = System.Drawing.Color.Red;
             }
 
+            duplicationLinks = DuplicationService.GetAuthorizedCounterpartLinks("Customer");
             DataList1.DataSource = dt;
             DataList1.DataBind();
         }
@@ -150,6 +152,7 @@ namespace Bill_Software.corporate.business.app
                 lblRecordCount.ForeColor = System.Drawing.Color.Red;
             }
 
+            duplicationLinks = DuplicationService.GetAuthorizedCounterpartLinks("Customer");
             DataList1.DataSource = dt;
             DataList1.DataBind();
         }
@@ -183,6 +186,15 @@ namespace Bill_Software.corporate.business.app
             HiddenField sourceId = e.Item.FindControl("hfClientId") as HiddenField;
             if (row != null && sourceId != null)
                 sourceId.Value = Convert.ToString(row["Id"]);
+
+            Label dupLink = e.Item.FindControl("lblDuplicationLink") as Label;
+            List<string> lines;
+            if (row != null && dupLink != null && duplicationLinks != null &&
+                duplicationLinks.TryGetValue(Convert.ToInt32(row["Id"]), out lines))
+            {
+                dupLink.Text = string.Join("<br />", lines.ConvertAll(l => HttpUtility.HtmlEncode(l)));
+                dupLink.Visible = true;
+            }
         }
 
         protected void btnBulkDuplicateClient_Click(object sender, EventArgs e)

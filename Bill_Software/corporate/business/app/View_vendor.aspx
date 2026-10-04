@@ -68,6 +68,7 @@
                             <span style="background:#e9ecef; padding:2px 6px; border-radius:4px; font-size:11px; margin-top:4px; display:inline-block;">
                                 Code: <%# string.IsNullOrEmpty(Convert.ToString(Eval("PrincipleVndrCode"))) ? "N/A" : Eval("PrincipleVndrCode") %>
                             </span>
+                            <asp:Label ID="lblDuplicationLink" runat="server" Visible="false" Style="display: block; margin-top: 4px; font-size: 11px; color: #17a2b8;" />
                         </td>
                         
                         <td style="font-size: 12px; color: #444;">

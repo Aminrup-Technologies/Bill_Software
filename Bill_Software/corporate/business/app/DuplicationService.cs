@@ -237,6 +237,7 @@ namespace Bill_Software.corporate.business.app
 
                         string targetName = ResolveDuplicateName(conn, tran, "tbl_Vendor", "Vendor_Name", srcName, targetCompanyId);
                         string newVendorId = GenerateNextVendorCode(conn, tran, targetCompanyId);
+                        int newVendorPk;
 
                         using (var cmd = new SqlCommand(@"
                             INSERT INTO tbl_Vendor
@@ -252,7 +253,8 @@ namespace Bill_Software.corporate.business.app
                              @Rep_Name, @Rep_Desig, @Rep_phone, @Rep_email,
                              @Service_tax_No, @Pan_No, @Vat_No, @PrincipleVndrCode,
                              @BankAccNo, @BankIfscCode, @AccountName,
-                             @CompanyID, @CreatedBy, GETDATE())", conn, tran))
+                             @CompanyID, @CreatedBy, GETDATE());
+                            SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tran))
                         {
                             cmd.Parameters.AddWithValue("@Vendor_Id", newVendorId);
                             cmd.Parameters.AddWithValue("@Vendor_Name", targetName);
@@ -278,8 +280,11 @@ namespace Bill_Software.corporate.business.app
                             cmd.Parameters.AddWithValue("@AccountName", RowStr(src, "AccountName"));
                             cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
                             cmd.Parameters.AddWithValue("@CreatedBy", userName);
-                            cmd.ExecuteNonQuery();
+                            newVendorPk = Convert.ToInt32(cmd.ExecuteScalar());
                         }
+
+                        WriteDuplicationRelationship(conn, tran, "Vendor", sourceId, srcVendorId,
+                            targetCompanyId, newVendorPk, newVendorId, userName);
 
                         // Audit trail — scoped to TARGET company (live tbl_SystemNotification schema)
                         string nameNote = targetName != srcName
@@ -380,6 +385,7 @@ namespace Bill_Software.corporate.business.app
 
                         // --- Client_Id generation with collision retry ---
                         string newClientId = GenerateNextClientCode(conn, tran, targetCompanyId);
+                        int newClientPk;
 
                         // Insert the duplicated client master
                         using (var cmd = new SqlCommand(@"
@@ -392,7 +398,8 @@ namespace Bill_Software.corporate.business.app
                             (@Client_Id, @Client_Name, @Industry, @Address1, @State, @City, @pin,
                              @Com_phone, @Com_Fax, @Com_web_site, @Com_email,
                              @Service_tax_no, @Pan_no, @PlaceofSupply,
-                             @CompanyID, @CreatedBy, GETDATE())", conn, tran))
+                             @CompanyID, @CreatedBy, GETDATE());
+                            SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tran))
                         {
                             cmd.Parameters.AddWithValue("@Client_Id", newClientId);
                             cmd.Parameters.AddWithValue("@Client_Name", targetName);
@@ -410,12 +417,15 @@ namespace Bill_Software.corporate.business.app
                             cmd.Parameters.AddWithValue("@PlaceofSupply", RowStr(src, "PlaceofSupply"));
                             cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
                             cmd.Parameters.AddWithValue("@CreatedBy", userName);
-                            cmd.ExecuteNonQuery();
+                            newClientPk = Convert.ToInt32(cmd.ExecuteScalar());
                         }
 
                         CopyClientRegAddress(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                         CopyFactoryRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                         CopyRepresentativeRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
+
+                        WriteDuplicationRelationship(conn, tran, "Customer", sourceId, srcClientId,
+                            targetCompanyId, newClientPk, newClientId, userName);
 
                         // Audit trail — scoped to TARGET company (live tbl_SystemNotification schema)
                         string nameNote = targetName != srcName
@@ -624,6 +634,7 @@ namespace Bill_Software.corporate.business.app
 
                             string targetName = ResolveDuplicateName(conn, tran, "tbl_Vendor", "Vendor_Name", srcName, targetCompanyId);
                             string newVendorId = GenerateNextVendorCode(conn, tran, targetCompanyId);
+                            int newVendorPk;
 
                             using (var cmd = new SqlCommand(@"
                                 INSERT INTO tbl_Vendor
@@ -639,7 +650,8 @@ namespace Bill_Software.corporate.business.app
                                  @Rep_Name, @Rep_Desig, @Rep_phone, @Rep_email,
                                  @Service_tax_No, @Pan_No, @Vat_No, @PrincipleVndrCode,
                                  @BankAccNo, @BankIfscCode, @AccountName,
-                                 @CompanyID, @CreatedBy, GETDATE())", conn, tran))
+                                 @CompanyID, @CreatedBy, GETDATE());
+                                SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tran))
                             {
                                 cmd.Parameters.AddWithValue("@Vendor_Id", newVendorId);
                                 cmd.Parameters.AddWithValue("@Vendor_Name", targetName);
@@ -665,8 +677,11 @@ namespace Bill_Software.corporate.business.app
                                 cmd.Parameters.AddWithValue("@AccountName", RowStr(src, "AccountName"));
                                 cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
                                 cmd.Parameters.AddWithValue("@CreatedBy", userName);
-                                cmd.ExecuteNonQuery();
+                                newVendorPk = Convert.ToInt32(cmd.ExecuteScalar());
                             }
+
+                            WriteDuplicationRelationship(conn, tran, "Vendor", sourceId, srcVendorId,
+                                targetCompanyId, newVendorPk, newVendorId, userName);
 
                             string nameNote = targetName != srcName
                                 ? string.Format(" (renamed from '{0}' due to name collision)", srcName)
@@ -783,6 +798,7 @@ namespace Bill_Software.corporate.business.app
 
                             string targetName = ResolveDuplicateName(conn, tran, "tbl_Client", "Client_Name", srcName, targetCompanyId);
                             string newClientId = GenerateNextClientCode(conn, tran, targetCompanyId);
+                            int newClientPk;
 
                             using (var cmd = new SqlCommand(@"
                                 INSERT INTO tbl_Client
@@ -794,7 +810,8 @@ namespace Bill_Software.corporate.business.app
                                 (@Client_Id, @Client_Name, @Industry, @Address1, @State, @City, @pin,
                                  @Com_phone, @Com_Fax, @Com_web_site, @Com_email,
                                  @Service_tax_no, @Pan_no, @PlaceofSupply,
-                                 @CompanyID, @CreatedBy, GETDATE())", conn, tran))
+                                 @CompanyID, @CreatedBy, GETDATE());
+                                SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tran))
                             {
                                 cmd.Parameters.AddWithValue("@Client_Id", newClientId);
                                 cmd.Parameters.AddWithValue("@Client_Name", targetName);
@@ -812,12 +829,15 @@ namespace Bill_Software.corporate.business.app
                                 cmd.Parameters.AddWithValue("@PlaceofSupply", RowStr(src, "PlaceofSupply"));
                                 cmd.Parameters.AddWithValue("@CompanyID", targetCompanyId);
                                 cmd.Parameters.AddWithValue("@CreatedBy", userName);
-                                cmd.ExecuteNonQuery();
+                                newClientPk = Convert.ToInt32(cmd.ExecuteScalar());
                             }
 
                             CopyClientRegAddress(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                             CopyFactoryRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
                             CopyRepresentativeRecords(conn, tran, srcClientId, newClientId, targetCompanyId, userName);
+
+                            WriteDuplicationRelationship(conn, tran, "Customer", sourceId, srcClientId,
+                                targetCompanyId, newClientPk, newClientId, userName);
 
                             string nameNote = targetName != srcName
                                 ? string.Format(" (renamed from '{0}' due to name collision)", srcName)
@@ -857,6 +877,82 @@ namespace Bill_Software.corporate.business.app
         }
 
         // ───────────────────────────────────────────────────────────
+        //  RELATIONSHIP DISPLAY
+        // ───────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns counterpart display lines ("Duplicated → Company (Code)" / "Duplicated ← Company (Code)")
+        /// for records of the current company, keyed by the local record Id (tbl_Vendor.Id / tbl_Client.Id).
+        /// Business codes are duplication-time snapshots; when the counterpart record no longer exists in its
+        /// company the line is marked historical. Links whose counterpart company the user cannot access are omitted.
+        /// </summary>
+        /// <param name="entityType">"Vendor" or "Customer".</param>
+        public static Dictionary<int, List<string>> GetAuthorizedCounterpartLinks(string entityType)
+        {
+            string recordTable;
+            if (entityType == "Vendor")
+                recordTable = "tbl_Vendor";
+            else if (entityType == "Customer")
+                recordTable = "tbl_Client";
+            else
+                throw new ArgumentException("Unsupported entity type.", "entityType");
+
+            var links = new Dictionary<int, List<string>>();
+            var companyNames = new Dictionary<int, string>();
+            foreach (AuthorizedCompany c in AuthGuard.GetAuthorizedCompanies())
+                companyNames[c.Id] = c.Name;
+            var access = new Dictionary<int, bool>();
+
+            using (var conn = new SqlConnection(ConnString))
+            using (var cmd = new SqlCommand(string.Format(@"
+                SELECT d.SourceRecordID, d.TargetCompanyID, d.TargetBusinessCode, CAST(1 AS BIT),
+                       CAST(CASE WHEN x.Id IS NULL THEN 0 ELSE 1 END AS BIT), d.DuplicatedOn
+                FROM dbo.tbl_CrossTenantDuplication d
+                LEFT JOIN dbo.[{0}] x ON x.Id = d.TargetRecordID AND x.CompanyID = d.TargetCompanyID
+                WHERE d.EntityType = @EntityType AND d.SourceCompanyID = @CompanyID
+                UNION ALL
+                SELECT d.TargetRecordID, d.SourceCompanyID, d.SourceBusinessCode, CAST(0 AS BIT),
+                       CAST(CASE WHEN x.Id IS NULL THEN 0 ELSE 1 END AS BIT), d.DuplicatedOn
+                FROM dbo.tbl_CrossTenantDuplication d
+                LEFT JOIN dbo.[{0}] x ON x.Id = d.SourceRecordID AND x.CompanyID = d.SourceCompanyID
+                WHERE d.EntityType = @EntityType AND d.TargetCompanyID = @CompanyID
+                ORDER BY DuplicatedOn", recordTable), conn))
+            {
+                cmd.Parameters.Add(new SqlParameter("@EntityType", SqlDbType.VarChar, 20) { Value = entityType });
+                cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                conn.Open();
+                using (var r = cmd.ExecuteReader())
+                {
+                    while (r.Read())
+                    {
+                        int counterpartCompanyId = r.GetInt32(1);
+                        bool allowed;
+                        if (!access.TryGetValue(counterpartCompanyId, out allowed))
+                        {
+                            allowed = companyNames.ContainsKey(counterpartCompanyId) && UserCanAccessCompany(counterpartCompanyId);
+                            access[counterpartCompanyId] = allowed;
+                        }
+                        if (!allowed)
+                            continue;
+
+                        int localRecordId = r.GetInt32(0);
+                        List<string> lines;
+                        if (!links.TryGetValue(localRecordId, out lines))
+                        {
+                            lines = new List<string>();
+                            links[localRecordId] = lines;
+                        }
+                        lines.Add(string.Format("Duplicated {0} {1} ({2}){3}",
+                            r.GetBoolean(3) ? "→" : "←", companyNames[counterpartCompanyId], r.GetString(2),
+                            r.GetBoolean(4) ? "" : " — historical, record no longer exists"));
+                    }
+                }
+            }
+
+            return links;
+        }
+
+        // ───────────────────────────────────────────────────────────
         //  INTERNAL HELPERS
         // ───────────────────────────────────────────────────────────
 
@@ -889,6 +985,45 @@ namespace Bill_Software.corporate.business.app
                     Value = string.IsNullOrEmpty(userName) ? (object)DBNull.Value : userName
                 });
                 cmd.Parameters.Add(new SqlParameter("@CompanyID", SqlDbType.Int) { Value = targetCompanyId });
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        /// <summary>
+        /// Persists the source → target link in dbo.tbl_CrossTenantDuplication.
+        /// Source side is always CompanyContext.CurrentCompanyID (already validated by the caller).
+        /// </summary>
+        private static void WriteDuplicationRelationship(
+            SqlConnection conn,
+            SqlTransaction tran,
+            string entityType,
+            int sourceRecordId,
+            string sourceBusinessCode,
+            int targetCompanyId,
+            int targetRecordId,
+            string targetBusinessCode,
+            string userName)
+        {
+            using (var cmd = new SqlCommand(@"
+                INSERT INTO dbo.tbl_CrossTenantDuplication
+                (EntityType, SourceCompanyID, SourceRecordID, SourceBusinessCode,
+                 TargetCompanyID, TargetRecordID, TargetBusinessCode, DuplicatedOn, DuplicatedBy)
+                VALUES
+                (@EntityType, @SourceCompanyID, @SourceRecordID, @SourceBusinessCode,
+                 @TargetCompanyID, @TargetRecordID, @TargetBusinessCode, GETDATE(), @DuplicatedBy)",
+                conn, tran))
+            {
+                cmd.Parameters.Add(new SqlParameter("@EntityType", SqlDbType.VarChar, 20) { Value = entityType });
+                cmd.Parameters.Add(new SqlParameter("@SourceCompanyID", SqlDbType.Int) { Value = CompanyContext.CurrentCompanyID });
+                cmd.Parameters.Add(new SqlParameter("@SourceRecordID", SqlDbType.Int) { Value = sourceRecordId });
+                cmd.Parameters.Add(new SqlParameter("@SourceBusinessCode", SqlDbType.VarChar, 50) { Value = sourceBusinessCode ?? string.Empty });
+                cmd.Parameters.Add(new SqlParameter("@TargetCompanyID", SqlDbType.Int) { Value = targetCompanyId });
+                cmd.Parameters.Add(new SqlParameter("@TargetRecordID", SqlDbType.Int) { Value = targetRecordId });
+                cmd.Parameters.Add(new SqlParameter("@TargetBusinessCode", SqlDbType.VarChar, 50) { Value = targetBusinessCode ?? string.Empty });
+                cmd.Parameters.Add(new SqlParameter("@DuplicatedBy", SqlDbType.VarChar, 50)
+                {
+                    Value = string.IsNullOrEmpty(userName) ? (object)DBNull.Value : userName
+                });
                 cmd.ExecuteNonQuery();
             }
         }

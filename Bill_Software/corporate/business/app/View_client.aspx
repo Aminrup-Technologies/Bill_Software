@@ -178,6 +178,7 @@
                         <strong style="font-size: 14px; color: #19658A;"><%# Eval("Client_Name") %></strong><br />
                         <span style="background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-top: 4px; display: inline-block;">Industry: <%# string.IsNullOrEmpty(Convert.ToString(Eval("Industry"))) ? "N/A" : Eval("Industry") %>
                         </span>
+                        <asp:Label ID="lblDuplicationLink" runat="server" Visible="false" Style="display: block; margin-top: 4px; font-size: 11px; color: #17a2b8;" />
                     </td>
 
                     <td style="text-align: left; font-size: 12px; color: #444; vertical-align: top;">
