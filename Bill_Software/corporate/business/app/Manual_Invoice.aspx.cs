@@ -58,7 +58,7 @@ namespace Bill_Software.corporate.business.app
         {
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                using (SqlCommand cmd = new SqlCommand("SELECT User_Id, Name FROM tbl_login WHERE (User_Id NOT IN ('admin', 'AT01')) and CompanyID = @CompanyID and IsActive=1 ORDER BY Name", conn))
+                using (SqlCommand cmd = new SqlCommand("SELECT u.User_Id, u.Name FROM tbl_login u INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1 WHERE (u.User_Id NOT IN ('admin', 'AT01')) AND u.IsActive = 1 ORDER BY u.Name", conn))
                 {
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     using (SqlDataAdapter sda = new SqlDataAdapter(cmd))

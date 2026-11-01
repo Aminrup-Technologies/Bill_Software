@@ -51,8 +51,10 @@ namespace Bill_Software.corporate.business.app
             {
                 conn.Open();
 
-                // 1. Load Employees (Company Isolated)
-                string empQuery = "SELECT User_Id, Name + ' [' + User_Id + ']' as DisplayName FROM tbl_login WHERE CompanyID = @CompanyID AND IsActive = 1 AND User_Id NOT IN ('admin', 'AT01') ORDER BY Name";
+                // 1. Load Employees (current-company membership via UserCompanyAccess)
+                string empQuery = @"SELECT u.User_Id, u.Name + ' [' + u.User_Id + ']' as DisplayName FROM tbl_login u
+                    INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1
+                    WHERE u.IsActive = 1 AND u.User_Id NOT IN ('admin', 'AT01') ORDER BY u.Name";
                 using (SqlCommand cmd = new SqlCommand(empQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);

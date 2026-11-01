@@ -100,7 +100,10 @@ namespace Bill_Software.corporate.business.app
         {
             using (SqlConnection conn = new SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
             {
-                string query = "SELECT User_Id, Name FROM tbl_login WHERE User_Id NOT IN ('admin', 'AT01') AND CompanyID = @CompanyID AND IsActive = 1 ORDER BY Name";
+                // Membership-aware: current-company members via UserCompanyAccess (docs/48 section 4).
+                string query = @"SELECT u.User_Id, u.Name FROM tbl_login u
+                    INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1
+                    WHERE u.User_Id NOT IN ('admin', 'AT01') AND u.IsActive = 1 ORDER BY u.Name";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);

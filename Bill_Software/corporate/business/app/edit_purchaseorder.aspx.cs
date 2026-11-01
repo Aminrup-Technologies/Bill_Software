@@ -50,8 +50,10 @@ namespace Bill_Software.corporate.business.app
             {
                 conn.Open();
 
-                // 1. ISOLATED RESOURCE: Sales Persons
-                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompanyID ORDER BY Name";
+                // 1. CURRENT-COMPANY MEMBERSHIP: Sales Persons (UserCompanyAccess, docs/48 section 4)
+                string salesQuery = @"SELECT u.Id, (u.Name + ' [' + u.User_Id + ']') AS DisplayName FROM tbl_login u
+                    INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1
+                    WHERE u.IsActive = 1 ORDER BY u.Name";
                 using (SqlCommand cmd = new SqlCommand(salesQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);

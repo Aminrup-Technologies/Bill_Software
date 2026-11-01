@@ -333,7 +333,10 @@ namespace Bill_Software.corporate.business.app
         private string GetUserEmailFromDatabase(string userId)
         {
             string email = "Not Provided";
-            string query = "SELECT Email FROM tbl_login WHERE User_Id = @UserId AND CompanyID = @CompanyID";
+            // Membership-aware: route for current-company members, not only home-company users (docs/48 section 4).
+            string query = @"SELECT u.Email FROM tbl_login u
+                INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1
+                WHERE u.User_Id = @UserId";
             try
             {
                 using (var cn = new SqlConnection(ConnString))
