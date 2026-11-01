@@ -1,6 +1,6 @@
 # 48 — Identity hardening PR preparation (post-go-live)
 
-**Status:** Published as open, unmerged PR [#96](https://github.com/Aminrup-Technologies/Bill_Software/pull/96) from `feature/identity-hardening-pr` into `master`; opened at head `1209d15a2128150a2ba66ba35fa7dba8aae79a85` (one commit, twelve files). Baseline is `master` at `544a5888a9df5ad347b1f50bafeb80cbe810be95`. `July_to_Sept26_DevNSupport` remains at `4a37676`. Not merged, not deployed; B1 DBA execution and B2 architectural review are pending (§9).
+**Status:** Published as open, unmerged PR [#96](https://github.com/Aminrup-Technologies/Bill_Software/pull/96) from `feature/identity-hardening-pr` into `master`; opened at head `1209d15a2128150a2ba66ba35fa7dba8aae79a85` (one commit, twelve files); head advanced by fast-forward to `27517717d8e5382a27d70231c81c47bea48fc9d1` (B1 PASS 2 gate and index-definition validation). Baseline is `master` at `544a5888a9df5ad347b1f50bafeb80cbe810be95`. `July_to_Sept26_DevNSupport` remains at `4a37676`. Not merged, not deployed; B1 DBA execution and B2 architectural review are pending (§9).
 **Date:** 2026-09-30 (prepared); revised 2026-11-01
 **Branch:** `feature/identity-hardening-pr`
 **Scope:** B1 (`User_Id` uniqueness), B2 (`AuthGuard.HasPermission` company scoping — design in §3 only; `AuthGuard.cs` is not modified), B4 (membership-aware user enumeration), plus the discovered `Edit_quatation_v2.aspx.cs` global enumeration.
@@ -105,7 +105,7 @@ B4 smoke (post-conversion): as a user homed in Company 1 with an active membersh
 
 ## 8. Suggested PR #96 description
 
-PR [#96](https://github.com/Aminrup-Technologies/Bill_Software/pull/96) is open with its own description. The text below is a suggested replacement that matches this revision; it has not been applied to the PR.
+PR [#96](https://github.com/Aminrup-Technologies/Bill_Software/pull/96) is open with its own description. The text below is a suggested replacement that matches this revision; it was applied verbatim as the PR #96 body on 2026-11-01 (§9).
 
 > **Identity hardening (post-go-live) — B1, B4, Edit_quatation_v2 enumeration; B2 preparation only.** Branch `feature/identity-hardening-pr` targets `master` at `544a588`; `July_to_Sept26_DevNSupport` remains at `4a37676`. Adds `db/user_id_uniqueness_hardening.sql` (audit-first, DBA-only, no data mutation: PASS 1 audit runs alone with `@ExecutePass2 = 0`; PASS 2 runs only after the DBA reviews that audit and sets `@ExecutePass2 = 1`, rechecks duplicates and validates the exact index definition) so login's `SELECT TOP 1` on `User_Id` becomes well-defined; converts nine legacy user enumerations from the home-company predicate to the established `UserCompanyAccess` membership join so members of the operated company appear in assignment/approval surfaces (value columns and exclusions unchanged); fixes the `Edit_quatation_v2.BindDropdowns` global all-user enumeration (only enumeration with no company boundary) to the current-company membership join without activating commented binding code; records the `AuthGuard.HasPermission` fallback gap and an implementation-ready membership-scoped design, plus regression matrix R1–R7, in this document only — `AuthGuard.cs` is not modified (empty diff; no comment marker and no behavior change; protected asset; requires architectural review). Deferred: role architecture (B3), `srch_dailyrpts` Name→User_Id resolution, per-membership HR attributes, B5 UX. Deployment configuration untouched; `July_to_Sept26_DevNSupport` untouched. Not merged. **Pending:** B1 DBA execution (no database execution has occurred) and B2 architectural review.
 
@@ -113,9 +113,9 @@ PR [#96](https://github.com/Aminrup-Technologies/Bill_Software/pull/96) is open 
 
 | Item | Approval | Executor | Status |
 |---|---|---|---|
-| Push branch and open PR | Repository owner | — | Done: PR #96 open at head `1209d15` |
-| Commit and push this revision of `docs/48_Identity_Hardening_PR_Preparation.md` and `db/user_id_uniqueness_hardening.sql` to PR #96 | Repository owner (commit and push approved separately) | Cursor | Pending |
-| Replace the PR #96 description with §8 text | Repository owner | — | Pending (optional) |
+| Push branch and open PR | Repository owner | — | Done: PR #96 opened at head `1209d15` |
+| Commit and push this revision of `docs/48_Identity_Hardening_PR_Preparation.md` and `db/user_id_uniqueness_hardening.sql` to PR #96 | Repository owner (commit and push approved separately) | Cursor | Done 2026-11-01: commit `27517717d8e5382a27d70231c81c47bea48fc9d1` pushed as a fast-forward from `1209d15` (no force, no amend) |
+| Replace the PR #96 description with §8 text | Repository owner | Cursor | Done 2026-11-01: PR #96 body replaced verbatim with §8 text; title, base, head branch and open state unchanged |
 | PR #96 review and merge into `master` | Reviewer / repository owner | — | Pending |
 | B1 PASS 1 + PASS 2 on UAT, then production (§7 item 1) | DBA (post-go-live window) | DBA | **Pending — not executed** |
 | B2 behavior change (fallback scoping) | Architectural review (protected `AuthGuard`; ADR-001 precedent) | Cursor, after sign-off | **Pending — not reviewed; not implemented** |
