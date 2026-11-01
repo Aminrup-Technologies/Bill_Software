@@ -1,11 +1,11 @@
 # 48 — Identity hardening PR preparation (post-go-live)
 
-**Status:** Prepared artifacts for a future Cursor-executed hardening PR. The identity-hardening worktree baseline is `8330a48f1595464379980b5ccd904d61f589ba4f` (PR #94 merge; `cursor/identity-hardening-postgolive`). `July_to_Sept26_DevNSupport` remains at `4a37676`. Not deployed, not merged, no push.
-**Date:** 2026-09-30
-**Branch:** `cursor/identity-hardening-postgolive`
+**Status:** Published as open, unmerged PR [#96](https://github.com/Aminrup-Technologies/Bill_Software/pull/96) from `feature/identity-hardening-pr` into `master`; opened at head `1209d15a2128150a2ba66ba35fa7dba8aae79a85` (one commit, twelve files). Baseline is `master` at `544a5888a9df5ad347b1f50bafeb80cbe810be95`. `July_to_Sept26_DevNSupport` remains at `4a37676`. Not merged, not deployed; B1 DBA execution and B2 architectural review are pending (§9).
+**Date:** 2026-09-30 (prepared); revised 2026-11-01
+**Branch:** `feature/identity-hardening-pr`
 **Scope:** B1 (`User_Id` uniqueness), B2 (`AuthGuard.HasPermission` company scoping — design in §3 only; `AuthGuard.cs` is not modified), B4 (membership-aware user enumeration), plus the discovered `Edit_quatation_v2.aspx.cs` global enumeration.
 **Explicitly excluded:** B3 role architecture, per-membership HR attributes, B5 initial-company UX, `srch_dailyrpts` Name→User_Id identity resolution, duplicate-user provisioning, tenancy abstraction.
-**PR #94 deployment is frozen** — every artifact here is additive or documentation; the deployment branch worktree was never touched.
+Every artifact here is additive or documentation; `July_to_Sept26_DevNSupport` is not touched by PR #96.
 
 ---
 
@@ -13,7 +13,7 @@
 
 | File | Change | Why |
 |---|---|---|
-| `db/user_id_uniqueness_hardening.sql` | **New.** PASS 1 read-only duplicate audit; PASS 2 conditional filtered UNIQUE index `UQ_tbl_login_User_Id` on `tbl_login(User_Id) WHERE User_Id IS NOT NULL`; never mutates data | B1. Login is `SELECT TOP 1 … WHERE User_Id=@UserId` with no ORDER BY (`index.aspx.cs` L64–69); the model requires `User_Id` uniqueness the schema does not declare. Filtered because the column is nullable and a plain unique index would cap NULLs at one row. |
+| `db/user_id_uniqueness_hardening.sql` | **New.** PASS 1 read-only duplicate audit that stops before index creation; PASS 2 is DBA opt-in (`@ExecutePass2 = 1`) for filtered UNIQUE index `UQ_tbl_login_User_Id` on `tbl_login(User_Id) WHERE User_Id IS NOT NULL`, accepting only that exact enabled index if present; never mutates data | B1. Login is `SELECT TOP 1 … WHERE User_Id=@UserId` with no ORDER BY (`index.aspx.cs` L64–69); the model requires `User_Id` uniqueness the schema does not declare. Filtered because the column is nullable and a plain unique index would cap NULLs at one row. |
 | `Bill_Software/corporate/business/app/AddUser.aspx.cs` | Manager picker query (L60): home-company predicate → `UserCompanyAccess` join | B4. Manager assignment must reach members of the current company, not only users homed there. Value column `User_Id` preserved. |
 | `Bill_Software/corporate/business/app/Add_invoice.aspx.cs` | `LoadSalesPersons` (L103): same conversion | B4. Salesperson assignment picker. Value `User_Id`. |
 | `Bill_Software/corporate/business/app/Manual_Invoice.aspx.cs` | `LoadSalesPersons` (L61): same conversion | B4. Same surface as Add_invoice. Value `User_Id`. |
@@ -23,18 +23,18 @@
 | `Bill_Software/corporate/business/app/AdminShiftAssignment.aspx.cs` | `LoadDropdowns` employee query (L55): same conversion | B4. Shift mapping targets. Value `User_Id`. |
 | `Bill_Software/corporate/business/app/Bill.Master.cs` | `GetUserEmailFromDatabase` (L336): home predicate → membership join | B4. IT-support email routing for the current-company user; personalization only, existing "Not Provided" default unchanged. |
 | `Bill_Software/corporate/business/app/Edit_quatation_v2.aspx.cs` | `BindDropdowns` salesperson query (L46): global all-user enumeration → current-company membership join | Discovered issue. The only enumeration with **no company predicate at all**: it lists every active user in every company, with numeric `Id` values, so a Company-2 member's Id could be bound as Company-1's salesperson. The file's other tenancy queries use `CompanyContext.CurrentCompanyID` (L67, L119, …), so the correction matches file-local conventions. |
-| `docs/49_Identity_Model_Feasibility.md` | **New.** The feasibility review (prior session) | Evidence base for docs/48; its B1–B5 IDs are referenced throughout. |
+| `docs/49_Identity_Model_Feasibility.md` | **New.** The feasibility review (prior session) | Evidence base for `docs/48_Identity_Hardening_PR_Preparation.md`; its B1–B5 IDs are referenced throughout. |
 | `docs/48_Identity_Hardening_PR_Preparation.md` | **New.** This file | Manifest, B2 design, regression matrix, deferred items, PR description. |
 
 `AuthGuard.cs` is not a pending change. Its diff is empty: this patch contains no comment marker and no behavior change. B2 stays a documented design in §3.
 
 ## 2. B1 — `User_Id` uniqueness (DBA / data-integrity; audit first)
 
-1. **Prerequisite:** run PASS 1 (duplicate audit) on the target database. Zero rows → run PASS 2. Non-empty → **STOP**; remediation is a data-owner decision and is out of scope; the script never deduplicates and never mutates user data.
-2. PASS 2 re-verifies duplicates inside its transaction and fails closed with a clear message, so running it on a dirty database cannot deploy the constraint. Creation is skipped entirely if the index already exists (idempotent).
+1. **Prerequisite:** run PASS 1 (duplicate audit) with `@ExecutePass2` left at 0. PASS 1 is read-only and returns before any index creation. Zero rows → after reviewing that audit, set `@ExecutePass2 = 1` and re-run the whole script (PASS 1 repeats, then PASS 2 runs). Non-empty → **STOP**; remediation is a data-owner decision and is out of scope; the script never deduplicates and never mutates user data.
+2. PASS 2 re-verifies duplicates inside its transaction and fails closed with a clear message, so running it on a dirty database cannot deploy the constraint. An existing `UQ_tbl_login_User_Id` is accepted only when it is an enabled, non-hypothetical nonclustered unique index (not a primary key or unique constraint) on `User_Id` alone, ascending, with no included columns, filtered by `User_Id IS NOT NULL`. Any other definition of that name raises an error and rolls back.
 3. The index is **filtered** (`WHERE User_Id IS NOT NULL`): SQL Server unique indexes permit only one NULL row, `tbl_login.User_Id` is nullable, and legacy paths may insert NULL; excluding NULLs preserves legacy behavior exactly.
 4. No application change is needed for B1: the constraint is what makes the existing `SELECT TOP 1` login well-defined.
-5. **DBA execution required after go-live** (mark in the PR). Run against `flamex_uat` first; re-run PASS 1 after any UAT refresh; record audit output in the PR before PASS 2. Never execute from the application; never against `flamex_live` from development.
+5. **DBA execution required after go-live; not yet performed.** Run against `flamex_uat` first; re-run PASS 1 after any UAT refresh; record audit output in PR #96 before PASS 2. Exact steps: §7 item 1. Never execute from the application; never against `flamex_live` from development.
 
 ## 3. B2 — `AuthGuard.HasPermission` fallback (preparation only; no behavior change)
 
@@ -88,26 +88,35 @@ B4 smoke (post-conversion): as a user homed in Company 1 with an active membersh
 3. Per-membership HR attributes (department, designation, reporting manager, geo-fence).
 4. B5 initial-company UX for members whose home company is not among their memberships.
 5. Exclusion-list drift (`attendance.aspx.cs` hardcodes `NOT IN ('admin','AT01')`, omits `IT01` seen elsewhere) — single-source later.
-6. Duplicate-user provisioning / tenancy abstraction — rejected by the feasibility review (docs/49 §1, §6).
+6. Duplicate-user provisioning / tenancy abstraction — rejected by the feasibility review (`docs/49_Identity_Model_Feasibility.md` §1, §6).
 
 ## 7. Validation plan (Cursor, post-go-live)
 
-1. DBA on UAT: PASS 1 → record → PASS 2 → verification select (header of `db/user_id_uniqueness_hardening.sql`).
+1. DBA on `flamex_uat` with `db/user_id_uniqueness_hardening.sql`:
+   1. Run the script with `@ExecutePass2 = 0` (the default). Only PASS 1 runs; it returns the duplicate audit and stops before PASS 2.
+   2. Record the PASS 1 audit output in PR #96. Non-empty → **STOP** (data-owner remediation, out of scope).
+   3. After reviewing the PASS 1 audit and confirming zero rows, explicitly set `@ExecutePass2 = 1` and re-run the whole script. PASS 1 repeats, then PASS 2 rechecks duplicates inside its transaction, validates any existing `UQ_tbl_login_User_Id` definition exactly, creates the index only if absent, and rolls back with an error otherwise.
+   4. Run the two read-only verification queries at the end of the script. Expected: exactly one `sys.indexes` row with `type_desc = NONCLUSTERED`, `is_unique = 1`, `has_filter = 1`, `is_disabled = 0`, `is_hypothetical = 0`, `is_primary_key = 0`, `is_unique_constraint = 0`, filter `([User_Id] IS NOT NULL)`; and exactly one `sys.index_columns` row: `User_Id`, `key_ordinal = 1`, `is_descending_key = 0`, `is_included_column = 0`.
 2. Build `Visual Studio I2I INC Web Application.sln` targeting VS 2015 / .NET 4.5.2 (local/UAT harness; no production execution).
 3. Run §5 regression matrix R1–R7 on UAT after B2 lands; record PASS/FAIL per case in HANDOFF.
 4. Run the B4 smoke in §5 for every converted consumer.
-5. Confirm PR #94 behaviors intact: Switch User UAT cases 1/3/4, INV-13 nested deny, banner, `CompanyID` never swapped.
-6. Verify `git status` shows only the manifest files; `Web.config`, `*.pubxml`, stashes, and the deployment branch untouched.
+5. Confirm the existing Switch User UAT cases still hold (cases 1/3/4, INV-13 nested deny, banner, `CompanyID` never swapped).
+6. Verify `git status` shows only the manifest files; `Web.config`, `*.pubxml`, stashes, and `July_to_Sept26_DevNSupport` untouched.
 
-## 8. PR-ready description (paste)
+## 8. Suggested PR #96 description
 
-> **Identity hardening (post-go-live) — B1, B4, Edit_quatation_v2 enumeration; B2 preparation only.** Identity-hardening worktree baseline is PR #94 merge `8330a48`; `July_to_Sept26_DevNSupport` remains at `4a37676`. Adds `db/user_id_uniqueness_hardening.sql` (audit-first, DBA-only, no data mutation) so login's `SELECT TOP 1` on `User_Id` becomes well-defined; converts nine legacy user enumerations from the home-company predicate to the established `UserCompanyAccess` membership join so members of the operated company appear in assignment/approval surfaces (value columns and exclusions unchanged); fixes the `Edit_quatation_v2.BindDropdowns` global all-user enumeration (only enumeration with no company boundary) to the current-company membership join without activating commented binding code; records the `AuthGuard.HasPermission` fallback gap and an implementation-ready membership-scoped design, plus regression matrix R1–R7, in this document only — `AuthGuard.cs` is not modified (empty diff; no comment marker and no behavior change; protected asset; requires architectural review). Deferred: role architecture (B3), `srch_dailyrpts` Name→User_Id resolution, per-membership HR attributes, B5 UX. Deployment configuration untouched; deployment branch untouched; no merge/push performed.
+PR [#96](https://github.com/Aminrup-Technologies/Bill_Software/pull/96) is open with its own description. The text below is a suggested replacement that matches this revision; it has not been applied to the PR.
 
-## 9. Approvals required before execution
+> **Identity hardening (post-go-live) — B1, B4, Edit_quatation_v2 enumeration; B2 preparation only.** Branch `feature/identity-hardening-pr` targets `master` at `544a588`; `July_to_Sept26_DevNSupport` remains at `4a37676`. Adds `db/user_id_uniqueness_hardening.sql` (audit-first, DBA-only, no data mutation: PASS 1 audit runs alone with `@ExecutePass2 = 0`; PASS 2 runs only after the DBA reviews that audit and sets `@ExecutePass2 = 1`, rechecks duplicates and validates the exact index definition) so login's `SELECT TOP 1` on `User_Id` becomes well-defined; converts nine legacy user enumerations from the home-company predicate to the established `UserCompanyAccess` membership join so members of the operated company appear in assignment/approval surfaces (value columns and exclusions unchanged); fixes the `Edit_quatation_v2.BindDropdowns` global all-user enumeration (only enumeration with no company boundary) to the current-company membership join without activating commented binding code; records the `AuthGuard.HasPermission` fallback gap and an implementation-ready membership-scoped design, plus regression matrix R1–R7, in this document only — `AuthGuard.cs` is not modified (empty diff; no comment marker and no behavior change; protected asset; requires architectural review). Deferred: role architecture (B3), `srch_dailyrpts` Name→User_Id resolution, per-membership HR attributes, B5 UX. Deployment configuration untouched; `July_to_Sept26_DevNSupport` untouched. Not merged. **Pending:** B1 DBA execution (no database execution has occurred) and B2 architectural review.
 
-| Item | Approval | Executor |
-|---|---|---|
-| B1 PASS 1 + PASS 2 on UAT, then production | DBA (post-go-live window) | DBA |
-| B2 behavior change (fallback scoping) | Architectural review (protected `AuthGuard`; ADR-001 precedent) | Cursor, after sign-off |
-| Push / open PR for this branch | Repository owner | — |
-| Any production execution | Explicit operator approval, never from this task | — |
+## 9. Approvals and pending actions
+
+| Item | Approval | Executor | Status |
+|---|---|---|---|
+| Push branch and open PR | Repository owner | — | Done: PR #96 open at head `1209d15` |
+| Commit and push this revision of `docs/48_Identity_Hardening_PR_Preparation.md` and `db/user_id_uniqueness_hardening.sql` to PR #96 | Repository owner (commit and push approved separately) | Cursor | Pending |
+| Replace the PR #96 description with §8 text | Repository owner | — | Pending (optional) |
+| PR #96 review and merge into `master` | Reviewer / repository owner | — | Pending |
+| B1 PASS 1 + PASS 2 on UAT, then production (§7 item 1) | DBA (post-go-live window) | DBA | **Pending — not executed** |
+| B2 behavior change (fallback scoping) | Architectural review (protected `AuthGuard`; ADR-001 precedent) | Cursor, after sign-off | **Pending — not reviewed; not implemented** |
+| Any production execution | Explicit operator approval, never from this task | — | Not authorized |
