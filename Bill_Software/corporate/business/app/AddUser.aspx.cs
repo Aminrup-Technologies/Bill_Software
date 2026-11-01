@@ -57,7 +57,7 @@ namespace Bill_Software.corporate.business.app
                 }
 
                 // 4. Load Managers (Ponytail #1: Tenant-scoped)
-                using (var cmd = new SqlCommand("SELECT User_Id, Name FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompanyID AND User_Id NOT IN ('admin', 'AT01') ORDER BY Name", cn))
+                using (var cmd = new SqlCommand("SELECT u.User_Id, u.Name FROM tbl_login u INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1 WHERE u.IsActive = 1 AND u.User_Id NOT IN ('admin', 'AT01') ORDER BY u.Name", cn))
                 {
                     cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     var dt = new DataTable(); new SqlDataAdapter(cmd).Fill(dt);

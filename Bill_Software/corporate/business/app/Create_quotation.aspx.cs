@@ -83,8 +83,10 @@ namespace Bill_Software.corporate.business.app
             {
                 conn.Open();
 
-                // 1. TENANT-SCOPED RESOURCE: Sales Persons
-                string salesQuery = "SELECT Id, (Name + ' [' + User_Id + ']') AS DisplayName FROM tbl_login WHERE IsActive = 1 AND CompanyID = @CompanyID AND (User_Id NOT IN ('admin', 'AT01')) ORDER BY Id";
+                // 1. CURRENT-COMPANY MEMBERSHIP: Sales Persons (UserCompanyAccess, docs/48 section 4)
+                string salesQuery = @"SELECT u.Id, (u.Name + ' [' + u.User_Id + ']') AS DisplayName FROM tbl_login u
+                    INNER JOIN dbo.UserCompanyAccess uca ON uca.UserId = u.Id AND uca.CompanyID = @CompanyID AND uca.IsActive = 1
+                    WHERE u.IsActive = 1 AND (u.User_Id NOT IN ('admin', 'AT01')) ORDER BY u.Id";
                 using (var cmdSales = new SqlCommand(salesQuery, conn))
                 {
                     cmdSales.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
