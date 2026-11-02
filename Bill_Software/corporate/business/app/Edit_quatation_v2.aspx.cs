@@ -55,7 +55,7 @@ namespace Bill_Software.corporate.business.app
                     using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                     {
                         DataTable dtSales = new DataTable();
-                        try { da.Fill(dtSales); } catch { }
+                        da.Fill(dtSales);
 
                         // NOTE: Ensure <asp:DropDownList ID="cmbSalesPerson" runat="server" CssClass="dropdown_style select2-search"></asp:DropDownList> exists in your View1 ASPX!
                         // cmbSalesPerson.DataSource = dtSales;

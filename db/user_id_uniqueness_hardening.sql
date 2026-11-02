@@ -88,6 +88,7 @@ BEGIN TRY
               AND i.is_primary_key = 0
               AND i.is_unique_constraint = 0
               AND i.is_hypothetical = 0
+              AND i.ignore_dup_key = 0
               AND i.type = 2
               AND UPPER(REPLACE(REPLACE(REPLACE(ISNULL(i.filter_definition, N''), N' ', N''), N'[', N''), N']', N''))
                   IN (N'(USER_IDISNOTNULL)', N'USER_IDISNOTNULL'))
@@ -114,7 +115,7 @@ BEGIN TRY
 
     IF @indexId IS NOT NULL AND @definitionOk = 0
     BEGIN
-        RAISERROR('UQ_tbl_login_User_Id exists on dbo.tbl_login with an unexpected definition. Expected an enabled nonclustered unique index on User_Id only, filtered by User_Id IS NOT NULL. No change made.', 16, 1);
+        RAISERROR('UQ_tbl_login_User_Id exists on dbo.tbl_login with an unexpected definition. Expected an enabled nonclustered unique index on User_Id only, filtered by User_Id IS NOT NULL, with IGNORE_DUP_KEY OFF. No change made.', 16, 1);
     END;
 
     IF @indexId IS NULL
@@ -148,14 +149,14 @@ GO
 -- Verification (read-only), expected after PASS 2:
 --   SELECT i.name, i.type_desc, i.is_unique, i.has_filter, i.is_disabled,
 --          i.is_hypothetical, i.is_primary_key, i.is_unique_constraint,
---          i.filter_definition
+--          i.ignore_dup_key, i.filter_definition
 --   FROM sys.indexes i
 --   WHERE i.object_id = OBJECT_ID(N'dbo.tbl_login')
 --     AND i.name = N'UQ_tbl_login_User_Id';
 --   Expected: exactly one row; type_desc = NONCLUSTERED, is_unique = 1,
 --             has_filter = 1, is_disabled = 0, is_hypothetical = 0,
 --             is_primary_key = 0, is_unique_constraint = 0,
---             filter_definition = ([User_Id] IS NOT NULL).
+--             ignore_dup_key = 0, filter_definition = ([User_Id] IS NOT NULL).
 --
 --   SELECT c.name, ic.key_ordinal, ic.is_descending_key, ic.is_included_column
 --   FROM sys.indexes i
