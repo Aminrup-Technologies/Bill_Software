@@ -169,7 +169,7 @@ In-process / request-tied behavior that must not be replaced with a new host:
 |-----------|------|
 | IIS / `Page_Load` / postback / `[WebMethod]` | All ERP and kiosk UI work |
 | `Heartbeat.ashx` | Session idle; `ActiveSessions` heartbeat |
-| Page-invoked SPs (e.g. `sp_RunAttendanceRulesEngine`) | Recalc when the page calls them |
+| Page-invoked SPs (e.g. `sp_RunAttendanceRulesEngine`) | Recalc when the page calls them: punch (`attendance.aspx`), shift-assignment sync (`AdminShiftAssignment`), and after **successful attendance regularization approval** on `AdminApprovalDashboard` / `AdminOverride` / `QuickAction` (same C# `SqlTransaction` as the approval write). Leave approve/reject and regularization reject do **not** call the engine. `AdminOverride` / `QuickAction` use `RequestStatus = 'Pending'` on the UPDATE and `THROW` when zero rows so concurrent duplicate approvals cannot reach the engine. Call-site index: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Working status: [`HANDOFF.md`](HANDOFF.md). |
 | `sp_getapplock` | Quote / client-PO save serialization |
 | SQL Server | Persistence, procedures, constraints |
 

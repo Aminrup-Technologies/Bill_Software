@@ -96,7 +96,7 @@ Bodies live in SQL Server. This is a **call-site index** only. `clientHandlerAdm
 
 | Procedure | Callers | Unique purpose |
 |-----------|---------|----------------|
-| `sp_RunAttendanceRulesEngine` | `attendance.aspx.cs`, `AdminShiftAssignment.aspx.cs` | Recalc attendance after punch / shift map. |
+| `sp_RunAttendanceRulesEngine` | `attendance.aspx.cs`, `AdminShiftAssignment.aspx.cs`, `AdminApprovalDashboard.aspx.cs` (Reg + Approved only), `AdminOverride.aspx.cs` (Reg + Approved only), `QuickAction.aspx.cs` (Type=Reg + Approve only) | Recalc after punch / shift map / successful **regularization** approval (same C# `SqlTransaction` as the approval write). Leave approve/reject and Reg reject do **not** call it. `AdminOverride` / `QuickAction`: `RequestStatus = 'Pending'` UPDATE + `THROW` on zero rows. |
 | `sp_AllocateEmployeeLeaves` | `AddUser.aspx.cs` | Initial leave balances on new ERP user. |
 | `sp_GetActiveNotifications` | `GlobalNotification.ascx.cs` | Toast feed (control currently throws in `OnInit`). |
 | `sp_MarkNotificationRead` | `GlobalNotification.ascx.cs` | Dismiss one notification. |

@@ -22,6 +22,8 @@ Switch User post-Start runtime failure is **closed**.
 
 **PASS matrix:** initiate impersonation; End Impersonation banner (`ActorHoldsSwitchUser` / `CloseCurrent(ManualRollback)`); INV-13 nested (page hides list; `GateActor` still denies); redirect has no handler code after `CompleteRequest`; rollback restores actor identity, `CompanyID` never swapped; non-impersonating users without `SwitchUser` still 403.
 
+Attendance regularization → rules-engine integration is **closed** (implementation + functional UAT). Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md) scheduler row. Callers: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md), [`page-catalog/UAT_CATALOG.md`](page-catalog/UAT_CATALOG.md). Domain pages: [`page-catalog/DOMAIN_attendance-hr.md`](page-catalog/DOMAIN_attendance-hr.md).
+
 ---
 
 ## Completed Work
@@ -35,33 +37,13 @@ Switch User post-Start runtime failure is **closed**.
 - Cross-Tenant Duplication relationships published at `282cfce` (persistent source → target links, transactional write, authorized bidirectional display, historical counterpart handling; UAT validated with Customer-side R7 not independently exercised). Spec: `docs/47`.
 - Ponytail + solution-docs Cursor rules (existing).
 - This bootstrap: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/CURSOR_RULES.md`, `Bill_Software/.cursor/rules/project.mdc`.
+- Attendance regularization approval → `dbo.sp_RunAttendanceRulesEngine` (same C# `SqlTransaction` as the approval write) on `AdminApprovalDashboard` / `AdminOverride` / `QuickAction` when **Reg + Approved** only. Leave approve/reject and Reg reject do **not** call the engine. `attendance.aspx` punch path unchanged. `AdminOverride` / `QuickAction`: `RequestStatus = 'Pending'` on UPDATE; zero rows → SQL `THROW 50001` into C# rollback + controlled UI error (`Debug.WriteLine` keeps the exception server-side). `AdminApprovalDashboard` retains its existing Pending + `@@ROWCOUNT` abort. Alerts only after `Commit`. Request rows in `tbl_AttendanceRegularization` remain independently auditable. Debug and Release builds succeeded. **UAT PASS (functional):** Reg approval recalculates dependent fields; calendar / Day Detail consistent; Reg rejection and leave approval unchanged (no engine). **Deferred validation (not PASS):** failure-injection rollback of the engine, simultaneous dual-approval race, AdminApprovalDashboard concurrency review.
 
 ---
 
 ## Current Task
 
-View User Company 2 access is a card checkbox, separate from profile Save:
-
-`chkCompany2Access` is on the user card and posts `chkCompany2Access_CheckedChanged`. That handler confirms `tbl_login.Id` with `tbl_login.CompanyID = CompanyContext.CurrentCompanyID`, then calls `TrySetCompany2Membership`. It does not run the profile `UPDATE`, so `ReportingManagerId`, role, department, designation, password, and alert fields stay untouched. Page authorization is unchanged: `SecurePage.OnInit` calls `AuthGuard.EnsurePage(this, true, "ViewUser")` before postback events. `Company2Id` stays `2`. Checked sets `IsActive = 1` (reactivate or insert one row). Unchecked sets `IsActive = 0`. Listing does not insert a membership. Profile Save no longer calls `TrySetCompany2Membership`.
-
-`dbo.UserCompanyAccess` is already on `flamex_live`. Do not seed memberships from this change.
-
-Switch User deployment contract: canonical [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md). Committed at `1bb4754` on `cursor/impersonation-membership-runtime`. As of `3e04c58`: 6 ahead / 0 behind `July_to_Sept26_DevNSupport`. **Not pushed.**
-
-Menu membership: `Bill.Master.GetMenuControl` ports `cffc720` (`cursor/company-membership-menu`) — menu permissions filtered by active `UserCompanyAccess` for the current company instead of `tbl_login.CompanyID`. Menu visibility is membership-aware. `AuthGuard.cs`, `BindSwitchUserMenu`, `SwitchUser.aspx.cs`, and page authorization remain unchanged; ADR-001 not amended. Committed as `5ace354`.
-
-**UAT `5ace354` (recorded; candidates unchanged):**
-- Case 1 — **PASS:** `admin` switched to Company 2 (AA Associates) and received the expected 117-key menu despite home Company 1.
-- Case 2 — **BLOCKED:** `FLM021` is the required single-company regression candidate, but `MustChangePassword=1` prevents normal menu access. Case 2 did not pass.
-- Case 3 — **PASS:** `admin → FLM021` produced the expected 21-key Procurement Officer menu.
-- Case 4 — **PASS:** End Impersonation restored the original `admin` identity and 117-key menu without F5.
-- Observed menu transition on Cases 3–4: **117 → 21 → 117**.
-- Cases 3–4 also opened `settings.aspx`. That opening is attributable to FLM021's existing password-change lock (`MustChangePassword=1`) and is not a `5ace354` menu defect.
-
-Local state (not in git):
-- `Bill_Software/Web.config` and `flamexuat … Web Deploy.pubxml` hold local UAT overlay values (connection string, `SwitchUser=true`). Never stage or commit; do not use `git commit -a`.
-- Dropped impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` (on `cursor/impersonation-membership-runtime`: "impersonation-membership-runtime: undocumented menu/SwitchUser membership changes (AuthGuard, Bill.Master, SwitchUser) pending review"). Audited and dropped; it does not exist. `SwitchUser.aspx.cs` (target list by active `UserCompanyAccess`, not `tbl_login.CompanyID`) is preserved in HEAD at `3e04c58`. Menu membership in `Bill.Master.cs` is preserved in HEAD at `5ace354`. `AuthGuard.GetMenuPermissions()` and the coupled Switch User-link change were rejected under ADR-001 (`AuthGuard` unchanged) and were not restored.
-- Retained stashes: `stash@{0}` `5b29395` Cursor Desktop UAT workspace; `stash@{1}` `498247d` wip before challanwriter extraction; `stash@{2}` `8b3a36e` Local docs and config before Cross-Tenant UAT. Stash indices shift when a stash is added or dropped; identify stashes by message.
+None. Attendance rules-engine integration milestone is closed. Optional next work is resilience validation only (see Next Action).
 
 ---
 
@@ -86,7 +68,9 @@ Local state (not in git):
 
 ## Next Action
 
-Unpushed commits as of `5ace354`: `1bb4754`, `300505a`, `3e04c58`, `fb7de2b`, `5ace354` (plus any later HANDOFF-only commit). The `5ace354` UAT record in this file is a subsequent HANDOFF-only working-tree change. It is not one of those commits and has not been pushed. Case 2 remains **BLOCKED**. Push requires separate explicit approval. Impersonation-membership stash `01b05b971f07934ba23e90f321e56363a1cc1649` was audited and dropped; superseded work is in HEAD (`3e04c58`, `5ace354`) and the rejected `GetMenuPermissions` path was not restored. Do not reopen Switch User **runtime** unless a new defect is named. Do not push unless separately approved. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and pushed at `282cfce`; optional follow-up only: exercise Customer-side R7 with a restricted role that can open `View_client.aspx`.
+Optional resilience validation for attendance Reg approval (explicitly **deferred**, not claimed as UAT PASS): (1) inject `sp_RunAttendanceRulesEngine` failure and confirm approval rolls back with controlled UI error and no success alert; (2) simultaneous dual approval (Override vs QuickAction or two managers) and confirm only one wins Pending + no double engine run; (3) AdminApprovalDashboard concurrency review against the same Pending race model. Do not start unless requested.
+
+Verified repository state: HEAD is `4a37676` (`Document published cross-tenant duplication relationships`) on `July_to_Sept26_DevNSupport`, synchronized with `origin/July_to_Sept26_DevNSupport` (0 ahead / 0 behind). `5ace354` (menu membership by company) is historical only — an ancestor of HEAD, ten commits behind the tip; its menu UAT (Case 2 **BLOCKED**) stays historical and is not the current publication state. Attendance rules-engine integration (callers, Pending/`THROW` guards, these docs) is an uncommitted working-tree change on top of `4a37676`. Commit and push still need separate approval. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce` (included in HEAD `4a37676`); optional follow-up only: exercise Customer-side R7 with a restricted role that can open `View_client.aspx`.
 
 ---
 

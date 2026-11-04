@@ -2629,7 +2629,7 @@ Callers are `.cs` files that mention the name. **Bodies are not listed.**
 | `dbo.sp_Requisition_CreateDraft` | @ClientName varchar(250), @VendorId int, @CreatedBy varchar(100), @ReqNo varchar(250) OUTPUT, @CompanyID int | `corporate/business/app/RequisitionNew.aspx` | Modern PR draft header. |
 | `dbo.sp_RequisitionItem_BulkUpsert` | @ClientName varchar(250), @ReqNo varchar(250), @UserId varchar(100), @Items RequisitionItem_TVP, @CompanyID int | `corporate/business/app/RequisitionNew.aspx`, `corporate/business/app/View_PR_Details.aspx` | PR line upsert (TVP). |
 | `dbo.sp_RequisitionItem_Upsert` | @ClientName nvarchar(250), @ReqNo varchar(250), @ProductId varchar(250), @ProductName varchar(250), @ParentCategoryId int, @Description nvarchar(max), @Qnty decimal(18,2), @Rate de… | _none_ | PR single-line upsert (UAT; C# uses bulk). |
-| `dbo.sp_RunAttendanceRulesEngine` | @CompanyID int, @Month int, @Year int, @UserCodeList nvarchar(max) | `corporate/business/app/AdminShiftAssignment.aspx`, `corporate/business/app/attendance.aspx` | Recalc attendance after punch / shift map. |
+| `dbo.sp_RunAttendanceRulesEngine` | @CompanyID int, @Month int, @Year int, @UserCodeList nvarchar(max) | `corporate/business/app/AdminShiftAssignment.aspx`, `corporate/business/app/attendance.aspx`, `corporate/business/app/AdminApprovalDashboard.aspx` (Reg approve), `corporate/business/app/AdminOverride.aspx` (Reg approve), `corporate/business/app/QuickAction.aspx` (Reg approve) | Recalc after punch / shift map / successful Reg approval. Leave / Reg reject do not call it. |
 | `dbo.sp_SearchProductsFast` | @Search nvarchar(100), @Category nvarchar(100) | `corporate/business/app/Product_stock.aspx` | Stock page typeahead. |
 | `dbo.sp_SearchStockGrouped` | @Search nvarchar(200) | _none_ | Grouped stock search (UAT; no C# caller). |
 | `dbo.sp_SubmitRequisition` | @ReqNo varchar(250), @UserId varchar(100), @CompanyID int | `corporate/business/app/RequisitionNew.aspx`, `corporate/business/app/View_PR_Details.aspx` | Submit PR. |
@@ -3024,9 +3024,9 @@ PR single-line upsert (UAT; C# uses bulk).
 
 ### `dbo.sp_RunAttendanceRulesEngine`
 
-C# callers: `corporate/business/app/AdminShiftAssignment.aspx`, `corporate/business/app/attendance.aspx`.
+C# callers: `corporate/business/app/AdminShiftAssignment.aspx`, `corporate/business/app/attendance.aspx`, `corporate/business/app/AdminApprovalDashboard.aspx` (Reg + Approved only), `corporate/business/app/AdminOverride.aspx` (Reg + Approved only), `corporate/business/app/QuickAction.aspx` (Type=Reg + Approve only).
 
-Recalc attendance after punch / shift map.
+Recalc attendance after punch / shift map / successful **regularization** approval (approval paths share the C# `SqlTransaction` with the approval write). Leave approve/reject and regularization reject do **not** invoke this path. `AdminOverride` / `QuickAction` guard with `RequestStatus = 'Pending'` and SQL `THROW` on zero rows. Functional UAT PASS recorded in [`HANDOFF.md`](../HANDOFF.md); failure-injection rollback, simultaneous approval, and dashboard concurrency review remain deferred.
 
 | Param | Type | Direction |
 |-------|------|-----------|
