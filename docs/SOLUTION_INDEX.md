@@ -39,6 +39,10 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
 | Switch User host/DBA deploy | [SWITCHUSER_DEPLOYMENT_CHECKLIST.md](SWITCHUSER_DEPLOYMENT_CHECKLIST.md) |
 | Cross-tenant vendor/customer duplication (v1.1 complete at `88f9d0f`; relationships published at `282cfce`) | [34 CrossTenant](34_CrossTenant_Duplication_Architecture.md), [37 completion](37_CrossTenant_Duplication_Completion.md), [44 integration](44_CrossTenant_Final_Integration.md), [45 skip existing](45_SkipExisting_BulkDuplication.md), [46 release](46_CrossTenant_Release_v1.1.md), [47 relationships](47_CrossTenant_Duplication_Relationship_Architecture.md) |
+| Product / stock / purchase ownership, live UAT verification (implementation blocked) | [architecture/OWNERSHIP_AUDIT.md](architecture/OWNERSHIP_AUDIT.md) |
+| Multi-tenancy target ownership model (ratified D1–D8, frozen; Amendment A1) | [architecture/ADR-002_MultiTenancy_Ownership_Model.md](architecture/ADR-002_MultiTenancy_Ownership_Model.md) |
+| Multi-tenancy migration gates, exception register, UAT controls, production replay | [architecture/UAT_MIGRATION_GOVERNANCE.md](architecture/UAT_MIGRATION_GOVERNANCE.md) |
+| Multi-tenancy Gate 2 dependency / impact report (**BLOCKED**: 22/22 UAT bodies in §12.2; SQL Agent steps unreadable; X-18 `flamex_live` census not run; approval pending; X-20, X-21, X-22 unchanged; row 29 Open; Gate 3 not authorized) | [architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md](architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md) |
 | Attendance regularization → `sp_RunAttendanceRulesEngine` (Reg approve only: AdminApprovalDashboard, AdminOverride, QuickAction; Dashboard Pending + zero-row abort; Override/QuickAction Pending + `THROW`; leave and Reg reject excluded; functional UAT PASS; three resilience tests deferred) | [ARCHITECTURE.md](ARCHITECTURE.md) (scheduler row), [HANDOFF.md](HANDOFF.md), [page-catalog/SHARED_RUNTIME.md](page-catalog/SHARED_RUNTIME.md), [page-catalog/UAT_CATALOG.md](page-catalog/UAT_CATALOG.md) (`sp_RunAttendanceRulesEngine`), [page-catalog/DOMAIN_attendance-hr.md](page-catalog/DOMAIN_attendance-hr.md) (three callers and guards; QuickAction page census stays in [DOMAIN_dashboard.md](page-catalog/DOMAIN_dashboard.md)) |
 
 ## Page catalogs (unique facts only)
@@ -107,6 +111,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 - [`user_company_access_seed.sql`](../db/user_company_access_seed.sql) — Seeds missing home-tenant memberships after Phase 2A rollout.
 - [`SwitchUser_permission.sql`](../Bill_Software/corporate/business/sql/SwitchUser_permission.sql) — Catalog-only `SwitchUser` permission (no grant).
 - [`SwitchUser_superadmin_grant_uat.sql`](../Bill_Software/corporate/business/sql/SwitchUser_superadmin_grant_uat.sql) — UAT Super Admin grant only (DBA; do not execute from the app).
+- [`employee_config_permissions.sql`](../Bill_Software/corporate/business/sql/employee_config_permissions.sql) — **Parked. Not approved for UAT.** Draft catalog insert for `AdminLeaveSetup`, `AdminShiftSetup`, `AdminOverride`. `PermissionKey` uniqueness is not defined by repository DDL, and the three inserts are not one transaction. No `RolePermissions` or `UserRoles` grant.
 - [`user_company_access_admin_aa_associates.sql`](../Bill_Software/corporate/business/sql/user_company_access_admin_aa_associates.sql) — Optional UAT membership helper for duplication target-company access.
 
 ## Invoice lineage (specialist, not page catalogs)

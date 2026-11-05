@@ -143,6 +143,7 @@ Business rules stay unless a change explicitly states otherwise. Decision #8: `R
 - Self-service lists often also filter `CreatedByCode = Session["USERID"]`.
 - Same `User_Id` string and numeric `Id` are different keys; do not mix in joins.
 - Card-kiosk `tbl_Company` is not `CompanyContext`.
+- Target ownership model (frozen 2026-10-01; not the current schema): [`architecture/ADR-002_MultiTenancy_Ownership_Model.md`](architecture/ADR-002_MultiTenancy_Ownership_Model.md). Four classes: GLOBAL_REFERENCE, SHARED_MASTER, TENANT_MASTER, TRANSACTION_OWNED. In the target, Product, Category, Store, and `tbl_stock` are shared and carry no `CompanyID`; stock grain is `ProductID + StoreID`; `tbl_stock` is the only physical-stock authority and `tbl_stock.Quantity_Num` its quantity of record (Amendment A1). Current tables keep their `CompanyID` columns, and tenant queries keep the `CompanyID` filter, until Gate 7. Migration scripts are written in Gate 3 and first run in Gate 5 on UAT, then replayed to production: [`architecture/UAT_MIGRATION_GOVERNANCE.md`](architecture/UAT_MIGRATION_GOVERNANCE.md). Implementation stays blocked until Gate 2 completes and Gate 3 is approved. Gate 2 is blocked ([`architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md`](architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md)).
 
 ---
 
