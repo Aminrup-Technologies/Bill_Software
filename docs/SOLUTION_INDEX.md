@@ -34,6 +34,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 | Live UAT schema (tables, FKs, missing objects, SP inventory) | [page-catalog/SHARED_SCHEMA.md](page-catalog/SHARED_SCHEMA.md) |
 | Handlers, ASCX, helpers, SQL scripts, SP call index | [page-catalog/SHARED_RUNTIME.md](page-catalog/SHARED_RUNTIME.md) |
 | Census of all pages | [page-catalog/PAGE_INVENTORY.md](page-catalog/PAGE_INVENTORY.md) |
+| End-to-end commercial lifecycle (master data through accounts receivable), source-reviewed 2026-11-06 on `July_to_Sept26_DevNSupport` | [business_process/BUSINESS_PROCESS_MASTER_INDEX.md](business_process/BUSINESS_PROCESS_MASTER_INDEX.md) |
 | Product + Ponytail + setup | [README.md](../README.md) |
 | Security contract | [22_Security_Baseline.md](22_Security_Baseline.md) |
 | Administrator impersonation (UAT complete; production off) | [ADR-001](ADR-001_Administrator_Impersonation.md), [29](29_Impersonation_Governance.md)–[37](37_SwitchUser_UAT_Completion.md) |
