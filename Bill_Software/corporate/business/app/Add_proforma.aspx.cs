@@ -44,19 +44,20 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnSertch_Click(object sender, EventArgs e)
         {
+            PanelError.Visible = false;
             string cmdstring = "";
             if (RadioButtonList1.SelectedIndex == 0)
             {
                 // Only Client
                 string clientId = GetClientId(cmbvendor.Text);
                 if (string.IsNullOrEmpty(clientId)) { ShowError("Client not found."); return; }
-                cmdstring = "SELECT qut.PServiceName, qut.ID, qut.service_tax1, qut.sub_total, qut.Quotation_no, qut.Quotation_date, qut.Gross, qut.Service_tax, qut.Net_amount, qut.mailStatusDate, c.Client_Name FROM tbl_Quotation qut LEFT OUTER JOIN tbl_Client c ON qut.Client_Id = c.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather qut2 ON qut2.qutno = qut.Quotation_no WHERE qut.Client_Id = @ClientId AND qut.CompanyID = @CompanyID ORDER BY qut.ID DESC";
+                cmdstring = "SELECT qut2.PServiceName, qut.ID, qut.service_tax1, qut.sub_total, qut.Quotation_no, qut.Quotation_date, qut.Gross, qut.Service_tax, qut.Net_amount, qut.mailStatusDate, c.Client_Name FROM tbl_Quotation qut LEFT OUTER JOIN tbl_Client c ON qut.Client_Id = c.Client_Id AND c.CompanyID = qut.CompanyID OUTER APPLY (SELECT TOP 1 s.PServiceName FROM tbl_QuoPriSerTogather s WHERE s.qutno = qut.Quotation_no ORDER BY s.id DESC) qut2 WHERE qut.Client_Id = @ClientId AND qut.CompanyID = @CompanyID ORDER BY qut.ID DESC";
                 Binddatagrid1(cmdstring, clientId, null, null);
             }
             else if (RadioButtonList1.SelectedIndex == 1)
             {
                 // Only Date
-                cmdstring = "SELECT qut.PServiceName, qut.ID, qut.service_tax1, qut.sub_total, qut.Quotation_no, qut.Quotation_date, qut.Gross, qut.Service_tax, qut.Net_amount, qut.mailStatusDate, c.Client_Name FROM tbl_Quotation qut LEFT OUTER JOIN tbl_Client c ON qut.Client_Id = c.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather qut2 ON qut2.qutno = qut.Quotation_no WHERE CAST(qut.Quotation_date AS datetime) BETWEEN @FromDate AND @ToDate AND qut.CompanyID = @CompanyID ORDER BY qut.ID DESC";
+                cmdstring = "SELECT qut2.PServiceName, qut.ID, qut.service_tax1, qut.sub_total, qut.Quotation_no, qut.Quotation_date, qut.Gross, qut.Service_tax, qut.Net_amount, qut.mailStatusDate, c.Client_Name FROM tbl_Quotation qut LEFT OUTER JOIN tbl_Client c ON qut.Client_Id = c.Client_Id AND c.CompanyID = qut.CompanyID OUTER APPLY (SELECT TOP 1 s.PServiceName FROM tbl_QuoPriSerTogather s WHERE s.qutno = qut.Quotation_no ORDER BY s.id DESC) qut2 WHERE CAST(qut.Quotation_date AS datetime) BETWEEN @FromDate AND @ToDate AND qut.CompanyID = @CompanyID ORDER BY qut.ID DESC";
                 Binddatagrid1(cmdstring, null, txttodate.Text, txtfromDate.Text);
             }
             else
@@ -64,7 +65,7 @@ namespace Bill_Software.corporate.business.app
                 // Client & Date
                 string clientId = GetClientId(cmbvendor.Text);
                 if (string.IsNullOrEmpty(clientId)) { ShowError("Client not found."); return; }
-                cmdstring = "SELECT qut.PServiceName, qut.ID, qut.service_tax1, qut.sub_total, qut.Quotation_no, qut.Quotation_date, qut.Gross, qut.Service_tax, qut.Net_amount, qut.mailStatusDate, c.Client_Name FROM tbl_Quotation qut LEFT OUTER JOIN tbl_Client c ON qut.Client_Id = c.Client_Id LEFT OUTER JOIN tbl_QuoPriSerTogather qut2 ON qut2.qutno = qut.Quotation_no WHERE qut.Client_Id = @ClientId AND CAST(qut.Quotation_date AS datetime) BETWEEN @FromDate AND @ToDate AND qut.CompanyID = @CompanyID ORDER BY qut.ID DESC";
+                cmdstring = "SELECT qut2.PServiceName, qut.ID, qut.service_tax1, qut.sub_total, qut.Quotation_no, qut.Quotation_date, qut.Gross, qut.Service_tax, qut.Net_amount, qut.mailStatusDate, c.Client_Name FROM tbl_Quotation qut LEFT OUTER JOIN tbl_Client c ON qut.Client_Id = c.Client_Id AND c.CompanyID = qut.CompanyID OUTER APPLY (SELECT TOP 1 s.PServiceName FROM tbl_QuoPriSerTogather s WHERE s.qutno = qut.Quotation_no ORDER BY s.id DESC) qut2 WHERE qut.Client_Id = @ClientId AND CAST(qut.Quotation_date AS datetime) BETWEEN @FromDate AND @ToDate AND qut.CompanyID = @CompanyID ORDER BY qut.ID DESC";
                 Binddatagrid1(cmdstring, clientId, txttodate.Text, txtfromDate.Text);
             }
             btnSertch.Visible = false;
