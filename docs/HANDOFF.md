@@ -24,6 +24,29 @@ Switch User post-Start runtime failure is **closed**.
 
 Attendance regularization → rules-engine integration is **closed** (implementation + functional UAT). Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md) scheduler row. Callers: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md), [`page-catalog/UAT_CATALOG.md`](page-catalog/UAT_CATALOG.md). Domain pages: [`page-catalog/DOMAIN_attendance-hr.md`](page-catalog/DOMAIN_attendance-hr.md).
 
+Add Proforma company-scoped client join is **completed** (investigation, implementation, browser UAT; 2026-11-06). **Not committed:** the change is in the working tree of `feature/add-proforma-ui-refactor` at `9140326`, alongside the earlier uncommitted Add Proforma service-summary `OUTER APPLY` fix in the same file.
+
+**Defect:** the three quotation searches in `Bill_Software/corporate/business/app/Add_proforma.aspx.cs` (Only Client, Only Date, Client & Date) joined `tbl_Client` on `Client_Id` alone. `tbl_Client` has no unique key on `Client_Id` or (`Client_Id`, `CompanyID`). Read-only `flamex_uat` checks as `flmx_mcp_reader` found 7 codes in both companies, one row each (AD02, AD03, AD04, AD05, AD06, AD08, AD09); no same-company duplicates. Five Company 1 quotations used three of those codes, so each returned a second row with the Company 2 client name: `PO/FE/26-27/2`, `QTN/FE/25-26/13`, `/54`, `/60`, `/61`. The single Company 2 quotation `QTN/AA/26-27/1` uses `AD01`, which exists only in Company 1 (`3AP POLYMERS`).
+
+**Resolution:** all three joins are `LEFT OUTER JOIN tbl_Client c ON qut.Client_Id = c.Client_Id AND c.CompanyID = qut.CompanyID`. Projections, filters, parameters, ordering, and binding are unchanged. LEFT JOIN keeps quotations without a same-company client visible with a blank client name; there is no fallback to another company's client. MSBuild 14 Debug build succeeded.
+
+**Browser UAT PASS** (Search and Reset only; no quotation selected, no Save, no business data modified):
+
+| # | Company | Search | Result |
+|---|---|---|---|
+| 1 | 1 | Only Date, 01-Jan-2020 to 06-Nov-2026 | PASS: 158 rows, 158 distinct quotations, no duplicates, no blank client names |
+| 2 | 1 | Only Client, ACC LIMITED (Sindri) | PASS: 3 (`QTN/FE/25-26/61`, `/60`, `/13`) |
+| 3 | 1 | Only Client, ACC Limited (CHAIBASA) | PASS: 1 (`PO/FE/26-27/2`) |
+| 4 | 1 | Only Client, AMALGAM STEEL & POWER LIMITED | PASS: 1 (`QTN/FE/25-26/54`) |
+| 5 | 1 | Client & Date, ACC LIMITED (Sindri), 01-Jul-2025 to 31-Jul-2025 | PASS: 2 (`QTN/FE/25-26/61`, `/60`) |
+| 6 | 1 | Client & Date, ACC LIMITED (Sindri), 01-Jan-2020 to 31-Dec-2020 | PASS: "No Data Found..." |
+| 7 | 2 | Only Date, 01-Jan-2020 to 06-Nov-2026 | PASS: `QTN/AA/26-27/1` visible with a blank client name; `3AP POLYMERS` not shown |
+| 8 | 2 | Only Client, Heatworks Pvt. Ltd. (`AD02`) | PASS: "No Data Found..."; Company 1 `PO/FE/26-27/2` not returned |
+
+The Company 1 full-range count fell from 163 rows to 158: the five removed rows were the cross-company client matches. `QTN/FE/25-26/62`, `/63`, `/64` legitimately show "Heatworks Pvt. Ltd." because they use Company 1's own client `AD423`; that is not cross-company leakage. `PO/FE/25-26/19` (TATA STEEL LTD.(Jamshedpur), SUPPLY OF LUBRICANT) and `QTN/FE/25-26/69` (2M INTERNATIONAL, SUPPLY OF LIGHTS) were also correct.
+
+**Limitations:** blank service categories on `QTN/FE/25-26/31A`, `PO/FE/25-26/59`, `PO/FE/25-26/60` are pre-existing and unrelated to the client join. `QTN/AA/26-27/1` keeps `Client_Id = AD01` and can be found in Company 2 only by Only Date; repointing it is a separate data change needing its own write approval. Nothing in the schema prevents future duplicate (`Client_Id`, `CompanyID`) rows.
+
 ---
 
 ## Completed Work
@@ -38,6 +61,7 @@ Attendance regularization → rules-engine integration is **closed** (implementa
 - Ponytail + solution-docs Cursor rules (existing).
 - This bootstrap: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/CURSOR_RULES.md`, `Bill_Software/.cursor/rules/project.mdc`.
 - Attendance regularization approval → `dbo.sp_RunAttendanceRulesEngine` (same C# `SqlTransaction` as the approval write) on `AdminApprovalDashboard` / `AdminOverride` / `QuickAction` when **Reg + Approved** only. Leave approve/reject and Reg reject do **not** call the engine. `attendance.aspx` punch path unchanged. `AdminOverride` / `QuickAction`: `RequestStatus = 'Pending'` on UPDATE; zero rows → SQL `THROW 50001` into C# rollback + controlled UI error (`Debug.WriteLine` keeps the exception server-side). `AdminApprovalDashboard` retains its existing Pending + `@@ROWCOUNT` abort. Alerts only after `Commit`. Request rows in `tbl_AttendanceRegularization` remain independently auditable. Debug and Release builds succeeded. **UAT PASS (functional):** Reg approval recalculates dependent fields; calendar / Day Detail consistent; Reg rejection and leave approval unchanged (no engine). **Deferred validation (not PASS):** failure-injection rollback of the engine, simultaneous dual-approval race, AdminApprovalDashboard concurrency review.
+- Add Proforma company-scoped client join (2026-11-06; uncommitted on `feature/add-proforma-ui-refactor`): all three searches in `Add_proforma.aspx.cs` join `tbl_Client` on `qut.Client_Id = c.Client_Id AND c.CompanyID = qut.CompanyID`. Read-only `flamex_uat` investigation, MSBuild 14 Debug build, and eight-test browser UAT in Company 1 and Company 2 all PASS. Details and limitations: Current Status above.
 
 ---
 
