@@ -1,14 +1,22 @@
-# Solution documentation map
+# Solution documentation map — ARCHIVE PROPOSAL (7 November 2026)
+
+**This section lists the archive documentation for the 7 November 2026 FLMX Inventory Management Architecture review freeze. Separate from the normative architecture baseline.**
+
+**Archive location reference:** Review artifacts are tracked separately; do not commit to the architecture baseline repository.
+
+**Archive artifacts:** `Section1_Validation_Diff.md`, `REVIEW_REPORT_FLMX_v1.0.md`, `SECTION_1_REVIEW_FLMX_v1.0.md`, `VERIFICATION_REPORT_FLMX_v1.0.md` — archived with "unapproved/unverified" labeling as described in their file headers.
+
+**Baseline architecture:** `docs/architecture/FLMX_Inventory_Management_Architecture_v1.0.md` — remains at commit `6351b6a`; review-facing modifications reverted; archived separately.
+
+**Note:** This archive section is informational only. The normative architecture baseline and its governance documents remain unchanged. Review artifacts are preserved for governance review purposes only and do not constitute approved specifications or implementation directives.
 
 AminrupERP / Flame-ex (`Bill_Software`) documentation is split so **shared architecture is written once** and **every `.aspx` page is listed once**.
 
 **Coverage:** all **188** pages are in the census (Reviewed). Each of the **19** domains has a workflow narrative. Page↔table/SP verbs: [`page-catalog/DATA_DICTIONARY.md`](page-catalog/DATA_DICTIONARY.md). All UAT columns + SP signatures: [`page-catalog/UAT_CATALOG.md`](page-catalog/UAT_CATALOG.md). Handlers/helpers/SPs: [`page-catalog/SHARED_RUNTIME.md`](page-catalog/SHARED_RUNTIME.md). Live UAT objects: [`page-catalog/SHARED_SCHEMA.md`](page-catalog/SHARED_SCHEMA.md). Leftover `docs/01`–`docs/13` are pointers. Visit audit vs current code: [`sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md`](sales-visit-workflow-audit/00_SNAPSHOT_STATUS.md).
 
-**Still not in-repo:** ERD drawings, stored-procedure **bodies**, screenshot user manuals.
-
 ## Commercial spine (ERP)
 
-```
+``` 
 Quotation (or Client PO) [tbl_Quotation]
   → DPCC [tbl_Chalan] and/or Proforma [tbl_Proforma]
   → Tax invoice [tbl_Invoice]
@@ -119,4 +127,4 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 ## Invoice lineage (specialist, not page catalogs)
 
 - [invoice_export_data_inventory.md](invoice_export_data_inventory.md)
-- [invoice_insert_data_lineage.md](invoice_insert_data_lineage.md)
+- [invoice_insert_data_lineage.md](invoice_insert_data_lineage.md)
