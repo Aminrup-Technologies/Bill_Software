@@ -158,6 +158,8 @@ Business rules stay unless a change explicitly states otherwise. Decision #8: `R
 
 Do not commit new secrets. Do not rotate `machineKey` or live `DbConn`/SMTP/iTop/Msg91 in a feature change. `machineKey` rotation is a full-farm IIS recycle.
 
+Agent SQL access is not the IIS application. The project MCP servers are `FLMX_UAT` (`flamex_uat`) and `FLMX_LIVE` (`flamex_live`). Each reads its own user-environment variable, `FLMX_UAT_CONNECTION_STRING` or `FLMX_LIVE_CONNECTION_STRING`. Neither reads `Web.config`, `Web.Release.config`, or publish profiles. `FLMX_LIVE` uses `flmx_mcp_live_reader`, which has `CONNECT` and `SELECT` on `dbo.Permissions`, `dbo.Roles`, `dbo.RolePermissions`, `dbo.UserRoles`, and `dbo.tbl_login` only. The security boundary is that SQL principal. A client-side SELECT filter is not that boundary. Contract: [`CURSOR_RULES.md`](CURSOR_RULES.md).
+
 ---
 
 ## Scheduler / service architecture summary

@@ -155,3 +155,25 @@ Do not repeat Inspect → Execute → Verify → Approval, stash preservation, o
 ### Git safeguards (summary)
 
 Encoded in `project.mdc`: `git status` first; verify HEAD; preserve stashes; prefer `git restore`; never commit `Web.config`, `*.pubxml`, or MCP files; separate commit and push gates; never mutate stash state without explicit approval.
+
+---
+
+## MCP database access
+
+The project MCP file `Bill_Software/.cursor/mcp.json` (gitignored) registers `FLMX_UAT` and `FLMX_LIVE`. Package: `@bytebase/dbhub@1.6.0` (Bytebase, stdio, SQL Server). Selected on 2026-11-09 because it is maintained (1.6.0 published 2026-11-07), Cursor-compatible, and limited to `execute_sql` plus `search_objects`. `readonly = true`, `max_rows = 100`, `connection_timeout = 15`, and `query_timeout = 15` are set in `%USERPROFILE%\.flmx-mcp\FLMX_UAT.toml` and `%USERPROFILE%\.flmx-mcp\FLMX_LIVE.toml`. Each file contains only its own variable, `${FLMX_UAT_CONNECTION_STRING}` or `${FLMX_LIVE_CONNECTION_STRING}`. Both TOML files stay outside the repository. `Bill_Software/.cursor/*.toml` is gitignored.
+
+Rejected for this channel: `mssql-mcp-server@1.3.0` (the user-level server named `flamex_uat`, plus the unrelated AnmolDristi servers; 29 tools; SELECT filter and a 15-second driver timeout only; row cap skipped when the text already contains `SELECT TOP`); `@executeautomation/database-server` (unmaintained, write and DDL tools); `@azure/mcp` (Azure control plane, not T-SQL); Data API builder SQL MCP (entity gateway, not diagnostic SQL). Do not edit `%USERPROFILE%\.cursor\mcp.json` without explicit approval. The FLMX-specific legacy entry is `flamex_uat`. Leave both AnmolDristi entries in place.
+
+DBHub `readonly` blocks writes, DDL, `EXEC`, `sp_executesql`, and `xp_cmdshell` in the client, then rolls the SQL Server batch back. That is not database security. SQL Server has no read-only transaction. The June 2026 classifier bypass (DBHub issue 349) is fixed in 1.6.0 and is still not the boundary. SQL Server query timeout in this package is client-side. `sslmode = "require"` encrypts and does not verify the certificate. `ApplicationIntent=ReadOnly` is not used; it does not grant or deny permissions.
+
+Never copy `Web.config`, `Web.Release.config`, or publish-profile connection strings into these variables. URL-encode the password inside the `sqlserver://` DSN. Restart Cursor after the user environment changes.
+
+### Verified UAT state (2026-11-09)
+
+Existing reader `flmx_mcp_reader` on `flamex_uat`, server `WIN-8H6JMQBVGP2\MSSQLSERVER2017`, original login `flmx_mcp_reader`. Roles: `mcp_readonly`, `db_datareader`. Not `db_datawriter`, `db_owner`, `db_ddladmin`, or `sysadmin`. `HAS_DBACCESS('flamex_uat') = 1`. `HAS_DBACCESS('flamex_live') = 0` (database exists; this login cannot enter it). `sys.server_principals` visible to this login: only `flmx_mcp_reader`. Database permissions for this user, `mcp_readonly`, `public`, and `db_datareader`: `CONNECT`, database `SELECT` via `mcp_readonly`, and `public` `SELECT` on shipped objects only (170 shipped, 0 user objects). No `INSERT`, `UPDATE`, `DELETE`, `ALTER`, `EXECUTE`, `CONTROL`, or `DENY` rows. Guest has no `CONNECT` grant. Schema read returned `dbo` tables including `ActiveSessions` and `Permissions`. No mutating statement was sent. `FLMX_UAT_CONNECTION_STRING` is set in the Windows user environment for this login and `flamex_uat`. `FLMX_LIVE_CONNECTION_STRING` is unset.
+
+### LIVE principal
+
+The provisioned LIVE principal is `flmx_mcp_live_reader` on `flamex_live`. It is not a member of `mcp_readonly` or `db_datareader`. Its database permissions are `CONNECT` and `SELECT` on `dbo.Permissions`, `dbo.Roles`, `dbo.RolePermissions`, `dbo.UserRoles`, and `dbo.tbl_login` only. It has no database-wide `SELECT`. The login is created separately and has no user in `flamex_uat`. The script is `Bill_Software/corporate/business/sql/create_flmx_live_reader.sql`. `FLMX_LIVE_CONNECTION_STRING` must use that login and `flamex_live` only. Do not point it at `flamex_uat`, `flmx_mcp_reader`, or an application connection string.
+
+Confirm with read-only effective permissions: `DB_NAME()` is `flamex_live`, `HAS_DBACCESS('flamex_uat')` is 0, database `CONNECT` is effective, and object `SELECT` is effective on those five tables only. `FLMX_LIVE` is registered beside `FLMX_UAT` and reads `FLMX_LIVE_CONNECTION_STRING` only.

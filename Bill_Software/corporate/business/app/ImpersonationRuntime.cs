@@ -402,7 +402,12 @@ namespace Bill_Software.corporate.business.app
             if (!TryReadActor(out actor))
                 return ImpersonationResult.Fail("Actor session is incomplete.");
 
-            if (CurrentLink() != null || HasActiveLease(actor.SessionToken, actor.UserId))
+            if (CurrentLink() != null)
+                return DenyAndAudit(ImpersonationGovernance.InvNested, "Nested impersonation is rejected.");
+            bool activeLease;
+            if (!TryHasActiveLease(actor.SessionToken, actor.UserId, out activeLease))
+                return ImpersonationResult.Fail("Impersonation lease could not be verified.");
+            if (activeLease)
                 return DenyAndAudit(ImpersonationGovernance.InvNested, "Nested impersonation is rejected.");
 
             if (targetUserId <= 0)
@@ -460,12 +465,14 @@ namespace Bill_Software.corporate.business.app
             return null;
         }
 
-        private static bool HasActiveLease(Guid sessionToken, int actorUserId)
+        private static bool TryHasActiveLease(Guid sessionToken, int actorUserId, out bool activeLease)
         {
+            activeLease = false;
             const string sql = @"
                 SELECT TOP 1 1
                 FROM dbo.ImpersonationSessions
                 WHERE IsActive = 1 AND EndedAt IS NULL
+                  AND LeaseExpiresAt > SYSUTCDATETIME()
                   AND (ActorSessionToken = @Token OR TargetSessionToken = @Token OR ActorUserId = @ActorUserId)";
 
             try
@@ -476,12 +483,13 @@ namespace Bill_Software.corporate.business.app
                     cmd.Parameters.Add("@Token", SqlDbType.UniqueIdentifier).Value = sessionToken;
                     cmd.Parameters.Add("@ActorUserId", SqlDbType.Int).Value = actorUserId;
                     cn.Open();
-                    return cmd.ExecuteScalar() != null;
+                    activeLease = cmd.ExecuteScalar() != null;
+                    return true;
                 }
             }
             catch (SqlException)
             {
-                return true;
+                return false;
             }
         }
 

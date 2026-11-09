@@ -1018,7 +1018,7 @@
                 </div>
                 <div class="form-group" style="flex:2;">
                     <label>Global Search</label>
-                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="form-control" placeholder="Search by name, ID, HSN, Brand..."></asp:TextBox>
+                    <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="form-control" placeholder="Search by name, ID, HSN, Brand..." onfocus="autoCollapseForm()"></asp:TextBox>
                 </div>
                 <div class="btn-group">
                     <asp:Button ID="btnSearch" runat="server" CssClass="btn btn-search" Text="Search" OnClick="btnSearch_Click" />
