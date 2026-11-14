@@ -247,6 +247,7 @@
     <Content Include="Content\themes\base\tooltip.css" />
     <Content Include="corporate\business\app\AdminApprovalDashboard.aspx" />
     <Content Include="corporate\business\app\AdminAttendanceDashboard.aspx" />
+    <Content Include="corporate\business\app\AdminHolidaySetup.aspx" />
     <Content Include="corporate\business\app\AdminLeaveSetup.aspx" />
     <Content Include="corporate\business\app\AdminOverride.aspx" />
     <Content Include="corporate\business\app\AdminShiftAssignment.aspx" />
@@ -704,6 +705,13 @@
     </Compile>
     <Compile Include="corporate\business\app\AdminAttendanceDashboard.aspx.designer.cs">
       <DependentUpon>AdminAttendanceDashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminHolidaySetup.aspx.cs">
+      <DependentUpon>AdminHolidaySetup.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminHolidaySetup.aspx.designer.cs">
+      <DependentUpon>AdminHolidaySetup.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\AdminLeaveSetup.aspx.cs">
       <DependentUpon>AdminLeaveSetup.aspx</DependentUpon>
