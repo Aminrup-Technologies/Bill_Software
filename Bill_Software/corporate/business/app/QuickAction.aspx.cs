@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -26,80 +27,89 @@ namespace Bill_Software.corporate.business.app
 
         private void ProcessAction(string token)
         {
-            // Decrypt: Expected format -> "ReqID=45&Type=Leave&Action=Approve&ManagerID=ADM01&CompanyID=1"
-            string decryptedData = SecurityHelper.DecryptFromUrlToken(token);
-
-            if (string.IsNullOrEmpty(decryptedData))
-            {
-                ShowMessage("error", "Tampered Link", "This link is invalid or corrupted.");
-                return;
-            }
-
-            // Parse the data safely
-            var parameters = System.Web.HttpUtility.ParseQueryString(decryptedData);
-            string reqId = parameters["ReqID"];
-            string reqType = parameters["Type"]; // "Leave" or "Reg"
-            string action = parameters["Action"]; // "Approve" or "Reject"
-            string managerId = parameters["ManagerID"];
-            string companyIdRaw = parameters["CompanyID"];
-
-            int companyId;
-            if (!int.TryParse(companyIdRaw, out companyId) || companyId <= 0)
-            {
-                ShowMessage("error", "Invalid Link", "Company context on this link is invalid.");
-                return;
-            }
-
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
 
-                // 1. Verify the request is still pending
-                string checkQuery = reqType == "Leave"
-                    ? "SELECT RequestStatus, UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID AND CompanyID = @CompID"
-                    : "SELECT RequestStatus, UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID AND CompanyID = @CompID";
+                NameValueCollection parameters;
+                string reqId;
+                string reqType;
+                string action;
+                string managerId;
+                int companyId;
 
-                string employeeId = "";
-
-                using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn))
+                // Consume (TTL + one-time) and approval share one transaction so a failed
+                // approval rolls back UsedAtUtc and the manager can retry the same link.
+                using (SqlTransaction tran = conn.BeginTransaction())
                 {
-                    checkCmd.Parameters.AddWithValue("@ReqID", reqId);
-                    checkCmd.Parameters.AddWithValue("@CompID", companyId);
+                    QuickActionTokenFailure tokenFailure = QuickActionTokenService.TryConsume(
+                        conn, tran, token, out parameters);
 
-                    using (SqlDataReader checkReader = checkCmd.ExecuteReader())
+                    if (tokenFailure != QuickActionTokenFailure.None)
                     {
-                        if (checkReader.Read())
-                        {
-                            string currentStatus = checkReader["RequestStatus"].ToString();
-                            employeeId = checkReader["UserCode"].ToString();
+                        try { tran.Rollback(); } catch { /* already rolled back */ }
+                        QuickActionTokenService.ShowFailure(ShowMessage, tokenFailure);
+                        return;
+                    }
 
-                            if (currentStatus != "Pending")
+                    reqId = parameters["ReqID"];
+                    reqType = parameters["Type"];
+                    action = parameters["Action"];
+                    managerId = parameters["ManagerID"];
+                    if (!int.TryParse(parameters["CompanyID"], out companyId) || companyId <= 0)
+                    {
+                        try { tran.Rollback(); } catch { /* already rolled back */ }
+                        ShowMessage("error", "Invalid Link", "Company context on this link is invalid.");
+                        return;
+                    }
+
+                    // 1. Verify the request is still pending (same connection/transaction)
+                    string checkQuery = reqType == "Leave"
+                        ? "SELECT RequestStatus, UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID AND CompanyID = @CompID"
+                        : "SELECT RequestStatus, UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID AND CompanyID = @CompID";
+
+                    string employeeId = "";
+
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn, tran))
+                    {
+                        checkCmd.Parameters.AddWithValue("@ReqID", reqId);
+                        checkCmd.Parameters.AddWithValue("@CompID", companyId);
+
+                        using (SqlDataReader checkReader = checkCmd.ExecuteReader())
+                        {
+                            if (checkReader.Read())
                             {
-                                ShowMessage("error", "Action Already Taken", $"This request has already been {currentStatus}.");
+                                string currentStatus = checkReader["RequestStatus"].ToString();
+                                employeeId = checkReader["UserCode"].ToString();
+
+                                if (currentStatus != "Pending")
+                                {
+                                    checkReader.Close();
+                                    try { tran.Rollback(); } catch { /* already rolled back */ }
+                                    ShowMessage("error", "Action Already Taken", $"This request has already been {currentStatus}.");
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                checkReader.Close();
+                                try { tran.Rollback(); } catch { /* already rolled back */ }
+                                ShowMessage("error", "Not Found", "We could not locate this request.");
                                 return;
                             }
                         }
-                        else
-                        {
-                            ShowMessage("error", "Not Found", "We could not locate this request.");
-                            return;
-                        }
                     }
-                }
 
-                string newStatus = action == "Approve" ? "Approved" : "Rejected";
-                string reqTypeDesc = reqType == "Leave" ? "leave" : "attendance correction";
-                string moduleCode = reqType == "Leave" ? "HR/Leave" : "HR/Attendance";
-                string severityType = action == "Approve" ? "Success" : "Warning";
+                    string newStatus = action == "Approve" ? "Approved" : "Rejected";
+                    string reqTypeDesc = reqType == "Leave" ? "leave" : "attendance correction";
+                    string moduleCode = reqType == "Leave" ? "HR/Leave" : "HR/Attendance";
+                    string severityType = action == "Approve" ? "Success" : "Warning";
 
-                string eEmail = null, eMobile = null, empName = null;
-                bool sendEmail = false, sendWA = false;
-                DateTime? workflowAttDate = null;
-                bool processed = false;
+                    string eEmail = null, eMobile = null, empName = null;
+                    bool sendEmail = false, sendWA = false;
+                    DateTime? workflowAttDate = null;
+                    bool processed = false;
 
-                // 2. Execute the Approval/Rejection, Update Balances, rules engine (Reg approve), & Notify
-                using (SqlTransaction tran = conn.BeginTransaction())
-                {
                     try
                     {
                         // Ambient SqlTransaction owns consistency; do not BEGIN TRAN inside the batch.
@@ -240,10 +250,9 @@ namespace Bill_Software.corporate.business.app
                         ShowMessage("error", "Unable to Complete", "Unable to complete this request. No changes were saved.");
                         return;
                     }
-                }
 
-                string subject = $"Update: Your {reqTypeDesc} request was {newStatus}";
-                string htmlMessage = $@"
+                    string subject = $"Update: Your {reqTypeDesc} request was {newStatus}";
+                    string htmlMessage = $@"
                             <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; border-radius: 8px;'>
                                 <h2 style='color: {(action == "Approve" ? "#28a745" : "#dc3545")};'>Request {newStatus}</h2>
                                 <p>Hello <strong>{empName}</strong>,</p>
@@ -251,15 +260,16 @@ namespace Bill_Software.corporate.business.app
                                 <p style='margin-top: 20px;'><a href='https://exc.aagroupindia.com/index.aspx' style='color: #19658A; text-decoration: underline;'>Log in to Flame-Ex</a> to view your updated dashboard.</p>
                             </div>";
 
-                string targetEmail = sendEmail ? eEmail : null;
-                string targetMobile = sendWA ? eMobile : null;
+                    string targetEmail = sendEmail ? eEmail : null;
+                    string targetMobile = sendWA ? eMobile : null;
 
-                if (!string.IsNullOrEmpty(targetEmail) || !string.IsNullOrEmpty(targetMobile))
-                {
-                    CommunicationGateway.SendAlertsAsync(targetEmail, targetMobile, subject, htmlMessage);
+                    if (!string.IsNullOrEmpty(targetEmail) || !string.IsNullOrEmpty(targetMobile))
+                    {
+                        CommunicationGateway.SendAlertsAsync(targetEmail, targetMobile, subject, htmlMessage);
+                    }
+
+                    ShowMessage("success", $"Request {newStatus}", $"You have successfully {newStatus.ToLower()}ed this {reqType} request.");
                 }
-
-                ShowMessage("success", $"Request {newStatus}", $"You have successfully {newStatus.ToLower()}ed this {reqType} request.");
             }
         }
 

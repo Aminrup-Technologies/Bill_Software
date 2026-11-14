@@ -31,13 +31,13 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 
 ## Leave and shifts
 
-- **`MyLeaves`:** apply leave; emails manager a `QuickAction.aspx?t=` token (Approve/Reject). Gated by `SecurePage` / `RequiredPermissionKey = my_leaves` (same menu `id`).
+- **`MyLeaves`:** apply leave; emails manager a `QuickAction.aspx?t=` token via `QuickActionTokenService.TryIssue` (TTL + one-time). Gated by `SecurePage` / `RequiredPermissionKey = my_leaves` (same menu `id`).
 - **`AdminLeaveSetup`:** INSERT/UPDATE `tbl_LeaveMaster` scoped by `CompanyID` (edit + soft deactivate via `IsActive = 0`).
 - **`AdminShiftSetup`:** CRUD `tbl_ShiftMaster` + notifications.
 - **`AdminShiftAssignment`:** maps employees; permission key is **`AdminShiftAssignment`** (distinct from `AdminShiftSetup`). EmpConfig menu id `AdminShiftAssignment`. May run `sp_RunAttendanceRulesEngine` after a shift-map change (not an approval path).
 - **`AdminAttendanceDashboard`:** enterprise attendance register (INSERT/UPDATE/DELETE). SecurePage key **`AdminAttendanceDashboard`**; EmpConfig menu id matches. Catalog row in `employee_config_permissions.sql` (no RolePermissions grant).
-- **`AdminOverride`:** HR resolve leave/reg; can mint QuickAction tokens for managers. `sp_RunAttendanceRulesEngine` runs only after a successful regularization approval, on the approval `SqlTransaction`. UPDATE requires `RequestStatus = 'Pending'`; zero rows `THROW 50001` into the C# rollback handler (no engine, no `Commit`, no success alert). Leave approve/reject and regularization reject do not call the engine.
+- **`AdminOverride`:** HR resolve leave/reg; can mint QuickAction tokens for managers (`QuickActionTokenService.TryIssue`; remint invalidates prior unused same Action). `sp_RunAttendanceRulesEngine` runs only after a successful regularization approval, on the approval `SqlTransaction`. UPDATE requires `RequestStatus = 'Pending'`; zero rows `THROW 50001` into the C# rollback handler (no engine, no `Commit`, no success alert). Leave approve/reject and regularization reject do not call the engine.
 - **`AdminApprovalDashboard`:** pending-only approve/reject. Same engine rule (successful regularization approval only). Zero pending rows abort via `@@ROWCOUNT = 0` (no result set → rollback) before the engine and `Commit`. Leave approve/reject and regularization reject do not call the engine.
-- **`QuickAction`:** token page is catalogued in [DOMAIN_dashboard.md](DOMAIN_dashboard.md). `Type=Reg` + Approve calls `sp_RunAttendanceRulesEngine` on the approval `SqlTransaction`. UPDATE requires `RequestStatus = 'Pending'`; zero rows `THROW 50001` into the C# rollback handler. Leave approve/reject and regularization reject do not call the engine.
+- **`QuickAction`:** token page is catalogued in [DOMAIN_dashboard.md](DOMAIN_dashboard.md). TTL + one-time consume via `QuickActionTokenService` / `dbo.QuickActionTokens`. `Type=Reg` + Approve calls `sp_RunAttendanceRulesEngine` on the approval `SqlTransaction`. UPDATE requires `RequestStatus = 'Pending'`; zero rows `THROW 50001` into the C# rollback handler. Leave approve/reject and regularization reject do not call the engine.
 
 Sales-visit approval remains `srch_dailyrpts`. Working status and deferred resilience checks: [HANDOFF.md](../HANDOFF.md).

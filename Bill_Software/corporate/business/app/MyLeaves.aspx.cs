@@ -216,17 +216,33 @@ namespace Bill_Software.corporate.business.app
                                 string managerId = reader["ManagerID"]?.ToString();
                                 string newRequestID = reader["NewRequestID"]?.ToString();
 
-                                // 3. Generate the Secure Payloads
-                                string rawApprove = $"ReqID={newRequestID}&Type=Leave&Action=Approve&ManagerID={managerId}&CompanyID={CompanyContext.CurrentCompanyID}";
-                                string rawReject = $"ReqID={newRequestID}&Type=Leave&Action=Reject&ManagerID={managerId}&CompanyID={CompanyContext.CurrentCompanyID}";
-
-                                string tokenApprove = SecurityHelper.EncryptToUrlToken(rawApprove);
-                                string tokenReject = SecurityHelper.EncryptToUrlToken(rawReject);
+                                // 3. Generate TTL + one-time secure action tokens
+                                string tokenApprove;
+                                string tokenReject;
+                                string tokenError;
+                                if (!QuickActionTokenService.TryIssue(newRequestID, "Leave", "Approve", managerId, CompanyContext.CurrentCompanyID, out tokenApprove, out tokenError)
+                                    || !QuickActionTokenService.TryIssue(newRequestID, "Leave", "Reject", managerId, CompanyContext.CurrentCompanyID, out tokenReject, out tokenError))
+                                {
+                                    System.Diagnostics.Debug.WriteLine(tokenError ?? "QuickAction token mint failed.");
+                                    tokenApprove = null;
+                                    tokenReject = null;
+                                }
 
                                 // Ensure this base URL points to your live server IP/Domain
                                 string baseUrl = "https://exc.aagroupindia.com/corporate/business/app/";
-                                string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
-                                string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+                                string actionButtonsHtml = "";
+                                string actionFooter = "Sign in to Flame-Ex to approve or reject this request.";
+                                if (!string.IsNullOrEmpty(tokenApprove) && !string.IsNullOrEmpty(tokenReject))
+                                {
+                                    string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
+                                    string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+                                    actionButtonsHtml = $@"
+                                    <div style='margin-top: 20px;'>
+                                        <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block;'>✅ Approve Leave</a>
+                                        <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>❌ Reject Leave</a>
+                                    </div>";
+                                    actionFooter = "You can approve or reject directly from this email without logging in. Each link works once and expires automatically.";
+                                }
 
                                 // 4. Build the Rich HTML Email
                                 string subject = $"Action Required: Leave Request from {empName}";
@@ -240,12 +256,8 @@ namespace Bill_Software.corporate.business.app
                                         <tr><td style='padding: 5px 0;'><strong>Total Days:</strong></td><td>{totalDays} days</td></tr>
                                         <tr><td style='padding: 5px 0;'><strong>Reason:</strong></td><td>{reason}</td></tr>
                                     </table>
-                                    
-                                    <div style='margin-top: 20px;'>
-                                        <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block;'>✅ Approve Leave</a>
-                                        <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>❌ Reject Leave</a>
-                                    </div>
-                                    <p style='font-size: 12px; color: #777; margin-top: 30px;'>You can approve or reject directly from this email without logging in.</p>
+                                    {actionButtonsHtml}
+                                    <p style='font-size: 12px; color: #777; margin-top: 30px;'>{actionFooter}</p>
                                 </div>";
 
                                 // 5. Fire Gateway (Only if preferences allow)

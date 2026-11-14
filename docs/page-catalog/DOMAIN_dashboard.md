@@ -13,7 +13,7 @@ Landing KPIs. Narrative: docs/12_Home_Dashboard.md.
 
 ## Page-unique notes
 
-- `corporate/business/app/QuickAction.aspx`: Unauthenticated email action: QS `t` decrypts to ReqID/Type/Action/ManagerID/CompanyID for leave or regularization approve/reject.
+- `corporate/business/app/QuickAction.aspx`: Unauthenticated email action: QS `t` decrypts to ReqID/Type/Action/ManagerID/CompanyID/`Exp` for leave or regularization approve/reject. Fresh links are TTL-bounded (`QuickActionTokenMinutes`, default 7 days) and one-time via `dbo.QuickActionTokens` (SHA-256). Missing table / expired / reused links show explicit errors (no silent success).
 - `corporate/business/app/home.aspx`: Menu id `home1` label is My Profile; page title is Dashboard. Same file.
 
 <!-- NARRATIVE:BEGIN -->
@@ -32,4 +32,4 @@ Quote KPI is `LinkedQuotationNo` (non-blank), not a join to `tbl_Quotation`. New
 
 ## `QuickAction.aspx`
 
-No master. QS `t` → `SecurityHelper.DecryptFromUrlToken` → `ReqID`, `Type` (`Leave`|`Reg`), `Action` (`Approve`|`Reject`), `ManagerID`, `CompanyID`. Possession of the link is the credential. Updates leave request or regularization, then leave-balance / attendance punch side-effects, then notifies the employee. Issued from `MyLeaves` / `AdminOverride`.
+No master. QS `t` → `QuickActionTokenService.TryConsume` (AES decrypt + `Exp` TTL + one-time `dbo.QuickActionTokens` consume on the approval `SqlTransaction`) → `ReqID`, `Type` (`Leave`|`Reg`), `Action` (`Approve`|`Reject`), `ManagerID`, `CompanyID`. Pre-hardening links without `Exp` / store row are rejected as expired. Updates leave request or regularization, then leave-balance / attendance punch side-effects, then notifies the employee. Issued from `MyLeaves` / `attendance` / `AdminOverride` via `QuickActionTokenService.TryIssue`. DDL: `corporate/business/sql/QuickActionTokens.sql`.
