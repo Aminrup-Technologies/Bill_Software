@@ -266,10 +266,10 @@ namespace Bill_Software.corporate.business.app
                                 totalMonthDays++;
                                 totalPayable += payable;
 
-                                if (attCode == "P" || attCode == "NHP" || attCode == "FLP") presentCount++;
-                                else if (attCode == "HD") halfDayCount++;
-                                else if (attCode == "A" || attCode == "LWP") absentCount++;
-                                else if (status.Contains("Off") || status.Contains("Holiday") || attCode == "L") offCount++;
+                                // Same ruleset as calendar labels / GetAttendanceEventColor:
+                                // AttendanceCode when present, else CalculatedStatus (covers no-row "Absent").
+                                ApplyPayrollSummaryBucket(attCode, status,
+                                    ref presentCount, ref halfDayCount, ref absentCount, ref offCount);
                             }
 
                             string color = GetAttendanceEventColor(attCode, status);
@@ -939,6 +939,79 @@ namespace Bill_Software.corporate.business.app
         private static string PunchJson(string status, string message)
         {
             return new JavaScriptSerializer().Serialize(new { status = status, message = message });
+        }
+
+        /// <summary>
+        /// Payroll summary bucket for one calendar day. Must stay aligned with
+        /// CalculatedStatus labels and GetAttendanceEventColor so a day shown as
+        /// Absent/Present/Off on the calendar is counted the same way in the summary.
+        /// </summary>
+        private static void ApplyPayrollSummaryBucket(
+            string attendanceCode,
+            string calculatedStatus,
+            ref int presentCount,
+            ref int halfDayCount,
+            ref int absentCount,
+            ref int offCount)
+        {
+            string code = (attendanceCode ?? string.Empty).Trim().ToUpperInvariant();
+            string statusText = calculatedStatus ?? string.Empty;
+
+            if (code == "P" || code == "NHP" || code == "FLP")
+            {
+                presentCount++;
+                return;
+            }
+            if (code == "HD")
+            {
+                halfDayCount++;
+                return;
+            }
+            if (code == "A" || code == "LWP")
+            {
+                absentCount++;
+                return;
+            }
+            if (code == "L" || code == "CL" || code == "SL" || code == "PL" || code == "EL" ||
+                code == "NH" || code == "FL")
+            {
+                offCount++;
+                return;
+            }
+
+            if (statusText.IndexOf("Present", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Working", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Regularized", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                presentCount++;
+                return;
+            }
+            if (statusText.IndexOf("Half-Day", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Half Day", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Late", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                halfDayCount++;
+                return;
+            }
+            if (statusText.IndexOf("Leave", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                // Paid/approved leave stays in Offs/Holidays (legacy attCode "L" behavior).
+                offCount++;
+                return;
+            }
+            if (statusText.IndexOf("Holiday", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Weekly Off", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Off", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                offCount++;
+                return;
+            }
+            if (statusText.IndexOf("Absent", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Not Punched", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                absentCount++;
+                return;
+            }
         }
 
         private static string GetAttendanceEventColor(string attendanceCode, string status)
