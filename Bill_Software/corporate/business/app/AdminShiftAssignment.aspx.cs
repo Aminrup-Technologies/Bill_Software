@@ -9,7 +9,7 @@ namespace Bill_Software.corporate.business.app
 {
     public partial class AdminShiftAssignment : SecurePage
     {
-        protected override string RequiredPermissionKey { get { return "AdminShiftSetup"; } }
+        protected override string RequiredPermissionKey { get { return "AdminShiftAssignment"; } }
 
         private string ConnString
         {

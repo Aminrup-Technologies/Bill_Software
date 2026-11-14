@@ -2,19 +2,21 @@
    NAME:        employee_config_permissions
    WHEN:        2026-11-14
    WHY:         SecurePage gates AdminLeaveSetup.aspx, AdminShiftSetup.aspx,
-                AdminShiftAssignment.aspx (shared key AdminShiftSetup),
+                AdminShiftAssignment.aspx (distinct key AdminShiftAssignment),
                 AdminOverride.aspx, and AdminAttendanceDashboard.aspx on
                 Bill.Master menu ids. Those PermissionKey values must exist in
                 the UAT permission catalog (docs/16_Phase1A_SecurePage_RBAC.md)
                 for menu visibility and EnsurePage. EmpConfig is a parent
                 navigation container (href="#"), not an independently protected
-                page, so it is not a catalog key.
-   WHAT:        Idempotent INSERT into dbo.Permissions of exactly four rows:
-                PermissionKey AdminLeaveSetup, AdminShiftSetup, AdminOverride,
-                AdminAttendanceDashboard. Column list matches
-                SwitchUser_permission.sql. PermissionId is int IDENTITY
-                (docs/page-catalog/UAT_CATALOG.md) and is not supplied.
-                Description nvarchar(500), ModuleName nvarchar(100),
+                page, so it is not a catalog key. AdminShiftAssignment is a
+                separate menu id / SecurePage key from AdminShiftSetup so
+                define-shifts and map-people can be granted independently.
+   WHAT:        Idempotent INSERT into dbo.Permissions of exactly five rows:
+                PermissionKey AdminLeaveSetup, AdminShiftSetup,
+                AdminShiftAssignment, AdminOverride, AdminAttendanceDashboard.
+                Column list matches SwitchUser_permission.sql. PermissionId is
+                int IDENTITY (docs/page-catalog/UAT_CATALOG.md) and is not
+                supplied. Description nvarchar(500), ModuleName nvarchar(100),
                 SubModuleName nvarchar(100), and FeatureName nvarchar(100) are
                 supplied within those lengths. Runs only when
                 DB_NAME() = N'flamex_uat'. Existing rows are not updated.
@@ -76,10 +78,28 @@ BEGIN
     VALUES
         (
             N'AdminShiftSetup',
-            N'Shift setup (AdminShiftSetup.aspx). Same key gates AdminShiftAssignment.aspx. Catalog only; not granted.',
+            N'Shift setup (AdminShiftSetup.aspx). Catalog only; not granted. Does not cover AdminShiftAssignment.',
             N'Dashboard',
             N'Employee Config',
             N'Shift Setup'
+        );
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM dbo.Permissions
+    WHERE PermissionKey = N'AdminShiftAssignment'
+)
+BEGIN
+    INSERT INTO dbo.Permissions
+        (PermissionKey, Description, ModuleName, SubModuleName, FeatureName)
+    VALUES
+        (
+            N'AdminShiftAssignment',
+            N'Shift assignment / employee-shift mapping (AdminShiftAssignment.aspx). Catalog only; not granted. Distinct from AdminShiftSetup.',
+            N'Dashboard',
+            N'Employee Config',
+            N'Shift Assignment'
         );
 END;
 
@@ -121,6 +141,6 @@ END;
 
 -- No INSERT into dbo.RolePermissions.
 -- No INSERT into dbo.UserRoles.
--- EmpConfig is not registered. AdminShiftAssignment is not a separate key.
+-- EmpConfig is not registered.
 -- PermissionId is IDENTITY and is not supplied.
 GO
