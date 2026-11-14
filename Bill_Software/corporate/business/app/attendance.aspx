@@ -279,6 +279,53 @@
         #modalLateMins { color: #dc3545; }
         #modalTotalHours { color: #19658A; }
 
+        .absent-reg-prompt {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+            color: #856404;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 0 0 14px 0;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .absent-reg-suggest {
+            display: none;
+            background: #fff8e6;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            border-radius: 6px;
+            padding: 14px 15px;
+            margin: 0 0 16px 0;
+        }
+
+        .absent-reg-suggest h4 {
+            margin: 0 0 6px 0;
+            color: #19658A;
+            font-size: 14px;
+        }
+
+        .absent-reg-suggest p {
+            margin: 0 0 12px 0;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .absent-reg-suggest .absent-reg-cta {
+            background-color: #ffc107;
+            color: #333;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
         .geofence-override-swal {
             z-index: 200000 !important;
         }
@@ -468,6 +515,10 @@
 
                 <input type="hidden" id="hfClickedDate" />
 
+                <div id="absentRegPrompt" class="absent-reg-prompt" role="status">
+                    This weekday is marked <b>Absent</b>. If you worked that day, apply Regularize Attendance.
+                </div>
+
                 <div id="modalExistingRecordInfo" style="display: none;">
                     <p style="margin: 0 0 14px 0;"><b>Status:</b> <span id="modalEventStatus" style="font-weight: bold;"></span></p>
 
@@ -502,9 +553,19 @@
                         📍 View Map Details
                     </button>
 
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-                    <p style="font-size: 13px; color: #666; text-align: center;">Forgot to punch out? Need to correct this?</p>
-                    <button type="button" onclick="toggleForm('regForm');" style="background-color: #ffc107; color: #333; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                    <div id="genericRegSection">
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                        <p style="font-size: 13px; color: #666; text-align: center;">Forgot to punch out? Need to correct this?</p>
+                        <button type="button" onclick="toggleForm('regForm');" style="background-color: #ffc107; color: #333; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                            📝 Regularize Attendance
+                        </button>
+                    </div>
+                </div>
+
+                <div id="absentRegSuggest" class="absent-reg-suggest">
+                    <h4>Suggested next step</h4>
+                    <p>Missed punches on a working day can be corrected with Regularize Attendance. Your manager will review the request.</p>
+                    <button type="button" class="absent-reg-cta" onclick="toggleForm('regForm');">
                         📝 Regularize Attendance
                     </button>
                 </div>
@@ -919,13 +980,14 @@
                     var clickedDate = info.event.start;
                     var dateStr = info.event.startStr;
                     var props = info.event.extendedProps || {};
+                    var statusText = props.systemStatus || info.event.title || '';
 
                     hideForms();
                     hideCalendarTooltip();
                     document.getElementById('hfClickedDate').value = dateStr;
                     document.getElementById('modalDateHeader').innerText = clickedDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
 
-                    document.getElementById('modalEventStatus').innerText = props.systemStatus || info.event.title;
+                    document.getElementById('modalEventStatus').innerText = statusText;
                     document.getElementById('modalPunchIn').innerText = props.punchIn || '-';
                     document.getElementById('modalPunchOut').innerText = props.punchOut || '-';
                     document.getElementById('modalTotalHours').innerText = props.totalHours || '-';
@@ -942,6 +1004,7 @@
 
                     document.getElementById('modalExistingRecordInfo').style.display = 'block';
                     document.getElementById('modalEmptyRecordInfo').style.display = 'none';
+                    updateAbsentRegularizeSuggestion(clickedDate, statusText, props.attendanceCode);
                     document.getElementById('dateDetailsModal').style.display = 'block';
                 },
                 dateClick: function (info) {
@@ -956,12 +1019,61 @@
 
                     document.getElementById('modalExistingRecordInfo').style.display = 'none';
                     document.getElementById('modalEmptyRecordInfo').style.display = 'block';
+                    // Only event days with an Absent status get the dedicated prompt/div.
+                    updateAbsentRegularizeSuggestion(null, '', '');
                     document.getElementById('dateDetailsModal').style.display = 'block';
                 }
             });
 
             calendar.render();
         });
+
+        function isPastElapsedDay(dateObj) {
+            if (!dateObj) return false;
+            var day = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+            var today = new Date();
+            today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            return day < today;
+        }
+
+        function isWeekday(dateObj) {
+            if (!dateObj) return false;
+            var dow = dateObj.getDay();
+            return dow !== 0 && dow !== 6;
+        }
+
+        function isAbsentLikeStatus(statusText, attendanceCode) {
+            var s = (statusText || '').toLowerCase();
+            var code = (attendanceCode || '').toString().trim().toUpperCase();
+
+            // Explicit non-Absent statuses must never trigger the suggestion.
+            if (s.indexOf('leave') >= 0 ||
+                s.indexOf('holiday') >= 0 ||
+                s.indexOf('weekly off') >= 0 ||
+                s.indexOf('upcoming') >= 0 ||
+                s.indexOf('present') >= 0 ||
+                s.indexOf('working') >= 0 ||
+                s.indexOf('half-day') >= 0 ||
+                s.indexOf('half day') >= 0 ||
+                s.indexOf('regularized') >= 0) {
+                return false;
+            }
+
+            if (code === 'A') return true;
+            if (s.indexOf('absent') >= 0 || s.indexOf('not punched') >= 0) return true;
+            return false;
+        }
+
+        function updateAbsentRegularizeSuggestion(dateObj, statusText, attendanceCode) {
+            var promptEl = document.getElementById('absentRegPrompt');
+            var suggestEl = document.getElementById('absentRegSuggest');
+            var genericEl = document.getElementById('genericRegSection');
+            var show = isPastElapsedDay(dateObj) && isWeekday(dateObj) && isAbsentLikeStatus(statusText, attendanceCode);
+
+            if (promptEl) promptEl.style.display = show ? 'block' : 'none';
+            if (suggestEl) suggestEl.style.display = show ? 'block' : 'none';
+            if (genericEl) genericEl.style.display = show ? 'none' : 'block';
+        }
 
         function hideForms() {
             document.getElementById('regForm').style.display = 'none';
