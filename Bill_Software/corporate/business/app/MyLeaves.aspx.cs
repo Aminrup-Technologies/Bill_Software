@@ -32,9 +32,10 @@ namespace Bill_Software.corporate.business.app
         {
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string query = "SELECT LeaveID, LeaveName FROM tbl_LeaveMaster WHERE IsActive = 1";
+                string query = "SELECT LeaveID, LeaveName FROM tbl_LeaveMaster WHERE IsActive = 1 AND CompanyID = @CompanyID";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
+                    cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     da.Fill(dt);
@@ -58,7 +59,7 @@ namespace Bill_Software.corporate.business.app
             SELECT m.LeaveName, b.TotalAllotted, b.UsedDays, 
                    (b.TotalAllotted - b.UsedDays) AS BalanceDays 
             FROM tbl_EmployeeLeaveBalance b
-            INNER JOIN tbl_LeaveMaster m ON b.LeaveID = m.LeaveID
+            INNER JOIN tbl_LeaveMaster m ON b.LeaveID = m.LeaveID AND m.CompanyID = @CompanyID
             WHERE b.UserCode = @UserCode AND b.CompanyID = @CompanyID AND b.FinancialYear = YEAR(GETDATE())";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -83,7 +84,7 @@ namespace Bill_Software.corporate.business.app
                 string query = @"
                     SELECT r.AppliedOn, m.LeaveName, r.StartDate, r.EndDate, r.TotalDays, r.RequestStatus 
                     FROM tbl_LeaveRequests r
-                    INNER JOIN tbl_LeaveMaster m ON r.LeaveID = m.LeaveID
+                    INNER JOIN tbl_LeaveMaster m ON r.LeaveID = m.LeaveID AND m.CompanyID = @CompanyID
                     WHERE r.UserCode = @UserCode AND r.CompanyID = @CompanyID
                     ORDER BY r.AppliedOn DESC";
 
@@ -119,6 +120,18 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     conn.Open();
+
+                    using (SqlCommand typeCmd = new SqlCommand(
+                        "SELECT COUNT(1) FROM tbl_LeaveMaster WHERE LeaveID = @LeaveID AND CompanyID = @CompanyID AND IsActive = 1", conn))
+                    {
+                        typeCmd.Parameters.AddWithValue("@LeaveID", leaveId);
+                        typeCmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
+                        if (Convert.ToInt32(typeCmd.ExecuteScalar()) == 0)
+                        {
+                            ShowMessage("Invalid leave type for this company.", false);
+                            return;
+                        }
+                    }
 
                     string insertQuery = @"
                         BEGIN TRY

@@ -25,14 +25,15 @@ namespace Bill_Software.corporate.business.app
             {
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    string query = @"INSERT INTO tbl_LeaveMaster (LeaveName, IsPaid, MaxDaysPerYear, IsActive) 
-                                     VALUES (@LeaveName, @IsPaid, @MaxDays, 1)";
+                    string query = @"INSERT INTO tbl_LeaveMaster (LeaveName, IsPaid, MaxDaysPerYear, IsActive, CompanyID) 
+                                     VALUES (@LeaveName, @IsPaid, @MaxDays, 1, @CompanyID)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@LeaveName", txtLeaveName.Text.Trim());
                         cmd.Parameters.AddWithValue("@IsPaid", Convert.ToInt32(ddlIsPaid.SelectedValue));
                         cmd.Parameters.AddWithValue("@MaxDays", Convert.ToDecimal(txtMaxDays.Text));
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
 
                         conn.Open();
                         cmd.ExecuteNonQuery();
@@ -64,11 +65,12 @@ namespace Bill_Software.corporate.business.app
                 {
                     string query = @"SELECT LeaveID, LeaveName, IsPaid, MaxDaysPerYear 
                                      FROM tbl_LeaveMaster 
-                                     WHERE IsActive = 1 
+                                     WHERE IsActive = 1 AND CompanyID = @CompanyID
                                      ORDER BY IsPaid DESC, LeaveName ASC";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@CompanyID", CompanyContext.CurrentCompanyID);
                         SqlDataAdapter da = new SqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         da.Fill(dt);
