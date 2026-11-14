@@ -10,20 +10,16 @@ using System.Collections.Generic;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class attendance : System.Web.UI.Page
+    public partial class attendance : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "daily_attendance"; } }
+
         // Ponytail Standard #3: No public static fields. Static helper for WebMethods only.
         private static string GetConnStr() => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
         private string ConnString => ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (HttpContext.Current.Session["USERID"] == null)
-            {
-                Response.Redirect("~/index.aspx");
-                return;
-            }
-
             if (!IsPostBack)
             {
                 lblCurrentDate.Text = DateTime.Now.ToString("dddd, dd MMMM yyyy");
