@@ -195,6 +195,29 @@ namespace Bill_Software.corporate.business.app
                         WHERE lr.CompanyID = @CompanyID AND lr.UserCode = @UserId
                           AND lr.RequestStatus = 'Approved'
                           AND d.CalDate BETWEEN lr.StartDate AND lr.EndDate
+                    ),
+                    PendingRegData AS (
+                        SELECT AttendanceDate, MAX(RequestID) AS RequestID
+                        FROM tbl_AttendanceRegularization
+                        WHERE CompanyID = @CompanyID
+                          AND UserCode = @UserId
+                          AND RequestStatus = 'Pending'
+                          AND MONTH(AttendanceDate) = @Month
+                          AND YEAR(AttendanceDate) = @Year
+                        GROUP BY AttendanceDate
+                    ),
+                    PendingLeaveData AS (
+                        SELECT d.CalDate AS LeaveDate,
+                               MAX(lr.RequestID) AS RequestID,
+                               MAX(ISNULL(lm.LeaveName, 'Leave')) AS LeaveName
+                        FROM tbl_LeaveRequests lr
+                        LEFT JOIN tbl_LeaveMaster lm ON lr.LeaveID = lm.LeaveID AND lm.CompanyID = @CompanyID
+                        CROSS JOIN DateRange d
+                        WHERE lr.CompanyID = @CompanyID
+                          AND lr.UserCode = @UserId
+                          AND lr.RequestStatus = 'Pending'
+                          AND d.CalDate BETWEEN lr.StartDate AND lr.EndDate
+                        GROUP BY d.CalDate
                     )
                     SELECT 
                         d.CalDate AS ActivityDate,
@@ -206,6 +229,9 @@ namespace Bill_Software.corporate.business.app
                         ISNULL(oa.LateByMins, 0) AS LateByMins,
                         ISNULL(oa.EarlyOutByMins, 0) AS EarlyOutByMins,
                         ISNULL(oa.OvertimeMins, 0) AS OvertimeMins,
+                        CASE WHEN pr.RequestID IS NOT NULL THEN 1 ELSE 0 END AS HasPendingReg,
+                        CASE WHEN pl.RequestID IS NOT NULL THEN 1 ELSE 0 END AS HasPendingLeave,
+                        ISNULL(pl.LeaveName, '') AS PendingLeaveName,
                         
                         CASE 
                             WHEN d.CalDate > CAST(GETDATE() AS DATE) THEN 'Upcoming'
@@ -222,6 +248,8 @@ namespace Bill_Software.corporate.business.app
                     LEFT JOIN OfficeAttendance oa ON d.CalDate = oa.ActivityDate
                     LEFT JOIN HolidayData hd ON d.CalDate = hd.HolidayDate
                     LEFT JOIN LeaveData ld ON d.CalDate = ld.LeaveDate
+                    LEFT JOIN PendingRegData pr ON d.CalDate = pr.AttendanceDate
+                    LEFT JOIN PendingLeaveData pl ON d.CalDate = pl.LeaveDate
                     ORDER BY d.CalDate DESC
                     OPTION (MAXRECURSION 31);
                 ";
@@ -260,6 +288,14 @@ namespace Bill_Software.corporate.business.app
                                 ? reader["SystemCalculatedStatus"].ToString()
                                 : status;
                             string payableStr = payable.ToString("0.0");
+                            bool hasPendingReg = reader["HasPendingReg"] != DBNull.Value && Convert.ToInt32(reader["HasPendingReg"]) == 1;
+                            bool hasPendingLeave = reader["HasPendingLeave"] != DBNull.Value && Convert.ToInt32(reader["HasPendingLeave"]) == 1;
+                            string pendingLeaveName = reader["PendingLeaveName"] != DBNull.Value ? reader["PendingLeaveName"].ToString() : "";
+                            // Payroll buckets stay on CalculatedStatus; Pending leave/reg are UI overlays only.
+                            // Approved leave already becomes CalculatedStatus "On Leave (...)".
+                            string displayStatus = status;
+                            if (hasPendingLeave) displayStatus = FormatPendingLeaveDisplayStatus(displayStatus, pendingLeaveName);
+                            else if (hasPendingReg) displayStatus = FormatPendingRegDisplayStatus(displayStatus);
 
                             if (!IsUpcomingStatus(status))
                             {
@@ -273,19 +309,35 @@ namespace Bill_Software.corporate.business.app
                                     ref presentCount, ref halfDayCount, ref absentCount, ref offCount);
                             }
 
-                            string color = GetAttendanceEventColor(attCode, status);
+                            string color = hasPendingLeave
+                                ? GetPendingLeaveColor()
+                                : (hasPendingReg
+                                    ? GetPendingRegularizationColor()
+                                    : GetAttendanceEventColor(attCode, status));
 
-                            string desc = $"<b>Status:</b> {status}<br/><b>In:</b> {inTime} &nbsp;|&nbsp; <b>Out:</b> {outTime}<br/>";
+                            string desc = $"<b>Status:</b> {displayStatus}<br/><b>In:</b> {inTime} &nbsp;|&nbsp; <b>Out:</b> {outTime}<br/>";
+                            if (hasPendingLeave) desc += "<span style='color:#c026d3;'>Leave application pending approval</span><br/>";
+                            if (hasPendingReg) desc += "<span style='color:#fd7e14;'>Regularization request pending approval</span><br/>";
                             if (lateMins > 0) desc += $"<span style='color:#dc3545;'>Late: {lateMins}m</span><br/>";
+
+                            string title = status.Contains("Working")
+                                ? "Working"
+                                : (hasPendingLeave ? "Leave Pending"
+                                    : (hasPendingReg ? "Reg Pending"
+                                        : (attCode != "-" ? attCode : status)));
+
+                            bool darkText = string.Equals(color, "#ffc107", StringComparison.OrdinalIgnoreCase) ||
+                                            string.Equals(color, GetPendingRegularizationColor(), StringComparison.OrdinalIgnoreCase) ||
+                                            string.Equals(color, GetPendingLeaveColor(), StringComparison.OrdinalIgnoreCase);
 
                             events.Add(new
                             {
                                 id = attId,
-                                title = status.Contains("Working") ? "Working" : (attCode != "-" ? attCode : status),
+                                title = title,
                                 start = date.ToString("yyyy-MM-dd"),
                                 backgroundColor = color,
                                 borderColor = color,
-                                textColor = string.Equals(color, "#ffc107", StringComparison.OrdinalIgnoreCase) ? "#333333" : "#ffffff",
+                                textColor = darkText ? "#333333" : "#ffffff",
                                 description = desc,
                                 extendedProps = new
                                 {
@@ -296,6 +348,10 @@ namespace Bill_Software.corporate.business.app
                                     payableDays = payableStr,
                                     attendanceCode = attCode,
                                     systemStatus = sysStatus,
+                                    displayStatus = displayStatus,
+                                    hasPendingReg = hasPendingReg,
+                                    hasPendingLeave = hasPendingLeave,
+                                    pendingLeaveName = pendingLeaveName,
                                     description = desc
                                 }
                             });
@@ -304,7 +360,7 @@ namespace Bill_Software.corporate.business.app
                             {
                                 Date = date.ToString("dd-MMM-yyyy"),
                                 Day = reader["DayOfWeek"].ToString(),
-                                Status = status,
+                                Status = displayStatus,
                                 Code = attCode,
                                 Payable = payableStr,
                                 In = inTime,
@@ -313,7 +369,9 @@ namespace Bill_Software.corporate.business.app
                                 Late = lateMins,
                                 Early = earlyMins,
                                 OT = otMins,
-                                Id = attId
+                                Id = attId,
+                                HasPendingReg = hasPendingReg,
+                                HasPendingLeave = hasPendingLeave
                             });
                         }
 
@@ -717,6 +775,23 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(GetConnStr()))
                 {
                     conn.Open();
+                    // Block a second Pending request for the same day (UI also disables Regularize).
+                    using (SqlCommand dupCmd = new SqlCommand(@"
+                        SELECT COUNT(1)
+                        FROM tbl_AttendanceRegularization
+                        WHERE CompanyID = @CompanyID
+                          AND UserCode = @UserCode
+                          AND AttendanceDate = CAST(@Date AS DATE)
+                          AND RequestStatus = 'Pending';", conn))
+                    {
+                        dupCmd.Parameters.AddWithValue("@CompanyID", companyId);
+                        dupCmd.Parameters.AddWithValue("@UserCode", empId);
+                        dupCmd.Parameters.AddWithValue("@Date", Convert.ToDateTime(reqDate));
+                        int pendingCount = Convert.ToInt32(dupCmd.ExecuteScalar());
+                        if (pendingCount > 0)
+                            return "A regularization request is already pending for this date.";
+                    }
+
                     string query = @"
                         BEGIN TRY
                             BEGIN TRANSACTION;
@@ -851,6 +926,23 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(GetConnStr()))
                 {
                     conn.Open();
+                    // Block a second Pending leave that already covers this date (UI also disables Apply Leave).
+                    using (SqlCommand dupCmd = new SqlCommand(@"
+                        SELECT COUNT(1)
+                        FROM tbl_LeaveRequests
+                        WHERE CompanyID = @CompanyID
+                          AND UserCode = @UserCode
+                          AND RequestStatus = 'Pending'
+                          AND CAST(@Date AS DATE) BETWEEN StartDate AND EndDate;", conn))
+                    {
+                        dupCmd.Parameters.AddWithValue("@CompanyID", companyId);
+                        dupCmd.Parameters.AddWithValue("@UserCode", empId);
+                        dupCmd.Parameters.AddWithValue("@Date", targetDate);
+                        int pendingCount = Convert.ToInt32(dupCmd.ExecuteScalar());
+                        if (pendingCount > 0)
+                            return "A leave application is already pending for this date.";
+                    }
+
                     string query = @"
                         BEGIN TRY
                             BEGIN TRANSACTION;
@@ -1019,6 +1111,39 @@ namespace Bill_Software.corporate.business.app
                     absentCount++;
                     break;
             }
+        }
+
+        private static string GetPendingRegularizationColor()
+        {
+            return "#fd7e14";
+        }
+
+        private static string GetPendingLeaveColor()
+        {
+            // Distinct from approved Leave (#6f42c1) and Reg Pending (#fd7e14).
+            return "#c026d3";
+        }
+
+        private static string FormatPendingRegDisplayStatus(string calculatedStatus)
+        {
+            string statusText = (calculatedStatus ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(statusText)) return "Reg Pending";
+            if (statusText.IndexOf("Reg Pending", StringComparison.OrdinalIgnoreCase) >= 0) return statusText;
+            return statusText + " — Reg Pending";
+        }
+
+        private static string FormatPendingLeaveDisplayStatus(string calculatedStatus, string leaveName)
+        {
+            string statusText = (calculatedStatus ?? string.Empty).Trim();
+            string name = string.IsNullOrWhiteSpace(leaveName) ? "Leave" : leaveName.Trim();
+            if (statusText.IndexOf("Leave Pending", StringComparison.OrdinalIgnoreCase) >= 0) return statusText;
+            if (string.IsNullOrEmpty(statusText) ||
+                statusText.IndexOf("Absent", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Not Punched", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "Absent — Leave Pending (" + name + ")";
+            }
+            return statusText + " — Leave Pending (" + name + ")";
         }
 
         private static string GetAttendanceEventColor(string attendanceCode, string status)
