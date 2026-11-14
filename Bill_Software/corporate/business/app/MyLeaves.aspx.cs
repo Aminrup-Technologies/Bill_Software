@@ -7,17 +7,14 @@ using System.Web.UI.WebControls;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class MyLeaves : System.Web.UI.Page
+    public partial class MyLeaves : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "my_leaves"; } }
+
         string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (HttpContext.Current.Session["USERID"] == null)
-            {
-                Response.Redirect("~/index.aspx");
-            }
-
             if (!IsPostBack)
             {
                 LoadLeaveTypes();

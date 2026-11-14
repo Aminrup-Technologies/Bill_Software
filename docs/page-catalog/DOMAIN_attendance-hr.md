@@ -14,8 +14,8 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 | `corporate/business/app/AdminOverride.aspx` | HR Override Dashboard | Bill.Master / `AdminOverride` | SecurePage, CompanyID<br>`AdminOverride` | `roles`, `tbl_LeaveRequests`, `tbl_login`, `tbl_LeaveMaster`, `tbl_AttendanceRegularization`, `tbl_EmployeeLeaveBalance`, `tbl_Attendance`, `tbl_SystemNotification`, `sp_RunAttendanceRulesEngine()` | INSERT, UPDATE | this catalog |
 | `corporate/business/app/AdminShiftAssignment.aspx` | Shift Assignment | Bill.Master / `AdminShiftAssignment` | SecurePage, CompanyID<br>`AdminShiftSetup` | `tbl_login`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_SystemNotification`, `sp_RunAttendanceRulesEngine()` | INSERT, DELETE | this catalog |
 | `corporate/business/app/AdminShiftSetup.aspx` | Shift Setup | Bill.Master / `AdminShiftSetup` | SecurePage, CompanyID<br>`AdminShiftSetup` | `tbl_ShiftMaster`, `tbl_SystemNotification` | INSERT, UPDATE | this catalog |
-| `corporate/business/app/MyLeaves.aspx` | My Leaves | Bill.Master / `MyLeaves` | Bill.Master, CompanyID<br>menu `my_leaves` | `tbl_LeaveMaster`, `tbl_EmployeeLeaveBalance`, `tbl_LeaveRequests`, `tbl_login`, `tbl_SystemNotification` | INSERT | this catalog |
-| `corporate/business/app/attendance.aspx` | Daily Attendance<br>WM: `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings` | Bill.Master / `attendance` | Bill.Master, CompanyID, WebMethod<br>menu `daily_attendance` | `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_HolidayMaster`, `tbl_LeaveRequests`, `tbl_LeaveMaster`, `tbl_login` | INSERT, UPDATE | [module](../01_Attendance_Clock.md) |
+| `corporate/business/app/MyLeaves.aspx` | My Leaves | Bill.Master / `MyLeaves` | SecurePage, CompanyID<br>`my_leaves` | `tbl_LeaveMaster`, `tbl_EmployeeLeaveBalance`, `tbl_LeaveRequests`, `tbl_login`, `tbl_SystemNotification` | INSERT | this catalog |
+| `corporate/business/app/attendance.aspx` | Daily Attendance<br>WM: `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings` | Bill.Master / `attendance` | SecurePage, CompanyID, WebMethod<br>`daily_attendance` | `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_HolidayMaster`, `tbl_LeaveRequests`, `tbl_LeaveMaster`, `tbl_login` | INSERT, UPDATE | [module](../01_Attendance_Clock.md) |
 
 ## Page-unique notes
 
@@ -25,11 +25,11 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 
 ## Clock and calendar
 
-`attendance.aspx` (menu `daily_attendance`) is the employee punch UI. WebMethods include `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings`, plus `GetMyGeoFence`, `SubmitRegularization`, `SubmitLeave`. Tables: `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_HolidayMaster`, `tbl_LeaveRequests`. Dashboard rollup: [docs/01](../01_Attendance_Clock.md) (`AdminAttendanceDashboard` — FieldSales CTE; can INSERT/UPDATE/DELETE attendance; **not** SecurePage).
+`attendance.aspx` is the employee punch UI. Gated by `SecurePage` / `RequiredPermissionKey = daily_attendance` (same menu `id`). WebMethods keep `AuthGuard.EnsureWebMethod` (session + company membership; not permission-key). Methods: `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings`, plus `GetMyGeoFence`, `SubmitRegularization`, `SubmitLeave`. Tables: `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_HolidayMaster`, `tbl_LeaveRequests`. Dashboard rollup: [docs/01](../01_Attendance_Clock.md) (`AdminAttendanceDashboard` — FieldSales CTE; can INSERT/UPDATE/DELETE attendance; **not** SecurePage).
 
 ## Leave and shifts
 
-- **`MyLeaves`:** apply leave; emails manager a `QuickAction.aspx?t=` token (Approve/Reject). Not SecurePage.
+- **`MyLeaves`:** apply leave; emails manager a `QuickAction.aspx?t=` token (Approve/Reject). Gated by `SecurePage` / `RequiredPermissionKey = my_leaves` (same menu `id`).
 - **`AdminLeaveSetup`:** INSERT `tbl_LeaveMaster` with **no CompanyID**.
 - **`AdminShiftSetup`:** CRUD `tbl_ShiftMaster` + notifications.
 - **`AdminShiftAssignment`:** maps employees; permission key is **`AdminShiftSetup`** (shared). May run `sp_RunAttendanceRulesEngine` after a shift-map change (not an approval path).
