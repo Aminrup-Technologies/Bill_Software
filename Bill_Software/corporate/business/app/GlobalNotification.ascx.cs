@@ -22,34 +22,29 @@ namespace Bill_Software.corporate.business.app
                 BindNotifications();
         }
 
-        protected override void OnInit(EventArgs e)
-        {
-            base.OnInit(e);
-            throw new Exception("GlobalNotification code-behind executed");
-        }
-
-
         private void BindNotifications()
         {
-            string userId = Session["USERID"]?.ToString();
+            string userId = Session["USERID"] != null ? Session["USERID"].ToString() : null;
             if (string.IsNullOrEmpty(userId))
                 return;
 
             using (SqlConnection con =
                 new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand("sp_GetActiveNotifications", con))
             {
-                SqlCommand cmd = new SqlCommand("sp_GetActiveNotifications", con);
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.Add("@UserId", SqlDbType.VarChar, 50).Value = userId;
 
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
 
-                rptNotifications.DataSource = dt;
-                rptNotifications.DataBind();
+                    rptNotifications.DataSource = dt;
+                    rptNotifications.DataBind();
 
-                this.Visible = dt.Rows.Count > 0;
+                    this.Visible = dt.Rows.Count > 0;
+                }
             }
         }
 
@@ -58,31 +53,23 @@ namespace Bill_Software.corporate.business.app
             if (e.CommandName == "Dismiss")
             {
                 int notificationId = Convert.ToInt32(e.CommandArgument);
-                string userId = Session["USERID"]?.ToString();
+                string userId = Session["USERID"] != null ? Session["USERID"].ToString() : null;
+                if (string.IsNullOrEmpty(userId))
+                    return;
 
                 using (SqlConnection con =
                     new SqlConnection(ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString))
+                using (SqlCommand cmd = new SqlCommand("sp_MarkNotificationRead", con))
                 {
-                    SqlCommand cmd = new SqlCommand("sp_MarkNotificationRead", con);
                     cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@NotificationId", notificationId);
-                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.Add("@NotificationId", SqlDbType.Int).Value = notificationId;
+                    cmd.Parameters.Add("@UserId", SqlDbType.VarChar, 50).Value = userId;
                     con.Open();
                     cmd.ExecuteNonQuery();
                 }
 
                 BindNotifications();
             }
-        }
-
-        protected void btnDismiss_Click(object sender, EventArgs e)
-        {
-            string userId = Session["USERID"]?.ToString();
-            if (string.IsNullOrEmpty(userId)) return;
-
-            // Example: mark all visible notifications as read
-            // OR hide control
-            this.Visible = false;
         }
 
     }

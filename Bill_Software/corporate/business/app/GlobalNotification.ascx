@@ -7,11 +7,12 @@
             <span class="erp-alert-msg"><%# Eval("Message") %></span>
 
             <asp:LinkButton
-    ID="btnDismiss"
-    runat="server"
-    Text="✕"
-    CssClass="erp-alert-close"
-    OnClick="btnDismiss_Click" />
+                ID="btnDismiss"
+                runat="server"
+                Text="✕"
+                CssClass="erp-alert-close"
+                CommandName="Dismiss"
+                CommandArgument='<%# Eval("NotificationId") %>' />
 
         </div>
     </ItemTemplate>
