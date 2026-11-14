@@ -144,10 +144,10 @@ namespace Bill_Software.corporate.business.app
                             DECLARE @EmpID varchar(50);
                             DECLARE @AttDate date = NULL;
 
-                            -- A. Update the Request Status
+                            -- A. Update the Request Status (Pending guard; zero rows → THROW so concurrent approvers cannot reach the engine / Commit)
                             " + (reqType == "Leave"
-                                        ? "UPDATE tbl_LeaveRequests SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID AND RequestStatus = 'Pending'; IF @@ROWCOUNT = 0 RETURN; SELECT @EmpID = UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID AND CompanyID = @CompID;"
-                                        : "UPDATE tbl_AttendanceRegularization SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID AND RequestStatus = 'Pending'; IF @@ROWCOUNT = 0 RETURN; SELECT @EmpID = UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID AND CompanyID = @CompID;") + @"
+                                        ? "UPDATE tbl_LeaveRequests SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID AND RequestStatus = 'Pending'; IF @@ROWCOUNT = 0 THROW 50001, N'Request is no longer pending.', 1; SELECT @EmpID = UserCode FROM tbl_LeaveRequests WHERE RequestID = @ReqID AND CompanyID = @CompID;"
+                                        : "UPDATE tbl_AttendanceRegularization SET RequestStatus = @Status, ResolvedOn = GETDATE(), ManagerID = @ManagerID WHERE RequestID = @ReqID AND CompanyID = @CompID AND RequestStatus = 'Pending'; IF @@ROWCOUNT = 0 THROW 50001, N'Request is no longer pending.', 1; SELECT @EmpID = UserCode FROM tbl_AttendanceRegularization WHERE RequestID = @ReqID AND CompanyID = @CompID;") + @"
 
                             -- B. Execute Business Logic if APPROVED
                             IF @Status = 'Approved'
@@ -268,10 +268,21 @@ namespace Bill_Software.corporate.business.app
 
                         tran.Commit();
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         try { if (tran.Connection != null) tran.Rollback(); } catch { /* already rolled back */ }
-                        ShowMessage("Unable to complete this request. No changes were saved.", false);
+                        System.Diagnostics.Debug.WriteLine(ex.ToString());
+                        SqlException sqlEx = ex as SqlException;
+                        if (sqlEx != null && sqlEx.Number == 50001)
+                        {
+                            // Concurrent dual-approve lost the Pending row — no engine, no Commit, no success alert.
+                            ShowMessage("This request is no longer pending. Another approver may have already acted on it.", false);
+                        }
+                        else
+                        {
+                            // Engine failure or other batch error — approval write rolled back; no success alert.
+                            ShowMessage("Unable to complete this request. No changes were saved.", false);
+                        }
                         return;
                     }
 

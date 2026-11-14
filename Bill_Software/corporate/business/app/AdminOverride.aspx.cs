@@ -600,7 +600,17 @@ namespace Bill_Software.corporate.business.app
                     {
                         try { if (tran.Connection != null) tran.Rollback(); } catch { /* already rolled back */ }
                         System.Diagnostics.Debug.WriteLine(ex.ToString());
-                        ShowMessage("Unable to complete this request. No changes were saved.", false);
+                        SqlException sqlEx = ex as SqlException;
+                        if (sqlEx != null && sqlEx.Number == 50001)
+                        {
+                            // Concurrent dual-approve lost the Pending row — no engine, no Commit, no success alert.
+                            ShowMessage("This request is no longer pending. Another approver may have already acted on it.", false);
+                        }
+                        else
+                        {
+                            // Engine failure or other batch error — approval write rolled back; no success alert.
+                            ShowMessage("Unable to complete this request. No changes were saved.", false);
+                        }
                         return;
                     }
 
