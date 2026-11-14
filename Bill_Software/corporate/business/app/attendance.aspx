@@ -326,6 +326,118 @@
             font-weight: bold;
         }
 
+        .absent-reg-suggest .absent-leave-cta {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .absent-days-entry {
+            display: none;
+            margin: 0 0 18px 0;
+            padding: 12px 14px;
+            background: #fff8e6;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #dc3545;
+            border-radius: 6px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .absent-days-entry p {
+            margin: 0;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .absent-days-entry button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 9px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .absent-summary-clickable {
+            cursor: pointer;
+            transition: box-shadow 0.15s ease;
+        }
+
+        .absent-summary-clickable:hover {
+            box-shadow: 0 3px 10px rgba(220, 53, 69, 0.25);
+        }
+
+        .absent-days-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+        }
+
+        .absent-days-row:last-child {
+            border-bottom: none;
+        }
+
+        .absent-days-meta {
+            min-width: 160px;
+        }
+
+        .absent-days-meta .absent-date {
+            font-weight: 700;
+            color: #19658A;
+            font-size: 14px;
+        }
+
+        .absent-days-meta .absent-status {
+            display: inline-block;
+            margin-top: 4px;
+            color: #dc3545;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .absent-days-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .absent-days-actions .btn-reg {
+            background-color: #ffc107;
+            color: #333;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .absent-days-actions .btn-leave {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
         .geofence-override-swal {
             z-index: 200000 !important;
         }
@@ -399,7 +511,7 @@
                 <h4 style="margin: 0 0 5px 0; font-size: 11px; color: #ff9800; text-transform: uppercase;">Half Days</h4>
                 <span id="lblHalfDays" style="font-weight: bold; font-size: 22px; color: #ff9800;">0</span>
             </div>
-            <div style="flex: 1; min-width: 100px; padding: 15px; border-radius: 8px; background: #ffebee; border-left: 4px solid #dc3545; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div id="absentSummaryCard" class="absent-summary-clickable" title="Review Absent weekdays" onclick="openAbsentDaysModal();" style="flex: 1; min-width: 100px; padding: 15px; border-radius: 8px; background: #ffebee; border-left: 4px solid #dc3545; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <h4 style="margin: 0 0 5px 0; font-size: 11px; color: #dc3545; text-transform: uppercase;">Absent</h4>
                 <span id="lblAbsent" style="font-weight: bold; font-size: 22px; color: #dc3545;">0</span>
             </div>
@@ -407,6 +519,11 @@
                 <h4 style="margin: 0 0 5px 0; font-size: 11px; color: #9c27b0; text-transform: uppercase;">Offs / Holidays</h4>
                 <span id="lblOffs" style="font-weight: bold; font-size: 22px; color: #9c27b0;">0</span>
             </div>
+        </div>
+
+        <div id="absentDaysEntry" class="absent-days-entry">
+            <p><b>Absent weekdays found.</b> Review past Absent days and Regularize or Apply Leave for each.</p>
+            <button type="button" onclick="openAbsentDaysModal();">Review Absent Days (<span id="absentDaysEntryCount">0</span>)</button>
         </div>
 
         <div class="section-card">
@@ -564,9 +681,17 @@
 
                 <div id="absentRegSuggest" class="absent-reg-suggest">
                     <h4>Suggested next step</h4>
-                    <p>Missed punches on a working day can be corrected with Regularize Attendance. Your manager will review the request.</p>
-                    <button type="button" class="absent-reg-cta" onclick="toggleForm('regForm');">
-                        📝 Regularize Attendance
+                    <p>This weekday is Absent. Regularize if you worked, or Apply Leave if you did not. You can also review all Absent days for the month.</p>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button type="button" class="absent-reg-cta" style="flex: 1;" onclick="toggleForm('regForm');">
+                            📝 Regularize
+                        </button>
+                        <button type="button" class="absent-leave-cta" style="flex: 1;" onclick="toggleForm('leaveForm');">
+                            🏖️ Apply Leave
+                        </button>
+                    </div>
+                    <button type="button" onclick="openAbsentDaysModal();" style="background: transparent; border: none; color: #19658A; text-decoration: underline; cursor: pointer; font-weight: bold; font-size: 12px; padding: 0;">
+                        View all Absent days this month
                     </button>
                 </div>
 
@@ -616,6 +741,24 @@
                     </button>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <div id="absentDaysModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 99998;">
+        <div style="background: #fff; width: 90%; max-width: 640px; margin: 6% auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); overflow: hidden; font-family: Arial, sans-serif;">
+            <div style="background-color: #19658A; color: white; padding: 15px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between;">
+                <span>⚠️ Absent Days — <span id="absentDaysModalMonth"></span></span>
+                <span style="cursor: pointer;" onclick="closeAbsentDaysModal();">✖</span>
+            </div>
+            <div style="padding: 20px 25px; line-height: 1.5; max-height: 70vh; overflow-y: auto;">
+                <p style="margin: 0 0 14px 0; color: #555; font-size: 13px;">
+                    Past weekday Absents for this month. Choose <b>Regularize</b> if you worked that day, or <b>Apply Leave</b> if you did not.
+                </p>
+                <div id="absentDaysList"></div>
+                <div id="absentDaysEmpty" style="display: none; text-align: center; color: #666; font-style: italic; padding: 24px 10px;">
+                    No past Absent weekdays in this month.
+                </div>
             </div>
         </div>
     </div>
@@ -916,6 +1059,8 @@
                             document.getElementById('lblAbsent').innerText = payload.Summary.Absent;
                             document.getElementById('lblOffs').innerText = payload.Summary.Offs;
 
+                            refreshAbsentDaysFromPayload(payload, m, y);
+
                             // 2. Build the HTML Grid Instantly!
                             var tbody = document.getElementById('historyBody');
                             tbody.innerHTML = '';
@@ -1028,6 +1173,10 @@
             calendar.render();
         });
 
+        window._monthAbsentWeekdays = [];
+        window._currentSummaryMonthKey = '';
+        window._currentSummaryMonthLabel = '';
+
         function isPastElapsedDay(dateObj) {
             if (!dateObj) return false;
             var day = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
@@ -1073,6 +1222,148 @@
             if (promptEl) promptEl.style.display = show ? 'block' : 'none';
             if (suggestEl) suggestEl.style.display = show ? 'block' : 'none';
             if (genericEl) genericEl.style.display = show ? 'none' : 'block';
+        }
+
+        function collectAbsentWeekdays(events) {
+            var list = [];
+            (events || []).forEach(function (ev) {
+                var dateStr = ev.start;
+                if (!dateStr) return;
+                var d = new Date(dateStr + 'T00:00:00');
+                if (isNaN(d.getTime())) return;
+                var props = ev.extendedProps || {};
+                var statusText = props.systemStatus || ev.title || '';
+                var code = props.attendanceCode || '';
+                if (!isPastElapsedDay(d) || !isWeekday(d) || !isAbsentLikeStatus(statusText, code)) return;
+                list.push({
+                    dateStr: dateStr,
+                    displayDate: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    dayName: d.toLocaleDateString('en-GB', { weekday: 'short' }),
+                    status: statusText || 'Absent',
+                    code: code
+                });
+            });
+            list.sort(function (a, b) { return a.dateStr < b.dateStr ? -1 : (a.dateStr > b.dateStr ? 1 : 0); });
+            return list;
+        }
+
+        function refreshAbsentDaysFromPayload(payload, month, year) {
+            window._monthAbsentWeekdays = collectAbsentWeekdays(payload && payload.Events ? payload.Events : []);
+            window._currentSummaryMonthKey = year + '-' + month;
+            var monthLabelEl = document.getElementById('summaryMonthText');
+            window._currentSummaryMonthLabel = monthLabelEl ? monthLabelEl.innerText : (month + '/' + year);
+            updateAbsentEntryPoint();
+            maybeAutoOfferAbsentDaysModal();
+        }
+
+        function updateAbsentEntryPoint() {
+            var entry = document.getElementById('absentDaysEntry');
+            var countEl = document.getElementById('absentDaysEntryCount');
+            var count = (window._monthAbsentWeekdays || []).length;
+            if (countEl) countEl.innerText = count;
+            if (entry) entry.style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        function maybeAutoOfferAbsentDaysModal() {
+            var list = window._monthAbsentWeekdays || [];
+            if (list.length === 0) return;
+            var key = 'absentDaysAuto_' + (window._currentSummaryMonthKey || '');
+            try {
+                if (sessionStorage.getItem(key) === '1') return;
+                sessionStorage.setItem(key, '1');
+            } catch (e) { /* sessionStorage may be blocked; still auto-offer once this load */ }
+            openAbsentDaysModal();
+        }
+
+        function renderAbsentDaysList() {
+            var listEl = document.getElementById('absentDaysList');
+            var emptyEl = document.getElementById('absentDaysEmpty');
+            var monthEl = document.getElementById('absentDaysModalMonth');
+            var list = window._monthAbsentWeekdays || [];
+            if (monthEl) monthEl.innerText = window._currentSummaryMonthLabel || '';
+            if (!listEl || !emptyEl) return;
+
+            listEl.innerHTML = '';
+            if (list.length === 0) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+            emptyEl.style.display = 'none';
+            list.forEach(function (item) {
+                var row = document.createElement('div');
+                row.className = 'absent-days-row';
+
+                var meta = document.createElement('div');
+                meta.className = 'absent-days-meta';
+                var dateEl = document.createElement('div');
+                dateEl.className = 'absent-date';
+                dateEl.innerText = item.displayDate + ' (' + item.dayName + ')';
+                var statusEl = document.createElement('span');
+                statusEl.className = 'absent-status';
+                statusEl.innerText = item.status || 'Absent';
+                meta.appendChild(dateEl);
+                meta.appendChild(statusEl);
+
+                var actions = document.createElement('div');
+                actions.className = 'absent-days-actions';
+
+                var btnReg = document.createElement('button');
+                btnReg.type = 'button';
+                btnReg.className = 'btn-reg';
+                btnReg.innerText = '📝 Regularize';
+                btnReg.onclick = function () { openDayForAbsentAction(item.dateStr, item.status, item.code, 'regForm'); };
+
+                var btnLeave = document.createElement('button');
+                btnLeave.type = 'button';
+                btnLeave.className = 'btn-leave';
+                btnLeave.innerText = '🏖️ Apply Leave';
+                btnLeave.onclick = function () { openDayForAbsentAction(item.dateStr, item.status, item.code, 'leaveForm'); };
+
+                actions.appendChild(btnReg);
+                actions.appendChild(btnLeave);
+                row.appendChild(meta);
+                row.appendChild(actions);
+                listEl.appendChild(row);
+            });
+        }
+
+        function openAbsentDaysModal() {
+            var detailModal = document.getElementById('dateDetailsModal');
+            if (detailModal) detailModal.style.display = 'none';
+            renderAbsentDaysList();
+            document.getElementById('absentDaysModal').style.display = 'block';
+        }
+
+        function closeAbsentDaysModal() {
+            document.getElementById('absentDaysModal').style.display = 'none';
+        }
+
+        function openDayForAbsentAction(dateStr, statusText, attCode, formId) {
+            closeAbsentDaysModal();
+            hideForms();
+
+            var clickedDate = new Date(dateStr + 'T00:00:00');
+            document.getElementById('hfClickedDate').value = dateStr;
+            document.getElementById('modalDateHeader').innerText = clickedDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('modalEventStatus').innerText = statusText || 'Absent';
+            document.getElementById('modalPunchIn').innerText = '-';
+            document.getElementById('modalPunchOut').innerText = '-';
+            document.getElementById('modalTotalHours').innerText = '-';
+            document.getElementById('modalLateMins').innerText = '0';
+            document.getElementById('modalPayableDays').innerText = '0.0';
+            document.getElementById('modalAssignedShift').innerText = '-';
+
+            prefillShiftTimings(dateStr);
+
+            document.getElementById('btnViewMapFromModal').onclick = function () {
+                document.getElementById('dateDetailsModal').style.display = 'none';
+            };
+
+            document.getElementById('modalExistingRecordInfo').style.display = 'block';
+            document.getElementById('modalEmptyRecordInfo').style.display = 'none';
+            updateAbsentRegularizeSuggestion(clickedDate, statusText, attCode);
+            document.getElementById('dateDetailsModal').style.display = 'block';
+            if (formId) toggleForm(formId);
         }
 
         function hideForms() {
