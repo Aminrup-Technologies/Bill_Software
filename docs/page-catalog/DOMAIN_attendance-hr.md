@@ -25,11 +25,7 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 
 ## Clock and calendar
 
-<<<<<<< HEAD
-`attendance.aspx` is the employee punch UI. Gated by `SecurePage` / `RequiredPermissionKey = daily_attendance` (same menu `id`). WebMethods keep `AuthGuard.EnsureWebMethod` (session + company membership; not permission-key). Methods: `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings`, plus `GetMyGeoFence`, `SubmitRegularization`, `SubmitLeave`. Tables: `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_HolidayMaster`, `tbl_LeaveRequests`. Dashboard rollup: [docs/01](../01_Attendance_Clock.md) (`AdminAttendanceDashboard` — FieldSales CTE; can INSERT/UPDATE/DELETE attendance; **not** SecurePage).
-=======
-`attendance.aspx` (menu `daily_attendance`) is the employee punch UI. WebMethods include `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings`, plus `GetMyGeoFence`, `SubmitRegularization`, `SubmitLeave`. Tables: `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_HolidayMaster`, `tbl_LeaveRequests`. Dashboard rollup: [docs/01](../01_Attendance_Clock.md) (`AdminAttendanceDashboard` — FieldSales CTE; can INSERT/UPDATE/DELETE attendance; SecurePage key `AdminAttendanceDashboard`; EmpConfig menu).
->>>>>>> 89f3161 (Secure AdminAttendanceDashboard with SecurePage and EmpConfig menu.)
+`attendance.aspx` is the employee punch UI. Gated by `SecurePage` / `RequiredPermissionKey = daily_attendance` (same menu `id`). WebMethods keep `AuthGuard.EnsureWebMethod` (session + company membership; not permission-key). Methods: `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings`, plus `GetMyGeoFence`, `SubmitRegularization`, `SubmitLeave`. Tables: `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_HolidayMaster`, `tbl_LeaveRequests`. Dashboard rollup: [docs/01](../01_Attendance_Clock.md) (`AdminAttendanceDashboard` — FieldSales CTE; can INSERT/UPDATE/DELETE attendance; SecurePage key `AdminAttendanceDashboard`; EmpConfig menu).
 
 ## Leave and shifts
 
