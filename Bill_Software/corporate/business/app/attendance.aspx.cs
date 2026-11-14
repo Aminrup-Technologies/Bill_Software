@@ -195,6 +195,16 @@ namespace Bill_Software.corporate.business.app
                         WHERE lr.CompanyID = @CompanyID AND lr.UserCode = @UserId
                           AND lr.RequestStatus = 'Approved'
                           AND d.CalDate BETWEEN lr.StartDate AND lr.EndDate
+                    ),
+                    PendingRegData AS (
+                        SELECT AttendanceDate, MAX(RequestID) AS RequestID
+                        FROM tbl_AttendanceRegularization
+                        WHERE CompanyID = @CompanyID
+                          AND UserCode = @UserId
+                          AND RequestStatus = 'Pending'
+                          AND MONTH(AttendanceDate) = @Month
+                          AND YEAR(AttendanceDate) = @Year
+                        GROUP BY AttendanceDate
                     )
                     SELECT 
                         d.CalDate AS ActivityDate,
@@ -206,6 +216,7 @@ namespace Bill_Software.corporate.business.app
                         ISNULL(oa.LateByMins, 0) AS LateByMins,
                         ISNULL(oa.EarlyOutByMins, 0) AS EarlyOutByMins,
                         ISNULL(oa.OvertimeMins, 0) AS OvertimeMins,
+                        CASE WHEN pr.RequestID IS NOT NULL THEN 1 ELSE 0 END AS HasPendingReg,
                         
                         CASE 
                             WHEN d.CalDate > CAST(GETDATE() AS DATE) THEN 'Upcoming'
@@ -222,6 +233,7 @@ namespace Bill_Software.corporate.business.app
                     LEFT JOIN OfficeAttendance oa ON d.CalDate = oa.ActivityDate
                     LEFT JOIN HolidayData hd ON d.CalDate = hd.HolidayDate
                     LEFT JOIN LeaveData ld ON d.CalDate = ld.LeaveDate
+                    LEFT JOIN PendingRegData pr ON d.CalDate = pr.AttendanceDate
                     ORDER BY d.CalDate DESC
                     OPTION (MAXRECURSION 31);
                 ";
@@ -260,6 +272,9 @@ namespace Bill_Software.corporate.business.app
                                 ? reader["SystemCalculatedStatus"].ToString()
                                 : status;
                             string payableStr = payable.ToString("0.0");
+                            bool hasPendingReg = reader["HasPendingReg"] != DBNull.Value && Convert.ToInt32(reader["HasPendingReg"]) == 1;
+                            // Payroll buckets stay on CalculatedStatus; Pending reg is a UI overlay only.
+                            string displayStatus = hasPendingReg ? FormatPendingRegDisplayStatus(status) : status;
 
                             if (!IsUpcomingStatus(status))
                             {
@@ -273,19 +288,28 @@ namespace Bill_Software.corporate.business.app
                                     ref presentCount, ref halfDayCount, ref absentCount, ref offCount);
                             }
 
-                            string color = GetAttendanceEventColor(attCode, status);
+                            string color = hasPendingReg
+                                ? GetPendingRegularizationColor()
+                                : GetAttendanceEventColor(attCode, status);
 
-                            string desc = $"<b>Status:</b> {status}<br/><b>In:</b> {inTime} &nbsp;|&nbsp; <b>Out:</b> {outTime}<br/>";
+                            string desc = $"<b>Status:</b> {displayStatus}<br/><b>In:</b> {inTime} &nbsp;|&nbsp; <b>Out:</b> {outTime}<br/>";
+                            if (hasPendingReg) desc += "<span style='color:#fd7e14;'>Regularization request pending approval</span><br/>";
                             if (lateMins > 0) desc += $"<span style='color:#dc3545;'>Late: {lateMins}m</span><br/>";
+
+                            string title = status.Contains("Working")
+                                ? "Working"
+                                : (hasPendingReg ? "Reg Pending" : (attCode != "-" ? attCode : status));
 
                             events.Add(new
                             {
                                 id = attId,
-                                title = status.Contains("Working") ? "Working" : (attCode != "-" ? attCode : status),
+                                title = title,
                                 start = date.ToString("yyyy-MM-dd"),
                                 backgroundColor = color,
                                 borderColor = color,
-                                textColor = string.Equals(color, "#ffc107", StringComparison.OrdinalIgnoreCase) ? "#333333" : "#ffffff",
+                                textColor = string.Equals(color, "#ffc107", StringComparison.OrdinalIgnoreCase) ||
+                                            string.Equals(color, GetPendingRegularizationColor(), StringComparison.OrdinalIgnoreCase)
+                                    ? "#333333" : "#ffffff",
                                 description = desc,
                                 extendedProps = new
                                 {
@@ -296,6 +320,8 @@ namespace Bill_Software.corporate.business.app
                                     payableDays = payableStr,
                                     attendanceCode = attCode,
                                     systemStatus = sysStatus,
+                                    displayStatus = displayStatus,
+                                    hasPendingReg = hasPendingReg,
                                     description = desc
                                 }
                             });
@@ -304,7 +330,7 @@ namespace Bill_Software.corporate.business.app
                             {
                                 Date = date.ToString("dd-MMM-yyyy"),
                                 Day = reader["DayOfWeek"].ToString(),
-                                Status = status,
+                                Status = displayStatus,
                                 Code = attCode,
                                 Payable = payableStr,
                                 In = inTime,
@@ -313,7 +339,8 @@ namespace Bill_Software.corporate.business.app
                                 Late = lateMins,
                                 Early = earlyMins,
                                 OT = otMins,
-                                Id = attId
+                                Id = attId,
+                                HasPendingReg = hasPendingReg
                             });
                         }
 
@@ -717,6 +744,23 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(GetConnStr()))
                 {
                     conn.Open();
+                    // Block a second Pending request for the same day (UI also disables Regularize).
+                    using (SqlCommand dupCmd = new SqlCommand(@"
+                        SELECT COUNT(1)
+                        FROM tbl_AttendanceRegularization
+                        WHERE CompanyID = @CompanyID
+                          AND UserCode = @UserCode
+                          AND AttendanceDate = CAST(@Date AS DATE)
+                          AND RequestStatus = 'Pending';", conn))
+                    {
+                        dupCmd.Parameters.AddWithValue("@CompanyID", companyId);
+                        dupCmd.Parameters.AddWithValue("@UserCode", empId);
+                        dupCmd.Parameters.AddWithValue("@Date", Convert.ToDateTime(reqDate));
+                        int pendingCount = Convert.ToInt32(dupCmd.ExecuteScalar());
+                        if (pendingCount > 0)
+                            return "A regularization request is already pending for this date.";
+                    }
+
                     string query = @"
                         BEGIN TRY
                             BEGIN TRANSACTION;
@@ -1019,6 +1063,19 @@ namespace Bill_Software.corporate.business.app
                     absentCount++;
                     break;
             }
+        }
+
+        private static string GetPendingRegularizationColor()
+        {
+            return "#fd7e14";
+        }
+
+        private static string FormatPendingRegDisplayStatus(string calculatedStatus)
+        {
+            string statusText = (calculatedStatus ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(statusText)) return "Reg Pending";
+            if (statusText.IndexOf("Reg Pending", StringComparison.OrdinalIgnoreCase) >= 0) return statusText;
+            return statusText + " — Reg Pending";
         }
 
         private static string GetAttendanceEventColor(string attendanceCode, string status)
