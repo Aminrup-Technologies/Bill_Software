@@ -597,6 +597,10 @@
                 <h4 style="margin: 0 0 5px 0; font-size: 11px; color: #dc3545; text-transform: uppercase;">Absent</h4>
                 <span id="lblAbsent" style="font-weight: bold; font-size: 22px; color: #dc3545;">0</span>
             </div>
+            <div style="flex: 1; min-width: 100px; padding: 15px; border-radius: 8px; background: #fff3e8; border-left: 4px solid #fd7e14; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <h4 style="margin: 0 0 5px 0; font-size: 11px; color: #c45f0c; text-transform: uppercase;">Pending</h4>
+                <span id="lblPending" style="font-weight: bold; font-size: 22px; color: #c45f0c;">0</span>
+            </div>
             <div style="flex: 1; min-width: 100px; padding: 15px; border-radius: 8px; background: #f3e5f5; border-left: 4px solid #9c27b0; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <h4 style="margin: 0 0 5px 0; font-size: 11px; color: #9c27b0; text-transform: uppercase;">Offs / Holidays</h4>
                 <span id="lblOffs" style="font-weight: bold; font-size: 22px; color: #9c27b0;">0</span>
@@ -1149,6 +1153,7 @@
                             document.getElementById('lblPresent').innerText = payload.Summary.Present;
                             document.getElementById('lblHalfDays').innerText = payload.Summary.HalfDays;
                             document.getElementById('lblAbsent').innerText = payload.Summary.Absent;
+                            document.getElementById('lblPending').innerText = (payload.Summary.Pending != null ? payload.Summary.Pending : 0);
                             document.getElementById('lblOffs').innerText = payload.Summary.Offs;
 
                             refreshAbsentDaysFromPayload(payload, m, y);

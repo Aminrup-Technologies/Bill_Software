@@ -27,6 +27,8 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 
 `attendance.aspx` is the employee punch UI. Gated by `SecurePage` / `RequiredPermissionKey = daily_attendance` (same menu `id`). WebMethods keep `AuthGuard.EnsureWebMethod` (session + company membership; not permission-key). Methods: `GetMonthlyData`, `GetCalendarData`, `ProcessPunch`, `GetActiveLeaveTypes`, `GetAttendanceDetails`, `GetShiftTimings`, plus `GetMyGeoFence`, `SubmitRegularization`, `SubmitLeave`. Tables: `tbl_Attendance`, `tbl_AttendanceRegularization`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_HolidayMaster`, `tbl_LeaveRequests`. Dashboard rollup: [docs/01](../01_Attendance_Clock.md) (`AdminAttendanceDashboard` — FieldSales CTE; can INSERT/UPDATE/DELETE attendance; SecurePage key `AdminAttendanceDashboard`; EmpConfig menu).
 
+**Monthly Payroll Summary vs Pending overlays:** `ClassifyPayrollSummaryBucket` stays on underlying `CalculatedStatus` / attendance codes (#98). After #99 paints Reg/Leave Pending on the calendar, `GetMonthlyData` counts an open Reg Pending or Leave Pending day whose underlying bucket would be **Absent** as **Pending** (not Absent). Present / Half / Off keep their underlying buckets. Elapsed narrative: Present + Half + Absent + Offs + Pending = Month Days. `PayableDays` remains engine-driven `PayableDay` sum.
+
 ## Leave and shifts
 
 - **`MyLeaves`:** apply leave; emails manager a `QuickAction.aspx?t=` token (Approve/Reject). Gated by `SecurePage` / `RequiredPermissionKey = my_leaves` (same menu `id`).
