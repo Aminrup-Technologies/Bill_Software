@@ -42,7 +42,7 @@
     <div class="dashboard-container">
         
         <div class="section-card">
-            <h2 class="section-title">🏖️ Configure Leave Policy</h2>
+            <h2 class="section-title">Configure Leave Policy</h2>
             
             <asp:Label ID="lblMessage" runat="server" Font-Bold="true" style="display:block; margin-bottom: 15px;"></asp:Label>
 
@@ -65,13 +65,15 @@
             </div>
 
             <div style="text-align: right; margin-top: 15px;">
-                <asp:Button ID="btnSaveLeave" runat="server" Text="💾 Save Leave Type" CssClass="btn-action" OnClick="btnSaveLeave_Click" />
+                <asp:Button ID="btnCancelEdit" runat="server" Text="Cancel Edit" CssClass="btn-action" Style="background: #6c757d; display:none; margin-right: 8px;" OnClick="btnCancelEdit_Click" formnovalidate="true" />
+                <asp:Button ID="btnSaveLeave" runat="server" Text="Save Leave Type" CssClass="btn-action" OnClick="btnSaveLeave_Click" />
             </div>
         </div>
 
         <div class="section-card">
-            <h3 class="section-title">📋 Active Leave Categories</h3>
-            <asp:GridView ID="gvLeaveTypes" runat="server" AutoGenerateColumns="False" CssClass="grid-style" GridLines="None" EmptyDataText="No leave policies configured.">
+            <h3 class="section-title">Active Leave Categories</h3>
+            <asp:GridView ID="gvLeaveTypes" runat="server" AutoGenerateColumns="False" CssClass="grid-style" GridLines="None"
+                EmptyDataText="No leave policies configured." DataKeyNames="LeaveID" OnRowCommand="gvLeaveTypes_RowCommand">
                 <Columns>
                     <asp:BoundField DataField="LeaveID" HeaderText="ID" />
                     <asp:BoundField DataField="LeaveName" HeaderText="Leave Name" ItemStyle-Font-Bold="true" />
@@ -83,6 +85,15 @@
                         </ItemTemplate>
                     </asp:TemplateField>
                     <asp:BoundField DataField="MaxDaysPerYear" HeaderText="Max Days / Year" DataFormatString="{0:F1} Days" />
+                    <asp:TemplateField HeaderText="Action">
+                        <ItemTemplate>
+                            <asp:Button ID="btnEdit" runat="server" CommandName="EditLeave" CommandArgument="<%# Container.DataItemIndex %>"
+                                Text="Edit" CssClass="btn-action" Style="padding: 5px 10px; font-size: 12px; background: #f39c12;" formnovalidate="true" />
+                            <asp:Button ID="btnDeactivate" runat="server" CommandName="DeactivateLeave" CommandArgument="<%# Container.DataItemIndex %>"
+                                Text="Deactivate" CssClass="btn-action" Style="padding: 5px 10px; font-size: 12px; background: #dc3545; margin-left: 6px;"
+                                OnClientClick="return confirm('Deactivate this leave type? Employees will no longer see it when applying leave.');" formnovalidate="true" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
                 </Columns>
             </asp:GridView>
         </div>
