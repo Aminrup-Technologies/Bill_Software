@@ -267,7 +267,7 @@ namespace Bill_Software.corporate.business.app
                         var events = new List<object>();
                         var gridRows = new List<object>();
 
-                        int totalMonthDays = 0, presentCount = 0, halfDayCount = 0, absentCount = 0, offCount = 0;
+                        int totalMonthDays = 0, presentCount = 0, halfDayCount = 0, absentCount = 0, offCount = 0, pendingCount = 0;
                         decimal totalPayable = 0;
 
                         while (reader.Read())
@@ -291,7 +291,8 @@ namespace Bill_Software.corporate.business.app
                             bool hasPendingReg = reader["HasPendingReg"] != DBNull.Value && Convert.ToInt32(reader["HasPendingReg"]) == 1;
                             bool hasPendingLeave = reader["HasPendingLeave"] != DBNull.Value && Convert.ToInt32(reader["HasPendingLeave"]) == 1;
                             string pendingLeaveName = reader["PendingLeaveName"] != DBNull.Value ? reader["PendingLeaveName"].ToString() : "";
-                            // Payroll buckets stay on CalculatedStatus; Pending leave/reg are UI overlays only.
+                            // Calendar/log keep Pending as overlays on CalculatedStatus.
+                            // Summary: open Reg/Leave Pending that would otherwise be Absent → Pending (not Absent).
                             // Approved leave already becomes CalculatedStatus "On Leave (...)".
                             string displayStatus = status;
                             if (hasPendingLeave) displayStatus = FormatPendingLeaveDisplayStatus(displayStatus, pendingLeaveName);
@@ -302,11 +303,10 @@ namespace Bill_Software.corporate.business.app
                                 totalMonthDays++;
                                 totalPayable += payable;
 
-                                // Same ruleset as calendar labels / GetAttendanceEventColor.
-                                // Elapsed days with no other bucket (e.g. no-row CalculatedStatus=Absent,
-                                // AttendanceCode '-') always count as Absent — never leave Month Days orphaned.
-                                ApplyPayrollSummaryBucket(attCode, status,
-                                    ref presentCount, ref halfDayCount, ref absentCount, ref offCount);
+                                // Same #98 ruleset as calendar labels / GetAttendanceEventColor, then
+                                // divert Absent → Pending when an open Reg/Leave request covers the day.
+                                ApplyPayrollSummaryBucket(attCode, status, hasPendingReg || hasPendingLeave,
+                                    ref presentCount, ref halfDayCount, ref absentCount, ref offCount, ref pendingCount);
                             }
 
                             string color = hasPendingLeave
@@ -379,7 +379,7 @@ namespace Bill_Software.corporate.business.app
                         {
                             Events = events,
                             Grid = gridRows,
-                            Summary = new { TotalDays = totalMonthDays, PayableDays = totalPayable, Present = presentCount, HalfDays = halfDayCount, Absent = absentCount, Offs = offCount }
+                            Summary = new { TotalDays = totalMonthDays, PayableDays = totalPayable, Present = presentCount, HalfDays = halfDayCount, Absent = absentCount, Offs = offCount, Pending = pendingCount }
                         };
 
                         return new JavaScriptSerializer().Serialize(result);
@@ -1048,7 +1048,8 @@ namespace Bill_Software.corporate.business.app
             Present,
             HalfDay,
             Absent,
-            Off
+            Off,
+            Pending
         }
 
         private static bool IsUpcomingStatus(string calculatedStatus)
@@ -1061,6 +1062,7 @@ namespace Bill_Software.corporate.business.app
         /// Must stay aligned with SQL CalculatedStatus labels and GetAttendanceEventColor.
         /// Regression (FLM013 / Satyam, Nov 2026): no-row day with CalculatedStatus "Absent"
         /// and AttendanceCode "-" must return Absent — never leave Present+Half+Offs short of Month Days.
+        /// Pending overlays are applied after this method (see ApplyPayrollSummaryBucket).
         /// </summary>
         private static PayrollSummaryBucket ClassifyPayrollSummaryBucket(string attendanceCode, string calculatedStatus)
         {
@@ -1097,15 +1099,27 @@ namespace Bill_Software.corporate.business.app
             return PayrollSummaryBucket.Absent;
         }
 
+        /// <summary>
+        /// Product rule (FEE-12 / after #99): open Reg Pending or Leave Pending on a day whose
+        /// underlying #98 bucket is Absent counts as Pending, not Absent. Present / Half / Off
+        /// keep their underlying buckets even when a Pending overlay is painted on the calendar.
+        /// Present + Half + Absent + Offs + Pending = Month Days for elapsed days.
+        /// </summary>
         private static void ApplyPayrollSummaryBucket(
             string attendanceCode,
             string calculatedStatus,
+            bool hasOpenPendingRequest,
             ref int presentCount,
             ref int halfDayCount,
             ref int absentCount,
-            ref int offCount)
+            ref int offCount,
+            ref int pendingCount)
         {
-            switch (ClassifyPayrollSummaryBucket(attendanceCode, calculatedStatus))
+            PayrollSummaryBucket bucket = ClassifyPayrollSummaryBucket(attendanceCode, calculatedStatus);
+            if (hasOpenPendingRequest && bucket == PayrollSummaryBucket.Absent)
+                bucket = PayrollSummaryBucket.Pending;
+
+            switch (bucket)
             {
                 case PayrollSummaryBucket.Present:
                     presentCount++;
@@ -1115,6 +1129,9 @@ namespace Bill_Software.corporate.business.app
                     break;
                 case PayrollSummaryBucket.Off:
                     offCount++;
+                    break;
+                case PayrollSummaryBucket.Pending:
+                    pendingCount++;
                     break;
                 default:
                     absentCount++;
