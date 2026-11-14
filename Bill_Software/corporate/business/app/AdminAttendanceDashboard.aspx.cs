@@ -9,8 +9,10 @@ using System.Web.UI;
 
 namespace Bill_Software.corporate.business.app
 {
-    public partial class AdminAttendanceDashboard : System.Web.UI.Page
+    public partial class AdminAttendanceDashboard : SecurePage
     {
+        protected override string RequiredPermissionKey { get { return "AdminAttendanceDashboard"; } }
+
         private string ConnString
         {
             get { return ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString; }
@@ -18,12 +20,6 @@ namespace Bill_Software.corporate.business.app
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["USERID"] == null)
-            {
-                Response.Redirect("~/index.aspx");
-                return;
-            }
-
             if (!IsPostBack)
             {
                 PopulateYearDropdown();
