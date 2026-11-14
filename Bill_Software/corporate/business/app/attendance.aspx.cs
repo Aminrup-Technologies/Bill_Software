@@ -926,6 +926,15 @@ namespace Bill_Software.corporate.business.app
                 using (SqlConnection conn = new SqlConnection(GetConnStr()))
                 {
                     conn.Open();
+                    using (SqlCommand typeCmd = new SqlCommand(
+                        "SELECT COUNT(1) FROM tbl_LeaveMaster WHERE LeaveID = @LeaveID AND CompanyID = @CompanyID AND IsActive = 1", conn))
+                    {
+                        typeCmd.Parameters.AddWithValue("@LeaveID", leaveId);
+                        typeCmd.Parameters.AddWithValue("@CompanyID", companyId);
+                        if (Convert.ToInt32(typeCmd.ExecuteScalar()) == 0)
+                            return "Invalid leave type for this company.";
+                    }
+
                     // Block a second Pending leave that already covers this date (UI also disables Apply Leave).
                     using (SqlCommand dupCmd = new SqlCommand(@"
                         SELECT COUNT(1)
