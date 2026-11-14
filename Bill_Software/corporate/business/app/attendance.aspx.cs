@@ -860,15 +860,34 @@ namespace Bill_Software.corporate.business.app
                                 string managerId = reader["ManagerID"]?.ToString();
                                 string newRequestID = reader["NewRequestID"]?.ToString();
 
-                                string rawApprove = $"ReqID={newRequestID}&Type=Reg&Action=Approve&ManagerID={managerId}&CompanyID={companyId}";
-                                string rawReject = $"ReqID={newRequestID}&Type=Reg&Action=Reject&ManagerID={managerId}&CompanyID={companyId}";
-
-                                string tokenApprove = SecurityHelper.EncryptToUrlToken(rawApprove);
-                                string tokenReject = SecurityHelper.EncryptToUrlToken(rawReject);
+                                string tokenApprove;
+                                string tokenReject;
+                                string tokenError;
+                                if (!QuickActionTokenService.TryIssue(newRequestID, "Reg", "Approve", managerId, companyId, out tokenApprove, out tokenError)
+                                    || !QuickActionTokenService.TryIssue(newRequestID, "Reg", "Reject", managerId, companyId, out tokenReject, out tokenError))
+                                {
+                                    System.Diagnostics.Debug.WriteLine(tokenError ?? "QuickAction token mint failed.");
+                                    tokenApprove = null;
+                                    tokenReject = null;
+                                }
 
                                 string baseUrl = "https://exc.aagroupindia.com/corporate/business/app/";
-                                string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
-                                string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+                                string actionButtonsHtml = "";
+                                if (!string.IsNullOrEmpty(tokenApprove) && !string.IsNullOrEmpty(tokenReject))
+                                {
+                                    string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
+                                    string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+                                    actionButtonsHtml = $@"
+                                    <div style='margin-top: 20px;'>
+                                        <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block;'>✅ Approve Correction</a>
+                                        <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>❌ Reject</a>
+                                    </div>
+                                    <p style='font-size: 12px; color: #777; margin-top: 20px;'>Each link works once and expires automatically.</p>";
+                                }
+                                else
+                                {
+                                    actionButtonsHtml = "<p style='font-size: 12px; color: #777; margin-top: 20px;'>Sign in to Flame-Ex to approve or reject this request.</p>";
+                                }
 
                                 string subject = $"Action Required: Attendance Regularization ({empName})";
                                 string htmlMessage = $@"
@@ -881,11 +900,7 @@ namespace Bill_Software.corporate.business.app
                                         <tr><td style='padding: 5px 0;'><strong>Requested Out-Time:</strong></td><td>{outTime}</td></tr>
                                         <tr><td style='padding: 5px 0;'><strong>Reason:</strong></td><td>{reason}</td></tr>
                                     </table>
-                                    
-                                    <div style='margin-top: 20px;'>
-                                        <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block;'>✅ Approve Correction</a>
-                                        <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>❌ Reject</a>
-                                    </div>
+                                    {actionButtonsHtml}
                                 </div>";
 
                                 string targetEmail = sendEmail ? mEmail : null;

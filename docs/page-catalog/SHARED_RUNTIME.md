@@ -46,6 +46,7 @@ Ponytail CSS/JS is not a user control here — see [`SHARED_CONTEXT.md`](SHARED_
 | `PasswordHasher` | PBKDF2 `Rfc2898DeriveBytes`, 100k iterations, 16-byte salt, 32-byte hash; SHA-256 hex for reset tokens; legacy plaintext upgrade path. |
 | `PasswordResetService` | Table **`dbo.PasswordResetTokens`** (not `tbl_PasswordResets`). 32-byte hex token, SHA-256 store, default 30 min (`PasswordResetTokenMinutes`). SQL 208 (missing table) fails closed. Completes via `reset_password.aspx`. **UAT does not have this table** ([SHARED_SCHEMA.md](SHARED_SCHEMA.md) §4). |
 | `SecurityHelper` | AES URL token (`EncryptToUrlToken` / `DecryptFromUrlToken`) for **`QuickAction.aspx?t=`**. Not HMAC. Key from `AppSecrets.GetUrlTokenAesKey`. |
+| `QuickActionTokenService` | Issues/consumes QuickAction links: embeds UTC `Exp`, stores SHA-256 in **`dbo.QuickActionTokens`**, one-time `UsedAtUtc`, default TTL `QuickActionTokenMinutes` (10080). SQL 208 fails closed. Consume shares the approval `SqlTransaction`. |
 | `CommunicationGateway` | Config SMTP (`SmtpFrom`/`SmtpUser`/`SmtpPass`/`SmtpHost`/`SmtpPort`/`SmtpEnableSsl`) + MSG91 `Sendhttp`. `SendCustomEmail` / `SendAlertsAsync` (email and/or WhatsApp). Fail-open (swallow). Visit/HR/index use this. |
 | `InvoiceListHelper` | Shared invoice list SQL/format + **ClosedXML `.xlsx`** export (`ExportVersion` v3). Used by `View_Invoice` / `seartch_invoice`. |
 | `PurchaseOrderPrintHelper` | HTML bind for **client PO** print (`NewPurchaseOrder_Print.aspx?ID=` = `tbl_Quotation.ID`). Not vendor `tbl_PO_Header`. |
@@ -73,6 +74,7 @@ The **live database is not versioned**. These files are patches or snapshots. Do
 | [`docs/invoice_pservice_backfill.sql`](../invoice_pservice_backfill.sql) | Invoice primary-service backfill. |
 | [`docs/qutprimaryservice_companyid_backfill.sql`](../qutprimaryservice_companyid_backfill.sql) | Quotation primary-service `CompanyID` backfill. |
 | `Bill_Software/corporate/business/sql/PasswordResetTokens.sql` | `dbo.PasswordResetTokens` DDL. |
+| `Bill_Software/corporate/business/sql/QuickActionTokens.sql` | `dbo.QuickActionTokens` DDL (FEE-14 TTL + one-time email action links). |
 | `…/sql/CompanyID_Roles_ActiveSessions.sql` | Tenant / roles / sessions objects. |
 | `…/sql/UserCompanyAccess.sql` | `UserCompanyAccess` membership. |
 | `…/sql/user_company_access_reconciliation.sql` | Membership repair. |
@@ -130,6 +132,7 @@ Connection: **`DbConn`** (not `DBCS`). Do not paste secret values.
 |-----|----------|
 | `SmtpHost` / `SmtpPort` / `SmtpUser` / `SmtpPass` / `SmtpFrom` / `SmtpEnableSsl` | `CommunicationGateway`; some pages still construct `SmtpClient` themselves (`InvoiceMail`, `ProformaMail`, `PaymentMail`, `Set_quatation`, `ViewUser`, `Update/password`) |
 | `PasswordResetTokenMinutes` | `PasswordResetService` (default 30) |
+| `QuickActionTokenMinutes` | `QuickActionTokenService` (default 10080 = 7 days) |
 | `LoginOtpExpiryMinutes` | Login OTP |
 | `UrlTokenAesKey` | `SecurityHelper` / QuickAction |
 | `Msg91AuthKey` / `Msg91IntegratedNumber` / `Msg91OtpTemplateId` | WhatsApp/SMS via gateway / OTP |

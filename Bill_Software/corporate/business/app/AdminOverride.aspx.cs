@@ -200,13 +200,29 @@ namespace Bill_Software.corporate.business.app
                                     </tr>";
                             }
 
-                            // Generate fresh secure tokens ONLY for the manager
-                            string rawApprove = $"ReqID={reqId}&Type={type}&Action=Approve&ManagerID={managerId}&CompanyID={companyId}";
-                            string rawReject = $"ReqID={reqId}&Type={type}&Action=Reject&ManagerID={managerId}&CompanyID={companyId}";
-
+                            // Generate fresh TTL + one-time tokens ONLY for the manager
+                            string tokenApprove;
+                            string tokenReject;
+                            string tokenError;
                             string baseUrl = "https://exc.aagroupindia.com/corporate/business/app/";
-                            string linkApprove = $"{baseUrl}QuickAction.aspx?t={SecurityHelper.EncryptToUrlToken(rawApprove)}";
-                            string linkReject = $"{baseUrl}QuickAction.aspx?t={SecurityHelper.EncryptToUrlToken(rawReject)}";
+                            string managerActionHtml;
+                            if (QuickActionTokenService.TryIssue(reqId.ToString(), type, "Approve", managerId, companyId, out tokenApprove, out tokenError)
+                                && QuickActionTokenService.TryIssue(reqId.ToString(), type, "Reject", managerId, companyId, out tokenReject, out tokenError))
+                            {
+                                string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
+                                string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+                                managerActionHtml = $@"
+                                <div style='margin-top: 20px; text-align: center;'>
+                                    <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block; font-size: 14px;'>✅ Approve</a>
+                                    <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;'>❌ Reject</a>
+                                </div>
+                                <p style='font-size: 12px; color: #777; margin-top: 16px; text-align: center;'>Each link works once and expires automatically.</p>";
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine(tokenError ?? "QuickAction token mint failed.");
+                                managerActionHtml = "<p style='font-size: 12px; color: #777; margin-top: 16px; text-align: center;'>Sign in to Flame-Ex to approve or reject this request.</p>";
+                            }
 
                             // Shared Data Table HTML
                             string dataTableHtml = $@"
@@ -240,10 +256,7 @@ namespace Bill_Software.corporate.business.app
                                 <p style='color: #333; font-size: 15px;'>Hello Manager,</p>
                                 <p style='color: #333; font-size: 15px;'>This is a reminder that you have a pending <strong>{requestTypeName.ToLower()}</strong> request from <strong>{empName}</strong> that requires your attention.</p>
                                 {dataTableHtml}
-                                <div style='margin-top: 20px; text-align: center;'>
-                                    <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block; font-size: 14px;'>✅ Approve</a>
-                                    <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;'>❌ Reject</a>
-                                </div>
+                                {managerActionHtml}
                             </div>";
 
                             // --- 2. EMAIL FOR REQUESTOR (NO ACTION BUTTONS) ---
@@ -336,16 +349,29 @@ namespace Bill_Software.corporate.business.app
                             string reason = reader["Reason"]?.ToString() ?? "No reason provided.";
                             string requestTypeName = reader["RequestTypeName"]?.ToString() ?? type;
 
-                            // Generate fresh secure tokens
-                            string rawApprove = $"ReqID={reqId}&Type={type}&Action=Approve&ManagerID={managerId}&CompanyID={companyId}";
-                            string rawReject = $"ReqID={reqId}&Type={type}&Action=Reject&ManagerID={managerId}&CompanyID={companyId}";
-
-                            string tokenApprove = SecurityHelper.EncryptToUrlToken(rawApprove);
-                            string tokenReject = SecurityHelper.EncryptToUrlToken(rawReject);
-
+                            // Generate fresh TTL + one-time tokens
+                            string tokenApprove;
+                            string tokenReject;
+                            string tokenError;
                             string baseUrl = "https://exc.aagroupindia.com/corporate/business/app/";
-                            string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
-                            string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+                            string managerActionHtml;
+                            if (QuickActionTokenService.TryIssue(reqId.ToString(), type, "Approve", managerId, companyId, out tokenApprove, out tokenError)
+                                && QuickActionTokenService.TryIssue(reqId.ToString(), type, "Reject", managerId, companyId, out tokenReject, out tokenError))
+                            {
+                                string linkApprove = $"{baseUrl}QuickAction.aspx?t={tokenApprove}";
+                                string linkReject = $"{baseUrl}QuickAction.aspx?t={tokenReject}";
+                                managerActionHtml = $@"
+                                <div style='margin-top: 20px; text-align: center;'>
+                                    <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block; font-size: 14px;'>✅ Approve</a>
+                                    <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;'>❌ Reject</a>
+                                </div>
+                                <p style='font-size: 12px; color: #777; margin-top: 30px; text-align: center;'>Each link works once and expires automatically.</p>";
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine(tokenError ?? "QuickAction token mint failed.");
+                                managerActionHtml = "<p style='font-size: 12px; color: #777; margin-top: 30px; text-align: center;'>Sign in to Flame-Ex to approve or reject this request.</p>";
+                            }
 
                             // Build the Enriched HTML Email
                             string subject = $"REMINDER: Pending {requestTypeName} Request for {empName}";
@@ -395,11 +421,7 @@ namespace Bill_Software.corporate.business.app
                                     </tr>
                                 </table>
 
-                                <div style='margin-top: 20px; text-align: center;'>
-                                    <a href='{linkApprove}' style='background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px; display: inline-block; font-size: 14px;'>✅ Approve</a>
-                                    <a href='{linkReject}' style='background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;'>❌ Reject</a>
-                                </div>
-                                <p style='font-size: 12px; color: #777; margin-top: 30px; text-align: center;'>You can approve or reject directly from this email without logging in.</p>
+                                {managerActionHtml}
                             </div>";
 
                             string targetEmail = sendEmail ? email : null;
