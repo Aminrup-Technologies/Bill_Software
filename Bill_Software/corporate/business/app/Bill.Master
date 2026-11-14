@@ -335,6 +335,7 @@
                                     <ul class="nav first1">
                                         <li id="AdminLeaveSetup" runat="server"><a href="AdminLeaveSetup.aspx">Leave Setup</a></li>
                                         <li id="AdminShiftSetup" runat="server"><a href="AdminShiftSetup.aspx">Shift Setup</a></li>
+                                        <li id="AdminShiftAssignment" runat="server"><a href="AdminShiftAssignment.aspx">Shift Assignment</a></li>
                                         <li id="AdminOverride" runat="server"><a href="AdminOverride.aspx">Admin Override</a></li>
                                         <li id="AdminAttendanceDashboard" runat="server"><a href="AdminAttendanceDashboard.aspx">Attendance Register</a></li>
                                     </ul>
