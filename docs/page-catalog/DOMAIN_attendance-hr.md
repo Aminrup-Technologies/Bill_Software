@@ -1,6 +1,6 @@
 # Attendance, leaves, shifts
 
-> Domain key: `attendance-hr` · 8 page(s)
+> Domain key: `attendance-hr` · 9 page(s)
 
 Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 
@@ -10,6 +10,7 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 |------|---------|----------------|------|-----------------|-----|-----------|
 | `corporate/business/app/AdminApprovalDashboard.aspx` | Approvals Dashboard | Bill.Master / `AdminApprovalDashboard` | SecurePage, CompanyID<br>`AdminApprovalDashboard` | `tbl_AttendanceRegularization`, `tbl_login`, `tbl_LeaveRequests`, `tbl_LeaveMaster`, `tbl_EmployeeLeaveBalance`, `tbl_Attendance`, `tbl_SystemNotification`, `sp_RunAttendanceRulesEngine()` | INSERT, UPDATE | this catalog |
 | `corporate/business/app/AdminAttendanceDashboard.aspx` | Enterprise Attendance Register | Bill.Master / `AdminAttendanceDashboard` | SecurePage, CompanyID<br>`AdminAttendanceDashboard` | `tbl_login`, `tbl_Attendance`, `tbl_SalesVisitReport`, `tbl_LeaveRequests`, `tbl_LeaveMaster`, `tbl_AttendanceRegularization`, `tbl_SystemNotification` | INSERT, UPDATE, DELETE | [module](../01_Attendance_Clock.md) |
+| `corporate/business/app/AdminHolidaySetup.aspx` | Holiday Setup | Bill.Master / `AdminHolidaySetup` | SecurePage, CompanyID<br>`AdminHolidaySetup` | `tbl_HolidayMaster` | INSERT, UPDATE, DELETE | this catalog |
 | `corporate/business/app/AdminLeaveSetup.aspx` | Leave Policy Setup | Bill.Master / `AdminLeaveSetup` | SecurePage, CompanyID<br>`AdminLeaveSetup` | `tbl_LeaveMaster` | INSERT, UPDATE | this catalog |
 | `corporate/business/app/AdminOverride.aspx` | HR Override Dashboard | Bill.Master / `AdminOverride` | SecurePage, CompanyID<br>`AdminOverride` | `roles`, `tbl_LeaveRequests`, `tbl_login`, `tbl_LeaveMaster`, `tbl_AttendanceRegularization`, `tbl_EmployeeLeaveBalance`, `tbl_Attendance`, `tbl_SystemNotification`, `sp_RunAttendanceRulesEngine()` | INSERT, UPDATE | this catalog |
 | `corporate/business/app/AdminShiftAssignment.aspx` | Shift Assignment | Bill.Master / `AdminShiftAssignment` | SecurePage, CompanyID<br>`AdminShiftAssignment` | `tbl_login`, `tbl_ShiftMaster`, `tbl_EmployeeShiftMapping`, `tbl_SystemNotification`, `sp_RunAttendanceRulesEngine()` | INSERT, DELETE | this catalog |
@@ -33,6 +34,7 @@ Clock-in, leave, shift setup, admin override. Narrative: docs/01.
 
 - **`MyLeaves`:** apply leave; emails manager a `QuickAction.aspx?t=` token via `QuickActionTokenService.TryIssue` (TTL + one-time). Gated by `SecurePage` / `RequiredPermissionKey = my_leaves` (same menu `id`).
 - **`AdminLeaveSetup`:** INSERT/UPDATE `tbl_LeaveMaster` scoped by `CompanyID` (edit + soft deactivate via `IsActive = 0`).
+- **`AdminHolidaySetup`:** CRUD `tbl_HolidayMaster` with `CompanyID` (year filter). Permission key `AdminHolidaySetup`. DBA catalog/grant SQL under `corporate/business/sql/admin_holiday_setup_*.sql`.
 - **`AdminShiftSetup`:** CRUD `tbl_ShiftMaster` + notifications.
 - **`AdminShiftAssignment`:** maps employees; permission key is **`AdminShiftAssignment`** (distinct from `AdminShiftSetup`). EmpConfig menu id `AdminShiftAssignment`. May run `sp_RunAttendanceRulesEngine` after a shift-map change (not an approval path).
 - **`AdminAttendanceDashboard`:** enterprise attendance register (INSERT/UPDATE/DELETE). SecurePage key **`AdminAttendanceDashboard`**; EmpConfig menu id matches. Catalog row in `employee_config_permissions.sql` (no RolePermissions grant).
