@@ -18,10 +18,12 @@
                 SubModuleName nvarchar(100), and FeatureName nvarchar(100) are
                 supplied within those lengths. Runs only when
                 DB_NAME() = N'flamex_uat'. Existing rows are not updated.
-                No INSERT into dbo.RolePermissions or dbo.UserRoles. No grant
-                to Super Admin or any other role. DBA-executed only. Requires
-                separate approval before it is run. Do not run from the
-                application.
+                No INSERT into dbo.RolePermissions or dbo.UserRoles in THIS
+                script. Super Admin RolePermissions grants are a separate DBA
+                script: employee_config_superadmin_grant_uat.sql (run after
+                this catalog patch; also flamex_uat only; not auto-run).
+                DBA-executed only. Requires separate approval before it is run.
+                Do not run from the application.
                 Concurrency: IF NOT EXISTS then INSERT is not atomic. Unique
                 constraint UQ__tmp_ms_x__8884ABD46831F704 on PermissionKey
                 rejects the losing insert, so a duplicate key is not stored.
@@ -119,7 +121,10 @@ BEGIN
         );
 END;
 
--- No INSERT into dbo.RolePermissions.
+-- No INSERT into dbo.RolePermissions in this script.
+-- Grants: run employee_config_superadmin_grant_uat.sql after this catalog patch
+-- (AdminLeaveSetup / AdminShiftSetup / AdminOverride). Attendance Register grant
+-- remains with FEE-7 / ManagePermissions unless extended separately.
 -- No INSERT into dbo.UserRoles.
 -- EmpConfig is not registered. AdminShiftAssignment is not a separate key.
 -- PermissionId is IDENTITY and is not supplied.
