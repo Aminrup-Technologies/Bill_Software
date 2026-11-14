@@ -261,15 +261,16 @@ namespace Bill_Software.corporate.business.app
                                 : status;
                             string payableStr = payable.ToString("0.0");
 
-                            if (status != "Upcoming")
+                            if (!IsUpcomingStatus(status))
                             {
                                 totalMonthDays++;
                                 totalPayable += payable;
 
-                                if (attCode == "P" || attCode == "NHP" || attCode == "FLP") presentCount++;
-                                else if (attCode == "HD") halfDayCount++;
-                                else if (attCode == "A" || attCode == "LWP") absentCount++;
-                                else if (status.Contains("Off") || status.Contains("Holiday") || attCode == "L") offCount++;
+                                // Same ruleset as calendar labels / GetAttendanceEventColor.
+                                // Elapsed days with no other bucket (e.g. no-row CalculatedStatus=Absent,
+                                // AttendanceCode '-') always count as Absent — never leave Month Days orphaned.
+                                ApplyPayrollSummaryBucket(attCode, status,
+                                    ref presentCount, ref halfDayCount, ref absentCount, ref offCount);
                             }
 
                             string color = GetAttendanceEventColor(attCode, status);
@@ -939,6 +940,85 @@ namespace Bill_Software.corporate.business.app
         private static string PunchJson(string status, string message)
         {
             return new JavaScriptSerializer().Serialize(new { status = status, message = message });
+        }
+
+        private enum PayrollSummaryBucket
+        {
+            Present,
+            HalfDay,
+            Absent,
+            Off
+        }
+
+        private static bool IsUpcomingStatus(string calculatedStatus)
+        {
+            return string.Equals((calculatedStatus ?? string.Empty).Trim(), "Upcoming", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Single classification ruleset for Monthly Payroll Summary counters.
+        /// Must stay aligned with SQL CalculatedStatus labels and GetAttendanceEventColor.
+        /// Regression (FLM013 / Satyam, Nov 2026): no-row day with CalculatedStatus "Absent"
+        /// and AttendanceCode "-" must return Absent — never leave Present+Half+Offs short of Month Days.
+        /// </summary>
+        private static PayrollSummaryBucket ClassifyPayrollSummaryBucket(string attendanceCode, string calculatedStatus)
+        {
+            string code = (attendanceCode ?? string.Empty).Trim().ToUpperInvariant();
+            if (code == "-") code = string.Empty;
+            string statusText = (calculatedStatus ?? string.Empty).Trim();
+
+            if (code == "P" || code == "NHP" || code == "FLP") return PayrollSummaryBucket.Present;
+            if (code == "HD") return PayrollSummaryBucket.HalfDay;
+            if (code == "A" || code == "LWP") return PayrollSummaryBucket.Absent;
+            if (code == "L" || code == "CL" || code == "SL" || code == "PL" || code == "EL" ||
+                code == "NH" || code == "FL") return PayrollSummaryBucket.Off;
+
+            if (statusText.IndexOf("Present", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Working", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Regularized", StringComparison.OrdinalIgnoreCase) >= 0)
+                return PayrollSummaryBucket.Present;
+
+            if (statusText.IndexOf("Half-Day", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Half Day", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Late", StringComparison.OrdinalIgnoreCase) >= 0)
+                return PayrollSummaryBucket.HalfDay;
+
+            if (statusText.IndexOf("Leave", StringComparison.OrdinalIgnoreCase) >= 0)
+                return PayrollSummaryBucket.Off; // paid/approved leave → Offs/Holidays (legacy "L")
+
+            if (statusText.IndexOf("Holiday", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Weekly Off", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                statusText.IndexOf("Off", StringComparison.OrdinalIgnoreCase) >= 0)
+                return PayrollSummaryBucket.Off;
+
+            // Explicit Absent / Not Punched, blank code with Absent label, or any other
+            // elapsed unclassified day (safety net so Month Days never orphans a bucket).
+            return PayrollSummaryBucket.Absent;
+        }
+
+        private static void ApplyPayrollSummaryBucket(
+            string attendanceCode,
+            string calculatedStatus,
+            ref int presentCount,
+            ref int halfDayCount,
+            ref int absentCount,
+            ref int offCount)
+        {
+            switch (ClassifyPayrollSummaryBucket(attendanceCode, calculatedStatus))
+            {
+                case PayrollSummaryBucket.Present:
+                    presentCount++;
+                    break;
+                case PayrollSummaryBucket.HalfDay:
+                    halfDayCount++;
+                    break;
+                case PayrollSummaryBucket.Off:
+                    offCount++;
+                    break;
+                default:
+                    absentCount++;
+                    break;
+            }
         }
 
         private static string GetAttendanceEventColor(string attendanceCode, string status)
