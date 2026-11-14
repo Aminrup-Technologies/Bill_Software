@@ -221,6 +221,7 @@
         .legend-present { background: #28a745; }
         .legend-absent { background: #dc3545; }
         .legend-reg-pending { background: #fd7e14; }
+        .legend-leave-pending { background: #c026d3; }
         .legend-halfday { background: #ffc107; }
         .legend-leave { background: #6f42c1; }
         .legend-holiday { background: #0d6efd; }
@@ -411,8 +412,12 @@
             font-size: 12px;
         }
 
-        .absent-days-meta .absent-status.is-pending {
+        .absent-days-meta .absent-status.is-pending-reg {
             color: #c45f0c;
+        }
+
+        .absent-days-meta .absent-status.is-pending-leave {
+            color: #9d174d;
         }
 
         .pending-reg-badge {
@@ -421,6 +426,18 @@
             padding: 2px 8px;
             border-radius: 10px;
             background: #fd7e14;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            vertical-align: middle;
+        }
+
+        .pending-leave-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #c026d3;
             color: #fff;
             font-size: 11px;
             font-weight: 700;
@@ -461,7 +478,14 @@
             font-size: 12px;
         }
 
+        .absent-days-actions .btn-leave:disabled {
+            background-color: #e9ecef;
+            color: #888;
+            cursor: not-allowed;
+        }
+
         .absent-reg-cta:disabled,
+        .absent-leave-cta:disabled,
         .btn-reg-disabled {
             background-color: #e9ecef !important;
             color: #888 !important;
@@ -474,6 +498,20 @@
             border: 1px solid #fd7e14;
             border-left: 4px solid #fd7e14;
             color: #9a4b00;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 0 0 14px 0;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        #pendingLeaveNotice {
+            display: none;
+            background: #fce7f3;
+            border: 1px solid #c026d3;
+            border-left: 4px solid #c026d3;
+            color: #9d174d;
             border-radius: 6px;
             padding: 10px 12px;
             margin: 0 0 14px 0;
@@ -576,8 +614,9 @@
                 <span class="legend-item"><span class="legend-dot legend-present"></span> Present</span>
                 <span class="legend-item"><span class="legend-dot legend-absent"></span> Absent / No Data</span>
                 <span class="legend-item"><span class="legend-dot legend-reg-pending"></span> Reg Pending</span>
+                <span class="legend-item"><span class="legend-dot legend-leave-pending"></span> Leave Pending</span>
                 <span class="legend-item"><span class="legend-dot legend-halfday"></span> Half-Day / Late</span>
-                <span class="legend-item"><span class="legend-dot legend-leave"></span> Leave</span>
+                <span class="legend-item"><span class="legend-dot legend-leave"></span> Leave (Approved)</span>
                 <span class="legend-item"><span class="legend-dot legend-holiday"></span> Holiday</span>
             </div>
             <div id="attendanceCalendar"></div>
@@ -685,8 +724,12 @@
                     A regularization request for this date is already <b>Pending</b> approval. Regularize is unavailable until it is reviewed.
                 </div>
 
+                <div id="pendingLeaveNotice" role="status">
+                    A leave application covering this date is already <b>Pending</b> approval. Apply Leave is unavailable until it is reviewed.
+                </div>
+
                 <div id="modalExistingRecordInfo" style="display: none;">
-                    <p style="margin: 0 0 14px 0;"><b>Status:</b> <span id="modalEventStatus" style="font-weight: bold;"></span> <span id="modalPendingRegBadge" class="pending-reg-badge" style="display:none;">Reg Pending</span></p>
+                    <p style="margin: 0 0 14px 0;"><b>Status:</b> <span id="modalEventStatus" style="font-weight: bold;"></span> <span id="modalPendingRegBadge" class="pending-reg-badge" style="display:none;">Reg Pending</span> <span id="modalPendingLeaveBadge" class="pending-leave-badge" style="display:none;">Leave Pending</span></p>
 
                     <div class="day-detail-grid">
                         <div class="day-detail-card full-width">
@@ -735,7 +778,7 @@
                         <button type="button" id="btnAbsentSuggestReg" class="absent-reg-cta" style="flex: 1;" onclick="toggleForm('regForm');">
                             📝 Regularize
                         </button>
-                        <button type="button" class="absent-leave-cta" style="flex: 1;" onclick="toggleForm('leaveForm');">
+                        <button type="button" id="btnAbsentSuggestLeave" class="absent-leave-cta" style="flex: 1;" onclick="toggleForm('leaveForm');">
                             🏖️ Apply Leave
                         </button>
                     </div>
@@ -1118,7 +1161,8 @@
                             } else {
                                 payload.Grid.forEach(row => {
                                     var bgColor = ''; var statusColor = '#333';
-                                    if (row.HasPendingReg) { bgColor = '#fff3e8'; statusColor = '#c45f0c'; }
+                                    if (row.HasPendingLeave) { bgColor = '#fce7f3'; statusColor = '#9d174d'; }
+                                    else if (row.HasPendingReg) { bgColor = '#fff3e8'; statusColor = '#c45f0c'; }
                                     else if (row.Status.includes('Absent')) { bgColor = '#ffebee'; statusColor = 'darkred'; }
                                     else if (row.Status.includes('Leave')) { bgColor = '#f3e5f5'; statusColor = 'purple'; }
                                     else if (row.Status.includes('Working')) { bgColor = '#e8f5e9'; statusColor = '#155724'; }
@@ -1156,7 +1200,7 @@
                     let arrayOfDomNodes = [];
                     let titleEl = document.createElement('div');
                     var bg = (arg.event.backgroundColor || '').toLowerCase();
-                    var tagColor = (bg === '#ffc107' || bg === '#fd7e14') ? '#333' : 'white';
+                    var tagColor = (bg === '#ffc107' || bg === '#fd7e14' || bg === '#c026d3') ? '#333' : 'white';
                     titleEl.innerHTML = '<span class="calendar-tag" style="background:' + arg.event.backgroundColor + '; padding: 3px 6px; border-radius: 4px; color: ' + tagColor + '; font-size: 11px; display: block; text-align: center; white-space: normal; line-height: 1.2;">' + arg.event.title + '</span>';
                     arrayOfDomNodes.push(titleEl);
                     return { domNodes: arrayOfDomNodes };
@@ -1179,6 +1223,7 @@
                     var statusText = props.systemStatus || info.event.title || '';
                     var displayStatus = props.displayStatus || statusText;
                     var hasPendingReg = !!props.hasPendingReg;
+                    var hasPendingLeave = !!props.hasPendingLeave;
 
                     hideForms();
                     hideCalendarTooltip();
@@ -1202,7 +1247,7 @@
 
                     document.getElementById('modalExistingRecordInfo').style.display = 'block';
                     document.getElementById('modalEmptyRecordInfo').style.display = 'none';
-                    updateAbsentRegularizeSuggestion(clickedDate, statusText, props.attendanceCode, hasPendingReg);
+                    updateAbsentRegularizeSuggestion(clickedDate, statusText, props.attendanceCode, hasPendingReg, hasPendingLeave);
                     document.getElementById('dateDetailsModal').style.display = 'block';
                 },
                 dateClick: function (info) {
@@ -1218,7 +1263,7 @@
                     document.getElementById('modalExistingRecordInfo').style.display = 'none';
                     document.getElementById('modalEmptyRecordInfo').style.display = 'block';
                     // Only event days with an Absent status get the dedicated prompt/div.
-                    updateAbsentRegularizeSuggestion(null, '', '', false);
+                    updateAbsentRegularizeSuggestion(null, '', '', false, false);
                     document.getElementById('dateDetailsModal').style.display = 'block';
                 }
             });
@@ -1267,11 +1312,15 @@
             return false;
         }
 
-        function setPendingRegBadge(show) {
-            var badge = document.getElementById('modalPendingRegBadge');
-            var notice = document.getElementById('pendingRegNotice');
-            if (badge) badge.style.display = show ? 'inline-block' : 'none';
-            if (notice) notice.style.display = show ? 'block' : 'none';
+        function setPendingBadges(hasPendingReg, hasPendingLeave) {
+            var regBadge = document.getElementById('modalPendingRegBadge');
+            var leaveBadge = document.getElementById('modalPendingLeaveBadge');
+            var regNotice = document.getElementById('pendingRegNotice');
+            var leaveNotice = document.getElementById('pendingLeaveNotice');
+            if (regBadge) regBadge.style.display = hasPendingReg ? 'inline-block' : 'none';
+            if (leaveBadge) leaveBadge.style.display = hasPendingLeave ? 'inline-block' : 'none';
+            if (regNotice) regNotice.style.display = hasPendingReg ? 'block' : 'none';
+            if (leaveNotice) leaveNotice.style.display = hasPendingLeave ? 'block' : 'none';
         }
 
         function setRegularizeEnabled(enabled) {
@@ -1289,27 +1338,50 @@
             }
         }
 
-        function updateAbsentRegularizeSuggestion(dateObj, statusText, attendanceCode, hasPendingReg) {
+        function setLeaveEnabled(enabled) {
+            var btnSuggest = document.getElementById('btnAbsentSuggestLeave');
+            var leaveFormBtn = document.querySelector('#leaveForm button[onclick*="submitLeave"]');
+            if (btnSuggest) {
+                btnSuggest.disabled = !enabled;
+                btnSuggest.innerText = enabled ? '🏖️ Apply Leave' : '⏳ Leave Pending';
+                btnSuggest.onclick = enabled ? function () { toggleForm('leaveForm'); } : function () {
+                    showNotification('Already Submitted', 'A leave application is already pending for this date.', 'warning');
+                };
+            }
+            if (leaveFormBtn) {
+                leaveFormBtn.disabled = !enabled;
+            }
+        }
+
+        function updateAbsentRegularizeSuggestion(dateObj, statusText, attendanceCode, hasPendingReg, hasPendingLeave) {
             var promptEl = document.getElementById('absentRegPrompt');
             var suggestEl = document.getElementById('absentRegSuggest');
             var suggestText = document.getElementById('absentRegSuggestText');
             var genericEl = document.getElementById('genericRegSection');
             var show = isPastElapsedDay(dateObj) && isWeekday(dateObj) && isAbsentLikeStatus(statusText, attendanceCode);
-            var pending = !!hasPendingReg;
+            var pendingReg = !!hasPendingReg;
+            var pendingLeave = !!hasPendingLeave;
 
-            setPendingRegBadge(pending);
-            setRegularizeEnabled(!pending);
+            setPendingBadges(pendingReg, pendingLeave);
+            setRegularizeEnabled(!pendingReg);
+            setLeaveEnabled(!pendingLeave);
 
             if (promptEl) {
-                promptEl.style.display = (show && !pending) ? 'block' : 'none';
+                promptEl.style.display = (show && !pendingReg && !pendingLeave) ? 'block' : 'none';
             }
             if (suggestEl) suggestEl.style.display = show ? 'block' : 'none';
             if (suggestText) {
-                suggestText.innerText = pending
-                    ? 'This weekday is still Absent while your regularization awaits approval. Apply Leave only if that is the correct action; Regularize is locked until the pending request is reviewed.'
-                    : 'This weekday is Absent. Regularize if you worked, or Apply Leave if you did not. You can also review all Absent days for the month.';
+                if (pendingLeave && pendingReg) {
+                    suggestText.innerText = 'This weekday still shows Absent while leave and regularization requests await approval. Both Apply Leave and Regularize are locked until reviewed.';
+                } else if (pendingLeave) {
+                    suggestText.innerText = 'This weekday still shows Absent while your leave application awaits approval. Apply Leave is locked; Regularize stays available if that is the correct action.';
+                } else if (pendingReg) {
+                    suggestText.innerText = 'This weekday is still Absent while your regularization awaits approval. Apply Leave only if that is the correct action; Regularize is locked until the pending request is reviewed.';
+                } else {
+                    suggestText.innerText = 'This weekday is Absent. Regularize if you worked, or Apply Leave if you did not. You can also review all Absent days for the month.';
+                }
             }
-            if (genericEl) genericEl.style.display = (show || pending) ? 'none' : 'block';
+            if (genericEl) genericEl.style.display = (show || pendingReg || pendingLeave) ? 'none' : 'block';
         }
 
         function collectAbsentWeekdays(events) {
@@ -1324,6 +1396,8 @@
                 var displayStatus = props.displayStatus || statusText || 'Absent';
                 var code = props.attendanceCode || '';
                 var hasPendingReg = !!props.hasPendingReg;
+                var hasPendingLeave = !!props.hasPendingLeave;
+                // Approved leave is not Absent-like. Pending leave keeps underlying Absent and stays listable.
                 if (!isPastElapsedDay(d) || !isWeekday(d) || !isAbsentLikeStatus(statusText, code)) return;
                 list.push({
                     dateStr: dateStr,
@@ -1331,7 +1405,8 @@
                     dayName: d.toLocaleDateString('en-GB', { weekday: 'short' }),
                     status: displayStatus,
                     code: code,
-                    hasPendingReg: hasPendingReg
+                    hasPendingReg: hasPendingReg,
+                    hasPendingLeave: hasPendingLeave
                 });
             });
             list.sort(function (a, b) { return a.dateStr < b.dateStr ? -1 : (a.dateStr > b.dateStr ? 1 : 0); });
@@ -1389,16 +1464,25 @@
                 var dateEl = document.createElement('div');
                 dateEl.className = 'absent-date';
                 dateEl.innerText = item.displayDate + ' (' + item.dayName + ')';
+                var statusClass = 'absent-status';
+                if (item.hasPendingLeave) statusClass += ' is-pending-leave';
+                else if (item.hasPendingReg) statusClass += ' is-pending-reg';
                 var statusEl = document.createElement('span');
-                statusEl.className = 'absent-status' + (item.hasPendingReg ? ' is-pending' : '');
+                statusEl.className = statusClass;
                 statusEl.innerText = item.status || 'Absent';
                 meta.appendChild(dateEl);
                 meta.appendChild(statusEl);
+                if (item.hasPendingLeave) {
+                    var leaveBadge = document.createElement('span');
+                    leaveBadge.className = 'pending-leave-badge';
+                    leaveBadge.innerText = 'Leave Pending';
+                    meta.appendChild(leaveBadge);
+                }
                 if (item.hasPendingReg) {
-                    var badge = document.createElement('span');
-                    badge.className = 'pending-reg-badge';
-                    badge.innerText = 'Reg Pending';
-                    meta.appendChild(badge);
+                    var regBadge = document.createElement('span');
+                    regBadge.className = 'pending-reg-badge';
+                    regBadge.innerText = 'Reg Pending';
+                    meta.appendChild(regBadge);
                 }
 
                 var actions = document.createElement('div');
@@ -1413,14 +1497,24 @@
                     btnReg.title = 'A regularization request is already pending for this date.';
                 } else {
                     btnReg.innerText = '📝 Regularize';
-                    btnReg.onclick = function () { openDayForAbsentAction(item.dateStr, item.status, item.code, 'regForm', false); };
+                    btnReg.onclick = function () {
+                        openDayForAbsentAction(item.dateStr, item.status, item.code, 'regForm', false, !!item.hasPendingLeave);
+                    };
                 }
 
                 var btnLeave = document.createElement('button');
                 btnLeave.type = 'button';
                 btnLeave.className = 'btn-leave';
-                btnLeave.innerText = '🏖️ Apply Leave';
-                btnLeave.onclick = function () { openDayForAbsentAction(item.dateStr, item.status, item.code, 'leaveForm', !!item.hasPendingReg); };
+                if (item.hasPendingLeave) {
+                    btnLeave.disabled = true;
+                    btnLeave.innerText = '⏳ Leave Pending';
+                    btnLeave.title = 'A leave application is already pending for this date.';
+                } else {
+                    btnLeave.innerText = '🏖️ Apply Leave';
+                    btnLeave.onclick = function () {
+                        openDayForAbsentAction(item.dateStr, item.status, item.code, 'leaveForm', !!item.hasPendingReg, false);
+                    };
+                }
 
                 actions.appendChild(btnReg);
                 actions.appendChild(btnLeave);
@@ -1441,14 +1535,18 @@
             document.getElementById('absentDaysModal').style.display = 'none';
         }
 
-        function openDayForAbsentAction(dateStr, statusText, attCode, formId, hasPendingReg) {
+        function openDayForAbsentAction(dateStr, statusText, attCode, formId, hasPendingReg, hasPendingLeave) {
             closeAbsentDaysModal();
             hideForms();
 
             var clickedDate = new Date(dateStr + 'T00:00:00');
-            var pending = !!hasPendingReg;
-            // Prefer underlying Absent status for gating; displayStatus already includes Pending label when present.
-            var baseStatus = (statusText || 'Absent').replace(/\s*[—-]\s*Reg Pending/i, '').trim() || 'Absent';
+            var pendingReg = !!hasPendingReg;
+            var pendingLeave = !!hasPendingLeave;
+            // Prefer underlying Absent status for gating; displayStatus already includes Pending labels when present.
+            var baseStatus = (statusText || 'Absent')
+                .replace(/\s*[—-]\s*Leave Pending(?:\s*\([^)]*\))?/ig, '')
+                .replace(/\s*[—-]\s*Reg Pending/ig, '')
+                .trim() || 'Absent';
             document.getElementById('hfClickedDate').value = dateStr;
             document.getElementById('modalDateHeader').innerText = clickedDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
             document.getElementById('modalEventStatus').innerText = statusText || 'Absent';
@@ -1467,10 +1565,14 @@
 
             document.getElementById('modalExistingRecordInfo').style.display = 'block';
             document.getElementById('modalEmptyRecordInfo').style.display = 'none';
-            updateAbsentRegularizeSuggestion(clickedDate, baseStatus, attCode, pending);
+            updateAbsentRegularizeSuggestion(clickedDate, baseStatus, attCode, pendingReg, pendingLeave);
             document.getElementById('dateDetailsModal').style.display = 'block';
-            if (formId === 'regForm' && pending) {
+            if (formId === 'regForm' && pendingReg) {
                 showNotification('Already Submitted', 'A regularization request is already pending for this date.', 'warning');
+                return;
+            }
+            if (formId === 'leaveForm' && pendingLeave) {
+                showNotification('Already Submitted', 'A leave application is already pending for this date.', 'warning');
                 return;
             }
             if (formId) toggleForm(formId);
@@ -1571,6 +1673,11 @@
             var date = document.getElementById('hfClickedDate').value;
             var leaveId = document.getElementById('ddlLeaveTypes').value;
             var reason = document.getElementById('txtLeaveReason').value;
+            var pendingLeaveNotice = document.getElementById('pendingLeaveNotice');
+            if (pendingLeaveNotice && pendingLeaveNotice.style.display === 'block') {
+                showNotification("Already Submitted", "A leave application is already pending for this date.", "warning");
+                return;
+            }
 
             if (!leaveId || !reason) { showNotification("Missing Info", "Select Leave Type and reason.", "warning"); return; }
 
