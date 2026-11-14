@@ -248,6 +248,7 @@
     <Content Include="corporate\business\app\AdminApprovalDashboard.aspx" />
     <Content Include="corporate\business\app\AdminAttendanceDashboard.aspx" />
     <Content Include="corporate\business\app\AdminHolidaySetup.aspx" />
+    <Content Include="corporate\business\app\AdminLeaveBalance.aspx" />
     <Content Include="corporate\business\app\AdminLeaveSetup.aspx" />
     <Content Include="corporate\business\app\AdminOverride.aspx" />
     <Content Include="corporate\business\app\AdminShiftAssignment.aspx" />
@@ -712,6 +713,13 @@
     </Compile>
     <Compile Include="corporate\business\app\AdminHolidaySetup.aspx.designer.cs">
       <DependentUpon>AdminHolidaySetup.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminLeaveBalance.aspx.cs">
+      <DependentUpon>AdminLeaveBalance.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="corporate\business\app\AdminLeaveBalance.aspx.designer.cs">
+      <DependentUpon>AdminLeaveBalance.aspx</DependentUpon>
     </Compile>
     <Compile Include="corporate\business\app\AdminLeaveSetup.aspx.cs">
       <DependentUpon>AdminLeaveSetup.aspx</DependentUpon>

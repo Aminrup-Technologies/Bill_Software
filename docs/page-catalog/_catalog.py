@@ -26,7 +26,7 @@ SP_NAME_RE = re.compile(
 
 SP_PURPOSE = {
     "sp_RunAttendanceRulesEngine": "Recalc after punch / shift map / successful Reg approval.",
-    "sp_AllocateEmployeeLeaves": "Initial leave balances on new ERP user.",
+    "sp_AllocateEmployeeLeaves": "Initial leave balances on new ERP user; admin FY re-seed.",
     "sp_GetActiveNotifications": "Toast feed (GlobalNotification OnInit currently throws).",
     "sp_MarkNotificationRead": "Dismiss one notification.",
     "sp_Requisition_CreateDraft": "Modern PR draft header.",
