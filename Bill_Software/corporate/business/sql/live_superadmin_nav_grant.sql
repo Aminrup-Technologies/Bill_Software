@@ -267,6 +267,12 @@ VALUES
 
 DECLARE @TargetKeyCount int = (SELECT COUNT(*) FROM #TargetKeys);
 
+IF @TargetKeyCount <> 114
+BEGIN
+    RAISERROR('Precondition failed: #TargetKeys must contain exactly 114 unique PermissionKeys (got %d). Aborting.', 16, 1, @TargetKeyCount);
+    RETURN;
+END;
+
 -----------------------------------------------------------------------------
 -- 4. Pre-change snapshots (auditable)
 -----------------------------------------------------------------------------
