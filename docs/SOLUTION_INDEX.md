@@ -121,6 +121,8 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 - [`user_company_access_seed.sql`](../db/user_company_access_seed.sql) — Seeds missing home-tenant memberships after Phase 2A rollout.
 - [`SwitchUser_permission.sql`](../Bill_Software/corporate/business/sql/SwitchUser_permission.sql) — Catalog-only `SwitchUser` permission (no grant).
 - [`SwitchUser_superadmin_grant_uat.sql`](../Bill_Software/corporate/business/sql/SwitchUser_superadmin_grant_uat.sql) — UAT Super Admin grant only (DBA; do not execute from the app).
+- [`admin_attendance_dashboard_superadmin_grant_uat.sql`](../Bill_Software/corporate/business/sql/admin_attendance_dashboard_superadmin_grant_uat.sql) — UAT Super Admin grant for `AdminAttendanceDashboard` only (DBA; inert; not auto-run).
+- [`live_superadmin_nav_grant.sql`](../Bill_Software/corporate/business/sql/live_superadmin_nav_grant.sql) — **LIVE inert.** Catalog `AdminAttendanceDashboard` by PermissionKey + Super Admin RolePermissions for 113 primary-nav derived keys (`flamex_live` only). DBA execute after approval; not auto-run. LIVE access not verified until DBA run + smoke tests.
 - [`employee_config_permissions.sql`](../Bill_Software/corporate/business/sql/employee_config_permissions.sql) — **Parked. Not approved for UAT.** Draft catalog insert for `AdminLeaveSetup`, `AdminShiftSetup`, `AdminOverride`. `PermissionKey` uniqueness is not defined by repository DDL, and the three inserts are not one transaction. No `RolePermissions` or `UserRoles` grant.
 - [`user_company_access_admin_aa_associates.sql`](../Bill_Software/corporate/business/sql/user_company_access_admin_aa_associates.sql) — Optional UAT membership helper for duplication target-company access.
 
