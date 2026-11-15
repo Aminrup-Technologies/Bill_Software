@@ -8,13 +8,18 @@
                 employee_config_permissions.sql (UAT draft). AdminAttendance
                 Dashboard is intentionally omitted — live_superadmin_nav_grant
                 inserts that key. No RolePermissions in this script.
-   WHAT:        On DB_NAME()=N'flamex_live' only: idempotent INSERT of exactly
-                two dbo.Permissions rows (PermissionKey AdminShiftAssignment,
+   WHAT:        On DB_NAME()=N'flamex_live' only: require an enabled,
+                non-hypothetical, unfiltered unique single-column index on
+                PermissionKey and reject duplicate PermissionKey values before
+                any persistent DML; then idempotent INSERT of exactly two
+                dbo.Permissions rows (PermissionKey AdminShiftAssignment,
                 AdminOverride) with Description/ModuleName/SubModuleName/
                 FeatureName copied from employee_config_permissions.sql.
-                PermissionId is IDENTITY and is not supplied. Existing rows
-                are not updated. No RolePermissions / UserRoles. SQL Server
-                2017/2019 compatible. DBA-executed only; never from the app.
+                Existing rows are fail-closed validated on Description plus
+                ModuleName/SubModuleName/FeatureName and never updated.
+                PermissionId is IDENTITY and is not supplied. No
+                RolePermissions / UserRoles. SQL Server 2017/2019 compatible.
+                DBA-executed only; never from the app.
    ************************************************************************** */
 -- INERT / DO NOT EXECUTE FROM THE APPLICATION.
 -- Separate written approval required before any flamex_live execution.
@@ -54,7 +59,54 @@ BEGIN
 END;
 
 -----------------------------------------------------------------------------
--- 2. Idempotent catalog insert (two keys only)
+-- 2. PermissionKey uniqueness preflight (before any persistent DML)
+-----------------------------------------------------------------------------
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes i
+    WHERE i.object_id = OBJECT_ID(N'dbo.Permissions')
+      AND i.is_unique = 1
+      AND i.is_disabled = 0
+      AND i.is_hypothetical = 0
+      AND i.has_filter = 0
+      AND (
+            SELECT COUNT(*)
+            FROM sys.index_columns ic
+            WHERE ic.object_id = i.object_id
+              AND ic.index_id = i.index_id
+              AND ic.is_included_column = 0
+        ) = 1
+      AND EXISTS (
+            SELECT 1
+            FROM sys.index_columns ic
+            INNER JOIN sys.columns c
+                ON c.object_id = ic.object_id
+               AND c.column_id = ic.column_id
+            WHERE ic.object_id = i.object_id
+              AND ic.index_id = i.index_id
+              AND ic.is_included_column = 0
+              AND ic.key_ordinal = 1
+              AND c.name = N'PermissionKey'
+        )
+)
+BEGIN
+    RAISERROR('Precondition failed: dbo.Permissions lacks an enabled, non-hypothetical, unfiltered unique single-column index on PermissionKey only. Aborting.', 16, 1);
+    RETURN;
+END;
+
+IF EXISTS (
+    SELECT PermissionKey
+    FROM dbo.Permissions
+    GROUP BY PermissionKey
+    HAVING COUNT(*) > 1
+)
+BEGIN
+    RAISERROR('Precondition failed: dbo.Permissions already contains duplicate PermissionKey rows. Aborting.', 16, 1);
+    RETURN;
+END;
+
+-----------------------------------------------------------------------------
+-- 3. Idempotent catalog insert (two keys only)
 -----------------------------------------------------------------------------
 BEGIN TRY
     BEGIN TRANSACTION;
@@ -107,18 +159,20 @@ BEGIN TRY
     END;
 
     -- Reject wrong metadata on pre-existing rows (do not UPDATE; abort for DBA review).
+    -- Description is validated with ModuleName / SubModuleName / FeatureName.
     IF EXISTS (
         SELECT 1
         FROM dbo.Permissions
         WHERE PermissionKey = N'AdminShiftAssignment'
           AND (
-                ISNULL(ModuleName, N'') <> N'Dashboard'
+                ISNULL(Description, N'') <> N'Shift assignment / employee-shift mapping (AdminShiftAssignment.aspx). Catalog only; not granted. Distinct from AdminShiftSetup.'
+             OR ISNULL(ModuleName, N'') <> N'Dashboard'
              OR ISNULL(SubModuleName, N'') <> N'Employee Config'
              OR ISNULL(FeatureName, N'') <> N'Shift Assignment'
           )
     )
     BEGIN
-        THROW 50002, 'Precondition failed: existing AdminShiftAssignment metadata is not exactly Dashboard / Employee Config / Shift Assignment. Aborting.', 1;
+        THROW 50002, 'Precondition failed: existing AdminShiftAssignment metadata is not exactly expected Description / Dashboard / Employee Config / Shift Assignment. Aborting (no UPDATE).', 1;
     END;
 
     IF EXISTS (
@@ -126,13 +180,14 @@ BEGIN TRY
         FROM dbo.Permissions
         WHERE PermissionKey = N'AdminOverride'
           AND (
-                ISNULL(ModuleName, N'') <> N'Dashboard'
+                ISNULL(Description, N'') <> N'HR override dashboard (AdminOverride.aspx). Catalog only; not granted.'
+             OR ISNULL(ModuleName, N'') <> N'Dashboard'
              OR ISNULL(SubModuleName, N'') <> N'Employee Config'
              OR ISNULL(FeatureName, N'') <> N'Admin Override'
           )
     )
     BEGIN
-        THROW 50003, 'Precondition failed: existing AdminOverride metadata is not exactly Dashboard / Employee Config / Admin Override. Aborting.', 1;
+        THROW 50003, 'Precondition failed: existing AdminOverride metadata is not exactly expected Description / Dashboard / Employee Config / Admin Override. Aborting (no UPDATE).', 1;
     END;
 
     SELECT
