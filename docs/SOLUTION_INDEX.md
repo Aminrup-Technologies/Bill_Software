@@ -122,6 +122,7 @@ Card kiosk: tbl_card_login / tbl_employee (isolated)
 - [`SwitchUser_permission.sql`](../Bill_Software/corporate/business/sql/SwitchUser_permission.sql) — Catalog-only `SwitchUser` permission (no grant).
 - [`SwitchUser_superadmin_grant_uat.sql`](../Bill_Software/corporate/business/sql/SwitchUser_superadmin_grant_uat.sql) — UAT Super Admin grant only (DBA; do not execute from the app).
 - [`employee_config_permissions.sql`](../Bill_Software/corporate/business/sql/employee_config_permissions.sql) — **Parked. Not approved for UAT.** Draft catalog insert for `AdminLeaveSetup`, `AdminShiftSetup`, `AdminOverride`. `PermissionKey` uniqueness is not defined by repository DDL, and the three inserts are not one transaction. No `RolePermissions` or `UserRoles` grant.
+- [`empconfig_override_shift_live_catalog_seed.sql`](../Bill_Software/corporate/business/sql/empconfig_override_shift_live_catalog_seed.sql) — **Inert LIVE proposal.** Catalog-only `AdminOverride` + `AdminShiftAssignment` for `flamex_live` (metadata from `employee_config_permissions.sql`). Omits `AdminAttendanceDashboard` (grant script). No `RolePermissions`. Not approved for execution.
 - [`user_company_access_admin_aa_associates.sql`](../Bill_Software/corporate/business/sql/user_company_access_admin_aa_associates.sql) — Optional UAT membership helper for duplication target-company access.
 
 ## Invoice lineage (specialist, not page catalogs)
