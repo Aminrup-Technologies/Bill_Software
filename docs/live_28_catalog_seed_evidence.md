@@ -1,8 +1,8 @@
 # LIVE 28-key catalog seed — evidence
 
-**Date:** 2026-11-15  
-**Seed:** [`Bill_Software/corporate/business/sql/live_nav_28_catalog_seed.sql`](../Bill_Software/corporate/business/sql/live_nav_28_catalog_seed.sql)  
-**Master:** [`Bill_Software/corporate/business/app/Bill.Master`](../Bill_Software/corporate/business/app/Bill.Master)  
+**Date:** 2026-11-15
+**Seed:** [`Bill_Software/corporate/business/sql/live_nav_28_catalog_seed.sql`](../Bill_Software/corporate/business/sql/live_nav_28_catalog_seed.sql)
+**Master:** [`Bill_Software/corporate/business/app/Bill.Master`](../Bill_Software/corporate/business/app/Bill.Master)
 **Column contract:** [`docs/page-catalog/UAT_CATALOG.md`](page-catalog/UAT_CATALOG.md) (`dbo.Permissions` nvarchar 200/500/100/100/100)
 
 All Description / ModuleName / SubModuleName / FeatureName values are **newly derived** from repository evidence (Bill.Master + page purpose). They are **not** recovered historical `dbo.Permissions` tuples.
