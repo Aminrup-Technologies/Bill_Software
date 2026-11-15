@@ -129,6 +129,7 @@ Business rules stay unless a change explicitly states otherwise. Decision #8: `R
 - Login: `index.aspx` against `tbl_login` (PBKDF2; leftover plaintext upgraded in place). Concurrent session: deactivate prior `ActiveSessions`. Idle: `Heartbeat.ashx` (~30 minutes).
 - Re-validate `ActiveSessions.IsActive` on Master load.
 - Authorization: `UserRoles` → `RolePermissions` → `Permissions.PermissionKey` at **action** (`EnsurePage` / WebMethod / `EnsurePrint`), not only menu hide.
+- Permission catalog rows are keyed by `PermissionKey` (Bill.Master menu `id`); SQL comparisons follow the target database collation. `PermissionId` is IDENTITY and is never hardcoded across environments. Catalog-seed scripts insert `dbo.Permissions` only; RolePermissions grants stay in separate grant scripts. When historical catalog tuples are absent, a seed may carry **newly derived** Description/Module/Sub/Feature from Master + page evidence — that is not historical recovery and must be labeled as such in the script header/docs.
 - Resource scope: company + owner or manager-dashboard as documented in `docs/19` / `docs/22`. Guessed ids must not cross company/owner.
 - Kiosk login is plaintext `tbl_card_login`, parameterized SQL, no `ActiveSessions`. Isolated.
 - Impersonation: ADR-001. Stays off unless `SwitchUser=true` **and** Super Admin grant **and** an explicit runtime caller. Do not rewrite AuthGuard for impersonation. Host/DBA steps: [`SWITCHUSER_DEPLOYMENT_CHECKLIST.md`](SWITCHUSER_DEPLOYMENT_CHECKLIST.md).
