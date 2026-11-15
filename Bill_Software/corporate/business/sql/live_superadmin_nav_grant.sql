@@ -10,19 +10,24 @@
                 PermissionKey only. Pattern follows
                 SwitchUser_live_catalog_grant_proposal.sql.
    WHAT:        On DB_NAME()=N'flamex_live' only: (1) validate IDENTITY /
-                PermissionKey uniqueness / admin / Super Admin role;
-                (2) idempotent INSERT dbo.Permissions for
-                AdminAttendanceDashboard if absent (Dashboard / Employee Config /
-                Attendance Register); (3) idempotent INSERT dbo.RolePermissions
-                for the approved Super Admin role for all listed nav keys that
-                already exist in dbo.Permissions (join by PermissionKey — never
-                hardcode PermissionId). No UserRoles changes. No deletes of
-                unrelated rows. DBA-executed only; never run from the app.
+                enabled non-hypothetical unfiltered unique single-column
+                PermissionKey index / no duplicate PermissionKey values /
+                admin / Super Admin role; (2) idempotent INSERT dbo.Permissions
+                for AdminAttendanceDashboard if absent (Dashboard / Employee
+                Config / Attendance Register); (3) fail closed inside the
+                transaction if any of the 114 target PermissionKeys are still
+                absent after that catalog step; (4) idempotent INSERT
+                dbo.RolePermissions for the approved Super Admin role for all
+                114 keys (join by PermissionKey — never hardcode PermissionId).
+                No UserRoles changes. No deletes of unrelated rows.
+                DBA-executed only; never run from the app.
    ************************************************************************** */
 -- INERT / DO NOT EXECUTE FROM THE APPLICATION.
 -- Separate written approval required before any flamex_live execution.
--- Does not grant catalog keys outside the 113-page derived set.
+-- Does not grant catalog keys outside the 114-key set below.
 -- Does not INSERT missing keys other than AdminAttendanceDashboard.
+-- After AAD insert, ALL 114 target PermissionKeys must exist or the
+-- transaction aborts (fail closed; soft STILL_MISSING is not used for grants).
 -- Bill.Master leaves AdminHolidaySetup / AdminLeaveBalance / SwitchUser are
 -- outside the 113-page inventory census and are intentionally omitted here.
 
@@ -50,6 +55,8 @@ END;
 
 -----------------------------------------------------------------------------
 -- 1. Schema preflight: PermissionId IDENTITY + PermissionKey uniqueness
+--    Require an enabled, non-hypothetical, unfiltered unique index whose ONLY
+--    key column is PermissionKey. Also reject existing duplicate values.
 -----------------------------------------------------------------------------
 IF NOT EXISTS (
     SELECT 1
@@ -68,17 +75,42 @@ IF NOT EXISTS (
     FROM sys.indexes i
     WHERE i.object_id = OBJECT_ID(N'dbo.Permissions')
       AND i.is_unique = 1
+      AND i.is_disabled = 0
+      AND i.is_hypothetical = 0
+      AND i.has_filter = 0
+      AND (
+            SELECT COUNT(*)
+            FROM sys.index_columns ic
+            WHERE ic.object_id = i.object_id
+              AND ic.index_id = i.index_id
+              AND ic.is_included_column = 0
+        ) = 1
       AND EXISTS (
             SELECT 1
             FROM sys.index_columns ic
-            INNER JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+            INNER JOIN sys.columns c
+                ON c.object_id = ic.object_id
+               AND c.column_id = ic.column_id
             WHERE ic.object_id = i.object_id
               AND ic.index_id = i.index_id
+              AND ic.is_included_column = 0
+              AND ic.key_ordinal = 1
               AND c.name = N'PermissionKey'
         )
 )
 BEGIN
-    RAISERROR('Precondition failed: no unique index/constraint found on dbo.Permissions.PermissionKey. Aborting.', 16, 1);
+    RAISERROR('Precondition failed: dbo.Permissions lacks an enabled, non-hypothetical, unfiltered unique single-column index on PermissionKey only. Aborting.', 16, 1);
+    RETURN;
+END;
+
+IF EXISTS (
+    SELECT PermissionKey
+    FROM dbo.Permissions
+    GROUP BY PermissionKey
+    HAVING COUNT(*) > 1
+)
+BEGIN
+    RAISERROR('Precondition failed: dbo.Permissions already contains duplicate PermissionKey rows. Aborting.', 16, 1);
     RETURN;
 END;
 
@@ -145,7 +177,7 @@ END;
 IF OBJECT_ID(N'tempdb..#TargetKeys') IS NOT NULL DROP TABLE #TargetKeys;
 CREATE TABLE #TargetKeys
 (
-    PermissionKey nvarchar(200) NOT NULL PRIMARY KEY
+    PermissionKey nvarchar(200) COLLATE DATABASE_DEFAULT NOT NULL PRIMARY KEY
 );
 
 INSERT INTO #TargetKeys (PermissionKey)
@@ -293,7 +325,8 @@ SELECT
      INNER JOIN dbo.Permissions p ON p.PermissionId = rp.PermissionId
      WHERE rp.RoleId = @RoleId AND p.PermissionKey = N'AdminAttendanceDashboard') AS SuperAdminAadGrantCount;
 
--- Keys required by nav that are absent from LIVE catalog (informational; not inserted except AAD)
+-- Keys required by nav that are absent from LIVE catalog before AAD insert
+-- (auditable PRE snapshot; after AAD insert the txn fail-closes if any remain)
 SELECT N'MISSING_CATALOG' AS Finding, t.PermissionKey
 FROM #TargetKeys t
 WHERE NOT EXISTS (
@@ -318,7 +351,7 @@ BEGIN
 END;
 
 -----------------------------------------------------------------------------
--- 5. Transaction: catalog (AAD only) + RolePermissions for existing keys
+-- 5. Transaction: catalog (AAD only) + fail-closed 114 coverage + grants
 -----------------------------------------------------------------------------
 BEGIN TRY
     BEGIN TRANSACTION;
@@ -352,7 +385,27 @@ BEGIN TRY
         THROW 50001, 'AdminAttendanceDashboard catalog row missing after insert attempt.', 1;
     END;
 
-    -- 5b. Grant: only target keys that exist in catalog; resolve PermissionId by key
+    -- Fail closed: after AAD catalog insertion, every target key must exist.
+    -- Other missing keys are reported and abort the transaction (not auto-inserted).
+    IF EXISTS (
+        SELECT 1
+        FROM #TargetKeys t
+        WHERE NOT EXISTS (
+            SELECT 1 FROM dbo.Permissions p WHERE p.PermissionKey = t.PermissionKey
+        )
+    )
+    BEGIN
+        SELECT N'ABORT_MISSING_CATALOG' AS Finding, t.PermissionKey
+        FROM #TargetKeys t
+        WHERE NOT EXISTS (
+            SELECT 1 FROM dbo.Permissions p WHERE p.PermissionKey = t.PermissionKey
+        )
+        ORDER BY t.PermissionKey;
+
+        THROW 50012, 'Fail closed: one or more of the 114 target PermissionKeys are still absent from dbo.Permissions after AdminAttendanceDashboard catalog step (see ABORT_MISSING_CATALOG result set). Catalog keys other than AdminAttendanceDashboard are not inserted by this script. Transaction will roll back.', 1;
+    END;
+
+    -- 5b. Grant: all 114 target keys (catalog coverage asserted above)
     DECLARE @InsertedGrants int = 0;
 
     INSERT INTO dbo.RolePermissions (RoleId, PermissionId)
@@ -409,7 +462,7 @@ BEGIN TRY
         THROW 50004, 'Postcondition failed: AuthGuard-shaped HasPermission probe for AdminAttendanceDashboard returned no row.', 1;
     END;
 
-    -- Every target key that exists in catalog must be granted to Super Admin
+    -- Every one of the 114 target keys must be granted to Super Admin
     IF EXISTS (
         SELECT 1
         FROM #TargetKeys t
@@ -422,10 +475,19 @@ BEGIN TRY
         )
     )
     BEGIN
-        THROW 50005, 'Postcondition failed: one or more existing target keys still ungranted to Super Admin.', 1;
+        THROW 50005, 'Postcondition failed: one or more of the 114 target keys still ungranted to Super Admin.', 1;
     END;
 
-    -- Do not require keys that remain missing from catalog (except AAD, already asserted)
+    IF (
+        SELECT COUNT_BIG(*)
+        FROM #TargetKeys t
+        INNER JOIN dbo.Permissions p ON p.PermissionKey = t.PermissionKey
+        INNER JOIN dbo.RolePermissions rp ON rp.RoleId = @RoleId AND rp.PermissionId = p.PermissionId
+    ) <> 114
+    BEGIN
+        THROW 50013, 'Postcondition failed: TargetKeysGranted must equal 114 after fail-closed catalog gate.', 1;
+    END;
+
     COMMIT TRANSACTION;
 
     SELECT
@@ -437,22 +499,13 @@ BEGIN TRY
          FROM #TargetKeys t
          INNER JOIN dbo.Permissions p ON p.PermissionKey = t.PermissionKey
          INNER JOIN dbo.RolePermissions rp ON rp.RoleId = @RoleId AND rp.PermissionId = p.PermissionId
-        ) AS TargetKeysGranted,
-        (SELECT COUNT_BIG(*)
-         FROM #TargetKeys t
-         WHERE NOT EXISTS (SELECT 1 FROM dbo.Permissions p WHERE p.PermissionKey = t.PermissionKey)
-        ) AS TargetKeysStillMissingFromCatalog;
-
-    SELECT N'STILL_MISSING_CATALOG' AS Finding, t.PermissionKey
-    FROM #TargetKeys t
-    WHERE NOT EXISTS (SELECT 1 FROM dbo.Permissions p WHERE p.PermissionKey = t.PermissionKey)
-    ORDER BY t.PermissionKey;
+        ) AS TargetKeysGranted;
 
     PRINT N'live_superadmin_nav_grant: COMMIT OK. AadPermissionId='
         + CONVERT(nvarchar(11), @AadPermissionId)
         + N'; grantsInserted='
         + CONVERT(nvarchar(11), @InsertedGrants)
-        + N'. Unrelated RolePermissions preserved. Missing catalog keys listed above were not inserted.';
+        + N'. All 114 target keys present in catalog and granted. Unrelated RolePermissions preserved.';
 END TRY
 BEGIN CATCH
     IF XACT_STATE() <> 0
