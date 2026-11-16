@@ -489,21 +489,27 @@ namespace Bill_Software.corporate.business.app
                             IF @Status = 'Approved'
                             BEGIN
                                 {(reqType == "Leave" ? @"
-                                    DECLARE @LeaveID int, @Days decimal(5,2), @StartDate date;
-                                    SELECT @LeaveID = LeaveID, @Days = TotalDays, @StartDate = StartDate FROM tbl_LeaveRequests WHERE RequestID = @ReqID;
+                                    DECLARE @LeaveID int, @Days decimal(5,2), @StartDate date, @EndDate date;
+                                    SELECT @LeaveID = LeaveID, @Days = TotalDays, @StartDate = StartDate, @EndDate = EndDate FROM tbl_LeaveRequests WHERE RequestID = @ReqID;
 
                                     UPDATE tbl_EmployeeLeaveBalance
                                     SET UsedDays = UsedDays + @Days
                                     WHERE UserCode = @EmpID AND LeaveID = @LeaveID AND FinancialYear = YEAR(GETDATE()) AND CompanyID = @CompID;
 
-                                    IF EXISTS (SELECT 1 FROM tbl_Attendance WHERE UserCode = @EmpID AND ActivityDate = @StartDate AND CompanyID = @CompID)
+                                    -- Mark every calendar day StartDate..EndDate (inclusive), matching TotalDays and calendar overlays.
+                                    DECLARE @LeaveDay date = @StartDate;
+                                    WHILE @LeaveDay <= @EndDate
                                     BEGIN
-                                        UPDATE tbl_Attendance SET SystemCalculatedStatus = 'On Approved Leave' WHERE UserCode = @EmpID AND ActivityDate = @StartDate AND CompanyID = @CompID;
-                                    END
-                                    ELSE
-                                    BEGIN
-                                        INSERT INTO tbl_Attendance (UserCode, ActivityDate, SystemCalculatedStatus, AppliedShiftID, CompanyID)
-                                        VALUES (@EmpID, @StartDate, 'On Approved Leave', 1, @CompID);
+                                        IF EXISTS (SELECT 1 FROM tbl_Attendance WHERE UserCode = @EmpID AND ActivityDate = @LeaveDay AND CompanyID = @CompID)
+                                        BEGIN
+                                            UPDATE tbl_Attendance SET SystemCalculatedStatus = 'On Approved Leave' WHERE UserCode = @EmpID AND ActivityDate = @LeaveDay AND CompanyID = @CompID;
+                                        END
+                                        ELSE
+                                        BEGIN
+                                            INSERT INTO tbl_Attendance (UserCode, ActivityDate, SystemCalculatedStatus, AppliedShiftID, CompanyID)
+                                            VALUES (@EmpID, @LeaveDay, 'On Approved Leave', 1, @CompID);
+                                        END
+                                        SET @LeaveDay = DATEADD(day, 1, @LeaveDay);
                                     END
                                 " : @"
                                     DECLARE @InTime time, @OutTime time;
