@@ -114,7 +114,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error saving holiday: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 
@@ -173,7 +174,8 @@ namespace Bill_Software.corporate.business.app
                 }
                 catch (Exception ex)
                 {
-                    ShowMessage("Error loading holiday: " + ex.Message, false);
+                    System.Diagnostics.Debug.WriteLine(ex.ToString());
+                    ShowMessage("Unable to load data.", false);
                 }
                 return;
             }
@@ -205,7 +207,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error deleting holiday: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 
@@ -257,7 +260,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error loading holidays: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to load data.", false);
             }
         }
 

@@ -111,7 +111,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Allocation failed: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 
@@ -169,7 +170,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error saving allotment: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 
@@ -216,7 +218,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error loading balances: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to load data.", false);
             }
         }
 
