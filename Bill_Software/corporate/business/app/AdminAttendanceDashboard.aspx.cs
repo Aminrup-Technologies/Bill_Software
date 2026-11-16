@@ -292,127 +292,128 @@ namespace Bill_Software.corporate.business.app
                 }
 
                 using (SqlConnection conn = new SqlConnection(ConnString))
-                using (SqlTransaction tran = conn.BeginTransaction())
                 {
                     conn.Open();
-
-                    try
+                    using (SqlTransaction tran = conn.BeginTransaction())
                     {
-                        // ==========================================
-                        // PATH A: FORCE CHECKOUT (Fixing an Orphaned Punch)
-                        // ==========================================
-                        if (actionType == "ForceOut")
+                        try
                         {
-                            string outTimeInput = txtManualOutTime.Text; // e.g., "18:30"
-
-                            if (string.IsNullOrEmpty(outTimeInput))
+                            // ==========================================
+                            // PATH A: FORCE CHECKOUT (Fixing an Orphaned Punch)
+                            // ==========================================
+                            if (actionType == "ForceOut")
                             {
-                                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Error', 'Please provide a valid Checkout Time.', 'error');", true);
-                                tran.Rollback();
-                                return;
-                            }
+                                string outTimeInput = txtManualOutTime.Text; // e.g., "18:30"
 
-                            // Safely stitch the Date and the HR's inputted Time together
-                            DateTime combinedOutDateTime = Convert.ToDateTime($"{targetDate} {outTimeInput}:00");
+                                if (string.IsNullOrEmpty(outTimeInput))
+                                {
+                                    ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Error', 'Please provide a valid Checkout Time.', 'error');", true);
+                                    tran.Rollback();
+                                    return;
+                                }
 
-                            // REMOVED 'Remarks' column, added 'AttendanceStatus' update
-                            string updateQuery = @"UPDATE tbl_Attendance 
+                                // Safely stitch the Date and the HR's inputted Time together
+                                DateTime combinedOutDateTime = Convert.ToDateTime($"{targetDate} {outTimeInput}:00");
+
+                                // REMOVED 'Remarks' column, added 'AttendanceStatus' update
+                                string updateQuery = @"UPDATE tbl_Attendance
                                            SET PunchOutTime = @OutTime,
                                                TotalHoursWorked = CAST(DATEDIFF(MINUTE, PunchInTime, @OutTime) / 60.0 AS DECIMAL(5,2)),
                                                SystemCalculatedStatus = 'Manual Checkout (HR)',
                                                AttendanceStatus = 'Present'
                                            WHERE UserCode = @UserCode AND ActivityDate = @Date AND CompanyID = @CompanyID";
 
-                            using (SqlCommand cmdUpdate = new SqlCommand(updateQuery, conn, tran))
-                            {
-                                cmdUpdate.Parameters.AddWithValue("@OutTime", combinedOutDateTime);
-                                cmdUpdate.Parameters.AddWithValue("@UserCode", targetUser);
-                                cmdUpdate.Parameters.AddWithValue("@Date", targetDate);
-                                cmdUpdate.Parameters.AddWithValue("@CompanyID", companyId);
-                                cmdUpdate.ExecuteNonQuery();
+                                using (SqlCommand cmdUpdate = new SqlCommand(updateQuery, conn, tran))
+                                {
+                                    cmdUpdate.Parameters.AddWithValue("@OutTime", combinedOutDateTime);
+                                    cmdUpdate.Parameters.AddWithValue("@UserCode", targetUser);
+                                    cmdUpdate.Parameters.AddWithValue("@Date", targetDate);
+                                    cmdUpdate.Parameters.AddWithValue("@CompanyID", companyId);
+                                    cmdUpdate.ExecuteNonQuery();
+                                }
                             }
-                        }
-                        // ==========================================
-                        // PATH B: FULL DAY OVERRIDE (Marking Present/Absent)
-                        // ==========================================
-                        else
-                        {
-                            // 1. Delete any existing partial/junk record for this user/date combo
-                            string delQuery = "DELETE FROM tbl_Attendance WHERE UserCode = @UserCode AND ActivityDate = @Date AND CompanyID = @CompanyID";
-                            using (SqlCommand cmdDel = new SqlCommand(delQuery, conn, tran))
+                            // ==========================================
+                            // PATH B: FULL DAY OVERRIDE (Marking Present/Absent)
+                            // ==========================================
+                            else
                             {
-                                cmdDel.Parameters.AddWithValue("@UserCode", targetUser);
-                                cmdDel.Parameters.AddWithValue("@Date", targetDate);
-                                cmdDel.Parameters.AddWithValue("@CompanyID", companyId);
-                                cmdDel.ExecuteNonQuery();
-                            }
+                                // 1. Delete any existing partial/junk record for this user/date combo
+                                string delQuery = "DELETE FROM tbl_Attendance WHERE UserCode = @UserCode AND ActivityDate = @Date AND CompanyID = @CompanyID";
+                                using (SqlCommand cmdDel = new SqlCommand(delQuery, conn, tran))
+                                {
+                                    cmdDel.Parameters.AddWithValue("@UserCode", targetUser);
+                                    cmdDel.Parameters.AddWithValue("@Date", targetDate);
+                                    cmdDel.Parameters.AddWithValue("@CompanyID", companyId);
+                                    cmdDel.ExecuteNonQuery();
+                                }
 
-                            // 2. Insert the Clean Override Record (Strictly matching your DB Schema)
-                            string insQuery = @"INSERT INTO tbl_Attendance 
+                                // 2. Insert the Clean Override Record (Strictly matching your DB Schema)
+                                string insQuery = @"INSERT INTO tbl_Attendance
                                         (UserCode, ActivityDate, AttendanceStatus, SystemCalculatedStatus, TotalHoursWorked, CreatedDate, CompanyID) 
                                         VALUES 
                                         (@UserCode, @Date, @AttStatus, @SysStatus, @Hours, GETDATE(), @CompanyID)";
 
-                            using (SqlCommand cmdIns = new SqlCommand(insQuery, conn, tran))
-                            {
-                                cmdIns.Parameters.AddWithValue("@UserCode", targetUser);
-                                cmdIns.Parameters.AddWithValue("@Date", targetDate);
-                                cmdIns.Parameters.AddWithValue("@CompanyID", companyId);
-
-                                if (actionType == "Present")
+                                using (SqlCommand cmdIns = new SqlCommand(insQuery, conn, tran))
                                 {
-                                    cmdIns.Parameters.AddWithValue("@AttStatus", "Present");
-                                    cmdIns.Parameters.AddWithValue("@SysStatus", "HR Override - Present");
-                                    cmdIns.Parameters.AddWithValue("@Hours", 8.0); // Defaulting to 8 hours for a forced present
-                                }
-                                else
-                                {
-                                    cmdIns.Parameters.AddWithValue("@AttStatus", "Absent");
-                                    cmdIns.Parameters.AddWithValue("@SysStatus", "HR Override - Absent");
-                                    cmdIns.Parameters.AddWithValue("@Hours", 0.0);
-                                }
+                                    cmdIns.Parameters.AddWithValue("@UserCode", targetUser);
+                                    cmdIns.Parameters.AddWithValue("@Date", targetDate);
+                                    cmdIns.Parameters.AddWithValue("@CompanyID", companyId);
 
-                                cmdIns.ExecuteNonQuery();
+                                    if (actionType == "Present")
+                                    {
+                                        cmdIns.Parameters.AddWithValue("@AttStatus", "Present");
+                                        cmdIns.Parameters.AddWithValue("@SysStatus", "HR Override - Present");
+                                        cmdIns.Parameters.AddWithValue("@Hours", 8.0); // Defaulting to 8 hours for a forced present
+                                    }
+                                    else
+                                    {
+                                        cmdIns.Parameters.AddWithValue("@AttStatus", "Absent");
+                                        cmdIns.Parameters.AddWithValue("@SysStatus", "HR Override - Absent");
+                                        cmdIns.Parameters.AddWithValue("@Hours", 0.0);
+                                    }
+
+                                    cmdIns.ExecuteNonQuery();
+                                }
                             }
-                        }
 
-                        // ==========================================
-                        // COMMON: NOTIFICATIONS & AUDIT TRAIL
-                        // ==========================================
-                        // The Remarks are safely saved here instead of tbl_Attendance!
-                        string notiQuery = @"INSERT INTO tbl_SystemNotification 
+                            // ==========================================
+                            // COMMON: NOTIFICATIONS & AUDIT TRAIL
+                            // ==========================================
+                            // The Remarks are safely saved here instead of tbl_Attendance!
+                            string notiQuery = @"INSERT INTO tbl_SystemNotification
                                     (Title, Message, ModuleCode, Severity, CreatedBy, StartDate, EndDate, IsActive, CompanyID) 
                                     VALUES 
                                     (@Title, @Message, 'Attendance', 'Warning', @AdminId, GETDATE(), DATEADD(day, 30, GETDATE()), 1, @CompanyID)";
 
-                        using (SqlCommand cmdNoti = new SqlCommand(notiQuery, conn, tran))
-                        {
-                            cmdNoti.Parameters.AddWithValue("@Title", "Attendance Manual Override");
-                            cmdNoti.Parameters.AddWithValue("@Message", $"Admin {adminId} manually marked {targetUser} as {actionType} for {Convert.ToDateTime(targetDate):dd-MMM-yyyy}. Remarks: {remarks}");
-                            cmdNoti.Parameters.AddWithValue("@AdminId", adminId);
-                            cmdNoti.Parameters.AddWithValue("@CompanyID", companyId);
-                            cmdNoti.ExecuteNonQuery();
+                            using (SqlCommand cmdNoti = new SqlCommand(notiQuery, conn, tran))
+                            {
+                                cmdNoti.Parameters.AddWithValue("@Title", "Attendance Manual Override");
+                                cmdNoti.Parameters.AddWithValue("@Message", $"Admin {adminId} manually marked {targetUser} as {actionType} for {Convert.ToDateTime(targetDate):dd-MMM-yyyy}. Remarks: {remarks}");
+                                cmdNoti.Parameters.AddWithValue("@AdminId", adminId);
+                                cmdNoti.Parameters.AddWithValue("@CompanyID", companyId);
+                                cmdNoti.ExecuteNonQuery();
+                            }
+
+                            // Commit the Transaction securely
+                            tran.Commit();
+
+                            ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Success', 'Attendance processed successfully.', 'success');", true);
+
+                            // Clear all modal inputs to prevent accidental re-submissions
+                            hdnTargetUser.Value = "";
+                            hdnTargetDate.Value = "";
+                            hdnActionType.Value = "";
+                            txtAdminRemarks.Text = "";
+                            txtManualOutTime.Text = "";
+
+                            // Refresh the Grid
+                            GenerateReport();
                         }
-
-                        // Commit the Transaction securely
-                        tran.Commit();
-
-                        ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Success', 'Attendance processed successfully.', 'success');", true);
-
-                        // Clear all modal inputs to prevent accidental re-submissions
-                        hdnTargetUser.Value = "";
-                        hdnTargetDate.Value = "";
-                        hdnActionType.Value = "";
-                        txtAdminRemarks.Text = "";
-                        txtManualOutTime.Text = "";
-
-                        // Refresh the Grid
-                        GenerateReport();
-                    }
-                    catch (Exception)
-                    {
-                        tran.Rollback();
-                        throw;
+                        catch (Exception)
+                        {
+                            tran.Rollback();
+                            throw;
+                        }
                     }
                 }
             }
