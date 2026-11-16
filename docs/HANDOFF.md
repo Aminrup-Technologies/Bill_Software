@@ -47,6 +47,72 @@ The Company 1 full-range count fell from 163 rows to 158: the five removed rows 
 
 **Limitations:** blank service categories on `QTN/FE/25-26/31A`, `PO/FE/25-26/59`, `PO/FE/25-26/60` are pre-existing and unrelated to the client join. `QTN/AA/26-27/1` keeps `Client_Id = AD01` and can be found in Company 2 only by Only Date; repointing it is a separate data change needing its own write approval. Nothing in the schema prevents future duplicate (`Client_Id`, `CompanyID`) rows.
 
+**UAT RBAC (`flamex_uat`) — recorded separately from LIVE; not LIVE deployment; 114-key = approved nav catalog only.**
+
+Approved remediation TXN on `flamex_uat` committed successfully. Postconditions verified:
+
+| Check | Result |
+|-------|--------|
+| Catalog coverage among `live_superadmin_nav_grant.sql` `#TargetKeys` | **114/114** present in `dbo.Permissions` |
+| RoleId **1** (Super Admin) grants among those 114 keys | **114/114** present in `dbo.RolePermissions` |
+| RolePermissions inserts this run | **16** total = **13** reviewed Id/Key grants + **3** catalog-key grants (`ManagePermissions`, `ManageRoles`, `my_leaves`) |
+
+Direct-page smoke (authorized Super Admin path) **PASS**:
+
+| Page | Result |
+|------|--------|
+| `ManagePermissions.aspx` | **PASS** |
+| `ManageRoles.aspx` | **PASS** |
+| `MyLeaves.aspx` | **PASS** |
+| `AdminShiftAssignment.aspx` | **PASS** |
+
+Negative AuthZ (**FLM013**, normal user) **PASS**:
+
+| Case | Actor | Action | Expected | Result |
+|------|-------|--------|----------|--------|
+| FLM013 | Normal user (non–Super Admin) | Direct URL `ManagePermissions.aspx` | Denial body `Unauthorized` | **PASS** |
+
+CompanyID isolation for the remediated surfaces / RoleId 1 grant scope: **CLOSED (reported test outcome)** — user-reported; not an independently agent-attested transcript. Does **not** claim product-wide AuthZ beyond the approved-nav 114-key set and the named smoke/negative cases. Auth chain unchanged: `SecurePage.OnInit` → `AuthGuard.EnsurePage` → session → company → `HasPermission` (menu ≠ auth).
+
+**LIVE RBAC (`flamex_live`) — recorded separately from UAT; PR merge ≠ DB deploy; 114-key = approved nav catalog only.**
+
+Repository merges on `July_to_Sept26_DevNSupport` (from merge-result evidence; do not invent SHAs):
+
+| PR | Artifact | Merge commit |
+|----|----------|--------------|
+| [#115](https://github.com/Aminrup-Technologies/Bill_Software/pull/115) | `empconfig_override_shift_live_catalog_seed.sql` (catalog-only Override + ShiftAssignment) | `0ab39827fe76008abf2da8b3a674838e645474bb` |
+| [#116](https://github.com/Aminrup-Technologies/Bill_Software/pull/116) | `live_nav_28_catalog_seed.sql` (28 newly derived nav keys) | `2b292e2ee3dba44cb75ac4ac91c79085523531b3` |
+| [#114](https://github.com/Aminrup-Technologies/Bill_Software/pull/114) | `live_superadmin_nav_grant.sql` (AAD catalog if absent + RoleId 1 grants for 114) | `2412dfd8a6e3cefc16f5366a9e4bd66f9777fe04` |
+
+User-confirmed LIVE DBA execution (distinct from the PR merges above):
+
+| Check | Result |
+|-------|--------|
+| PR #115 seed counts | `AdminShiftAssignmentCount=1`, `AdminOverrideCount=1` |
+| PR #114 grant | committed **114/114** |
+| PR #116 standalone seed execution output | **Not independently confirmed** — **documented gap**; do not invent a #116 run transcript. Rely on final LIVE postflight **114/114** catalog closure. |
+
+Read-only LIVE postflight (`docs/sql/live_rbac_readonly_postflight.sql`; `SOURCE_HEAD` `2412dfd8…`) **PASS**:
+
+| Check | Result |
+|-------|--------|
+| Target keys / catalog / RoleId 1 grants | **114** / **114** / **114** |
+| Missing / duplicate catalog keys | **zero** |
+| Missing / duplicate grant mappings | **zero** |
+| Ambient `@@TRANCOUNT` | **0** |
+| Concurrent marker | limited aggregate-count OPEN/CLOSE only — **not** proof of no concurrent change |
+| `AdminAttendanceDashboard` | reported **separately** (not folded into the 114 arithmetic narrative) |
+
+User-confirmed LIVE app smoke (AuthGuard chain preserved):
+
+| Case | Result |
+|------|--------|
+| Super Admin → `ManagePermissions` / `ManageRoles` / `AdminShiftAssignment` / `AdminOverride` | **PASS** |
+| Normal user → `ManagePermissions` | **Unauthorized** |
+| CompanyID isolation | **CLOSED (reported test outcome)** |
+
+Out-of-scope remains as already documented: legacy/non-nav, kiosk, QuickAction tokens, print, SwitchUser. Not a claim that every legacy page/object is covered by the 114-key approved-nav set.
+
 ---
 
 ## Completed Work
@@ -62,12 +128,14 @@ The Company 1 full-range count fell from 163 rows to 158: the five removed rows 
 - This bootstrap: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/CURSOR_RULES.md`, `Bill_Software/.cursor/rules/project.mdc`.
 - Attendance regularization approval → `dbo.sp_RunAttendanceRulesEngine` (same C# `SqlTransaction` as the approval write) on `AdminApprovalDashboard` / `AdminOverride` / `QuickAction` when **Reg + Approved** only. Leave approve/reject and Reg reject do **not** call the engine. `attendance.aspx` punch path unchanged. `AdminOverride` / `QuickAction`: `RequestStatus = 'Pending'` on UPDATE; zero rows → SQL `THROW 50001` into C# rollback + controlled UI error (`Debug.WriteLine` keeps the exception server-side). `AdminApprovalDashboard` retains its existing Pending + `@@ROWCOUNT` abort. Alerts only after `Commit`. Request rows in `tbl_AttendanceRegularization` remain independently auditable. Debug and Release builds succeeded. **UAT PASS (functional):** Reg approval recalculates dependent fields; calendar / Day Detail consistent; Reg rejection and leave approval unchanged (no engine). **Deferred validation (not PASS):** failure-injection rollback of the engine, simultaneous dual-approval race, AdminApprovalDashboard concurrency review.
 - Add Proforma company-scoped client join (2026-11-06; uncommitted on `feature/add-proforma-ui-refactor`): all three searches in `Add_proforma.aspx.cs` join `tbl_Client` on `qut.Client_Id = c.Client_Id AND c.CompanyID = qut.CompanyID`. Read-only `flamex_uat` investigation, MSBuild 14 Debug build, and eight-test browser UAT in Company 1 and Company 2 all PASS. Details and limitations: Current Status above.
+- UAT RBAC 114-key remediation on `flamex_uat`: TXN COMMIT; **114/114** catalog; **114/114** RoleId 1 grants; **16** RolePermissions inserts (13+3); Super Admin smoke PASS ManagePermissions / ManageRoles / MyLeaves / AdminShiftAssignment; **FLM013** Unauthorized PASS; CompanyID isolation **CLOSED (reported)**. Not LIVE. Details: Current Status above.
+- LIVE RBAC 114-key rollout on `flamex_live` (DB deploy distinct from PR merges #115/`0ab39827…`, #116/`2b292e2…`, #114/`2412dfd8…`): user-confirmed #115 counts Override/ShiftAssignment = 1 each; #114 grant 114/114; read-only postflight **PASS** (114/114/114; zero missing/dups; `@@TRANCOUNT` 0; limited aggregate concurrent marker only; AAD separate); Super Admin smoke PASS + normal-user Unauthorized; CompanyID isolation **CLOSED (reported)**. **PR #116 standalone seed execution output not independently confirmed** (gap). Details: Current Status above.
 
 ---
 
 ## Current Task
 
-**GATE 2 BLOCKED.** Attendance rules-engine integration stays closed. Resilience validation stays deferred (see Next Action). Do not start Gate 3.
+**FLMX RBAC UAT + LIVE approved-nav documentation finalize (docs-only).** Evidence recorded in Current Status; **PR #116 standalone seed execution gap** remains noted (do not invent). **GATE 2 BLOCKED.** Attendance rules-engine integration stays closed. Resilience validation stays deferred (see Next Action). Do not start Gate 3.
 
 ---
 
@@ -78,7 +146,7 @@ The Company 1 full-range count fell from 163 rows to 158: the five removed rows 
 - Multi-tenancy target (working tree, not published HEAD): D1–D8, S1, S2, and Amendment A1 in [`architecture/ADR-002_MultiTenancy_Ownership_Model.md`](architecture/ADR-002_MultiTenancy_Ownership_Model.md) and [`architecture/UAT_MIGRATION_GOVERNANCE.md`](architecture/UAT_MIGRATION_GOVERNANCE.md), dated 2026-10-01. Those files are untracked, so Gate 1 is not merged at `4918b977`. No approver name is recorded. A1 stands: invoice payment / due / TDS are children of the invoice; `tbl_StockAdjustments` is a tenant-owned movement on shared stock at `ProductID + StoreID`; `tbl_stock.Quantity_Num` is the only quantity of record.
 - **GATE 2 BLOCKED** (2026-11-05). Exit criteria are the Gate 2 column in governance §2. Inventory: [`architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md`](architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md). `dbo.tbl_CrossTenantDuplication` is §16.6 row 29 (Open; not classified; not approved). Supplied `flamex_uat` collection `2026-11-05T02:55:01.975Z` recorded 22/22 module bodies in report §12.2 (`OBJECT_DEFINITION()`, UAT only). Failing criteria: SQL Agent job-step text was not returned (`flamex_uat` MCP `execute_query` is disabled; no `msdb.dbo.sysjobsteps` rows); X-18 read-only `flamex_live` census of every ADR-002 §2 and §7 object, including tables empty on UAT, was not run; repository-owner approval, which is an explicit statement in this file and has not been given. X-19 live re-verification was not run. X-20, X-21, and X-22 are unchanged. Gate 3 decisions X-23, X-24, X-25, X-28, X-31 stay open (report §16). Scripts are written in Gate 3 and first run in Gate 5 on `flamex_uat` only. Application adaptation is Gate 7. Production is a replay under its own approval. Gate 3 is not authorized. `employee_config_permissions.sql` is parked and is outside this gate.
 - Product stops still closed: Decision #8 (`ReportingManagerId` ACL), Decision #9 (HQ cross-company), `machineKey` rotation, secret cutover ops.
-- **LIVE Super Admin nav catalog (inert proposals; not executed):** Historical `flamex_live` census Expected=114 / Present=83 / Missing=31 (not a fresh LIVE verify). Three catalog/grant inputs are all **proposals until separately DBA-approved and executed**: (1) PR [#115](https://github.com/Aminrup-Technologies/Bill_Software/pull/115) [`empconfig_override_shift_live_catalog_seed.sql`](../Bill_Software/corporate/business/sql/empconfig_override_shift_live_catalog_seed.sql) — `AdminOverride` + `AdminShiftAssignment` (metadata from parked `employee_config_permissions.sql`; **merged** to base, still not executed); (2) `live_nav_28_catalog_seed.sql` — **28** remaining keys with **newly derived** metadata (evidence: [`live_28_catalog_seed_evidence.md`](live_28_catalog_seed_evidence.md)); (3) `AdminAttendanceDashboard` via `live_superadmin_nav_grant.sql` auto-insert (PR [#114](https://github.com/Aminrup-Technologies/Bill_Software/pull/114) / store SoT). Classification for the Missing=31 set: Project store `docs/live-missing-31-permissionkeys-classification.md`. Arithmetic: 31 = 28 + 2 + 1; 83 + 28 + 2 + 1 = **114**. **Do not** run the 114-key grant until both catalog seeds are approved/executed, the approved grant artifact’s fail-closed catalog gate is present, and reconcile shows MissingKeys ⊆ {`AdminAttendanceDashboard`} (or empty after AAD insert). Do not claim grant ready/executed, or audit-table/THROW behavior beyond the approved grant script text.
+- **LIVE Super Admin approved-nav 114-key rollout (execution recorded; PR merge ≠ DB deploy):** Historical pre-deploy census Expected=114 / Present=83 / Missing=31 is retained as history only. Merged scripts: PR [#115](https://github.com/Aminrup-Technologies/Bill_Software/pull/115) [`empconfig_override_shift_live_catalog_seed.sql`](../Bill_Software/corporate/business/sql/empconfig_override_shift_live_catalog_seed.sql) merge `0ab39827…`; PR [#116](https://github.com/Aminrup-Technologies/Bill_Software/pull/116) [`live_nav_28_catalog_seed.sql`](../Bill_Software/corporate/business/sql/live_nav_28_catalog_seed.sql) merge `2b292e2…` (**standalone seed execution output not independently confirmed**); PR [#114](https://github.com/Aminrup-Technologies/Bill_Software/pull/114) [`live_superadmin_nav_grant.sql`](../Bill_Software/corporate/business/sql/live_superadmin_nav_grant.sql) merge `2412dfd8…`. User-confirmed LIVE: #115 counts = 1/1; #114 grant 114/114; postflight **PASS**; smoke + CompanyID **CLOSED (reported)**. Classification archive: Project store `docs/live-missing-31-permissionkeys-classification.md`. Arithmetic retained: 31 = 28 + 2 + 1; 83 + 28 + 2 + 1 = **114**. Details: Current Status above.
 
 ---
 
@@ -96,9 +164,11 @@ The Company 1 full-range count fell from 163 rows to 158: the five removed rows 
 
 ## Next Action
 
+Optional: if product requires an independently captured PR #116 standalone seed execution transcript, obtain it from DBA evidence — do **not** invent one; final LIVE postflight **114/114** already closes catalog presence for the approved-nav set. Do not re-run LIVE `#115` / `#116` / `#114` unless a new defect or re-approval is named.
+
 Optional resilience validation for attendance Reg approval (explicitly **deferred**, not claimed as UAT PASS): (1) inject `sp_RunAttendanceRulesEngine` failure and confirm approval rolls back with controlled UI error and no success alert; (2) simultaneous dual approval (Override vs QuickAction or two managers) and confirm only one wins Pending + no double engine run; (3) AdminApprovalDashboard concurrency review against the same Pending race model. Do not start unless requested.
 
-Verified repository state: published HEAD is `4918b977` (`Recalculate attendance when a regularization is approved.`) on `July_to_Sept26_DevNSupport`. Attendance rules-engine integration is in that commit. `4a37676` is an ancestor, not HEAD. `5ace354` (menu membership by company) stays historical. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce`. Optional follow-up only: exercise Customer-side R7 with a restricted role that can open `View_client.aspx`. Gate 2 disposition did not edit `Web.config`, the UAT publish profile, `AdminShiftAssignment.aspx.cs`, or `newproduct_master.aspx`.
+Verified repository state for this docs finalize: HEAD `2412dfd8a6e3cefc16f5366a9e4bd66f9777fe04` on `July_to_Sept26_DevNSupport` (PR #114 merge tip; ancestors include #116 `2b292e2…` and #115 `0ab39827…`). Attendance rules-engine integration remains in ancestor `4918b977`. `4a37676` is an ancestor, not HEAD. `5ace354` (menu membership by company) stays historical. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce`. Optional follow-up only: exercise Customer-side R7 with a restricted role that can open `View_client.aspx`. Gate 2 disposition did not edit `Web.config`, the UAT publish profile, `AdminShiftAssignment.aspx.cs`, or `newproduct_master.aspx`. This RBAC docs finalize must not stage/commit/push and must not mutate SQL or application code.
 
 ---
 
