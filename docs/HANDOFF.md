@@ -128,6 +128,17 @@ Out-of-scope remains as already documented: legacy/non-nav, kiosk, QuickAction t
 
 Record: [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md). Does **not** claim forced-fault runtime emission of the new catch-site `Debug.WriteLine` calls. Docs-only close-out must not stage `Web.config`, `.pubxml`, `.freebuff`, SQL, or application source.
 
+**FLMX Wave 1 integration — PRs #117–#120 merged into default `July_to_Sept26_DevNSupport` (2026-11-17, Asia/Calcutta).** No deployment. UAT qualifications preserved (not cleared by merge).
+
+| PR | Source HEAD | Merge commit | UAT qualification retained |
+|----|-------------|--------------|----------------------------|
+| [#117](https://github.com/Aminrup-Technologies/Bill_Software/pull/117) | `5b6f21c01c55f78015a00d0fc88f3b82771e9172` | `4fc3635a5ca9f20db1fcb2848a20abba2f987643` | ForceOut scenario **BLOCKED**; rollback **NOT RUN** |
+| [#118](https://github.com/Aminrup-Technologies/Bill_Software/pull/118) | `b5d9f34088a6cbc58db5f899540875cb085ef9a2` | `35e35a32c36ffa3ab3c8793c2a8f108e7df5f058` | Negative authorization test **NOT PROVEN** |
+| [#119](https://github.com/Aminrup-Technologies/Bill_Software/pull/119) | `053ba0754975582dd6893cd738a0e52c5f38a36d` | `16952900d6a884dac6c3820329eb2511f63e8988` | Approval Dashboard / ForceApprove / QuickAction multi-day **PASS**; future Ask-A UI visibility limitation documented |
+| [#120](https://github.com/Aminrup-Technologies/Bill_Software/pull/120) | `47e4574abb7a4d94ca11052c6a98bd014ba42b2c` (docs on `f188a645…`) | `1e1372885849dec8e279daf2c64a79c5897c440c` | **PASS WITH QUALIFICATION**; specific catch-block `Debug.WriteLine` emission **NOT VERIFIED** |
+
+Default tip after wave: `1e1372885849dec8e279daf2c64a79c5897c440c`. Evidence: Project store `docs/uat-wave1-integration-117-120.md`.
+
 ---
 
 ## Completed Work
@@ -146,12 +157,13 @@ Record: [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md)
 - UAT RBAC 114-key remediation on `flamex_uat`: TXN COMMIT; **114/114** catalog; **114/114** RoleId 1 grants; **16** RolePermissions inserts (13+3); Super Admin smoke PASS ManagePermissions / ManageRoles / MyLeaves / AdminShiftAssignment; **FLM013** Unauthorized PASS; CompanyID isolation **CLOSED (reported)**. Not LIVE. Details: Current Status above.
 - LIVE RBAC 114-key rollout on `flamex_live` (DB deploy distinct from PR merges #115/`0ab39827…`, #116/`2b292e2…`, #114/`2412dfd8…`): user-confirmed #115 counts Override/ShiftAssignment = 1 each; #114 grant 114/114; read-only postflight **PASS** (114/114/114; zero missing/dups; `@@TRANCOUNT` 0; limited aggregate concurrent marker only; AAD separate); Super Admin smoke PASS + normal-user Unauthorized; CompanyID isolation **CLOSED (reported)**. **PR #116 standalone seed execution output not independently confirmed** (gap). Details: Current Status above.
 - PR **#120** exception-disclosure localhost UAT (**PASS WITH QUALIFICATION**, 2026-11-17): static + six-page UI + ShiftSetup rollback/rethrow **PASS**; VS Debug capture capability **PASS**; specific catch-block `Debug.WriteLine` emission **NOT VERIFIED**; no business-data mutations. Implementation HEAD `f188a645…`. Record: [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md).
+- FLMX Wave 1 PRs **#117–#120** merged into `July_to_Sept26_DevNSupport` (merge SHAs `4fc3635…` / `35e35a3…` / `1695290…` / `1e13728…`; tip `1e137288…`). Qualifications retained. No deployment.
 
 ---
 
 ## Current Task
 
-**PR #120 disclosure UAT docs close-out (docs-only).** Disposition recorded in Current Status and [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md): **PASS WITH QUALIFICATION** (catch-block `Debug.WriteLine` emission **NOT VERIFIED**). Implementation HEAD remains `f188a645995c46afb135d57a6a1813f186ac81bd`. Do not push/merge/close the GitHub PR from this docs commit unless separately approved. **GATE 2 BLOCKED.** Attendance rules-engine integration stays closed. Resilience validation stays deferred (see Next Action). Do not start Gate 3.
+**FLMX Wave 1 (#117–#120) merged into default — docs integration record.** Default HEAD `1e1372885849dec8e279daf2c64a79c5897c440c`. UAT qualifications remain as recorded (ForceOut BLOCKED / AuthZ NOT PROVEN / Ask-A future limitation / Debug.WriteLine emission NOT VERIFIED). **GATE 2 BLOCKED.** Attendance rules-engine resilience validation stays deferred. Do not start Gate 3. No deployment from this wave.
 
 ---
 
@@ -184,7 +196,7 @@ Optional: if product requires proof of the PR #120 catch-site `Debug.WriteLine` 
 
 Optional resilience validation for attendance Reg approval (explicitly **deferred**, not claimed as UAT PASS): (1) inject `sp_RunAttendanceRulesEngine` failure and confirm approval rolls back with controlled UI error and no success alert; (2) simultaneous dual approval (Override vs QuickAction or two managers) and confirm only one wins Pending + no double engine run; (3) AdminApprovalDashboard concurrency review against the same Pending race model. Do not start unless requested.
 
-Verified repository state for this PR #120 docs close-out: branch `cursor/exception-disclosure-myleaves-empconfig-1a9d` at implementation HEAD `f188a645995c46afb135d57a6a1813f186ac81bd` (docs commit is a child of that SHA). Attendance rules-engine integration remains in ancestor `4918b977`. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce`. Gate 2 stays **BLOCKED**. This docs close-out must not stage/commit `Web.config`, `.pubxml`, `.freebuff`, SQL, or application source, and must not push/merge/close the GitHub PR unless separately approved.
+Verified repository state after Wave 1 integration: default `July_to_Sept26_DevNSupport` at `1e1372885849dec8e279daf2c64a79c5897c440c` (includes PR #120 docs commit `47e4574…` on impl `f188a645…`). Attendance rules-engine integration remains in ancestor `4918b977`. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce`. Gate 2 stays **BLOCKED**. Do not stage/commit `Web.config`, `.pubxml`, `.freebuff`, SQL, or application source with docs updates. No deployment.
 
 ---
 
