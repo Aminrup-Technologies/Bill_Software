@@ -113,6 +113,21 @@ User-confirmed LIVE app smoke (AuthGuard chain preserved):
 
 Out-of-scope remains as already documented: legacy/non-nav, kiosk, QuickAction tokens, print, SwitchUser. Not a claim that every legacy page/object is covered by the 114-key approved-nav set.
 
+**PR #120 exception-disclosure (MyLeaves + EmpConfig) — localhost UAT closed with qualification (2026-11-17, Asia/Calcutta).**
+
+| Gate | Result |
+|------|--------|
+| Implementation HEAD | `f188a645995c46afb135d57a6a1813f186ac81bd` on `cursor/exception-disclosure-myleaves-empconfig-1a9d` |
+| Static disclosure (6 owned files; zero `ex.Message`) | **PASS** |
+| Six-page UI navigation (`:1216` / `flamex_uat` / CompanyID **1**) | **PASS** |
+| ShiftSetup `tran.Rollback(); throw;` | **PASS** |
+| VS debugger attachment / Debug output capture capability | **PASS** |
+| Specific modified catch-block `Debug.WriteLine` emission | **NOT VERIFIED** |
+| Business-data mutations this verification | **None** |
+| **Overall** | **PASS WITH QUALIFICATION** |
+
+Record: [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md). Does **not** claim forced-fault runtime emission of the new catch-site `Debug.WriteLine` calls. Docs-only close-out must not stage `Web.config`, `.pubxml`, `.freebuff`, SQL, or application source.
+
 ---
 
 ## Completed Work
@@ -130,12 +145,13 @@ Out-of-scope remains as already documented: legacy/non-nav, kiosk, QuickAction t
 - Add Proforma company-scoped client join (2026-11-06; uncommitted on `feature/add-proforma-ui-refactor`): all three searches in `Add_proforma.aspx.cs` join `tbl_Client` on `qut.Client_Id = c.Client_Id AND c.CompanyID = qut.CompanyID`. Read-only `flamex_uat` investigation, MSBuild 14 Debug build, and eight-test browser UAT in Company 1 and Company 2 all PASS. Details and limitations: Current Status above.
 - UAT RBAC 114-key remediation on `flamex_uat`: TXN COMMIT; **114/114** catalog; **114/114** RoleId 1 grants; **16** RolePermissions inserts (13+3); Super Admin smoke PASS ManagePermissions / ManageRoles / MyLeaves / AdminShiftAssignment; **FLM013** Unauthorized PASS; CompanyID isolation **CLOSED (reported)**. Not LIVE. Details: Current Status above.
 - LIVE RBAC 114-key rollout on `flamex_live` (DB deploy distinct from PR merges #115/`0ab39827…`, #116/`2b292e2…`, #114/`2412dfd8…`): user-confirmed #115 counts Override/ShiftAssignment = 1 each; #114 grant 114/114; read-only postflight **PASS** (114/114/114; zero missing/dups; `@@TRANCOUNT` 0; limited aggregate concurrent marker only; AAD separate); Super Admin smoke PASS + normal-user Unauthorized; CompanyID isolation **CLOSED (reported)**. **PR #116 standalone seed execution output not independently confirmed** (gap). Details: Current Status above.
+- PR **#120** exception-disclosure localhost UAT (**PASS WITH QUALIFICATION**, 2026-11-17): static + six-page UI + ShiftSetup rollback/rethrow **PASS**; VS Debug capture capability **PASS**; specific catch-block `Debug.WriteLine` emission **NOT VERIFIED**; no business-data mutations. Implementation HEAD `f188a645…`. Record: [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md).
 
 ---
 
 ## Current Task
 
-**FLMX RBAC UAT + LIVE approved-nav documentation finalize (docs-only).** Evidence recorded in Current Status; **PR #116 standalone seed execution gap** remains noted (do not invent). **GATE 2 BLOCKED.** Attendance rules-engine integration stays closed. Resilience validation stays deferred (see Next Action). Do not start Gate 3.
+**PR #120 disclosure UAT docs close-out (docs-only).** Disposition recorded in Current Status and [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md): **PASS WITH QUALIFICATION** (catch-block `Debug.WriteLine` emission **NOT VERIFIED**). Implementation HEAD remains `f188a645995c46afb135d57a6a1813f186ac81bd`. Do not push/merge/close the GitHub PR from this docs commit unless separately approved. **GATE 2 BLOCKED.** Attendance rules-engine integration stays closed. Resilience validation stays deferred (see Next Action). Do not start Gate 3.
 
 ---
 
@@ -164,11 +180,11 @@ Out-of-scope remains as already documented: legacy/non-nav, kiosk, QuickAction t
 
 ## Next Action
 
-Optional: if product requires an independently captured PR #116 standalone seed execution transcript, obtain it from DBA evidence — do **not** invent one; final LIVE postflight **114/114** already closes catalog presence for the approved-nav set. Do not re-run LIVE `#115` / `#116` / `#114` unless a new defect or re-approval is named.
+Optional: if product requires proof of the PR #120 catch-site `Debug.WriteLine` lines under a forced fault, run that diagnostic separately — do **not** restate the current disposition as full Debug emission PASS. Optional: if product requires an independently captured PR #116 standalone seed execution transcript, obtain it from DBA evidence — do **not** invent one; final LIVE postflight **114/114** already closes catalog presence for the approved-nav set. Do not re-run LIVE `#115` / `#116` / `#114` unless a new defect or re-approval is named.
 
 Optional resilience validation for attendance Reg approval (explicitly **deferred**, not claimed as UAT PASS): (1) inject `sp_RunAttendanceRulesEngine` failure and confirm approval rolls back with controlled UI error and no success alert; (2) simultaneous dual approval (Override vs QuickAction or two managers) and confirm only one wins Pending + no double engine run; (3) AdminApprovalDashboard concurrency review against the same Pending race model. Do not start unless requested.
 
-Verified repository state for this docs finalize: HEAD `2412dfd8a6e3cefc16f5366a9e4bd66f9777fe04` on `July_to_Sept26_DevNSupport` (PR #114 merge tip; ancestors include #116 `2b292e2…` and #115 `0ab39827…`). Attendance rules-engine integration remains in ancestor `4918b977`. `4a37676` is an ancestor, not HEAD. `5ace354` (menu membership by company) stays historical. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce`. Optional follow-up only: exercise Customer-side R7 with a restricted role that can open `View_client.aspx`. Gate 2 disposition did not edit `Web.config`, the UAT publish profile, `AdminShiftAssignment.aspx.cs`, or `newproduct_master.aspx`. This RBAC docs finalize must not stage/commit/push and must not mutate SQL or application code.
+Verified repository state for this PR #120 docs close-out: branch `cursor/exception-disclosure-myleaves-empconfig-1a9d` at implementation HEAD `f188a645995c46afb135d57a6a1813f186ac81bd` (docs commit is a child of that SHA). Attendance rules-engine integration remains in ancestor `4918b977`. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce`. Gate 2 stays **BLOCKED**. This docs close-out must not stage/commit `Web.config`, `.pubxml`, `.freebuff`, SQL, or application source, and must not push/merge/close the GitHub PR unless separately approved.
 
 ---
 
