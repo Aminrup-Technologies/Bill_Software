@@ -284,7 +284,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("An error occurred: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 

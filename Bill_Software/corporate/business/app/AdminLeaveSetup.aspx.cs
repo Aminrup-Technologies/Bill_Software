@@ -96,7 +96,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error saving leave category: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 
@@ -149,7 +150,8 @@ namespace Bill_Software.corporate.business.app
                 }
                 catch (Exception ex)
                 {
-                    ShowMessage("Error loading leave type: " + ex.Message, false);
+                    System.Diagnostics.Debug.WriteLine(ex.ToString());
+                    ShowMessage("Unable to load data.", false);
                 }
                 return;
             }
@@ -186,7 +188,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error deactivating leave type: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 
@@ -230,7 +233,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("Error loading data: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to load data.", false);
             }
         }
 

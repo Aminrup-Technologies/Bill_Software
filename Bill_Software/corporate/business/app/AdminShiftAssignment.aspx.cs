@@ -195,7 +195,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ScriptManager.RegisterStartupScript(this, GetType(), "alert", $"Swal.fire('Error', '{ex.Message.Replace("'", "")}', 'error');", true);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Error', 'Unable to complete this request. No changes were saved.', 'error');", true);
             }
         }
 
@@ -268,7 +269,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ScriptManager.RegisterStartupScript(this, GetType(), "alert", $"Swal.fire('Error', 'Failed to filter view: {ex.Message.Replace("'", "")}', 'error');", true);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Error', 'Unable to load data.', 'error');", true);
             }
         }
 
@@ -359,7 +361,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ScriptManager.RegisterStartupScript(this, GetType(), "alert", $"Swal.fire('Error', 'Sync failed: {ex.Message.Replace("'", "")}', 'error');", true);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Error', 'Unable to complete this request. No changes were saved.', 'error');", true);
             }
         }
 
@@ -410,7 +413,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ScriptManager.RegisterStartupScript(this, GetType(), "alert", $"Swal.fire('Error', 'Failed to load grid: {ex.Message.Replace("'", "")}', 'error');", true);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ScriptManager.RegisterStartupScript(this, GetType(), "alert", "Swal.fire('Error', 'Unable to load data.', 'error');", true);
             }
         }
     }

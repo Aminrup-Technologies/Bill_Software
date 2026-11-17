@@ -115,16 +115,17 @@ namespace Bill_Software.corporate.business.app
                         ResetFormState();
                         LoadShiftData();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         tran.Rollback();
-                        throw new Exception("Transaction failed: " + ex.Message);
+                        throw;
                     }
                 }
             }
             catch (Exception ex)
             {
-                ShowMessage("❌ Error: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to complete this request. No changes were saved.", false);
             }
         }
 
@@ -239,7 +240,8 @@ namespace Bill_Software.corporate.business.app
             }
             catch (Exception ex)
             {
-                ShowMessage("❌ Error loading data: " + ex.Message, false);
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                ShowMessage("Unable to load data.", false);
             }
         }
 
