@@ -159,7 +159,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetMonthlyData(int month, int year)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -397,7 +397,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string ProcessPunch(string punchType, double currentLat, double currentLng, string locationType = "", string overrideReason = "")
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -610,7 +610,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetActiveLeaveTypes()
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             List<object> leaves = new List<object>();
             using (SqlConnection conn = new SqlConnection(GetConnStr()))
@@ -635,7 +635,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetAttendanceDetails(int id)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             using (SqlConnection conn = new SqlConnection(GetConnStr()))
             {
@@ -672,7 +672,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetShiftTimings(string reqDate)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             string userId = HttpContext.Current.Session["USERID"].ToString();
             DateTime date = Convert.ToDateTime(reqDate);
@@ -715,7 +715,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string GetMyGeoFence()
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             int companyId = CompanyContext.CurrentCompanyID;
 
@@ -761,7 +761,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string SubmitRegularization(string reqDate, string inTime, string outTime, string reason)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             string empId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
@@ -926,7 +926,7 @@ namespace Bill_Software.corporate.business.app
         [WebMethod(EnableSession = true)]
         public static string SubmitLeave(string reqDate, int leaveId, string reason)
         {
-            AuthGuard.EnsureWebMethod();
+            AuthGuard.EnsureWebMethodPermission("daily_attendance");
 
             string empId = HttpContext.Current.Session["USERID"].ToString();
             int companyId = CompanyContext.CurrentCompanyID;
