@@ -27,7 +27,7 @@ namespace Bill_Software
             public int? RoleId { get; set; }
             public string RoleName { get; set; }
             public int FailedAccessCount { get; set; }
-            public DateTime? LockoutEnd { get; set; }
+            public DateTimeOffset? LockoutEnd { get; set; }
         }
 
         protected void Page_Load(object sender, EventArgs e)
@@ -101,7 +101,7 @@ namespace Bill_Software
                                 RoleId = rdr["RoleId"] != DBNull.Value ? (int?)Convert.ToInt32(rdr["RoleId"]) : null,
                                 RoleName = rdr["RoleName"]?.ToString() ?? string.Empty,
                                 FailedAccessCount = rdr["FailedAccessCount"] != DBNull.Value ? Convert.ToInt32(rdr["FailedAccessCount"]) : 0,
-                                LockoutEnd = rdr["LockoutEnd"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(rdr["LockoutEnd"]) : null
+                                LockoutEnd = ReadLockoutEnd(rdr["LockoutEnd"])
                             };
 
                             if (rdr["PasswordHash"] is byte[]) { user.PasswordHash = (byte[])rdr["PasswordHash"]; }
@@ -112,10 +112,11 @@ namespace Bill_Software
 
                             rdr.Close();
 
-                            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.Now)
+                            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.Now)
                             {
-                                TimeSpan lockoutRemaining = user.LockoutEnd.Value - DateTime.Now;
-                                ShowError($"Account locked due to multiple failed login attempts. Please try again in {lockoutRemaining.Minutes} minutes.");
+                                int minutesLeft = (int)Math.Ceiling((user.LockoutEnd.Value - DateTimeOffset.Now).TotalMinutes);
+                                if (minutesLeft < 1) minutesLeft = 1;
+                                ShowError($"Account locked due to multiple failed login attempts. Please try again in {minutesLeft} minutes.");
                                 return;
                             }
 
@@ -229,12 +230,16 @@ namespace Bill_Software
 
         private void HandleFailedLoginAttempt(UserModel user)
         {
-            int newFailCount = user.FailedAccessCount + 1;
-            DateTime? newLockoutEnd = null;
+            int priorFailures = user.FailedAccessCount;
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value <= DateTimeOffset.Now)
+                priorFailures = 0;
+
+            int newFailCount = priorFailures + 1;
+            DateTimeOffset? newLockoutEnd = null;
 
             if (newFailCount >= 5)
             {
-                newLockoutEnd = DateTime.Now.AddMinutes(15);
+                newLockoutEnd = DateTimeOffset.Now.AddMinutes(15);
             }
 
             try
@@ -558,6 +563,22 @@ namespace Bill_Software
         {
             PanelError.Visible = true;
             lblErrorMsg.Text = message;
+        }
+
+        private static DateTimeOffset? ReadLockoutEnd(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return null;
+            if (value is DateTimeOffset)
+                return (DateTimeOffset)value;
+            if (value is DateTime)
+            {
+                DateTime dt = (DateTime)value;
+                if (dt.Kind == DateTimeKind.Unspecified)
+                    dt = DateTime.SpecifyKind(dt, DateTimeKind.Local);
+                return new DateTimeOffset(dt);
+            }
+            return null;
         }
 
         private byte[] SafeBase64Decode(string base64)
