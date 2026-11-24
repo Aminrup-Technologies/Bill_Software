@@ -166,6 +166,47 @@
                 color: #153e75;
             }
 
+        .page-spinner {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 10000;
+            background: rgba(244, 247, 246, 0.92);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-spinner.is-visible {
+            display: flex;
+        }
+
+        .page-spinner-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+            padding: 28px 36px;
+            text-align: center;
+            color: #153e75;
+            font-weight: bold;
+        }
+
+        .page-spinner-ring {
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 14px;
+            border: 4px solid #d6e0ea;
+            border-top-color: #153e75;
+            border-radius: 50%;
+            animation: page-spin 0.8s linear infinite;
+        }
+
+        @keyframes page-spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Desktop Layout (CSS Grid) */
         @media (min-width: 768px) {
             .login-card {
@@ -223,6 +264,13 @@
             g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
         })();
 
+        function showLoginSpinner() {
+            var overlay = document.getElementById('loginSpinner');
+            if (overlay && overlay.className.indexOf('is-visible') === -1) {
+                overlay.className += ' is-visible';
+            }
+        }
+
         function togglePasswordVisibility() {
         // Get the ASP.NET generated client ID for the textbox
         var passwordInput = document.getElementById('<%= txtPassword.ClientID %>');
@@ -247,6 +295,12 @@
 </head>
 <body>
     <form id="form1" runat="server">
+        <div id="loginSpinner" class="page-spinner" role="status" aria-live="polite">
+            <div class="page-spinner-card">
+                <div class="page-spinner-ring"></div>
+                <div>Signing in…</div>
+            </div>
+        </div>
         <div class="login-wrapper">
             <div class="login-card">
 
@@ -295,7 +349,7 @@
                             <label style="margin: 0; cursor: pointer;">Remember Me</label>
                         </div>
 
-                        <asp:Button ID="btnLogin" runat="server" CssClass="btn-submit" Text="Login" OnClick="btnLogin_Click" />
+                        <asp:Button ID="btnLogin" runat="server" CssClass="btn-submit" Text="Login" OnClick="btnLogin_Click" OnClientClick="showLoginSpinner();" />
 
                         <div style="text-align: center; margin-top: 15px;">
                             <asp:LinkButton ID="lnkForgotPassword" runat="server" OnClick="lnkForgotPassword_Click" Style="color: #153e75; text-decoration: none; font-size: 14px;">Forgot Password?</asp:LinkButton>
@@ -358,6 +412,17 @@
 
             </div>
         </div>
+        <script type="text/javascript">
+            (function () {
+                var form = document.getElementById('form1');
+                var loginButton = document.getElementById('<%= btnLogin.ClientID %>');
+                if (!form || !loginButton) return;
+                form.addEventListener('submit', function (e) {
+                    var submitter = e.submitter || document.activeElement;
+                    if (submitter && submitter.id === loginButton.id) showLoginSpinner();
+                });
+            })();
+        </script>
     </form>
 </body>
 </html>
