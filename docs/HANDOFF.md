@@ -137,7 +137,26 @@ Record: [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md)
 | [#119](https://github.com/Aminrup-Technologies/Bill_Software/pull/119) | `053ba0754975582dd6893cd738a0e52c5f38a36d` | `16952900d6a884dac6c3820329eb2511f63e8988` | Approval Dashboard / ForceApprove / QuickAction multi-day **PASS**; future Ask-A UI visibility limitation documented |
 | [#120](https://github.com/Aminrup-Technologies/Bill_Software/pull/120) | `47e4574abb7a4d94ca11052c6a98bd014ba42b2c` (docs on `f188a645…`) | `1e1372885849dec8e279daf2c64a79c5897c440c` | **PASS WITH QUALIFICATION**; specific catch-block `Debug.WriteLine` emission **NOT VERIFIED** |
 
-Default tip after wave: `1e1372885849dec8e279daf2c64a79c5897c440c`. Evidence: Project store `docs/uat-wave1-integration-117-120.md`.
+Merge tip after wave: `1e1372885849dec8e279daf2c64a79c5897c440c`. Docs tip on default (post-integration record): `bed7daef98fadac3f061a1fdee0b2d52eb3484ee`. Current default tip (after PR #121): `8e09bc0120e09db76dd4cda091c018307d92b06c`. Evidence: Project store `docs/uat-wave1-integration-117-120.md`.
+
+**Post-merge verification (2026-11-17, Asia/Calcutta):** on `July_to_Sept26_DevNSupport` @ `bed7daef98fadac3f061a1fdee0b2d52eb3484ee` — ancestry of #117–#120 merges + docs `47e4574…` **OK**; Debug/Release builds **PASS** (0 errors); localhost/`flamex_uat` load-only smoke **PASS** (attendance register, attendance page, ApprovalDashboard, MyLeaves, QuickAction without token, AdminOverride, six disclosure pages). **No deployment.** Evidence: Project store `docs/uat-wave1-postmerge-verify.md`. Qualifications above are **unchanged** (not converted to PASS).
+
+**Attendance & Leave hardening roadmap after Wave 1:**
+
+| Item | Status |
+|------|--------|
+| Wave 1 (PRs #117–#120) | **Completed** — merged into `July_to_Sept26_DevNSupport`, post-merge verified; qualifications retained; **not** production-deployed |
+| Wave 2 (system hardening) | **DEFERRED / PARKED** — not authorized; not in progress; no implementation or remediation from this parking |
+
+Broader hardening remains deferred context only. Reassess when current feature-development priorities permit. Do not start Wave 2 unless explicitly authorized.
+
+**Current execution priority (ordered):**
+
+1. Bug fixing and remediation of already implemented features.
+2. Development of approved new features.
+3. Regression verification and documentation of completed changes.
+
+Prioritize work by business impact, defect severity, dependencies, and implementation scope.
 
 ---
 
@@ -157,13 +176,13 @@ Default tip after wave: `1e1372885849dec8e279daf2c64a79c5897c440c`. Evidence: Pr
 - UAT RBAC 114-key remediation on `flamex_uat`: TXN COMMIT; **114/114** catalog; **114/114** RoleId 1 grants; **16** RolePermissions inserts (13+3); Super Admin smoke PASS ManagePermissions / ManageRoles / MyLeaves / AdminShiftAssignment; **FLM013** Unauthorized PASS; CompanyID isolation **CLOSED (reported)**. Not LIVE. Details: Current Status above.
 - LIVE RBAC 114-key rollout on `flamex_live` (DB deploy distinct from PR merges #115/`0ab39827…`, #116/`2b292e2…`, #114/`2412dfd8…`): user-confirmed #115 counts Override/ShiftAssignment = 1 each; #114 grant 114/114; read-only postflight **PASS** (114/114/114; zero missing/dups; `@@TRANCOUNT` 0; limited aggregate concurrent marker only; AAD separate); Super Admin smoke PASS + normal-user Unauthorized; CompanyID isolation **CLOSED (reported)**. **PR #116 standalone seed execution output not independently confirmed** (gap). Details: Current Status above.
 - PR **#120** exception-disclosure localhost UAT (**PASS WITH QUALIFICATION**, 2026-11-17): static + six-page UI + ShiftSetup rollback/rethrow **PASS**; VS Debug capture capability **PASS**; specific catch-block `Debug.WriteLine` emission **NOT VERIFIED**; no business-data mutations. Implementation HEAD `f188a645…`. Record: [`uat-wave1-pr120-disclosure-uat.md`](uat-wave1-pr120-disclosure-uat.md).
-- FLMX Wave 1 PRs **#117–#120** merged into `July_to_Sept26_DevNSupport` (merge SHAs `4fc3635…` / `35e35a3…` / `1695290…` / `1e13728…`; tip `1e137288…`). Qualifications retained. No deployment.
+- FLMX Wave 1 PRs **#117–#120** merged into `July_to_Sept26_DevNSupport` (merge SHAs `4fc3635…` / `35e35a3…` / `1695290…` / `1e13728…`; docs tip `bed7daef…`). Post-merge verify **PASS** (builds + load-only smoke). Qualifications retained. No deployment. Wave 2 hardening **PARKED**.
 
 ---
 
 ## Current Task
 
-**FLMX Wave 1 (#117–#120) merged into default — docs integration record.** Default HEAD `1e1372885849dec8e279daf2c64a79c5897c440c`. UAT qualifications remain as recorded (ForceOut BLOCKED / AuthZ NOT PROVEN / Ask-A future limitation / Debug.WriteLine emission NOT VERIFIED). **GATE 2 BLOCKED.** Attendance rules-engine resilience validation stays deferred. Do not start Gate 3. No deployment from this wave.
+**Existing-feature bug fixing and approved new-feature development** (primary). Wave 1 Attendance & Leave (#117–#120) is **complete** on default `July_to_Sept26_DevNSupport` (Wave 1 docs tip `bed7daef98fadac3f061a1fdee0b2d52eb3484ee`, post-merge verified; qualifications retained; **not** deployed). Current default tip: `8e09bc0120e09db76dd4cda091c018307d92b06c` (includes PR #121 login lockout). Wave 2 system hardening is **DEFERRED / PARKED** — do not start unless explicitly authorized. **GATE 2 BLOCKED.** Attendance rules-engine resilience validation stays deferred. Do not start Gate 3.
 
 ---
 
@@ -175,6 +194,7 @@ Default tip after wave: `1e1372885849dec8e279daf2c64a79c5897c440c`. Evidence: Pr
 - **GATE 2 BLOCKED** (2026-11-05). Exit criteria are the Gate 2 column in governance §2. Inventory: [`architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md`](architecture/GATE2_DEPENDENCY_IMPACT_REPORT.md). `dbo.tbl_CrossTenantDuplication` is §16.6 row 29 (Open; not classified; not approved). Supplied `flamex_uat` collection `2026-11-05T02:55:01.975Z` recorded 22/22 module bodies in report §12.2 (`OBJECT_DEFINITION()`, UAT only). Failing criteria: SQL Agent job-step text was not returned (`flamex_uat` MCP `execute_query` is disabled; no `msdb.dbo.sysjobsteps` rows); X-18 read-only `flamex_live` census of every ADR-002 §2 and §7 object, including tables empty on UAT, was not run; repository-owner approval, which is an explicit statement in this file and has not been given. X-19 live re-verification was not run. X-20, X-21, and X-22 are unchanged. Gate 3 decisions X-23, X-24, X-25, X-28, X-31 stay open (report §16). Scripts are written in Gate 3 and first run in Gate 5 on `flamex_uat` only. Application adaptation is Gate 7. Production is a replay under its own approval. Gate 3 is not authorized. `employee_config_permissions.sql` is parked and is outside this gate.
 - Product stops still closed: Decision #8 (`ReportingManagerId` ACL), Decision #9 (HQ cross-company), `machineKey` rotation, secret cutover ops.
 - **LIVE Super Admin approved-nav 114-key rollout (execution recorded; PR merge ≠ DB deploy):** Historical pre-deploy census Expected=114 / Present=83 / Missing=31 is retained as history only. Merged scripts: PR [#115](https://github.com/Aminrup-Technologies/Bill_Software/pull/115) [`empconfig_override_shift_live_catalog_seed.sql`](../Bill_Software/corporate/business/sql/empconfig_override_shift_live_catalog_seed.sql) merge `0ab39827…`; PR [#116](https://github.com/Aminrup-Technologies/Bill_Software/pull/116) [`live_nav_28_catalog_seed.sql`](../Bill_Software/corporate/business/sql/live_nav_28_catalog_seed.sql) merge `2b292e2…` (**standalone seed execution output not independently confirmed**); PR [#114](https://github.com/Aminrup-Technologies/Bill_Software/pull/114) [`live_superadmin_nav_grant.sql`](../Bill_Software/corporate/business/sql/live_superadmin_nav_grant.sql) merge `2412dfd8…`. User-confirmed LIVE: #115 counts = 1/1; #114 grant 114/114; postflight **PASS**; smoke + CompanyID **CLOSED (reported)**. Classification archive: Project store `docs/live-missing-31-permissionkeys-classification.md`. Arithmetic retained: 31 = 28 + 2 + 1; 83 + 28 + 2 + 1 = **114**. Details: Current Status above.
+- **Attendance & Leave Wave 2 (system hardening): DEFERRED / PARKED.** Not authorized; not in progress. Wave 1 qualifications and open verification limits (ForceOut BLOCKED; rollback NOT RUN; AuthZ NOT PROVEN; Ask-A future limitation; catch-block `Debug.WriteLine` emission NOT VERIFIED; rules-engine resilience deferred) remain documented — do not treat parking as closure of those gaps. Reassess when bug-fix / new-feature priorities permit.
 
 ---
 
@@ -192,11 +212,11 @@ Default tip after wave: `1e1372885849dec8e279daf2c64a79c5897c440c`. Evidence: Pr
 
 ## Next Action
 
-Optional: if product requires proof of the PR #120 catch-site `Debug.WriteLine` lines under a forced fault, run that diagnostic separately — do **not** restate the current disposition as full Debug emission PASS. Optional: if product requires an independently captured PR #116 standalone seed execution transcript, obtain it from DBA evidence — do **not** invent one; final LIVE postflight **114/114** already closes catalog presence for the approved-nav set. Do not re-run LIVE `#115` / `#116` / `#114` unless a new defect or re-approval is named.
+Take the next named **bug fix** on an already-shipped feature, or the next **approved new feature**, prioritized by business impact, defect severity, dependencies, and scope. After each completed change: regression-verify and document. Do **not** start Attendance & Leave Wave 2 hardening unless explicitly authorized.
 
-Optional resilience validation for attendance Reg approval (explicitly **deferred**, not claimed as UAT PASS): (1) inject `sp_RunAttendanceRulesEngine` failure and confirm approval rolls back with controlled UI error and no success alert; (2) simultaneous dual approval (Override vs QuickAction or two managers) and confirm only one wins Pending + no double engine run; (3) AdminApprovalDashboard concurrency review against the same Pending race model. Do not start unless requested.
+Optional (not current priority; do not invent PASS): PR #120 forced-fault `Debug.WriteLine` proof; PR #116 standalone LIVE seed transcript; attendance Reg resilience inject/race/concurrency — remain deferred as previously recorded.
 
-Verified repository state after Wave 1 integration: default `July_to_Sept26_DevNSupport` at `1e1372885849dec8e279daf2c64a79c5897c440c` (includes PR #120 docs commit `47e4574…` on impl `f188a645…`). Attendance rules-engine integration remains in ancestor `4918b977`. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Cross-Tenant Duplication relationships are closed and published at `282cfce`. Gate 2 stays **BLOCKED**. Do not stage/commit `Web.config`, `.pubxml`, `.freebuff`, SQL, or application source with docs updates. No deployment.
+Verified repository state for this parking: default `July_to_Sept26_DevNSupport` tip `8e09bc0120e09db76dd4cda091c018307d92b06c` (PR #121 on tip; Wave 1 docs tip `bed7daef98fadac3f061a1fdee0b2d52eb3484ee` remains the post-merge verify baseline). Attendance rules-engine integration remains in ancestor `4918b977`. Do not reopen Switch User **runtime** unless a new defect is named. Cross-Tenant Duplication v1.1 remains closed at `88f9d0f`. Relationships closed at `282cfce`. Gate 2 stays **BLOCKED**. Wave 2 stays **PARKED**. No deployment.
 
 ---
 
