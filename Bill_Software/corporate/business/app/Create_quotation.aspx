@@ -323,6 +323,7 @@
             $('#<%= ddlPlaceOfSupply.ClientID %>').select2({ placeholder: "Search Place of Supply..." });
             $('#<%= cmbproduct_service.ClientID %>').select2({ placeholder: "Search Category..." });
 
+            if (typeof lcResetConfigState === "function") lcResetConfigState();
             calculateCart();
         });
 
@@ -449,20 +450,25 @@
         var _lineConfigQueue = [];
         var _lineConfigIndex = 0;
         var _lineConfigOverrides = {};
-        var _lineConfigAllowPostback = false;
 
         function lcTrim(v) {
             return (v == null) ? "" : String(v).replace(/^\s+|\s+$/g, "");
         }
-        function lcIsMissingUnit(u) { return lcTrim(u) === ""; }
+        function lcIsMissingUnit(u) {
+            var s = lcTrim(u);
+            // Treat blank / em dash / hyphen placeholders as missing
+            return s === "" || s === "—" || s === "-" || s === "–";
+        }
         function lcIsInvalidTax(t) {
             var s = lcTrim(t);
-            if (s === "") return true;
+            if (s === "" || s === "—" || s === "-") return true;
             var n = parseFloat(s);
             return isNaN(n); // Tax = 0 is valid
         }
         function lcIsInvalidRate(r) {
-            var n = parseFloat(lcTrim(r));
+            var s = lcTrim(r);
+            if (s === "" || s === "—" || s === "-") return true;
+            var n = parseFloat(s);
             return isNaN(n) || n <= 0;
         }
         function lcNeedsConfig(item) {
@@ -475,7 +481,21 @@
         function lcRowText(row, idSuffix) {
             var el = row.querySelector("span[id$='" + idSuffix + "'], input[id$='" + idSuffix + "']");
             if (!el) return "";
-            return lcTrim(el.innerText != null ? el.innerText : el.value);
+            var raw = (typeof el.textContent !== "undefined" && el.textContent !== null)
+                ? el.textContent
+                : (el.innerText != null ? el.innerText : el.value);
+            return lcTrim(raw);
+        }
+        function lcGetOverridesField() {
+            return document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
+        }
+        function lcResetConfigState() {
+            _lineConfigQueue = [];
+            _lineConfigIndex = 0;
+            _lineConfigOverrides = {};
+            var hf = lcGetOverridesField();
+            if (hf) hf.value = "";
+            closeLineConfigModal();
         }
         function lcFindCheckedCatalogRows() {
             var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
@@ -566,12 +586,12 @@
             var modal = document.getElementById('productConfigModal');
             if (modal) modal.className = 'modal-backdrop';
         }
-        // Resume Add-to-Cart via __doPostBack (not btn.click): synthetic click is unreliable
-        // with OnClientClick + ScriptManager/UpdatePanel and can yield a silent no-op.
+        // Resume Add-to-Cart via __doPostBack (not btn.click / not OnClientClick flag).
+        // __doPostBack skips OnClientClick, so a sticky allow-postback flag would bypass
+        // incomplete-product detection on the next Add (esp. Edit UpdatePanel).
         function postAddToCartAfterConfig() {
-            var hf = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
+            var hf = lcGetOverridesField();
             if (hf) hf.value = serializeLineConfigOverrides(_lineConfigOverrides);
-            _lineConfigAllowPostback = true;
             closeLineConfigModal();
             setTimeout(function () {
                 __doPostBack('<%= btnNext2.UniqueID %>', '');
@@ -623,34 +643,26 @@
             return showNextLineConfig();
         }
         function cancelLineConfigQueue() {
-            _lineConfigQueue = [];
-            _lineConfigIndex = 0;
-            _lineConfigOverrides = {};
-            _lineConfigAllowPostback = false;
-            var hf = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
-            if (hf) hf.value = "";
-            closeLineConfigModal();
+            lcResetConfigState();
             return false;
         }
         function prepareAddToCart() {
-            if (_lineConfigAllowPostback) {
-                _lineConfigAllowPostback = false;
-                return true;
-            }
+            // Always re-detect. Never short-circuit: __doPostBack does not clear client flags,
+            // and Edit UpdatePanel leaves stale hfLineConfigOverrides outside the panel.
+            var hfStale = lcGetOverridesField();
+            if (hfStale) hfStale.value = "";
+            _lineConfigQueue = [];
+            _lineConfigOverrides = {};
+            _lineConfigIndex = 0;
+
             var checked = lcFindCheckedCatalogRows();
             if (checked.length === 0) return true; // server handles empty selection / Skip Catalog
 
-            _lineConfigQueue = [];
-            _lineConfigOverrides = {};
             for (var j = 0; j < checked.length; j++) {
                 if (lcNeedsConfig(checked[j])) _lineConfigQueue.push(checked[j]);
             }
-            if (_lineConfigQueue.length === 0) {
-                var hfClear = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
-                if (hfClear) hfClear.value = "";
-                return true;
-            }
-            _lineConfigIndex = 0;
+            if (_lineConfigQueue.length === 0) return true;
+
             showNextLineConfig();
             return false;
         }
