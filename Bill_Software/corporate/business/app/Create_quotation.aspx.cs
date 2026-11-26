@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Diagnostics;
 using System.Web;
 using System.Web.UI.WebControls;
 using System.Text;
@@ -196,7 +197,11 @@ namespace Bill_Software.corporate.business.app
             WizardMultiView.ActiveViewIndex = 1;
         }
 
-        protected void btnPrev2_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 0; }
+        protected void btnPrev2_Click(object sender, EventArgs e)
+        {
+            PanelGlobalAlert.Visible = false;
+            WizardMultiView.ActiveViewIndex = 0;
+        }
 
         protected void Button2_Click(object sender, EventArgs e)
         {
@@ -331,6 +336,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnAddMoreProducts_Click(object sender, EventArgs e)
         {
+            PanelGlobalAlert.Visible = false;
             SaveCartToViewState();
             WizardMultiView.ActiveViewIndex = 1; // Back to Step 2
         }
@@ -369,6 +375,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnPrev3_Click(object sender, EventArgs e)
         {
+            PanelGlobalAlert.Visible = false;
             SaveCartToViewState();
             WizardMultiView.ActiveViewIndex = 1;
         }
@@ -389,7 +396,11 @@ namespace Bill_Software.corporate.business.app
             WizardMultiView.ActiveViewIndex = 3;
         }
 
-        protected void btnPrev4_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 2; }
+        protected void btnPrev4_Click(object sender, EventArgs e)
+        {
+            PanelGlobalAlert.Visible = false;
+            WizardMultiView.ActiveViewIndex = 2;
+        }
 
 
         // ================= DB UTILITIES =================
@@ -685,6 +696,9 @@ namespace Bill_Software.corporate.business.app
                     try { trans?.Rollback(); } catch { }
 
                     // Ponytail #3: Never expose raw exception details to client
+                    Debug.WriteLine("Create_quotation.MagicianNew: " + ex);
+                    if (ex.StackTrace != null)
+                        Debug.WriteLine("Create_quotation.MagicianNew stack: " + ex.StackTrace);
                     ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
                 }
             }

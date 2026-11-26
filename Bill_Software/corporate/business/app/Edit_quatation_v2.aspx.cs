@@ -4,6 +4,7 @@ using System.Linq;
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Diagnostics;
 using System.Web;
 using System.Web.UI.WebControls;
 using System.Text;
@@ -377,7 +378,11 @@ namespace Bill_Software.corporate.business.app
             }
         }
 
-        protected void btnPrev2_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 1; }
+        protected void btnPrev2_Click(object sender, EventArgs e)
+        {
+            PanelGlobalAlert.Visible = false;
+            WizardMultiView.ActiveViewIndex = 1;
+        }
 
         protected void Button2_Click(object sender, EventArgs e)
         {
@@ -537,6 +542,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnAddMoreProducts_Click(object sender, EventArgs e)
         {
+            PanelGlobalAlert.Visible = false;
             SaveCartToViewState();
             WizardMultiView.ActiveViewIndex = 2;
         }
@@ -575,6 +581,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnPrev3_Click(object sender, EventArgs e)
         {
+            PanelGlobalAlert.Visible = false;
             SaveCartToViewState();
             WizardMultiView.ActiveViewIndex = 2;
         }
@@ -595,20 +602,36 @@ namespace Bill_Software.corporate.business.app
             WizardMultiView.ActiveViewIndex = 4;
         }
 
-        protected void btnPrev4_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 3; }
+        protected void btnPrev4_Click(object sender, EventArgs e)
+        {
+            PanelGlobalAlert.Visible = false;
+            WizardMultiView.ActiveViewIndex = 3;
+        }
 
         // ================= WIZARD FINAL SAVE METHODS =================
 
         protected void btnSabe_Click(object sender, EventArgs e)
         {
             try { DataUpdaterMethod(); }
-            catch (Exception ex) { ShowAlert("Error updating version: " + ex.Message, true); }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Edit_quatation_v2.btnSabe_Click: " + ex);
+                if (ex.StackTrace != null)
+                    Debug.WriteLine("Edit_quatation_v2.btnSabe_Click stack: " + ex.StackTrace);
+                ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
+            }
         }
 
         protected void btnNew_Click(object sender, EventArgs e)
         {
             try { MagicianNew(); }
-            catch (Exception ex) { ShowAlert("Error creating new version: " + ex.Message, true); }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Edit_quatation_v2.btnNew_Click: " + ex);
+                if (ex.StackTrace != null)
+                    Debug.WriteLine("Edit_quatation_v2.btnNew_Click stack: " + ex.StackTrace);
+                ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
+            }
         }
 
         // --- CORE UPDATE LOGIC: Soft-Delete Details, Update Header ---
@@ -826,10 +849,11 @@ namespace Bill_Software.corporate.business.app
                 catch (Exception ex)
                 {
                     try { trans?.Rollback(); } catch { }
-                    StringBuilder errorMsg = new StringBuilder();
-                    errorMsg.AppendLine("An error occurred: " + ex.Message);
-                    if (ex.InnerException != null) errorMsg.AppendLine("<br/>Inner: " + ex.InnerException.ToString());
-                    ShowAlert(errorMsg.ToString(), true);
+                    // Ponytail #3: Never expose raw exception details to client
+                    Debug.WriteLine("Edit_quatation_v2.DataUpdaterMethod: " + ex);
+                    if (ex.StackTrace != null)
+                        Debug.WriteLine("Edit_quatation_v2.DataUpdaterMethod stack: " + ex.StackTrace);
+                    ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
                 }
             }
         }
@@ -1007,10 +1031,11 @@ namespace Bill_Software.corporate.business.app
                 catch (Exception ex)
                 {
                     try { trans?.Rollback(); } catch { }
-                    StringBuilder errorMsg = new StringBuilder();
-                    errorMsg.AppendLine("An error occurred: " + ex.Message);
-                    if (ex.InnerException != null) errorMsg.AppendLine("<br/>Inner: " + ex.InnerException.ToString());
-                    ShowAlert(errorMsg.ToString(), true);
+                    // Ponytail #3: Never expose raw exception details to client
+                    Debug.WriteLine("Edit_quatation_v2.MagicianNew: " + ex);
+                    if (ex.StackTrace != null)
+                        Debug.WriteLine("Edit_quatation_v2.MagicianNew stack: " + ex.StackTrace);
+                    ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
                 }
             }
         }
