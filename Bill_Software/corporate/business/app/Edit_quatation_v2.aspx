@@ -205,6 +205,17 @@
             .table2 td {
                 border-top: none;
             }
+
+        /* Phase A.6.2 — cart line sync scope (document vs product master) */
+        .line-sync-panel {
+            margin: 12px 0 8px; padding: 10px 12px; text-align: left;
+            border: 1px solid #d7eaf4; border-radius: 6px; background: #f4fafd;
+            font-size: 12px; color: #0f172a;
+        }
+        .line-sync-panel .line-sync-title {
+            font-weight: 700; color: #19658A; margin-bottom: 6px;
+        }
+        .line-sync-panel label { margin-right: 16px; font-weight: 600; }
     </style>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -274,7 +285,11 @@
                 var qty = parseFloat(qtyInput.value) || 0;
                 var rate = parseFloat(rateInput.value) || 0;
                 var disc = parseFloat(row.querySelector('.disc-input').value) || 0;
-                var taxRate = parseFloat(row.querySelector('.tax-lbl').innerText) || 0;
+                var taxEl = row.querySelector('.tax-input') || row.querySelector('.tax-lbl');
+                var taxRate = 0;
+                if (taxEl) {
+                    taxRate = parseFloat(taxEl.value != null && taxEl.tagName === 'INPUT' ? taxEl.value : taxEl.innerText) || 0;
+                }
 
                 var baseAmt = rate * qty;
                 var discAmt = baseAmt * (disc / 100);
@@ -307,18 +322,46 @@
             if (!grid || grid.rows.length <= 2) { alert("Cart is empty!"); return false; }
 
             var rows = grid.getElementsByTagName('tr');
+            var messages = [];
             for (var i = 1; i < rows.length - 1; i++) {
                 var qtyInput = rows[i].querySelector('.qty-input');
-                if (!qtyInput) continue; // Skip header/footer
-
+                var rateInput = rows[i].querySelector('.rate-input');
+                if (!qtyInput || !rateInput) continue;
                 var qty = parseFloat(qtyInput.value) || 0;
-                var rate = parseFloat(rows[i].querySelector('.rate-input').value) || 0;
-                if (qty <= 0 || rate <= 0) {
-                    alert("Error on Row " + i + ": Quantity and Base Rate must be greater than 0.");
-                    rows[i].style.backgroundColor = "#ffcccc";
+                var rate = parseFloat(rateInput.value) || 0;
+                var unitInput = rows[i].querySelector('.unit-input');
+                var taxInput = rows[i].querySelector('.tax-input');
+                var unit = unitInput ? String(unitInput.value || "").replace(/^\s+|\s+$/g, "") : "";
+                var taxRaw = taxInput ? String(taxInput.value || "").replace(/^\s+|\s+$/g, "") : "";
+                var nameEl = rows[i].querySelector("span[id$='ProductName']");
+                var productName = (nameEl && nameEl.innerText) ? nameEl.innerText.trim() : ("Row " + i);
+                var bad = false;
+                if (qty <= 0) { messages.push(productName + ": Quantity must be greater than 0."); bad = true; }
+                if (isNaN(rate) || rate <= 0) { messages.push(productName + ": Base Rate must be greater than 0."); bad = true; }
+                if (unit === "") { messages.push(productName + ": Unit (UOM) is required."); bad = true; }
+                if (taxRaw === "" || isNaN(parseFloat(taxRaw))) {
+                    messages.push(productName + ": GST / Tax % must be a number (0 is allowed).");
+                    bad = true;
+                }
+                rows[i].style.backgroundColor = bad ? "#ffcccc" : "";
+            }
+            if (messages.length > 0) {
+                alert(messages.join("\n"));
+                return false;
+            }
+            return true;
+        }
+
+        // Phase A.6.2 — optional Product Master sync (double confirm). Default = document only.
+        function validateCartAndSync() {
+            if (!validateCart()) return false;
+            var masterOpt = document.getElementById('<%= rblLineSyncScope.ClientID %>_1');
+            if (masterOpt && masterOpt.checked) {
+                if (!confirm("Update Product Master for cart lines whose Rate / Tax % / Unit differ from the values loaded with this document?")) {
                     return false;
-                } else {
-                    rows[i].style.backgroundColor = "";
+                }
+                if (!confirm("Second confirmation: this will UPDATE tbl_NewProduct Sail_Rate, Tax_Rate, and Unit for this company. Continue?")) {
+                    return false;
                 }
             }
             return true;
@@ -787,15 +830,15 @@
                                     <FooterTemplate><span id="ftr-qty">0</span></FooterTemplate>
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Unit">
+                                <asp:TemplateField HeaderText="Unit" ItemStyle-CssClass="col-editable">
                                     <ItemTemplate>
-                                        <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label>
+                                        <asp:TextBox ID="Unit" runat="server" Text='<%# Bind("Unit") %>' CssClass="center textbox_style unit-input" Width="60px" MaxLength="100"></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
                                 <asp:TemplateField HeaderText="Rate" ItemStyle-CssClass="col-editable" HeaderStyle-Width="8%">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="80px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                                        <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="80px" onkeyup="calculateCart()" onchange="calculateCart()" onkeypress="return onlyNumberDecimal(event);"></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
@@ -805,9 +848,9 @@
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="GST %">
+                                <asp:TemplateField HeaderText="GST %" ItemStyle-CssClass="col-editable">
                                     <ItemTemplate>
-                                        <asp:Label ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>' CssClass="tax-lbl"></asp:Label>
+                                        <asp:TextBox ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>' CssClass="center textbox_style tax-input" Width="50px" onkeyup="calculateCart()" onchange="calculateCart()" onkeypress="return onlyNumberDecimal(event);"></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
@@ -904,7 +947,14 @@
                     <div style="margin-top: 15px; text-align: center;">
                         <asp:Button ID="btnPrev3" runat="server" Text="🡄 Back" CssClass="btn_style" Width="120px" OnClick="btnPrev3_Click" CausesValidation="false" />
                         &nbsp;
-                        <asp:Button ID="btnNext3" runat="server" Text="Proceed to Terms ➔" CssClass="btn_style" Width="200px" OnClientClick="return validateCart();" OnClick="btnNext3_Click" />
+                        <div class="line-sync-panel">
+                            <div class="line-sync-title">Rate / Tax % / Unit changes apply to:</div>
+                            <asp:RadioButtonList ID="rblLineSyncScope" runat="server" RepeatDirection="Horizontal" RepeatLayout="Flow">
+                                <asp:ListItem Text="Current Document Only" Value="Document" Selected="True"></asp:ListItem>
+                                <asp:ListItem Text="Also update Product Master" Value="Master"></asp:ListItem>
+                            </asp:RadioButtonList>
+                        </div>
+                        <asp:Button ID="btnNext3" runat="server" Text="Proceed to Terms ➔" CssClass="btn_style" Width="200px" OnClientClick="return validateCartAndSync();" OnClick="btnNext3_Click" />
                     </div>
                 </asp:View>
 

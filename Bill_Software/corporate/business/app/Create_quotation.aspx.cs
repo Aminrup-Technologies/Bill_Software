@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Diagnostics;
 using System.Web;
 using System.Web.UI.WebControls;
 using System.Text;
@@ -196,7 +197,11 @@ namespace Bill_Software.corporate.business.app
             WizardMultiView.ActiveViewIndex = 1;
         }
 
-        protected void btnPrev2_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 0; }
+        protected void btnPrev2_Click(object sender, EventArgs e)
+        {
+            PanelGlobalAlert.Visible = false;
+            WizardMultiView.ActiveViewIndex = 0;
+        }
 
         protected void Button2_Click(object sender, EventArgs e)
         {
@@ -220,8 +225,8 @@ namespace Bill_Software.corporate.business.app
         protected void btnNext2_Click(object sender, EventArgs e)
         {
             PanelGlobalAlert.Visible = false;
-            DataTable dtpro = ViewState["dtprocat"] as DataTable;
-            if (dtpro == null) return;
+            // Catalog rows are read from gridProdWithCat (ViewState-restored). Do not silent-return
+            // when ViewState["dtprocat"] is missing — that presented as Add-to-Cart "no response".
             if (ViewState["PhaseProductData"] == null)
             {
                 dtPCat.Columns.Add("ProductId", typeof(string));
@@ -242,6 +247,9 @@ namespace Bill_Software.corporate.business.app
                 dtPCat.Columns.Add("ProductOrServiceCat", typeof(string));
                 dtPCat.Columns.Add("DeliveryDate", typeof(string));
                 dtPCat.Columns.Add("Department", typeof(string));
+                dtPCat.Columns.Add("Master_Sail_Rate", typeof(string));
+                dtPCat.Columns.Add("Master_Tax_Rate", typeof(string));
+                dtPCat.Columns.Add("Master_Unit", typeof(string));
                 ViewState["PhaseProductData"] = dtPCat;
             }
             else
@@ -249,12 +257,20 @@ namespace Bill_Software.corporate.business.app
                 dtPCat = (DataTable)ViewState["PhaseProductData"];
             }
 
+            // Phase A.6.2: Add to Cart is unblocked — Rate/Tax/Unit are edited on Step 3 cart.
+            // Completeness (A.5 Qty/Rate + Unit/Tax) is enforced on Proceed to Terms.
+            EnsureMasterBaselineColumns(dtPCat);
+
             bool itemsAdded = false;
             for (int i = 0; i < gridProdWithCat.Rows.Count; i++)
             {
                 CheckBox chkdtp = (CheckBox)gridProdWithCat.Rows[i].FindControl("chkdtp");
                 if (chkdtp != null && chkdtp.Checked)
                 {
+                    string sailRateText = ((Label)gridProdWithCat.Rows[i].FindControl("Sail_Rate"))?.Text ?? "";
+                    string unit = ((Label)gridProdWithCat.Rows[i].FindControl("Unit"))?.Text ?? "";
+                    string tax = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate"))?.Text ?? "";
+
                     DataRow dr = dtPCat.NewRow();
                     dr["ProductId"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
                     dr["Product_code"] = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
@@ -267,13 +283,17 @@ namespace Bill_Software.corporate.business.app
                     dr["MaterialNo"] = "";
                     dr["PackSize"] = "";
                     dr["ItemRemarks"] = "";
-                    dr["Sail_Rate"] = ((Label)gridProdWithCat.Rows[i].FindControl("Sail_Rate")).Text;
-                    dr["Tax_Rate"] = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate")).Text;
+                    dr["Sail_Rate"] = sailRateText;
+                    dr["Tax_Rate"] = tax;
                     dr["Type"] = ((Label)gridProdWithCat.Rows[i].FindControl("Type")).Text;
-                    dr["Unit"] = ((Label)gridProdWithCat.Rows[i].FindControl("Unit")).Text;
+                    dr["Unit"] = unit;
                     dr["ProductOrServiceCat"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductOrServiceCat")).Text;
                     dr["DeliveryDate"] = "";
                     dr["Department"] = "";
+                    // Baseline for optional conflict-safe Product Master sync
+                    dr["Master_Sail_Rate"] = sailRateText;
+                    dr["Master_Tax_Rate"] = tax;
+                    dr["Master_Unit"] = unit;
 
                     dtPCat.Rows.Add(dr);
                     itemsAdded = true;
@@ -313,6 +333,8 @@ namespace Bill_Software.corporate.business.app
                     dt.Rows[i]["Quantity"] = ((TextBox)row.FindControl("Quantity")).Text;
                     dt.Rows[i]["Sail_Rate"] = ((TextBox)row.FindControl("Sail_Rate")).Text;
                     dt.Rows[i]["Discount_Rate"] = ((TextBox)row.FindControl("Discount_Rate")).Text;
+                    dt.Rows[i]["Unit"] = ((TextBox)row.FindControl("Unit"))?.Text ?? "";
+                    dt.Rows[i]["Tax_Rate"] = ((TextBox)row.FindControl("Tax_Rate"))?.Text ?? "";
                     dt.Rows[i]["Specification"] = ((TextBox)row.FindControl("Specification")).Text;
                     dt.Rows[i]["Brand"] = ((TextBox)row.FindControl("Brand")).Text;
                     dt.Rows[i]["ItemNo"] = ((TextBox)row.FindControl("ItemNo"))?.Text ?? "";
@@ -331,6 +353,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnAddMoreProducts_Click(object sender, EventArgs e)
         {
+            PanelGlobalAlert.Visible = false;
             SaveCartToViewState();
             WizardMultiView.ActiveViewIndex = 1; // Back to Step 2
         }
@@ -369,6 +392,7 @@ namespace Bill_Software.corporate.business.app
 
         protected void btnPrev3_Click(object sender, EventArgs e)
         {
+            PanelGlobalAlert.Visible = false;
             SaveCartToViewState();
             WizardMultiView.ActiveViewIndex = 1;
         }
@@ -385,11 +409,37 @@ namespace Bill_Software.corporate.business.app
                 return;
             }
 
+            // Server-side mirror of validateCart(): Qty, Rate, Unit, Tax (0 tax allowed).
+            string cartError;
+            if (!TryValidateCartCompleteness(currentCart, out cartError))
+            {
+                ShowAlert(cartError, true);
+                return;
+            }
+
+            // Optional Product Master sync — never silent; default is document-only.
+            if (rblLineSyncScope != null && rblLineSyncScope.SelectedValue == "Master")
+            {
+                string syncMsg;
+                if (!TrySyncCartLinesToProductMaster(currentCart, out syncMsg))
+                {
+                    ShowAlert(syncMsg, true);
+                    return;
+                }
+                // Surface non-empty sync result (updated / skipped / conflicts) before advancing.
+                if (!string.IsNullOrWhiteSpace(syncMsg))
+                    ShowAlert(syncMsg, false);
+            }
+
             bindphaseType();
             WizardMultiView.ActiveViewIndex = 3;
         }
 
-        protected void btnPrev4_Click(object sender, EventArgs e) { WizardMultiView.ActiveViewIndex = 2; }
+        protected void btnPrev4_Click(object sender, EventArgs e)
+        {
+            PanelGlobalAlert.Visible = false;
+            WizardMultiView.ActiveViewIndex = 2;
+        }
 
 
         // ================= DB UTILITIES =================
@@ -685,6 +735,9 @@ namespace Bill_Software.corporate.business.app
                     try { trans?.Rollback(); } catch { }
 
                     // Ponytail #3: Never expose raw exception details to client
+                    Debug.WriteLine("Create_quotation.MagicianNew: " + ex);
+                    if (ex.StackTrace != null)
+                        Debug.WriteLine("Create_quotation.MagicianNew stack: " + ex.StackTrace);
                     ShowAlert("An unexpected error occurred while saving the document. Please try again.", true);
                 }
             }
@@ -698,6 +751,187 @@ namespace Bill_Software.corporate.business.app
             if (decimal.TryParse(text, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out val))
                 return val;
             return 0m;
+        }
+
+        /// <summary>
+        /// Display name for completeness messages. Derived for UX only; not a new mandatory field.
+        /// </summary>
+        private static string GetProductDisplayName(string productName, string productCode)
+        {
+            if (!string.IsNullOrWhiteSpace(productName)) return productName.Trim();
+            if (!string.IsNullOrWhiteSpace(productCode)) return productCode.Trim();
+            return "Selected product";
+        }
+
+        /// <summary>
+        /// Cart completeness: Quantity &gt; 0, Base Rate &gt; 0 (A.5), Unit required, Tax numeric (0 allowed).
+        /// </summary>
+        private bool TryValidateCartCompleteness(DataTable cart, out string errorMessage)
+        {
+            errorMessage = null;
+            if (cart == null || cart.Rows.Count == 0)
+            {
+                errorMessage = "Cart is empty! Add products to proceed.";
+                return false;
+            }
+
+            var errors = new System.Collections.Generic.List<string>();
+            for (int i = 0; i < cart.Rows.Count; i++)
+            {
+                DataRow row = cart.Rows[i];
+                string displayName = GetProductDisplayName(
+                    row["ProductName"]?.ToString(),
+                    row.Table.Columns.Contains("Product_code") ? row["Product_code"]?.ToString() : null);
+
+                if (ParseDecimal(row["Quantity"]?.ToString()) <= 0m)
+                    errors.Add(displayName + ": Quantity must be greater than 0.");
+                if (ParseDecimal(row["Sail_Rate"]?.ToString()) <= 0m)
+                    errors.Add(displayName + ": Base Rate must be greater than 0.");
+                if (IsMissingUnit(row.Table.Columns.Contains("Unit") ? row["Unit"]?.ToString() : null))
+                    errors.Add(displayName + ": Unit (UOM) is required.");
+                if (IsInvalidTaxRate(row.Table.Columns.Contains("Tax_Rate") ? row["Tax_Rate"]?.ToString() : null))
+                    errors.Add(displayName + ": GST / Tax % must be a number (0 is allowed).");
+            }
+
+            if (errors.Count == 0) return true;
+            errorMessage = string.Join(" ", errors.ToArray());
+            return false;
+        }
+
+        private static bool IsMissingUnit(string unit)
+        {
+            return string.IsNullOrWhiteSpace(unit);
+        }
+
+        /// <summary>Missing/non-numeric Tax is invalid; Tax = 0 is allowed.</summary>
+        private bool IsInvalidTaxRate(string taxText)
+        {
+            if (string.IsNullOrWhiteSpace(taxText)) return true;
+            decimal tax;
+            return !decimal.TryParse(
+                taxText.Trim(),
+                System.Globalization.NumberStyles.AllowDecimalPoint,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out tax);
+        }
+
+        private static void EnsureMasterBaselineColumns(DataTable dt)
+        {
+            if (dt == null) return;
+            if (!dt.Columns.Contains("Master_Sail_Rate")) dt.Columns.Add("Master_Sail_Rate", typeof(string));
+            if (!dt.Columns.Contains("Master_Tax_Rate")) dt.Columns.Add("Master_Tax_Rate", typeof(string));
+            if (!dt.Columns.Contains("Master_Unit")) dt.Columns.Add("Master_Unit", typeof(string));
+        }
+
+        /// <summary>
+        /// Conflict-safe Product Master sync for lines whose Rate/Tax/Unit differ from baseline.
+        /// UPDATE is parameterized and scoped by ProductID + CompanyID + original values.
+        /// </summary>
+        private bool TrySyncCartLinesToProductMaster(DataTable cart, out string message)
+        {
+            message = null;
+            if (cart == null || cart.Rows.Count == 0)
+            {
+                message = "No cart lines to sync.";
+                return false;
+            }
+
+            EnsureMasterBaselineColumns(cart);
+            int companyId = CompanyContext.CurrentCompanyID;
+            string userId = HttpContext.Current.Session["USERID"] != null
+                ? HttpContext.Current.Session["USERID"].ToString()
+                : "";
+
+            int updated = 0, skipped = 0, conflicts = 0, missing = 0;
+            var conflictNames = new System.Collections.Generic.List<string>();
+
+            string connStr = ConfigurationManager.ConnectionStrings["DbConn"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+                for (int i = 0; i < cart.Rows.Count; i++)
+                {
+                    DataRow row = cart.Rows[i];
+                    string productId = row["ProductId"]?.ToString()?.Trim() ?? "";
+                    string displayName = GetProductDisplayName(
+                        row["ProductName"]?.ToString(),
+                        row.Table.Columns.Contains("Product_code") ? row["Product_code"]?.ToString() : null);
+
+                    string sail = (row["Sail_Rate"]?.ToString() ?? "").Trim();
+                    string tax = (row["Tax_Rate"]?.ToString() ?? "").Trim();
+                    string unit = (row["Unit"]?.ToString() ?? "").Trim();
+                    string origSail = (row["Master_Sail_Rate"]?.ToString() ?? "").Trim();
+                    string origTax = (row["Master_Tax_Rate"]?.ToString() ?? "").Trim();
+                    string origUnit = (row["Master_Unit"]?.ToString() ?? "").Trim();
+
+                    if (string.IsNullOrWhiteSpace(productId))
+                    {
+                        missing++;
+                        continue;
+                    }
+
+                    if (sail == origSail && tax == origTax && unit == origUnit)
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    // Schema (flamex_uat dbo.tbl_NewProduct): Sail_Rate/Tax_Rate = varchar(MAX),
+                    // Unit/ProductID = nvarchar, ModifiedByUserId = varchar(50), CompanyID = int.
+                    // Do not bind Decimal or ISNULL(..., numeric) — that forces varchar→numeric conversion.
+                    const string sql = @"
+UPDATE tbl_NewProduct
+SET Sail_Rate = @Sail_Rate,
+    Tax_Rate = @Tax_Rate,
+    Unit = @Unit,
+    ModifiedByUserId = @ModifiedByUserId,
+    ModifiedOn = GETDATE()
+WHERE ProductID = @ProductID
+  AND CompanyID = @CompanyID
+  AND ISNULL(Sail_Rate, '') = @OrigSail
+  AND ISNULL(Tax_Rate, '') = @OrigTax
+  AND ISNULL(Unit, '') = @OrigUnit";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.Add("@Sail_Rate", SqlDbType.VarChar, -1).Value = sail;
+                        cmd.Parameters.Add("@Tax_Rate", SqlDbType.VarChar, -1).Value = tax;
+                        cmd.Parameters.Add("@Unit", SqlDbType.NVarChar, -1).Value = unit;
+                        cmd.Parameters.Add("@ModifiedByUserId", SqlDbType.VarChar, 50).Value =
+                            string.IsNullOrEmpty(userId) ? (object)DBNull.Value : userId;
+                        cmd.Parameters.Add("@ProductID", SqlDbType.NVarChar, 250).Value = productId;
+                        cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
+                        cmd.Parameters.Add("@OrigSail", SqlDbType.VarChar, -1).Value = origSail;
+                        cmd.Parameters.Add("@OrigTax", SqlDbType.VarChar, -1).Value = origTax;
+                        cmd.Parameters.Add("@OrigUnit", SqlDbType.NVarChar, -1).Value = origUnit;
+
+                        int affected = cmd.ExecuteNonQuery();
+                        if (affected > 0)
+                        {
+                            updated++;
+                            row["Master_Sail_Rate"] = sail;
+                            row["Master_Tax_Rate"] = tax;
+                            row["Master_Unit"] = unit;
+                        }
+                        else
+                        {
+                            conflicts++;
+                            conflictNames.Add(displayName);
+                        }
+                    }
+                }
+            }
+
+            ViewState["PhaseProductData"] = cart;
+
+            var parts = new System.Collections.Generic.List<string>();
+            parts.Add("Product Master sync: " + updated + " updated, " + skipped + " unchanged, " + conflicts + " conflict(s), " + missing + " missing ProductID.");
+            if (conflictNames.Count > 0)
+                parts.Add("Conflicts (master changed since load or product not found): " + string.Join(", ", conflictNames.ToArray()) + ".");
+
+            message = string.Join(" ", parts.ToArray());
+            // Conflicts are reported but do not block document progression — document values stay in ViewState.
+            return true;
         }
 
         // --- INJECTION 3: Dynamic Prefix using CompanyContext.CurrentCompanyCode ---
