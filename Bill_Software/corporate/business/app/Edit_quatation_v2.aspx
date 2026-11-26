@@ -206,92 +206,16 @@
                 border-top: none;
             }
 
-        /* Phase A.6.1 — Quotation Product Configuration Modal (adapted from newproduct_master View More shell/CSS) */
-        .modal-backdrop {
-            display: none; position: fixed; z-index: 10050; left: 0; top: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, .45); align-items: center; justify-content: center;
-            padding: 12px;
+        /* Phase A.6.2 — cart line sync scope (document vs product master) */
+        .line-sync-panel {
+            margin: 12px 0 8px; padding: 10px 12px; text-align: left;
+            border: 1px solid #d7eaf4; border-radius: 6px; background: #f4fafd;
+            font-size: 12px; color: #0f172a;
         }
-        .modal-backdrop.is-open { display: flex; }
-        .modal-box.product-config-modal {
-            background: #fff; border-radius: 8px; width: min(720px, 96vw); max-height: 92vh;
-            overflow: hidden; padding: 0; border: 1px solid #d7e2ec;
-            box-shadow: 0 12px 40px rgba(0,0,0,.2);
-            display: flex; flex-direction: column;
+        .line-sync-panel .line-sync-title {
+            font-weight: 700; color: #19658A; margin-bottom: 6px;
         }
-        .product-config-modal .pd-header {
-            display: flex; align-items: center; justify-content: space-between; gap: 16px;
-            padding: 14px 16px;
-            background: linear-gradient(135deg, #19658A 0%, #0f4a66 100%);
-            border-radius: 8px 8px 0 0; color: #fff; flex-shrink: 0;
-        }
-        .product-config-modal .pd-header-left { flex: 1; min-width: 0; }
-        .product-config-modal .pd-eyebrow {
-            display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
-            opacity: .8; margin-bottom: 2px;
-        }
-        .product-config-modal .pd-name {
-            margin: 0; color: #fff; font-size: 18px; font-weight: 800; line-height: 1.25;
-            word-break: break-word;
-        }
-        .product-config-modal .pd-header-right {
-            flex: 0 0 auto; text-align: right;
-            background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
-            border-radius: 6px; padding: 6px 10px;
-        }
-        .product-config-modal .pd-meta-k {
-            font-size: 9px; text-transform: uppercase; letter-spacing: .04em; opacity: .8;
-        }
-        .product-config-modal .pd-meta-v { font-size: 13px; font-weight: 700; }
-        .product-config-modal .pd-progress {
-            margin-top: 4px; font-size: 11px; font-weight: 600; opacity: .95;
-        }
-        .product-config-modal .pd-body {
-            padding: 12px 14px 10px; overflow-y: auto; flex: 1 1 auto; min-height: 0;
-        }
-        .product-config-modal .modal-section {
-            margin: 0 0 10px; padding: 10px;
-            background: #fff; border: 1px solid #e8edf3; border-radius: 8px;
-        }
-        .product-config-modal .modal-section-title {
-            margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .04em;
-            text-transform: uppercase; padding-bottom: 6px;
-            border-bottom: 2px solid #d7eaf4; color: #19658A;
-        }
-        .product-config-modal .modal-grid {
-            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 8px; font-size: 12px;
-        }
-        .product-config-modal .modal-grid .span2 { grid-column: span 2; }
-        .product-config-modal .modal-grid .full { grid-column: 1 / -1; }
-        .product-config-modal .pd-field {
-            background: #f8fafc; border: 1px solid #e8edf3; border-radius: 6px; padding: 7px 9px;
-        }
-        .product-config-modal .pd-field.is-edit { background: #fff; border-color: #cbd5e1; }
-        .product-config-modal .modal-grid .k {
-            font-size: 9px; line-height: 1.1; margin-bottom: 3px; color: #64748b; font-weight: 700;
-            text-transform: uppercase;
-        }
-        .product-config-modal .modal-grid .v {
-            font-size: 12px; line-height: 1.3; font-weight: 600; color: #0f172a; word-break: break-word;
-        }
-        .product-config-modal .pd-field input[type="text"],
-        .product-config-modal .pd-field select {
-            width: 100%; box-sizing: border-box; height: 30px;
-            border: 1px solid #ccc; border-radius: 4px; padding: 2px 8px; font-size: 12px;
-        }
-        .product-config-modal .modal-close {
-            margin: 10px 0 0; padding-top: 10px; border-top: 1px solid #e8edf3;
-            display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
-        }
-        .product-config-modal .btn-modal-save {
-            background: #19658A; color: #fff; border-color: #19658A;
-        }
-        .product-config-modal .btn-modal-save:hover { background: #0f4a66; }
-        @media (max-width: 700px) {
-            .product-config-modal .modal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .product-config-modal .pd-header { flex-direction: column; align-items: flex-start; }
-        }
+        .line-sync-panel label { margin-right: 16px; font-weight: 600; }
     </style>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -316,9 +240,6 @@
             $('#<%= ddlPlaceOfSupply.ClientID %>').select2({ placeholder: "Search Place of Supply..." });
             $('#<%= cmbproduct_service.ClientID %>').select2({ placeholder: "Search Category..." });
 
-            // UpdatePanel keeps outer script state + hf outside the panel — reset so
-            // incomplete products cannot skip the config modal on the next Add.
-            if (typeof lcResetConfigState === "function") lcResetConfigState();
             calculateCart();
             togglePanel();
         });
@@ -364,7 +285,11 @@
                 var qty = parseFloat(qtyInput.value) || 0;
                 var rate = parseFloat(rateInput.value) || 0;
                 var disc = parseFloat(row.querySelector('.disc-input').value) || 0;
-                var taxRate = parseFloat(row.querySelector('.tax-lbl').innerText) || 0;
+                var taxEl = row.querySelector('.tax-input') || row.querySelector('.tax-lbl');
+                var taxRate = 0;
+                if (taxEl) {
+                    taxRate = parseFloat(taxEl.value != null && taxEl.tagName === 'INPUT' ? taxEl.value : taxEl.innerText) || 0;
+                }
 
                 var baseAmt = rate * qty;
                 var discAmt = baseAmt * (disc / 100);
@@ -401,19 +326,24 @@
             for (var i = 1; i < rows.length - 1; i++) {
                 var qtyInput = rows[i].querySelector('.qty-input');
                 var rateInput = rows[i].querySelector('.rate-input');
-                if (!qtyInput || !rateInput) continue; // Skip header/footer
-
+                if (!qtyInput || !rateInput) continue;
                 var qty = parseFloat(qtyInput.value) || 0;
                 var rate = parseFloat(rateInput.value) || 0;
+                var unitInput = rows[i].querySelector('.unit-input');
+                var taxInput = rows[i].querySelector('.tax-input');
+                var unit = unitInput ? String(unitInput.value || "").replace(/^\s+|\s+$/g, "") : "";
+                var taxRaw = taxInput ? String(taxInput.value || "").replace(/^\s+|\s+$/g, "") : "";
                 var nameEl = rows[i].querySelector("span[id$='ProductName']");
                 var productName = (nameEl && nameEl.innerText) ? nameEl.innerText.trim() : ("Row " + i);
-                if (qty <= 0 || rate <= 0) {
-                    if (qty <= 0) messages.push(productName + ": Quantity must be greater than 0.");
-                    if (rate <= 0) messages.push(productName + ": Base Rate must be greater than 0.");
-                    rows[i].style.backgroundColor = "#ffcccc";
-                } else {
-                    rows[i].style.backgroundColor = "";
+                var bad = false;
+                if (qty <= 0) { messages.push(productName + ": Quantity must be greater than 0."); bad = true; }
+                if (isNaN(rate) || rate <= 0) { messages.push(productName + ": Base Rate must be greater than 0."); bad = true; }
+                if (unit === "") { messages.push(productName + ": Unit (UOM) is required."); bad = true; }
+                if (taxRaw === "" || isNaN(parseFloat(taxRaw))) {
+                    messages.push(productName + ": GST / Tax % must be a number (0 is allowed).");
+                    bad = true;
                 }
+                rows[i].style.backgroundColor = bad ? "#ffcccc" : "";
             }
             if (messages.length > 0) {
                 alert(messages.join("\n"));
@@ -422,224 +352,19 @@
             return true;
         }
 
-        // Phase A.6.1 — sequential Product Configuration Modal (Rate / Tax / UOM) before Add to Cart
-        var _lineConfigQueue = [];
-        var _lineConfigIndex = 0;
-        var _lineConfigOverrides = {};
-
-        function lcTrim(v) {
-            return (v == null) ? "" : String(v).replace(/^\s+|\s+$/g, "");
-        }
-        function lcIsMissingUnit(u) {
-            var s = lcTrim(u);
-            // Treat blank / em dash / hyphen placeholders as missing
-            return s === "" || s === "—" || s === "-" || s === "–";
-        }
-        function lcIsInvalidTax(t) {
-            var s = lcTrim(t);
-            if (s === "" || s === "—" || s === "-") return true;
-            var n = parseFloat(s);
-            return isNaN(n); // Tax = 0 is valid
-        }
-        function lcIsInvalidRate(r) {
-            var s = lcTrim(r);
-            if (s === "" || s === "—" || s === "-") return true;
-            var n = parseFloat(s);
-            return isNaN(n) || n <= 0;
-        }
-        function lcNeedsConfig(item) {
-            return lcIsMissingUnit(item.unit) || lcIsInvalidTax(item.tax) || lcIsInvalidRate(item.sailRate);
-        }
-        function lcDash(v) {
-            var s = lcTrim(v);
-            return s === "" ? "—" : s;
-        }
-        function lcRowText(row, idSuffix) {
-            var el = row.querySelector("span[id$='" + idSuffix + "'], input[id$='" + idSuffix + "']");
-            if (!el) return "";
-            var raw = (typeof el.textContent !== "undefined" && el.textContent !== null)
-                ? el.textContent
-                : (el.innerText != null ? el.innerText : el.value);
-            return lcTrim(raw);
-        }
-        function lcGetOverridesField() {
-            return document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
-        }
-        function lcResetConfigState() {
-            _lineConfigQueue = [];
-            _lineConfigIndex = 0;
-            _lineConfigOverrides = {};
-            var hf = lcGetOverridesField();
-            if (hf) hf.value = "";
-            closeLineConfigModal();
-        }
-        function lcFindCheckedCatalogRows() {
-            var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
-            if (!grid) return [];
-            var rows = grid.getElementsByTagName('tr');
-            var checked = [];
-            for (var i = 1; i < rows.length; i++) {
-                var chk = rows[i].querySelector("input[type='checkbox'][id$='chkdtp']");
-                if (!chk || !chk.checked) continue;
-                checked.push({
-                    rowIndex: i - 1,
-                    row: rows[i],
-                    productName: lcRowText(rows[i], 'ProductName') || ('Row ' + i),
-                    productId: lcRowText(rows[i], 'ProductID'),
-                    productCode: lcRowText(rows[i], 'Product_code'),
-                    brand: lcRowText(rows[i], 'Brand'),
-                    type: lcRowText(rows[i], 'Type'),
-                    specification: lcRowText(rows[i], 'Specification'),
-                    category: lcRowText(rows[i], 'ProductOrServiceCat'),
-                    sailRate: lcRowText(rows[i], 'Sail_Rate'),
-                    unit: lcRowText(rows[i], 'Unit'),
-                    tax: lcRowText(rows[i], 'Tax_Rate')
-                });
-            }
-            return checked;
-        }
-        function serializeLineConfigOverrides(map) {
-            var parts = [];
-            for (var k in map) {
-                if (!map.hasOwnProperty(k)) continue;
-                var u = String(map[k].unit || "").replace(/\|/g, "/").replace(/;;/g, ";");
-                var t = String(map[k].tax || "").replace(/\|/g, "/").replace(/;;/g, ";");
-                var r = String(map[k].rate || "").replace(/\|/g, "/").replace(/;;/g, ";");
-                parts.push(k + "=" + u + "|" + t + "|" + r);
-            }
-            return parts.join(";;");
-        }
-        function lcSetTaxSelect(taxVal) {
-            var taxSel = document.getElementById('pcTax');
-            if (!taxSel) return;
-            if (taxVal !== "" && !lcIsInvalidTax(taxVal)) {
-                var found = false;
-                for (var i = 0; i < taxSel.options.length; i++) {
-                    if (taxSel.options[i].value === String(parseFloat(taxVal))) {
-                        taxSel.selectedIndex = i;
-                        found = true;
-                        break;
-                    }
+        // Phase A.6.2 — optional Product Master sync (double confirm). Default = document only.
+        function validateCartAndSync() {
+            if (!validateCart()) return false;
+            var masterOpt = document.getElementById('<%= rblLineSyncScope.ClientID %>_1');
+            if (masterOpt && masterOpt.checked) {
+                if (!confirm("Update Product Master for cart lines whose Rate / Tax % / Unit differ from the values loaded with this document?")) {
+                    return false;
                 }
-                if (!found) {
-                    var opt = document.createElement('option');
-                    opt.value = String(parseFloat(taxVal));
-                    opt.text = opt.value;
-                    taxSel.appendChild(opt);
-                    taxSel.value = opt.value;
+                if (!confirm("Second confirmation: this will UPDATE tbl_NewProduct Sail_Rate, Tax_Rate, and Unit for this company. Continue?")) {
+                    return false;
                 }
-            } else {
-                taxSel.value = "18";
             }
-        }
-        function openLineConfigModal(item, pos, total) {
-            var modal = document.getElementById('productConfigModal');
-            var rateInput = document.getElementById('pcSailRate');
-            var unitInput = document.getElementById('pcUnit');
-            var saveBtn = document.getElementById('pcSaveBtn');
-            if (!modal || !rateInput || !unitInput || !saveBtn) {
-                alert("Product Configuration modal failed to load. Please refresh and try again.");
-                return;
-            }
-            var el;
-            el = document.getElementById('pcProgress'); if (el) el.innerText = pos + " of " + total;
-            el = document.getElementById('pcHdrName'); if (el) el.innerText = item.productName || "—";
-            el = document.getElementById('pcHdrPid'); if (el) el.innerText = item.productId || "—";
-            el = document.getElementById('pcBrand'); if (el) el.innerText = lcDash(item.brand);
-            el = document.getElementById('pcType'); if (el) el.innerText = lcDash(item.type);
-            el = document.getElementById('pcCode'); if (el) el.innerText = lcDash(item.productCode);
-            el = document.getElementById('pcCategory'); if (el) el.innerText = lcDash(item.category);
-            el = document.getElementById('pcSpec'); if (el) el.innerText = lcDash(item.specification);
-            rateInput.value = lcIsInvalidRate(item.sailRate) ? "" : String(parseFloat(item.sailRate));
-            unitInput.value = item.unit || "";
-            lcSetTaxSelect(item.tax);
-            var isLast = (pos >= total);
-            saveBtn.innerText = isLast ? "Save & Proceed" : "Save & Next";
-            modal.className = 'modal-backdrop is-open';
-            try { rateInput.focus(); } catch (ex) { }
-        }
-        function closeLineConfigModal() {
-            var modal = document.getElementById('productConfigModal');
-            if (modal) modal.className = 'modal-backdrop';
-        }
-        // Resume Add-to-Cart via __doPostBack (not btn.click / not OnClientClick flag).
-        // __doPostBack skips OnClientClick, so a sticky allow-postback flag would bypass
-        // incomplete-product detection on the next Add (esp. Edit UpdatePanel).
-        function postAddToCartAfterConfig() {
-            var hf = lcGetOverridesField();
-            if (hf) hf.value = serializeLineConfigOverrides(_lineConfigOverrides);
-            closeLineConfigModal();
-            setTimeout(function () {
-                __doPostBack('<%= btnNext2.UniqueID %>', '');
-            }, 0);
-            return false;
-        }
-        function showNextLineConfig() {
-            if (_lineConfigIndex >= _lineConfigQueue.length) {
-                return postAddToCartAfterConfig();
-            }
-            openLineConfigModal(_lineConfigQueue[_lineConfigIndex], _lineConfigIndex + 1, _lineConfigQueue.length);
-            return false;
-        }
-        function applyLineConfigAndContinue() {
-            var item = _lineConfigQueue[_lineConfigIndex];
-            if (!item) return false;
-            var rate = lcTrim(document.getElementById('pcSailRate').value);
-            var unit = lcTrim(document.getElementById('pcUnit').value);
-            var tax = lcTrim(document.getElementById('pcTax').value);
-            if (lcIsInvalidRate(rate)) {
-                alert(item.productName + ": Base Rate must be greater than 0.");
-                document.getElementById('pcSailRate').focus();
-                return false;
-            }
-            if (lcIsMissingUnit(unit)) {
-                alert(item.productName + ": Unit (UOM) is required.");
-                document.getElementById('pcUnit').focus();
-                return false;
-            }
-            if (lcIsInvalidTax(tax)) {
-                alert(item.productName + ": GST / Tax % must be a number (0 is allowed).");
-                document.getElementById('pcTax').focus();
-                return false;
-            }
-            var rateStr = String(parseFloat(rate));
-            var taxStr = String(parseFloat(tax));
-            _lineConfigOverrides[String(item.rowIndex)] = { unit: unit, tax: taxStr, rate: rateStr };
-            var rateLbl = item.row.querySelector("span[id$='Sail_Rate']");
-            var unitLbl = item.row.querySelector("span[id$='Unit']");
-            var taxLbl = item.row.querySelector("span[id$='Tax_Rate']");
-            if (rateLbl) rateLbl.innerText = rateStr;
-            if (unitLbl) unitLbl.innerText = unit;
-            if (taxLbl) taxLbl.innerText = taxStr;
-            item.sailRate = rateStr;
-            item.unit = unit;
-            item.tax = taxStr;
-            _lineConfigIndex++;
-            return showNextLineConfig();
-        }
-        function cancelLineConfigQueue() {
-            lcResetConfigState();
-            return false;
-        }
-        function prepareAddToCart() {
-            // Always re-detect. Never short-circuit: __doPostBack does not clear client flags,
-            // and Edit UpdatePanel leaves stale hfLineConfigOverrides outside the panel.
-            var hfStale = lcGetOverridesField();
-            if (hfStale) hfStale.value = "";
-            _lineConfigQueue = [];
-            _lineConfigOverrides = {};
-            _lineConfigIndex = 0;
-
-            var checked = lcFindCheckedCatalogRows();
-            if (checked.length === 0) return true; // server handles empty selection / Skip Catalog
-
-            for (var j = 0; j < checked.length; j++) {
-                if (lcNeedsConfig(checked[j])) _lineConfigQueue.push(checked[j]);
-            }
-            if (_lineConfigQueue.length === 0) return true;
-
-            showNextLineConfig();
-            return false;
+            return true;
         }
 
         // ----- WIZARD STEP 4 FINAL VALIDATION -----
@@ -770,61 +495,6 @@
     </script>
 
     <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
-    <asp:HiddenField ID="hfLineConfigOverrides" runat="server" Value="" />
-
-    <div id="productConfigModal" class="modal-backdrop" onclick="if(event.target===this)cancelLineConfigQueue();">
-        <div class="modal-box product-config-modal" onclick="event.stopPropagation();">
-            <div class="pd-header">
-                <div class="pd-header-left">
-                    <span class="pd-eyebrow">Product Configuration</span>
-                    <div class="pd-name" id="pcHdrName">—</div>
-                </div>
-                <div class="pd-header-right">
-                    <div class="pd-meta-k">Product ID</div>
-                    <div class="pd-meta-v" id="pcHdrPid">—</div>
-                    <div class="pd-progress" id="pcProgress">1 of 1</div>
-                </div>
-            </div>
-            <div class="pd-body">
-                <div class="modal-section">
-                    <div class="modal-section-title">1. Identity</div>
-                    <div class="modal-grid">
-                        <div class="pd-field"><div class="k">Brand</div><div class="v" id="pcBrand">—</div></div>
-                        <div class="pd-field"><div class="k">Type</div><div class="v" id="pcType">—</div></div>
-                        <div class="pd-field"><div class="k">Product Code</div><div class="v" id="pcCode">—</div></div>
-                        <div class="pd-field"><div class="k">Category</div><div class="v" id="pcCategory">—</div></div>
-                        <div class="pd-field span2"><div class="k">Specification</div><div class="v" id="pcSpec">—</div></div>
-                    </div>
-                </div>
-                <div class="modal-section">
-                    <div class="modal-section-title">2. Commercial (quotation line)</div>
-                    <div class="modal-grid">
-                        <div class="pd-field is-edit">
-                            <div class="k">Base Rate *</div>
-                            <input type="text" id="pcSailRate" maxlength="20" placeholder="e.g. 100.00" onkeypress="return onlyNumberDecimal(event);" />
-                        </div>
-                        <div class="pd-field is-edit">
-                            <div class="k">GST / Tax % *</div>
-                            <select id="pcTax">
-                                <option value="0">0</option>
-                                <option value="5">5</option>
-                                <option value="12">12</option>
-                                <option value="18" selected="selected">18</option>
-                            </select>
-                        </div>
-                        <div class="pd-field is-edit">
-                            <div class="k">Unit (UOM) *</div>
-                            <input type="text" id="pcUnit" maxlength="100" placeholder="e.g. NOS, PCS, SET" />
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-close">
-                    <button type="button" class="btn_style" onclick="return cancelLineConfigQueue();">Cancel</button>
-                    <button type="button" class="btn_style btn-modal-save" id="pcSaveBtn" onclick="return applyLineConfigAndContinue();">Save &amp; Proceed</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
@@ -1108,7 +778,7 @@
                     <div style="margin-top: 15px; text-align: center;">
                         <asp:Button ID="btnPrev2" runat="server" Text="🡄 Back to Details" CssClass="btn_style" Width="150px" OnClick="btnPrev2_Click" />
                         &nbsp;
-                        <asp:Button ID="btnNext2" runat="server" Text="Add to Cart ➔" CssClass="btn_style" Width="200px" OnClientClick="return prepareAddToCart();" OnClick="btnNext2_Click" />
+                        <asp:Button ID="btnNext2" runat="server" Text="Add to Cart ➔" CssClass="btn_style" Width="200px" OnClick="btnNext2_Click" />
                         <br />
                         <br />
                         <asp:Button ID="btnSkipCatalog" runat="server" Text="Skip Catalog (Go to Cart)" CssClass="btn_style" BackColor="#6c757d" ForeColor="White" Width="250px" OnClick="btnNext2_Click" CausesValidation="false" />
@@ -1160,15 +830,15 @@
                                     <FooterTemplate><span id="ftr-qty">0</span></FooterTemplate>
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Unit">
+                                <asp:TemplateField HeaderText="Unit" ItemStyle-CssClass="col-editable">
                                     <ItemTemplate>
-                                        <asp:Label ID="Unit" runat="server" Text='<%# Bind("Unit") %>'></asp:Label>
+                                        <asp:TextBox ID="Unit" runat="server" Text='<%# Bind("Unit") %>' CssClass="center textbox_style unit-input" Width="60px" MaxLength="100"></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
                                 <asp:TemplateField HeaderText="Rate" ItemStyle-CssClass="col-editable" HeaderStyle-Width="8%">
                                     <ItemTemplate>
-                                        <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="80px" onkeyup="calculateCart()" onchange="calculateCart()"></asp:TextBox>
+                                        <asp:TextBox ID="Sail_Rate" runat="server" Text='<%# Bind("Sail_Rate") %>' CssClass="center textbox_style rate-input" Width="80px" onkeyup="calculateCart()" onchange="calculateCart()" onkeypress="return onlyNumberDecimal(event);"></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
@@ -1178,9 +848,9 @@
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="GST %">
+                                <asp:TemplateField HeaderText="GST %" ItemStyle-CssClass="col-editable">
                                     <ItemTemplate>
-                                        <asp:Label ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>' CssClass="tax-lbl"></asp:Label>
+                                        <asp:TextBox ID="Tax_Rate" runat="server" Text='<%# Bind("Tax_Rate") %>' CssClass="center textbox_style tax-input" Width="50px" onkeyup="calculateCart()" onchange="calculateCart()" onkeypress="return onlyNumberDecimal(event);"></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
 
@@ -1277,7 +947,14 @@
                     <div style="margin-top: 15px; text-align: center;">
                         <asp:Button ID="btnPrev3" runat="server" Text="🡄 Back" CssClass="btn_style" Width="120px" OnClick="btnPrev3_Click" CausesValidation="false" />
                         &nbsp;
-                        <asp:Button ID="btnNext3" runat="server" Text="Proceed to Terms ➔" CssClass="btn_style" Width="200px" OnClientClick="return validateCart();" OnClick="btnNext3_Click" />
+                        <div class="line-sync-panel">
+                            <div class="line-sync-title">Rate / Tax % / Unit changes apply to:</div>
+                            <asp:RadioButtonList ID="rblLineSyncScope" runat="server" RepeatDirection="Horizontal" RepeatLayout="Flow">
+                                <asp:ListItem Text="Current Document Only" Value="Document" Selected="True"></asp:ListItem>
+                                <asp:ListItem Text="Also update Product Master" Value="Master"></asp:ListItem>
+                            </asp:RadioButtonList>
+                        </div>
+                        <asp:Button ID="btnNext3" runat="server" Text="Proceed to Terms ➔" CssClass="btn_style" Width="200px" OnClientClick="return validateCartAndSync();" OnClick="btnNext3_Click" />
                     </div>
                 </asp:View>
 
