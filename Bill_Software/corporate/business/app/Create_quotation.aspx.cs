@@ -876,6 +876,9 @@ namespace Bill_Software.corporate.business.app
                         continue;
                     }
 
+                    // Schema (flamex_uat dbo.tbl_NewProduct): Sail_Rate/Tax_Rate = varchar(MAX),
+                    // Unit/ProductID = nvarchar, ModifiedByUserId = varchar(50), CompanyID = int.
+                    // Do not bind Decimal or ISNULL(..., numeric) — that forces varchar→numeric conversion.
                     const string sql = @"
 UPDATE tbl_NewProduct
 SET Sail_Rate = @Sail_Rate,
@@ -885,24 +888,22 @@ SET Sail_Rate = @Sail_Rate,
     ModifiedOn = GETDATE()
 WHERE ProductID = @ProductID
   AND CompanyID = @CompanyID
-  AND ISNULL(Sail_Rate, -999999.99) = @OrigSail
-  AND ISNULL(Tax_Rate, -999999.99) = @OrigTax
+  AND ISNULL(Sail_Rate, '') = @OrigSail
+  AND ISNULL(Tax_Rate, '') = @OrigTax
   AND ISNULL(Unit, '') = @OrigUnit";
 
                     using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        cmd.Parameters.Add("@Sail_Rate", SqlDbType.Decimal).Value = ParseDecimal(sail);
-                        cmd.Parameters.Add("@Tax_Rate", SqlDbType.Decimal).Value = ParseDecimal(tax);
-                        cmd.Parameters.Add("@Unit", SqlDbType.VarChar, 100).Value = unit;
+                        cmd.Parameters.Add("@Sail_Rate", SqlDbType.VarChar, -1).Value = sail;
+                        cmd.Parameters.Add("@Tax_Rate", SqlDbType.VarChar, -1).Value = tax;
+                        cmd.Parameters.Add("@Unit", SqlDbType.NVarChar, -1).Value = unit;
                         cmd.Parameters.Add("@ModifiedByUserId", SqlDbType.VarChar, 50).Value =
                             string.IsNullOrEmpty(userId) ? (object)DBNull.Value : userId;
-                        cmd.Parameters.Add("@ProductID", SqlDbType.VarChar, 100).Value = productId;
+                        cmd.Parameters.Add("@ProductID", SqlDbType.NVarChar, 250).Value = productId;
                         cmd.Parameters.Add("@CompanyID", SqlDbType.Int).Value = companyId;
-                        cmd.Parameters.Add("@OrigSail", SqlDbType.Decimal).Value =
-                            string.IsNullOrWhiteSpace(origSail) ? -999999.99m : ParseDecimal(origSail);
-                        cmd.Parameters.Add("@OrigTax", SqlDbType.Decimal).Value =
-                            string.IsNullOrWhiteSpace(origTax) ? -999999.99m : ParseDecimal(origTax);
-                        cmd.Parameters.Add("@OrigUnit", SqlDbType.VarChar, 100).Value = origUnit;
+                        cmd.Parameters.Add("@OrigSail", SqlDbType.VarChar, -1).Value = origSail;
+                        cmd.Parameters.Add("@OrigTax", SqlDbType.VarChar, -1).Value = origTax;
+                        cmd.Parameters.Add("@OrigUnit", SqlDbType.NVarChar, -1).Value = origUnit;
 
                         int affected = cmd.ExecuteNonQuery();
                         if (affected > 0)
