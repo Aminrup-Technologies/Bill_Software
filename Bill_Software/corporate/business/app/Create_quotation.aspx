@@ -213,6 +213,73 @@
             background-color: #19658A !important;
             color: white !important;
         }
+
+        /* Phase A.6 — Quotation line Tax/UOM config (adapted from newproduct_master View More shell) */
+        .line-config-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10050;
+            background: rgba(15, 23, 42, 0.45);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .line-config-backdrop.is-open { display: flex; }
+        .line-config-box {
+            background: #fff;
+            border-radius: 8px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            padding: 18px 20px 16px;
+            border: 1px solid #cbd5e1;
+        }
+        .line-config-box h3 {
+            margin: 0 0 6px;
+            color: #19658A;
+            font-size: 16px;
+        }
+        .line-config-progress {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        .line-config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+        .line-config-grid .full { grid-column: 1 / -1; }
+        .line-config-grid .k {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .line-config-grid .v {
+            color: #0f172a;
+            font-weight: 600;
+            word-break: break-word;
+        }
+        .line-config-grid input[type="text"],
+        .line-config-grid select {
+            width: 100%;
+            box-sizing: border-box;
+            height: 30px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        .line-config-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
     </style>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -356,6 +423,175 @@
                 return false;
             }
             return true;
+        }
+
+        // Phase A.6 — sequential Tax/UOM config before Add to Cart postback
+        var _lineConfigQueue = [];
+        var _lineConfigIndex = 0;
+        var _lineConfigOverrides = {};
+        var _lineConfigAllowPostback = false;
+
+        function lcTrim(v) {
+            return (v == null) ? "" : String(v).replace(/^\s+|\s+$/g, "");
+        }
+        function lcIsMissingUnit(u) { return lcTrim(u) === ""; }
+        function lcIsInvalidTax(t) {
+            var s = lcTrim(t);
+            if (s === "") return true;
+            var n = parseFloat(s);
+            return isNaN(n); // Tax = 0 is valid
+        }
+        function lcRowText(row, idSuffix) {
+            var el = row.querySelector("span[id$='" + idSuffix + "'], input[id$='" + idSuffix + "']");
+            if (!el) return "";
+            return lcTrim(el.innerText != null ? el.innerText : el.value);
+        }
+        function lcFindCheckedCatalogRows() {
+            var grid = document.getElementById('<%= gridProdWithCat.ClientID %>');
+            if (!grid) return [];
+            var rows = grid.getElementsByTagName('tr');
+            var checked = [];
+            for (var i = 1; i < rows.length; i++) {
+                var chk = rows[i].querySelector("input[type='checkbox'][id$='chkdtp']");
+                if (!chk || !chk.checked) continue;
+                checked.push({
+                    rowIndex: i - 1,
+                    row: rows[i],
+                    productName: lcRowText(rows[i], 'ProductName') || ('Row ' + i),
+                    productId: lcRowText(rows[i], 'ProductID'),
+                    sailRate: lcRowText(rows[i], 'Sail_Rate'),
+                    unit: lcRowText(rows[i], 'Unit'),
+                    tax: lcRowText(rows[i], 'Tax_Rate')
+                });
+            }
+            return checked;
+        }
+        function serializeLineConfigOverrides(map) {
+            var parts = [];
+            for (var k in map) {
+                if (!map.hasOwnProperty(k)) continue;
+                var u = String(map[k].unit || "").replace(/\|/g, "/").replace(/;;/g, ";");
+                var t = String(map[k].tax || "").replace(/\|/g, "/").replace(/;;/g, ";");
+                parts.push(k + "=" + u + "|" + t);
+            }
+            return parts.join(";;");
+        }
+        function openLineConfigModal(item, pos, total) {
+            document.getElementById('lineConfigProgress').innerText = "Configuring " + pos + " of " + total;
+            document.getElementById('lcProductName').innerText = item.productName || "—";
+            document.getElementById('lcSailRate').innerText = item.sailRate || "—";
+            document.getElementById('lcProductId').innerText = item.productId || "—";
+            document.getElementById('lcUnit').value = item.unit || "";
+            var taxSel = document.getElementById('lcTax');
+            var taxVal = lcTrim(item.tax);
+            if (taxVal !== "" && !lcIsInvalidTax(taxVal)) {
+                var found = false;
+                for (var i = 0; i < taxSel.options.length; i++) {
+                    if (taxSel.options[i].value === String(parseFloat(taxVal))) {
+                        taxSel.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    var opt = document.createElement('option');
+                    opt.value = String(parseFloat(taxVal));
+                    opt.text = opt.value;
+                    taxSel.appendChild(opt);
+                    taxSel.value = opt.value;
+                }
+            } else {
+                taxSel.value = "18";
+            }
+            document.getElementById('lineConfigModal').className = 'line-config-backdrop is-open';
+            document.getElementById('lcUnit').focus();
+        }
+        function closeLineConfigModal() {
+            document.getElementById('lineConfigModal').className = 'line-config-backdrop';
+        }
+        function showNextLineConfig() {
+            if (_lineConfigIndex >= _lineConfigQueue.length) {
+                closeLineConfigModal();
+                var hf = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
+                if (hf) hf.value = serializeLineConfigOverrides(_lineConfigOverrides);
+                _lineConfigAllowPostback = true;
+                var btn = document.getElementById('<%= btnNext2.ClientID %>');
+                if (btn) btn.click();
+                return false;
+            }
+            openLineConfigModal(_lineConfigQueue[_lineConfigIndex], _lineConfigIndex + 1, _lineConfigQueue.length);
+            return false;
+        }
+        function applyLineConfigAndContinue() {
+            var item = _lineConfigQueue[_lineConfigIndex];
+            if (!item) return false;
+            var unit = lcTrim(document.getElementById('lcUnit').value);
+            var tax = lcTrim(document.getElementById('lcTax').value);
+            if (lcIsMissingUnit(unit)) {
+                alert(item.productName + ": Unit (UOM) is required.");
+                document.getElementById('lcUnit').focus();
+                return false;
+            }
+            if (lcIsInvalidTax(tax)) {
+                alert(item.productName + ": GST / Tax % must be a number (0 is allowed).");
+                document.getElementById('lcTax').focus();
+                return false;
+            }
+            _lineConfigOverrides[String(item.rowIndex)] = { unit: unit, tax: String(parseFloat(tax)) };
+            // Reflect on catalog labels for visual consistency before postback (server uses hidden overrides).
+            var unitLbl = item.row.querySelector("span[id$='Unit']");
+            var taxLbl = item.row.querySelector("span[id$='Tax_Rate']");
+            if (unitLbl) unitLbl.innerText = unit;
+            if (taxLbl) taxLbl.innerText = String(parseFloat(tax));
+            _lineConfigIndex++;
+            return showNextLineConfig();
+        }
+        function cancelLineConfigQueue() {
+            _lineConfigQueue = [];
+            _lineConfigIndex = 0;
+            _lineConfigOverrides = {};
+            _lineConfigAllowPostback = false;
+            var hf = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
+            if (hf) hf.value = "";
+            closeLineConfigModal();
+            return false;
+        }
+        function prepareAddToCart() {
+            if (_lineConfigAllowPostback) {
+                _lineConfigAllowPostback = false;
+                return true;
+            }
+            var checked = lcFindCheckedCatalogRows();
+            if (checked.length === 0) return true; // server handles empty selection
+
+            var rateErrors = [];
+            for (var i = 0; i < checked.length; i++) {
+                var rate = parseFloat(checked[i].sailRate);
+                if (isNaN(rate) || rate <= 0) {
+                    rateErrors.push(checked[i].productName + ": Base Rate must be greater than 0.");
+                }
+            }
+            if (rateErrors.length > 0) {
+                alert(rateErrors.join("\n"));
+                return false;
+            }
+
+            _lineConfigQueue = [];
+            _lineConfigOverrides = {};
+            for (var j = 0; j < checked.length; j++) {
+                var c = checked[j];
+                if (lcIsMissingUnit(c.unit) || lcIsInvalidTax(c.tax)) {
+                    _lineConfigQueue.push(c);
+                }
+            }
+            if (_lineConfigQueue.length === 0) {
+                var hfClear = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
+                if (hfClear) hfClear.value = "";
+                return true;
+            }
+            _lineConfigIndex = 0;
+            showNextLineConfig();
+            return false;
         }
 
         function togglePanel() {
@@ -560,6 +796,45 @@ window.onload = function () { togglePanel(); };
 
     <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
     <asp:HiddenField ID="hfVisitId" runat="server" />
+    <asp:HiddenField ID="hfLineConfigOverrides" runat="server" Value="" />
+
+    <div id="lineConfigModal" class="line-config-backdrop" onclick="if(event.target===this)cancelLineConfigQueue();">
+        <div class="line-config-box" onclick="event.stopPropagation();">
+            <h3>Configure line Tax % / UOM</h3>
+            <div class="line-config-progress" id="lineConfigProgress">Configuring 1 of 1</div>
+            <div class="line-config-grid">
+                <div class="full">
+                    <div class="k">Product</div>
+                    <div class="v" id="lcProductName">—</div>
+                </div>
+                <div>
+                    <div class="k">Base Rate</div>
+                    <div class="v" id="lcSailRate">—</div>
+                </div>
+                <div>
+                    <div class="k">Product ID</div>
+                    <div class="v" id="lcProductId">—</div>
+                </div>
+                <div class="full">
+                    <div class="k">Unit (UOM) *</div>
+                    <input type="text" id="lcUnit" maxlength="100" placeholder="e.g. NOS, PCS, SET" />
+                </div>
+                <div class="full">
+                    <div class="k">GST / Tax % *</div>
+                    <select id="lcTax">
+                        <option value="0">0</option>
+                        <option value="5">5</option>
+                        <option value="12">12</option>
+                        <option value="18" selected="selected">18</option>
+                    </select>
+                </div>
+            </div>
+            <div class="line-config-actions">
+                <button type="button" class="btn_style" onclick="return cancelLineConfigQueue();">Cancel</button>
+                <button type="button" class="btn_style" style="background:#19658A;color:#fff;" onclick="return applyLineConfigAndContinue();">Apply &amp; Continue</button>
+            </div>
+        </div>
+    </div>
 
     <asp:Panel ID="PanelGlobalAlert" runat="server" Visible="False" Style="margin: 15px 0; padding: 10px; border-radius: 5px; border: 1px solid;">
         <asp:Label ID="lblGlobalAlert" runat="server" Font-Bold="True"></asp:Label>
@@ -793,7 +1068,7 @@ window.onload = function () { togglePanel(); };
             <div style="margin-top: 15px; text-align: center;">
                 <asp:Button ID="btnPrev2" runat="server" Text="🡄 Back" CssClass="btn_style" Width="120px" OnClick="btnPrev2_Click" />
                 &nbsp;
-                <asp:Button ID="btnNext2" runat="server" Text="Add to Cart ➔" CssClass="btn_style" Width="200px" OnClick="btnNext2_Click" />
+                <asp:Button ID="btnNext2" runat="server" Text="Add to Cart ➔" CssClass="btn_style" Width="200px" OnClientClick="return prepareAddToCart();" OnClick="btnNext2_Click" />
             </div>
         </asp:View>
 

@@ -460,11 +460,52 @@ namespace Bill_Software.corporate.business.app
                     return;
                 }
 
+                // Phase A.6: line Tax/UOM overrides from config modal (ViewState cart only — never product master).
+                var lineOverrides = ParseLineConfigOverrides(hfLineConfigOverrides != null ? hfLineConfigOverrides.Value : null);
+                var taxUomErrors = new List<string>();
+                for (int i = 0; i < gridProdWithCat.Rows.Count; i++)
+                {
+                    CheckBox chkPreTax = (CheckBox)gridProdWithCat.Rows[i].FindControl("chkdtp");
+                    if (chkPreTax == null || !chkPreTax.Checked) continue;
+
+                    string productName = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName"))?.Text;
+                    string productCode = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code"))?.Text;
+                    string displayName = GetProductDisplayName(productName, productCode);
+                    string unit = ((Label)gridProdWithCat.Rows[i].FindControl("Unit"))?.Text;
+                    string tax = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate"))?.Text;
+                    string overrideUnit, overrideTax;
+                    if (TryGetLineConfigOverride(lineOverrides, i, out overrideUnit, out overrideTax))
+                    {
+                        unit = overrideUnit;
+                        tax = overrideTax;
+                    }
+
+                    if (IsMissingUnit(unit))
+                        taxUomErrors.Add(displayName + ": Unit (UOM) is required.");
+                    if (IsInvalidTaxRate(tax))
+                        taxUomErrors.Add(displayName + ": GST / Tax % must be a number (0 is allowed).");
+                }
+
+                if (taxUomErrors.Count > 0)
+                {
+                    ShowAlert(string.Join(" ", taxUomErrors.ToArray()), true);
+                    return;
+                }
+
                 for (int i = 0; i < gridProdWithCat.Rows.Count; i++)
                 {
                     CheckBox chkdtp = (CheckBox)gridProdWithCat.Rows[i].FindControl("chkdtp");
                     if (chkdtp != null && chkdtp.Checked)
                     {
+                        string unit = ((Label)gridProdWithCat.Rows[i].FindControl("Unit"))?.Text;
+                        string tax = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate"))?.Text;
+                        string overrideUnit, overrideTax;
+                        if (TryGetLineConfigOverride(lineOverrides, i, out overrideUnit, out overrideTax))
+                        {
+                            unit = overrideUnit;
+                            tax = overrideTax;
+                        }
+
                         DataRow dr = dtPCat.NewRow();
                         dr["ProductId"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductID")).Text;
                         dr["Product_code"] = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code")).Text;
@@ -478,9 +519,9 @@ namespace Bill_Software.corporate.business.app
                         dr["PackSize"] = "";
                         dr["ItemRemarks"] = "";
                         dr["Sail_Rate"] = ((Label)gridProdWithCat.Rows[i].FindControl("Sail_Rate")).Text;
-                        dr["Tax_Rate"] = ((Label)gridProdWithCat.Rows[i].FindControl("Tax_Rate")).Text;
+                        dr["Tax_Rate"] = tax ?? "";
                         dr["Type"] = ((Label)gridProdWithCat.Rows[i].FindControl("Type")).Text;
-                        dr["Unit"] = ((Label)gridProdWithCat.Rows[i].FindControl("Unit")).Text;
+                        dr["Unit"] = unit ?? "";
                         dr["ProductOrServiceCat"] = ((Label)gridProdWithCat.Rows[i].FindControl("ProductOrServiceCat")).Text;
 
                         if (dtPCat.Columns.Contains("DeliveryDate")) dr["DeliveryDate"] = "";
@@ -492,6 +533,9 @@ namespace Bill_Software.corporate.business.app
                     }
                 }
             }
+
+            if (hfLineConfigOverrides != null)
+                hfLineConfigOverrides.Value = "";
 
             ViewState["PhaseProductData"] = dtPCat;
             gd_Service_Product.DataSource = dtPCat;
@@ -1093,7 +1137,7 @@ namespace Bill_Software.corporate.business.app
 
         /// <summary>
         /// Cart completeness from existing validateCart() / MagicianNew usage: Quantity &gt; 0 and Base Rate (Sail_Rate) &gt; 0.
-        /// Does not invent optional→mandatory rules (Tax/Brand/Spec/Unit remain optional).
+        /// Tax/UOM are enforced on catalog Add (Phase A.6), not here — cart Labels are not editable.
         /// </summary>
         private bool TryValidateCartCompleteness(DataTable cart, out string errorMessage)
         {
@@ -1121,6 +1165,64 @@ namespace Bill_Software.corporate.business.app
             if (errors.Count == 0) return true;
             errorMessage = string.Join(" ", errors.ToArray());
             return false;
+        }
+
+        private static bool IsMissingUnit(string unit)
+        {
+            return string.IsNullOrWhiteSpace(unit);
+        }
+
+        /// <summary>Missing/non-numeric Tax is invalid; Tax = 0 is allowed.</summary>
+        private bool IsInvalidTaxRate(string taxText)
+        {
+            if (string.IsNullOrWhiteSpace(taxText)) return true;
+            decimal tax;
+            return !decimal.TryParse(
+                taxText.Trim(),
+                System.Globalization.NumberStyles.AllowDecimalPoint,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out tax);
+        }
+
+        /// <summary>
+        /// Parses hfLineConfigOverrides: "rowIndex=unit|tax;;rowIndex=unit|tax".
+        /// </summary>
+        private static Dictionary<int, Tuple<string, string>> ParseLineConfigOverrides(string raw)
+        {
+            var map = new Dictionary<int, Tuple<string, string>>();
+            if (string.IsNullOrWhiteSpace(raw)) return map;
+
+            string[] entries = raw.Split(new[] { ";;" }, StringSplitOptions.RemoveEmptyEntries);
+            for (int e = 0; e < entries.Length; e++)
+            {
+                string entry = entries[e];
+                int eq = entry.IndexOf('=');
+                if (eq <= 0) continue;
+                int rowIndex;
+                if (!int.TryParse(entry.Substring(0, eq).Trim(), out rowIndex)) continue;
+                string rest = entry.Substring(eq + 1);
+                int pipe = rest.IndexOf('|');
+                if (pipe < 0) continue;
+                string unit = rest.Substring(0, pipe).Trim();
+                string tax = rest.Substring(pipe + 1).Trim();
+                map[rowIndex] = Tuple.Create(unit, tax);
+            }
+            return map;
+        }
+
+        private static bool TryGetLineConfigOverride(
+            Dictionary<int, Tuple<string, string>> map,
+            int rowIndex,
+            out string unit,
+            out string tax)
+        {
+            unit = null;
+            tax = null;
+            Tuple<string, string> pair;
+            if (map == null || !map.TryGetValue(rowIndex, out pair) || pair == null) return false;
+            unit = pair.Item1;
+            tax = pair.Item2;
+            return true;
         }
 
         private string GetSafeDateNew(string dateText)
