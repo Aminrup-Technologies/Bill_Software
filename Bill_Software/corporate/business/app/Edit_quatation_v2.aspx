@@ -206,71 +206,91 @@
                 border-top: none;
             }
 
-        /* Phase A.6 — Quotation line Tax/UOM config (adapted from newproduct_master View More shell) */
-        .line-config-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 10050;
-            background: rgba(15, 23, 42, 0.45);
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
+        /* Phase A.6.1 — Quotation Product Configuration Modal (adapted from newproduct_master View More shell/CSS) */
+        .modal-backdrop {
+            display: none; position: fixed; z-index: 10050; left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, .45); align-items: center; justify-content: center;
+            padding: 12px;
         }
-        .line-config-backdrop.is-open { display: flex; }
-        .line-config-box {
-            background: #fff;
-            border-radius: 8px;
-            max-width: 480px;
-            width: 100%;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-            padding: 18px 20px 16px;
-            border: 1px solid #cbd5e1;
+        .modal-backdrop.is-open { display: flex; }
+        .modal-box.product-config-modal {
+            background: #fff; border-radius: 8px; width: min(720px, 96vw); max-height: 92vh;
+            overflow: hidden; padding: 0; border: 1px solid #d7e2ec;
+            box-shadow: 0 12px 40px rgba(0,0,0,.2);
+            display: flex; flex-direction: column;
         }
-        .line-config-box h3 {
-            margin: 0 0 6px;
-            color: #19658A;
-            font-size: 16px;
+        .product-config-modal .pd-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #19658A 0%, #0f4a66 100%);
+            border-radius: 8px 8px 0 0; color: #fff; flex-shrink: 0;
         }
-        .line-config-progress {
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 12px;
+        .product-config-modal .pd-header-left { flex: 1; min-width: 0; }
+        .product-config-modal .pd-eyebrow {
+            display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+            opacity: .8; margin-bottom: 2px;
         }
-        .line-config-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 14px;
-            font-size: 13px;
-            margin-bottom: 14px;
-        }
-        .line-config-grid .full { grid-column: 1 / -1; }
-        .line-config-grid .k {
-            color: #64748b;
-            font-size: 11px;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-        .line-config-grid .v {
-            color: #0f172a;
-            font-weight: 600;
+        .product-config-modal .pd-name {
+            margin: 0; color: #fff; font-size: 18px; font-weight: 800; line-height: 1.25;
             word-break: break-word;
         }
-        .line-config-grid input[type="text"],
-        .line-config-grid select {
-            width: 100%;
-            box-sizing: border-box;
-            height: 30px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 12px;
+        .product-config-modal .pd-header-right {
+            flex: 0 0 auto; text-align: right;
+            background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
+            border-radius: 6px; padding: 6px 10px;
         }
-        .line-config-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            flex-wrap: wrap;
+        .product-config-modal .pd-meta-k {
+            font-size: 9px; text-transform: uppercase; letter-spacing: .04em; opacity: .8;
+        }
+        .product-config-modal .pd-meta-v { font-size: 13px; font-weight: 700; }
+        .product-config-modal .pd-progress {
+            margin-top: 4px; font-size: 11px; font-weight: 600; opacity: .95;
+        }
+        .product-config-modal .pd-body {
+            padding: 12px 14px 10px; overflow-y: auto; flex: 1 1 auto; min-height: 0;
+        }
+        .product-config-modal .modal-section {
+            margin: 0 0 10px; padding: 10px;
+            background: #fff; border: 1px solid #e8edf3; border-radius: 8px;
+        }
+        .product-config-modal .modal-section-title {
+            margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+            text-transform: uppercase; padding-bottom: 6px;
+            border-bottom: 2px solid #d7eaf4; color: #19658A;
+        }
+        .product-config-modal .modal-grid {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px; font-size: 12px;
+        }
+        .product-config-modal .modal-grid .span2 { grid-column: span 2; }
+        .product-config-modal .modal-grid .full { grid-column: 1 / -1; }
+        .product-config-modal .pd-field {
+            background: #f8fafc; border: 1px solid #e8edf3; border-radius: 6px; padding: 7px 9px;
+        }
+        .product-config-modal .pd-field.is-edit { background: #fff; border-color: #cbd5e1; }
+        .product-config-modal .modal-grid .k {
+            font-size: 9px; line-height: 1.1; margin-bottom: 3px; color: #64748b; font-weight: 700;
+            text-transform: uppercase;
+        }
+        .product-config-modal .modal-grid .v {
+            font-size: 12px; line-height: 1.3; font-weight: 600; color: #0f172a; word-break: break-word;
+        }
+        .product-config-modal .pd-field input[type="text"],
+        .product-config-modal .pd-field select {
+            width: 100%; box-sizing: border-box; height: 30px;
+            border: 1px solid #ccc; border-radius: 4px; padding: 2px 8px; font-size: 12px;
+        }
+        .product-config-modal .modal-close {
+            margin: 10px 0 0; padding-top: 10px; border-top: 1px solid #e8edf3;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+        }
+        .product-config-modal .btn-modal-save {
+            background: #19658A; color: #fff; border-color: #19658A;
+        }
+        .product-config-modal .btn-modal-save:hover { background: #0f4a66; }
+        @media (max-width: 700px) {
+            .product-config-modal .modal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .product-config-modal .pd-header { flex-direction: column; align-items: flex-start; }
         }
     </style>
 
@@ -399,7 +419,7 @@
             return true;
         }
 
-        // Phase A.6 — sequential Tax/UOM config before Add to Cart postback
+        // Phase A.6.1 — sequential Product Configuration Modal (Rate / Tax / UOM) before Add to Cart
         var _lineConfigQueue = [];
         var _lineConfigIndex = 0;
         var _lineConfigOverrides = {};
@@ -414,6 +434,17 @@
             if (s === "") return true;
             var n = parseFloat(s);
             return isNaN(n); // Tax = 0 is valid
+        }
+        function lcIsInvalidRate(r) {
+            var n = parseFloat(lcTrim(r));
+            return isNaN(n) || n <= 0;
+        }
+        function lcNeedsConfig(item) {
+            return lcIsMissingUnit(item.unit) || lcIsInvalidTax(item.tax) || lcIsInvalidRate(item.sailRate);
+        }
+        function lcDash(v) {
+            var s = lcTrim(v);
+            return s === "" ? "—" : s;
         }
         function lcRowText(row, idSuffix) {
             var el = row.querySelector("span[id$='" + idSuffix + "'], input[id$='" + idSuffix + "']");
@@ -433,6 +464,11 @@
                     row: rows[i],
                     productName: lcRowText(rows[i], 'ProductName') || ('Row ' + i),
                     productId: lcRowText(rows[i], 'ProductID'),
+                    productCode: lcRowText(rows[i], 'Product_code'),
+                    brand: lcRowText(rows[i], 'Brand'),
+                    type: lcRowText(rows[i], 'Type'),
+                    specification: lcRowText(rows[i], 'Specification'),
+                    category: lcRowText(rows[i], 'ProductOrServiceCat'),
                     sailRate: lcRowText(rows[i], 'Sail_Rate'),
                     unit: lcRowText(rows[i], 'Unit'),
                     tax: lcRowText(rows[i], 'Tax_Rate')
@@ -446,18 +482,13 @@
                 if (!map.hasOwnProperty(k)) continue;
                 var u = String(map[k].unit || "").replace(/\|/g, "/").replace(/;;/g, ";");
                 var t = String(map[k].tax || "").replace(/\|/g, "/").replace(/;;/g, ";");
-                parts.push(k + "=" + u + "|" + t);
+                var r = String(map[k].rate || "").replace(/\|/g, "/").replace(/;;/g, ";");
+                parts.push(k + "=" + u + "|" + t + "|" + r);
             }
             return parts.join(";;");
         }
-        function openLineConfigModal(item, pos, total) {
-            document.getElementById('lineConfigProgress').innerText = "Configuring " + pos + " of " + total;
-            document.getElementById('lcProductName').innerText = item.productName || "—";
-            document.getElementById('lcSailRate').innerText = item.sailRate || "—";
-            document.getElementById('lcProductId').innerText = item.productId || "—";
-            document.getElementById('lcUnit').value = item.unit || "";
-            var taxSel = document.getElementById('lcTax');
-            var taxVal = lcTrim(item.tax);
+        function lcSetTaxSelect(taxVal) {
+            var taxSel = document.getElementById('pcTax');
             if (taxVal !== "" && !lcIsInvalidTax(taxVal)) {
                 var found = false;
                 for (var i = 0; i < taxSel.options.length; i++) {
@@ -477,11 +508,27 @@
             } else {
                 taxSel.value = "18";
             }
-            document.getElementById('lineConfigModal').className = 'line-config-backdrop is-open';
-            document.getElementById('lcUnit').focus();
+        }
+        function openLineConfigModal(item, pos, total) {
+            document.getElementById('pcProgress').innerText = pos + " of " + total;
+            document.getElementById('pcHdrName').innerText = item.productName || "—";
+            document.getElementById('pcHdrPid').innerText = item.productId || "—";
+            document.getElementById('pcBrand').innerText = lcDash(item.brand);
+            document.getElementById('pcType').innerText = lcDash(item.type);
+            document.getElementById('pcCode').innerText = lcDash(item.productCode);
+            document.getElementById('pcCategory').innerText = lcDash(item.category);
+            document.getElementById('pcSpec').innerText = lcDash(item.specification);
+            document.getElementById('pcSailRate').value = lcIsInvalidRate(item.sailRate) ? "" : String(parseFloat(item.sailRate));
+            document.getElementById('pcUnit').value = item.unit || "";
+            lcSetTaxSelect(item.tax);
+            var isLast = (pos >= total);
+            var saveBtn = document.getElementById('pcSaveBtn');
+            saveBtn.innerText = isLast ? "Save & Proceed" : "Save & Next";
+            document.getElementById('productConfigModal').className = 'modal-backdrop is-open';
+            document.getElementById('pcSailRate').focus();
         }
         function closeLineConfigModal() {
-            document.getElementById('lineConfigModal').className = 'line-config-backdrop';
+            document.getElementById('productConfigModal').className = 'modal-backdrop';
         }
         function showNextLineConfig() {
             if (_lineConfigIndex >= _lineConfigQueue.length) {
@@ -499,24 +546,36 @@
         function applyLineConfigAndContinue() {
             var item = _lineConfigQueue[_lineConfigIndex];
             if (!item) return false;
-            var unit = lcTrim(document.getElementById('lcUnit').value);
-            var tax = lcTrim(document.getElementById('lcTax').value);
+            var rate = lcTrim(document.getElementById('pcSailRate').value);
+            var unit = lcTrim(document.getElementById('pcUnit').value);
+            var tax = lcTrim(document.getElementById('pcTax').value);
+            if (lcIsInvalidRate(rate)) {
+                alert(item.productName + ": Base Rate must be greater than 0.");
+                document.getElementById('pcSailRate').focus();
+                return false;
+            }
             if (lcIsMissingUnit(unit)) {
                 alert(item.productName + ": Unit (UOM) is required.");
-                document.getElementById('lcUnit').focus();
+                document.getElementById('pcUnit').focus();
                 return false;
             }
             if (lcIsInvalidTax(tax)) {
                 alert(item.productName + ": GST / Tax % must be a number (0 is allowed).");
-                document.getElementById('lcTax').focus();
+                document.getElementById('pcTax').focus();
                 return false;
             }
-            _lineConfigOverrides[String(item.rowIndex)] = { unit: unit, tax: String(parseFloat(tax)) };
-            // Reflect on catalog labels for visual consistency before postback (server uses hidden overrides).
+            var rateStr = String(parseFloat(rate));
+            var taxStr = String(parseFloat(tax));
+            _lineConfigOverrides[String(item.rowIndex)] = { unit: unit, tax: taxStr, rate: rateStr };
+            var rateLbl = item.row.querySelector("span[id$='Sail_Rate']");
             var unitLbl = item.row.querySelector("span[id$='Unit']");
             var taxLbl = item.row.querySelector("span[id$='Tax_Rate']");
+            if (rateLbl) rateLbl.innerText = rateStr;
             if (unitLbl) unitLbl.innerText = unit;
-            if (taxLbl) taxLbl.innerText = String(parseFloat(tax));
+            if (taxLbl) taxLbl.innerText = taxStr;
+            item.sailRate = rateStr;
+            item.unit = unit;
+            item.tax = taxStr;
             _lineConfigIndex++;
             return showNextLineConfig();
         }
@@ -538,25 +597,10 @@
             var checked = lcFindCheckedCatalogRows();
             if (checked.length === 0) return true; // server handles empty selection / Skip Catalog
 
-            var rateErrors = [];
-            for (var i = 0; i < checked.length; i++) {
-                var rate = parseFloat(checked[i].sailRate);
-                if (isNaN(rate) || rate <= 0) {
-                    rateErrors.push(checked[i].productName + ": Base Rate must be greater than 0.");
-                }
-            }
-            if (rateErrors.length > 0) {
-                alert(rateErrors.join("\n"));
-                return false;
-            }
-
             _lineConfigQueue = [];
             _lineConfigOverrides = {};
             for (var j = 0; j < checked.length; j++) {
-                var c = checked[j];
-                if (lcIsMissingUnit(c.unit) || lcIsInvalidTax(c.tax)) {
-                    _lineConfigQueue.push(c);
-                }
+                if (lcNeedsConfig(checked[j])) _lineConfigQueue.push(checked[j]);
             }
             if (_lineConfigQueue.length === 0) {
                 var hfClear = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
@@ -698,40 +742,56 @@
     <asp:HiddenField ID="hdnRefOption" runat="server" Value="No" />
     <asp:HiddenField ID="hfLineConfigOverrides" runat="server" Value="" />
 
-    <div id="lineConfigModal" class="line-config-backdrop" onclick="if(event.target===this)cancelLineConfigQueue();">
-        <div class="line-config-box" onclick="event.stopPropagation();">
-            <h3>Configure line Tax % / UOM</h3>
-            <div class="line-config-progress" id="lineConfigProgress">Configuring 1 of 1</div>
-            <div class="line-config-grid">
-                <div class="full">
-                    <div class="k">Product</div>
-                    <div class="v" id="lcProductName">—</div>
+    <div id="productConfigModal" class="modal-backdrop" onclick="if(event.target===this)cancelLineConfigQueue();">
+        <div class="modal-box product-config-modal" onclick="event.stopPropagation();">
+            <div class="pd-header">
+                <div class="pd-header-left">
+                    <span class="pd-eyebrow">Product Configuration</span>
+                    <div class="pd-name" id="pcHdrName">—</div>
                 </div>
-                <div>
-                    <div class="k">Base Rate</div>
-                    <div class="v" id="lcSailRate">—</div>
-                </div>
-                <div>
-                    <div class="k">Product ID</div>
-                    <div class="v" id="lcProductId">—</div>
-                </div>
-                <div class="full">
-                    <div class="k">Unit (UOM) *</div>
-                    <input type="text" id="lcUnit" maxlength="100" placeholder="e.g. NOS, PCS, SET" />
-                </div>
-                <div class="full">
-                    <div class="k">GST / Tax % *</div>
-                    <select id="lcTax">
-                        <option value="0">0</option>
-                        <option value="5">5</option>
-                        <option value="12">12</option>
-                        <option value="18" selected="selected">18</option>
-                    </select>
+                <div class="pd-header-right">
+                    <div class="pd-meta-k">Product ID</div>
+                    <div class="pd-meta-v" id="pcHdrPid">—</div>
+                    <div class="pd-progress" id="pcProgress">1 of 1</div>
                 </div>
             </div>
-            <div class="line-config-actions">
-                <button type="button" class="btn_style" onclick="return cancelLineConfigQueue();">Cancel</button>
-                <button type="button" class="btn_style" style="background:#19658A;color:#fff;" onclick="return applyLineConfigAndContinue();">Apply &amp; Continue</button>
+            <div class="pd-body">
+                <div class="modal-section">
+                    <div class="modal-section-title">1. Identity</div>
+                    <div class="modal-grid">
+                        <div class="pd-field"><div class="k">Brand</div><div class="v" id="pcBrand">—</div></div>
+                        <div class="pd-field"><div class="k">Type</div><div class="v" id="pcType">—</div></div>
+                        <div class="pd-field"><div class="k">Product Code</div><div class="v" id="pcCode">—</div></div>
+                        <div class="pd-field"><div class="k">Category</div><div class="v" id="pcCategory">—</div></div>
+                        <div class="pd-field span2"><div class="k">Specification</div><div class="v" id="pcSpec">—</div></div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title">2. Commercial (quotation line)</div>
+                    <div class="modal-grid">
+                        <div class="pd-field is-edit">
+                            <div class="k">Base Rate *</div>
+                            <input type="text" id="pcSailRate" maxlength="20" placeholder="e.g. 100.00" onkeypress="return onlyNumberDecimal(event);" />
+                        </div>
+                        <div class="pd-field is-edit">
+                            <div class="k">GST / Tax % *</div>
+                            <select id="pcTax">
+                                <option value="0">0</option>
+                                <option value="5">5</option>
+                                <option value="12">12</option>
+                                <option value="18" selected="selected">18</option>
+                            </select>
+                        </div>
+                        <div class="pd-field is-edit">
+                            <div class="k">Unit (UOM) *</div>
+                            <input type="text" id="pcUnit" maxlength="100" placeholder="e.g. NOS, PCS, SET" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-close">
+                    <button type="button" class="btn_style" onclick="return cancelLineConfigQueue();">Cancel</button>
+                    <button type="button" class="btn_style btn-modal-save" id="pcSaveBtn" onclick="return applyLineConfigAndContinue();">Save &amp; Proceed</button>
+                </div>
             </div>
         </div>
     </div>
