@@ -434,8 +434,32 @@ namespace Bill_Software.corporate.business.app
                 dtPCat = (DataTable)ViewState["PhaseProductData"];
             }
 
+            // Evidence-based completeness (matches validateCart / MagicianNew): Base Rate > 0.
+            // Quantity is always seeded as "1" on add. Validate all checked rows before mutating cart.
             if (dtpro != null)
             {
+                var completenessErrors = new List<string>();
+                for (int i = 0; i < gridProdWithCat.Rows.Count; i++)
+                {
+                    CheckBox chkPre = (CheckBox)gridProdWithCat.Rows[i].FindControl("chkdtp");
+                    if (chkPre == null || !chkPre.Checked) continue;
+
+                    string productName = ((Label)gridProdWithCat.Rows[i].FindControl("ProductName"))?.Text;
+                    string productCode = ((Label)gridProdWithCat.Rows[i].FindControl("Product_code"))?.Text;
+                    string displayName = GetProductDisplayName(productName, productCode);
+                    string sailRateText = ((Label)gridProdWithCat.Rows[i].FindControl("Sail_Rate"))?.Text;
+
+                    if (ParseDecimal(sailRateText) <= 0m)
+                        completenessErrors.Add(displayName + ": Base Rate must be greater than 0.");
+                }
+
+                if (completenessErrors.Count > 0)
+                {
+                    // Stay on catalog; leave checkboxes checked; do not append incomplete (or mixed) selection.
+                    ShowAlert(string.Join(" ", completenessErrors.ToArray()), true);
+                    return;
+                }
+
                 for (int i = 0; i < gridProdWithCat.Rows.Count; i++)
                 {
                     CheckBox chkdtp = (CheckBox)gridProdWithCat.Rows[i].FindControl("chkdtp");
@@ -595,6 +619,14 @@ namespace Bill_Software.corporate.business.app
             if (currentCart == null || currentCart.Rows.Count == 0)
             {
                 ShowAlert("Cart is empty! Add products to proceed.", true);
+                return;
+            }
+
+            // Server-side mirror of validateCart(): Quantity and Base Rate must be > 0.
+            string cartError;
+            if (!TryValidateCartCompleteness(currentCart, out cartError))
+            {
+                ShowAlert(cartError, true);
                 return;
             }
 
@@ -1047,6 +1079,48 @@ namespace Bill_Software.corporate.business.app
             decimal val;
             if (decimal.TryParse(text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val)) return val;
             return 0m;
+        }
+
+        /// <summary>
+        /// Display name for completeness messages. Derived for UX only; not a new mandatory field.
+        /// </summary>
+        private static string GetProductDisplayName(string productName, string productCode)
+        {
+            if (!string.IsNullOrWhiteSpace(productName)) return productName.Trim();
+            if (!string.IsNullOrWhiteSpace(productCode)) return productCode.Trim();
+            return "Selected product";
+        }
+
+        /// <summary>
+        /// Cart completeness from existing validateCart() / MagicianNew usage: Quantity &gt; 0 and Base Rate (Sail_Rate) &gt; 0.
+        /// Does not invent optional→mandatory rules (Tax/Brand/Spec/Unit remain optional).
+        /// </summary>
+        private bool TryValidateCartCompleteness(DataTable cart, out string errorMessage)
+        {
+            errorMessage = null;
+            if (cart == null || cart.Rows.Count == 0)
+            {
+                errorMessage = "Cart is empty! Add products to proceed.";
+                return false;
+            }
+
+            var errors = new List<string>();
+            for (int i = 0; i < cart.Rows.Count; i++)
+            {
+                DataRow row = cart.Rows[i];
+                string displayName = GetProductDisplayName(
+                    row["ProductName"]?.ToString(),
+                    row.Table.Columns.Contains("Product_code") ? row["Product_code"]?.ToString() : null);
+
+                if (ParseDecimal(row["Quantity"]?.ToString()) <= 0m)
+                    errors.Add(displayName + ": Quantity must be greater than 0.");
+                if (ParseDecimal(row["Sail_Rate"]?.ToString()) <= 0m)
+                    errors.Add(displayName + ": Base Rate must be greater than 0.");
+            }
+
+            if (errors.Count == 0) return true;
+            errorMessage = string.Join(" ", errors.ToArray());
+            return false;
         }
 
         private string GetSafeDateNew(string dateText)

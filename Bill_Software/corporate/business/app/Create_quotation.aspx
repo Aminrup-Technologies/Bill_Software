@@ -334,16 +334,26 @@
             if (!grid || grid.rows.length <= 2) { alert("Cart is empty!"); return false; }
 
             var rows = grid.getElementsByTagName('tr');
+            var messages = [];
             for (var i = 1; i < rows.length - 1; i++) {
-                var qty = parseFloat(rows[i].querySelector('.qty-input').value) || 0;
-                var rate = parseFloat(rows[i].querySelector('.rate-input').value) || 0;
+                var qtyInput = rows[i].querySelector('.qty-input');
+                var rateInput = rows[i].querySelector('.rate-input');
+                if (!qtyInput || !rateInput) continue;
+                var qty = parseFloat(qtyInput.value) || 0;
+                var rate = parseFloat(rateInput.value) || 0;
+                var nameEl = rows[i].querySelector("span[id$='ProductName']");
+                var productName = (nameEl && nameEl.innerText) ? nameEl.innerText.trim() : ("Row " + i);
                 if (qty <= 0 || rate <= 0) {
-                    alert("Error on Row " + i + ": Quantity and Base Rate must be greater than 0.");
+                    if (qty <= 0) messages.push(productName + ": Quantity must be greater than 0.");
+                    if (rate <= 0) messages.push(productName + ": Base Rate must be greater than 0.");
                     rows[i].style.backgroundColor = "#ffcccc";
-                    return false;
                 } else {
                     rows[i].style.backgroundColor = "";
                 }
+            }
+            if (messages.length > 0) {
+                alert(messages.join("\n"));
+                return false;
             }
             return true;
         }
