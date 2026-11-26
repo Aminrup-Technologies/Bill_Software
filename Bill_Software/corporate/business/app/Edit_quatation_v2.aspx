@@ -489,6 +489,7 @@
         }
         function lcSetTaxSelect(taxVal) {
             var taxSel = document.getElementById('pcTax');
+            if (!taxSel) return;
             if (taxVal !== "" && !lcIsInvalidTax(taxVal)) {
                 var found = false;
                 for (var i = 0; i < taxSel.options.length; i++) {
@@ -510,35 +511,50 @@
             }
         }
         function openLineConfigModal(item, pos, total) {
-            document.getElementById('pcProgress').innerText = pos + " of " + total;
-            document.getElementById('pcHdrName').innerText = item.productName || "—";
-            document.getElementById('pcHdrPid').innerText = item.productId || "—";
-            document.getElementById('pcBrand').innerText = lcDash(item.brand);
-            document.getElementById('pcType').innerText = lcDash(item.type);
-            document.getElementById('pcCode').innerText = lcDash(item.productCode);
-            document.getElementById('pcCategory').innerText = lcDash(item.category);
-            document.getElementById('pcSpec').innerText = lcDash(item.specification);
-            document.getElementById('pcSailRate').value = lcIsInvalidRate(item.sailRate) ? "" : String(parseFloat(item.sailRate));
-            document.getElementById('pcUnit').value = item.unit || "";
+            var modal = document.getElementById('productConfigModal');
+            var rateInput = document.getElementById('pcSailRate');
+            var unitInput = document.getElementById('pcUnit');
+            var saveBtn = document.getElementById('pcSaveBtn');
+            if (!modal || !rateInput || !unitInput || !saveBtn) {
+                alert("Product Configuration modal failed to load. Please refresh and try again.");
+                return;
+            }
+            var el;
+            el = document.getElementById('pcProgress'); if (el) el.innerText = pos + " of " + total;
+            el = document.getElementById('pcHdrName'); if (el) el.innerText = item.productName || "—";
+            el = document.getElementById('pcHdrPid'); if (el) el.innerText = item.productId || "—";
+            el = document.getElementById('pcBrand'); if (el) el.innerText = lcDash(item.brand);
+            el = document.getElementById('pcType'); if (el) el.innerText = lcDash(item.type);
+            el = document.getElementById('pcCode'); if (el) el.innerText = lcDash(item.productCode);
+            el = document.getElementById('pcCategory'); if (el) el.innerText = lcDash(item.category);
+            el = document.getElementById('pcSpec'); if (el) el.innerText = lcDash(item.specification);
+            rateInput.value = lcIsInvalidRate(item.sailRate) ? "" : String(parseFloat(item.sailRate));
+            unitInput.value = item.unit || "";
             lcSetTaxSelect(item.tax);
             var isLast = (pos >= total);
-            var saveBtn = document.getElementById('pcSaveBtn');
             saveBtn.innerText = isLast ? "Save & Proceed" : "Save & Next";
-            document.getElementById('productConfigModal').className = 'modal-backdrop is-open';
-            document.getElementById('pcSailRate').focus();
+            modal.className = 'modal-backdrop is-open';
+            try { rateInput.focus(); } catch (ex) { }
         }
         function closeLineConfigModal() {
-            document.getElementById('productConfigModal').className = 'modal-backdrop';
+            var modal = document.getElementById('productConfigModal');
+            if (modal) modal.className = 'modal-backdrop';
+        }
+        // Resume Add-to-Cart via __doPostBack (not btn.click): synthetic click is unreliable
+        // with OnClientClick + ScriptManager/UpdatePanel and can yield a silent no-op.
+        function postAddToCartAfterConfig() {
+            var hf = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
+            if (hf) hf.value = serializeLineConfigOverrides(_lineConfigOverrides);
+            _lineConfigAllowPostback = true;
+            closeLineConfigModal();
+            setTimeout(function () {
+                __doPostBack('<%= btnNext2.UniqueID %>', '');
+            }, 0);
+            return false;
         }
         function showNextLineConfig() {
             if (_lineConfigIndex >= _lineConfigQueue.length) {
-                closeLineConfigModal();
-                var hf = document.getElementById('<%= hfLineConfigOverrides.ClientID %>');
-                if (hf) hf.value = serializeLineConfigOverrides(_lineConfigOverrides);
-                _lineConfigAllowPostback = true;
-                var btn = document.getElementById('<%= btnNext2.ClientID %>');
-                if (btn) btn.click();
-                return false;
+                return postAddToCartAfterConfig();
             }
             openLineConfigModal(_lineConfigQueue[_lineConfigIndex], _lineConfigIndex + 1, _lineConfigQueue.length);
             return false;

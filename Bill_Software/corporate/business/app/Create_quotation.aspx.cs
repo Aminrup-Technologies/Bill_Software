@@ -225,8 +225,8 @@ namespace Bill_Software.corporate.business.app
         protected void btnNext2_Click(object sender, EventArgs e)
         {
             PanelGlobalAlert.Visible = false;
-            DataTable dtpro = ViewState["dtprocat"] as DataTable;
-            if (dtpro == null) return;
+            // Catalog rows are read from gridProdWithCat (ViewState-restored). Do not silent-return
+            // when ViewState["dtprocat"] is missing — that presented as Add-to-Cart "no response".
             if (ViewState["PhaseProductData"] == null)
             {
                 dtPCat.Columns.Add("ProductId", typeof(string));
